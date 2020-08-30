@@ -1,0 +1,205 @@
+import compilers.tokens_lib as tl
+import compilers.ast as ast
+import compilers.ast_builder as ab
+import compilers.util as util
+import compilers.errors as errs
+
+
+class Parser:
+    def __init__(self, tokens: tl.CollectiveElement):
+        self.tokens = tokens
+        self.literal_bytes = bytearray()
+        self.var_level = ast.VAR_VAR
+
+        self.int_literals = {}  # int_lit : position in literal_bytes
+        self.float_literals = {}
+        self.char_literals = {}
+
+        self.symbol_lib = {
+            "=": self.process_assign,
+            ":": self.process_declare,
+            ",": self.process_comma,
+            ";": self.process_end_line,
+            "fn": self.process_fn,
+            "var": self.process_var,
+            "const": self.process_const,
+            "return": self.process_return
+        }
+
+    def parse(self):
+        return self.parse_as_block(self.tokens), self.literal_bytes
+
+    def process_assign(self, p, i, builder, lf):
+        builder.add_node(ast.Assignment(lf))
+
+    def process_declare(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+        builder.add_node(ast.Declaration(self.var_level, lf))
+
+    def process_fn(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+        fn_name = parent[index + 1].atom.identifier
+        arg_list = parent[index + 2]
+        args = self.parse_as_line(arg_list)
+        rtype_list = tl.CollectiveElement(tl.CE_BRACKET, None, lf)
+        i = index + 3
+        while not (tl.is_brace(parent[i]) or identifier_of(parent[i], ";")):
+            rtype_list.append(parent[i])
+            i += 1
+        rtype = self.parse_as_part(rtype_list)
+        body_list = parent[i]
+        if identifier_of(body_list, ";"):
+            body = None
+        else:
+            body = self.parse_as_block(body_list)
+
+        builder.add_node(ast.FunctionDef(fn_name, args, rtype, body, lf))
+        return i
+
+    def process_end_line(self, p, i, builder, lf):
+        builder.finish_part()
+        builder.finish_line()
+
+    def process_comma(self, p, i, builder, lf):
+        builder.finish_part()
+
+    def process_var(self, p, i, b, lf):
+        self.var_level = ast.VAR_VAR
+
+    def process_const(self, p, i, b, lf):
+        self.var_level = ast.VAR_CONST
+
+    def process_return(self, p, i, builder, lf):
+        builder.add_node(ast.ReturnStmt(lf))
+
+    def parse_as_block(self, lst: tl.CollectiveElement):
+        builder = self.parse_as_builder(lst)
+        self.var_level = ast.VAR_VAR
+        builder.finish_part()
+        builder.finish_line()
+        return builder.get_block()
+
+    def parse_as_line(self, lst: tl.CollectiveElement):
+        builder = self.parse_as_builder(lst)
+        self.var_level = ast.VAR_VAR
+        builder.finish_part()
+        return builder.get_line()
+
+    def parse_as_part(self, lst: tl.CollectiveElement):
+        builder = self.parse_as_builder(lst)
+        builder.finish_part()
+        line = builder.get_line()
+        if len(line.parts) != 1:
+            raise errs.TplParseError("Line should only contain 1 part. ", lst.lf)
+        return line.parts[0]
+
+    def parse_as_builder(self, lst: tl.CollectiveElement) -> ab.AstBuilder:
+        builder = ab.AstBuilder(lst.lf)
+        i = 0
+        while i < len(lst):
+            i = self.parse_one(lst, i, builder)
+        return builder
+
+    def parse_one(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder) -> int:
+        ele: tl.Element = parent[index]
+        if isinstance(ele, tl.AtomicElement):
+            token = ele.atom
+            lf = token.lf
+            if isinstance(token, tl.IntToken):
+                if token.value in self.int_literals:
+                    pos = self.int_literals[token.value]
+                else:
+                    pos = len(self.literal_bytes)
+                    self.literal_bytes.extend(util.int_to_bytes(token.value))
+                builder.add_node(ast.IntLiteral(pos, lf))
+            elif isinstance(token, tl.FloatToken):
+                pass
+            elif isinstance(token, tl.CharToken):
+                pass
+            elif isinstance(token, tl.StrToken):
+                pass
+            elif isinstance(token, tl.IdToken):
+                symbol = token.identifier
+                if symbol == "-":
+                    if index < 1 or is_unary(parent[index - 1]):
+                        builder.add_node(ast.UnaryOperator("neg", ast.UNA_ARITH, lf))
+                    else:
+                        builder.add_node(ast.BinaryOperator("-", ast.BIN_ARITH, lf))
+                elif symbol == "*":
+                    if index < 1 or is_unary(parent[index - 1]):
+                        builder.add_node(ast.StarExpr(lf))
+                    else:
+                        builder.add_node(ast.BinaryOperator("*", ast.BIN_ARITH, lf))
+                elif symbol in tl.ARITH_BINARY:
+                    builder.add_node(ast.BinaryOperator(symbol, ast.BIN_ARITH, lf))
+                elif symbol in tl.LOGICAL_BINARY:
+                    builder.add_node(ast.BinaryOperator(symbol, ast.BIN_LOGICAL, lf))
+                elif symbol in tl.BITWISE_BINARY:
+                    builder.add_node(ast.BinaryOperator(symbol, ast.BIN_BITWISE, lf))
+                elif symbol in tl.LAZY_BINARY:
+                    builder.add_node(ast.BinaryOperator(symbol, ast.BIN_LAZY, lf))
+                elif symbol in tl.ARITH_UNARY:
+                    builder.add_node(ast.UnaryOperator(symbol, ast.UNA_ARITH, lf))
+                elif symbol in tl.LOGICAL_UNARY:
+                    builder.add_node(ast.UnaryOperator(symbol, ast.UNA_LOGICAL, lf))
+                elif symbol in tl.ARITH_BINARY_ASS:
+                    builder.add_node(ast.BinaryOperatorAssignment(symbol, ast.BIN_ARITH, lf))
+                elif symbol in tl.BITWISE_BINARY_ASS:
+                    builder.add_node(ast.BinaryOperatorAssignment(symbol, ast.BIN_BITWISE, lf))
+                elif symbol in tl.FAKE_TERNARY:
+                    builder.add_node(ast.FakeTernaryOperator(symbol, lf))
+                elif symbol in self.symbol_lib:
+                    ftn = self.symbol_lib[symbol]
+                    res = ftn(parent, index, builder, lf)
+                    if res:
+                        index = res
+                else:
+                    builder.add_node(ast.NameNode(symbol, lf))
+
+            else:
+                raise Exception("Unexpected error. ")
+        elif isinstance(ele, tl.CollectiveElement):
+            if ele.is_bracket():
+                lf = ele.lf
+                if index > 0:
+                    prob_call_obj = parent[index - 1]
+                    if isinstance(prob_call_obj, tl.AtomicElement) and is_call(prob_call_obj.atom):
+                        args = self.parse_as_line(ele)
+                        call_obj = builder.remove_last()
+                        call = ast.FunctionCall(call_obj, args, lf)
+                        builder.add_node(call)
+        else:
+            raise Exception("Unexpected error. ")
+
+        return index + 1
+
+
+UNARY_LEADING = {
+    ";", "=", "->", ".", ","
+}
+
+
+def identifier_of(ele: tl.Element, target: str) -> bool:
+    return isinstance(ele, tl.AtomicElement) and isinstance(ele.atom, tl.IdToken) and ele.atom.identifier == target
+
+
+def is_unary(leading_ele: tl.Element) -> bool:
+    if isinstance(leading_ele, tl.AtomicElement):
+        token = leading_ele.atom
+        if isinstance(token, tl.IdToken):
+            symbol = token.identifier
+            if symbol in UNARY_LEADING:
+                return True
+            else:
+                return symbol in tl.ALL_BINARY or symbol in tl.RESERVED
+        else:
+            return not (isinstance(token, tl.IntToken) or
+                        isinstance(token, tl.FloatToken) or
+                        isinstance(token, tl.CharToken))
+    else:
+        return not (isinstance(leading_ele, tl.CollectiveElement) and leading_ele.is_bracket())
+
+
+def is_call(token_before: tl.Token) -> bool:
+    if isinstance(token_before, tl.IdToken):
+        symbol = token_before.identifier
+        return symbol.isidentifier() and symbol not in tl.RESERVED
+    return False

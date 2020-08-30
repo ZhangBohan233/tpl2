@@ -1,0 +1,13 @@
+struct A {
+    a: int;
+    const b: int;
+    c: fn(int, int) -> void;
+}
+
+fn foo(a: int, b: float) int {
+    return a + b;
+}
+
+fn main() int {
+    return 1;
+}

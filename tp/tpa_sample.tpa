@@ -1,0 +1,42 @@
+stack_size
+1024
+global_length
+0
+literal_length
+16
+literal
+1 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0
+
+
+fn add
+    push_fp
+    push       16
+    load       %0    $0
+    load       %1    $8
+    addi       %0    %1
+    put_ret    %0
+    pull_fp
+    ret
+
+fn main
+    push_fp
+    push       8
+    aload_sp   %0    $0    ; store "sp + 0" to reg0
+    load_lit   %1    $0    ; load lit0 to reg1
+    store_abs  %0    %1    ; store lit in reg1 to abs addr in reg0
+    aload_sp   %0    $8
+    load_lit   %1    $8
+    store_abs  %0    %1
+    iload      %0    0    ; let 'add' return to addr stored in reg0, which is $0 in this function
+    set_ret    %0
+    call       add
+    load       %0    $0    ; load the returned value from 'add' to reg0
+    put_ret    %0
+    pull_fp
+    ret
+
+entry
+    iload      %0    1
+    set_ret    %0
+    call       main
+    exit
