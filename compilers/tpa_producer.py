@@ -33,7 +33,7 @@ class Manager:
         self.available_regs = [7, 6, 5, 4, 3, 2, 1, 0]
         self.gp = STACK_SIZE
         self.sp = 9
-        self.functions_positions = {}
+        self.functions_map = {}
 
     def allocate_stack(self, length):
         if len(self.blocks) == 0:
@@ -64,17 +64,21 @@ class Manager:
         for reg in regs:
             self.available_regs.append(reg)
 
+    def map_function(self, ptr: int, name: str, body: list):
+        self.functions_map[name] = (ptr, body)
+
     def global_length(self):
         return self.gp - STACK_SIZE
 
 
 class TpaOutput:
-    def __init__(self, manager: Manager):
+    def __init__(self, manager: Manager, is_global=False):
         self.manager: Manager = manager
-        self.output = []
+        self.is_global = is_global
+        self.output = ["entry"] if is_global else []
 
     def add_function(self, name, fn_ptr):
-        self.output.append("fn " + name + " $" + str(fn_ptr))
+        self.output.append("fn " + name + " " + address(fn_ptr))
         self.write_format("push_fp")
 
     def add_indefinite_push(self) -> int:
@@ -96,6 +100,13 @@ class TpaOutput:
         self.write_format("load", register(reg1), address(src_addr))
         self.write_format("iload", register(reg2), address(dst_addr))
         self.write_format("store", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
+    def assign_fn(self, fn_name: str, fn_addr: int):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        # self.write_format("assign_fn", fn_name, address(fn_addr), register(reg1), register(reg2))
 
         self.manager.append_regs(reg2, reg1)
 
@@ -182,20 +193,32 @@ class TpaOutput:
         return s.rstrip()
 
     def generate(self):
+        if self.is_global:
+            self._global_generate()
+        else:
+            self._local_generate()
+
+    def _global_generate(self):
         literal_str = " ".join([str(int(b)) for b in self.manager.literal])
-        header = ["stack_size", str(STACK_SIZE),
+        merged = ["stack_size", str(STACK_SIZE),
                   "global_length", str(self.manager.global_length()),
                   "literal_length", str(len(self.manager.literal)),
                   "literal", literal_str,
                   ""]
 
-        self.output = header + self.output
+        for fn_name in self.manager.functions_map:
+            content = self.manager.functions_map[fn_name]
+            merged.extend(content[1])
 
-        self.output.append("entry")
+        self.output = merged + self.output
+
         self.write_format("aload", "%0", "$1")
         self.write_format("set_ret", "%0")
         self.write_format("call_fn", "main")
         self.write_format("exit")
+
+    def _local_generate(self):
+        pass
 
     def result(self):
         return self.output

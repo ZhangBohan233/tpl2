@@ -11,7 +11,7 @@ class Compiler:
 
     def compile(self) -> str:
         manager = prod.Manager(self.literals)
-        out = prod.TpaOutput(manager)
+        out = prod.TpaOutput(manager, is_global=True)
         env = en.GlobalEnvironment()
 
         self.root.compile(env, out)

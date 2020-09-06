@@ -448,15 +448,18 @@ class FunctionDef(AbstractExpression):
         env.set(self.name, fn_ptr, self.lf)
 
         if self.body is not None:
-            tpa.add_function(self.name, fn_ptr)
-            push_index = tpa.add_indefinite_push()
-            self.body.compile(scope, tpa)
-            tpa.end_func()
+            body_out.add_function(self.name, fn_ptr)
+            push_index = body_out.add_indefinite_push()
+            self.body.compile(scope, body_out)
+            body_out.end_func()
 
-            stack_len = tpa.manager.sp - tpa.manager.blocks[-1]
-            tpa.modify_indefinite_push(push_index, stack_len)
+            stack_len = body_out.manager.sp - body_out.manager.blocks[-1]
+            body_out.modify_indefinite_push(push_index, stack_len)
 
         tpa.manager.restore_stack()
+        body_out.generate()
+        tpa.manager.map_function(fn_ptr, self.name, body_out.result())
+        tpa.assign_fn(self.name, fn_ptr)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
         pass

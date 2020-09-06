@@ -20,7 +20,6 @@ fn add $1024
     pull_fp
     ret
 
-    set_fn      add     1024
 fn sub $1032
     push_fp
     push        24
@@ -34,10 +33,9 @@ fn sub $1032
     pull_fp
     ret
 
-    set_fn      sub     1032
 fn main $1040
     push_fp
-    push        40
+    push        48
     load_lit    %0      $0
     iload       %1      $8
     store       %1      %0
@@ -50,21 +48,23 @@ fn main $1040
     load        %0      $24
     iload       %1      $16
     store       %1      %0
+    load        %0      $1032
+    iload       %1      $32
+    store       %1      %0
     aload_sp    %0      $0
     load        %1      $0
     store_abs   %0      %1
     aload_sp    %0      $8
     load        %1      $16
     store_abs   %0      %1
-    iload       %0      32
+    iload       %0      40
     set_ret     %0
-    call_fn     add
-    load        %0      $32
+    call_fn     c
+    load        %0      $40
     put_ret     %0
     pull_fp
     ret
 
-    set_fn      main    1040
 entry
     aload       %0      $1
     set_ret     %0

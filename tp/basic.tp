@@ -9,6 +9,6 @@ fn sub(a: int, b: int) int {
 fn main() int {
     var a: int = 5;
     b: int = 2;
-    //var c: fn(int, int) -> int = sub;
-    return add(a, b);
+    var c: fn(int, int) -> int = sub;
+    return c(a, b);
 }

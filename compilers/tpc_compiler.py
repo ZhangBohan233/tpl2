@@ -35,7 +35,7 @@ INSTRUCTIONS = {
 }
 
 MNEMONIC = {
-    "fn", "entry", "call_fn", "label",
+    "fn", "entry", "call_fn", "label"
 }
 
 PSEUDO_INSTRUCTIONS = {
@@ -72,9 +72,9 @@ class TpcCompiler:
         global_length: 8 ~ 16
         literal_length: 16 ~ 24
         literal: 24 ~ (24 + literal_length)
-        function_pointers: (24 + literal_length) ~ (24 + literal_length + function_count * 8)
-        functions: (24 + literal_length + function_count * 8) ~ end of functions
-        entry: end of functions ~ end - 8
+        functions: (24 + literal_length) ~ end of functions
+        function_assignments: end of functions ~ end of functions + (function count * length of assignment)
+        entry: end of function_assignments ~ end - 8
         entry_len: end - 8 ~ end
 
         :return:
@@ -123,11 +123,11 @@ class TpcCompiler:
                         inst = instructions[0]
                         if inst == "fn":
                             cur_fn_name = instructions[1]
+                            if not instructions[2].startswith("$"):
+                                raise errs.TpaError("Incorrect number format. ", lf)
+                            cur_fn_ptr = int(instructions[2][1:])
                             cur_fn_body = bytearray()
-                            function_pointers[cur_fn_name] = self.stack_size + \
-                                                             literal_length + \
-                                                             self.global_length + \
-                                                             len(function_list) * util.INT_LEN
+                            function_pointers[cur_fn_name] = cur_fn_ptr
                             function_list.append(cur_fn_name)
                             function_body_positions[cur_fn_name] = len(body)
                         elif inst == "entry":
@@ -159,18 +159,19 @@ class TpcCompiler:
         header = util.int_to_bytes(self.stack_size) + util.int_to_bytes(self.global_length) + \
                  util.int_to_bytes(literal_length) + literal
 
-        fn_headers = bytearray()
-        fn_count = len(function_list)
-        fn_pointers_len = fn_count * util.INT_LEN
-        all_len_before_real_fn = self.stack_size + self.global_length + literal_length + fn_pointers_len
+        fn_assignments = bytearray()
+        all_len_before_real_fn = self.stack_size + self.global_length + literal_length
+        entry_lf = tl.LineFile("tpa compiler ", 0)
         for name in function_list:
             pos = function_body_positions[name]
+            fn_ptr = function_pointers[name]
             fn_real_pos = all_len_before_real_fn + pos
-            fn_headers.extend(util.int_to_bytes(fn_real_pos))
+            self.compile_inst("iload", ["iload", "%0", "$" + str(fn_real_pos)], fn_assignments, entry_lf)
+            self.compile_inst("iload", ["iload", "%1", "$" + str(fn_ptr)], fn_assignments, entry_lf)
+            self.compile_inst("store", ["store", "%1", "%0"], fn_assignments, entry_lf)
 
-        # entry_code_pos = len(header) + len(fn_headers) + len(body)
-        entry_len = len(entry_part)
-        return header + fn_headers + body + entry_part + util.int_to_bytes(entry_len)
+        entry_len = len(entry_part) + len(fn_assignments)
+        return header + body + fn_assignments + entry_part + util.int_to_bytes(entry_len)
 
     def compile_function(self, body: bytearray) -> bytearray:
         return body.copy()
@@ -203,7 +204,15 @@ class TpcCompiler:
             raise errs.TpaError("Instruction length error", lf)
 
 
-def inst_to_num(actual_line, tup, lf) -> list:
+def inst_to_num(actual_line: list, tup: tuple, lf) -> list:
+    """
+    Convert an instruction line to actual numbers
+
+    :param actual_line: the actual instruction line, with str inst head at first
+    :param tup: the designated instruction
+    :param lf:
+    :return: a new list contained numeric instruction, with a None at the first position to maintain the same length
+    """
     lst = [None]
     for j in range(1, len(tup)):
         byte_len = tup[j]
