@@ -1,13 +1,13 @@
 stack_size
 1024
 global_length
-0
+24
 literal_length
 16
 literal
 5 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0
 
-fn add
+fn add $1024
     push_fp
     push        24
     load        %0      $0
@@ -20,7 +20,22 @@ fn add
     pull_fp
     ret
 
-fn main
+    set_fn      add     1024
+fn sub $1032
+    push_fp
+    push        24
+    load        %0      $0
+    load        %1      $8
+    subi        %0      %1
+    iload       %1      16
+    store       %1      %0
+    load        %0      $16
+    put_ret     %0
+    pull_fp
+    ret
+
+    set_fn      sub     1032
+fn main $1040
     push_fp
     push        40
     load_lit    %0      $0
@@ -43,14 +58,15 @@ fn main
     store_abs   %0      %1
     iload       %0      32
     set_ret     %0
-    call        add
+    call_fn     add
     load        %0      $32
     put_ret     %0
     pull_fp
     ret
 
+    set_fn      main    1040
 entry
     aload       %0      $1
     set_ret     %0
-    call        main
+    call_fn     main
     exit

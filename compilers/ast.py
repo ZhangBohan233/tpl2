@@ -397,6 +397,26 @@ class Declaration(BinaryExpr):
         return "BE({} {}: {})".format(level, self.left, self.right)
 
 
+class RightArrowExpr(BinaryExpr):
+    def __init__(self, lf):
+        super().__init__("->", lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        pass
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+        pass
+
+    def definition_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+        if isinstance(self.left, FunctionTypeExpr):
+            pt = []
+            for par in self.left.param_line:
+                pt.append(par.definition_type(env, manager))
+            rt = self.right.definition_type(env, manager)
+            ft = en.FuncType(pt, rt)
+            return ft
+
+
 class FunctionDef(AbstractExpression):
     def __init__(self, name: str, params: Line, rtype: AbstractExpression, body: BlockStmt, lf):
         super().__init__(lf)
@@ -408,9 +428,12 @@ class FunctionDef(AbstractExpression):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         rtype = self.rtype.definition_type(env, tpa.manager)
+        fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
 
         scope = en.FunctionEnvironment(env, self.name, rtype)
         tpa.manager.push_stack()
+
+        body_out = tp.TpaOutput(tpa.manager)
 
         param_types = []
         for i in range(len(self.params.parts)):
@@ -418,13 +441,14 @@ class FunctionDef(AbstractExpression):
             if isinstance(param, Declaration):
                 pt = param.right.definition_type(env, tpa.manager)
                 param_types.append(pt)
-                param.compile(scope, tpa)
+                param.compile(scope, body_out)
 
         func_type = en.FuncType(param_types, rtype)
         env.define_function(self.name, func_type, self.lf)
+        env.set(self.name, fn_ptr, self.lf)
 
         if self.body is not None:
-            tpa.add_function(self.name)
+            tpa.add_function(self.name, fn_ptr)
             push_index = tpa.add_indefinite_push()
             self.body.compile(scope, tpa)
             tpa.end_func()
@@ -439,6 +463,22 @@ class FunctionDef(AbstractExpression):
 
     def __str__(self):
         return "fn {}({}) {} {}".format(self.name, self.params, self.rtype, self.body)
+
+
+class FunctionTypeExpr(AbstractExpression):
+    def __init__(self, param_line: Line, lf):
+        super().__init__(lf)
+
+        self.param_line = param_line
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        raise errs.NotCompileAbleError(lf=self.lf)
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+        pass
+
+    def __str__(self):
+        return "fn({})".format(self.param_line)
 
 
 class FunctionCall(AbstractExpression):
@@ -489,7 +529,11 @@ class VoidExpr(AbstractExpression):
 
 
 INT_ARITH_TABLE = {
-    "+": "addi"
+    "+": "addi",
+    "-": "subi",
+    "*": "muli",
+    "/": "divi",
+    "%": "modi"
 }
 
 

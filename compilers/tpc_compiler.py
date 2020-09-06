@@ -22,7 +22,7 @@ INSTRUCTIONS = {
     "push_fp": (14,),
     "pull_fp": (15,),
     "set_ret": (16, 1),  # set_ret    %reg   | set the return abs addr in %reg to ret_stack
-    "call_fn": (17, util.INT_LEN),
+    "call": (17, util.INT_LEN),
     "exit": (18,),
     "true_addr": (19, 1),  # true_addr   %reg    | relative addr to absolute addr
     "put_ret": (21, 1),  # put_ret    %reg    | put value from %reg to returning addr previously set
@@ -30,11 +30,12 @@ INSTRUCTIONS = {
     "addi": (30, 1, 1),
     "subi": (31, 1, 1),
     "muli": (32, 1, 1),
-    "divi": (33, 1, 1)
+    "divi": (33, 1, 1),
+    "modi": (34, 1, 1),
 }
 
 MNEMONIC = {
-    "fn", "entry", "call", "label",
+    "fn", "entry", "call_fn", "label",
 }
 
 PSEUDO_INSTRUCTIONS = {
@@ -131,10 +132,10 @@ class TpcCompiler:
                             function_body_positions[cur_fn_name] = len(body)
                         elif inst == "entry":
                             cur_fn_body = bytearray()
-                        elif inst == "call":
+                        elif inst == "call_fn":
                             fn_name = instructions[1]
                             fn_ptr = function_pointers[fn_name]
-                            tup = INSTRUCTIONS["call_fn"]
+                            tup = INSTRUCTIONS["call"]
                             cur_fn_body.append(tup[0])
                             cur_fn_body.extend(util.int_to_bytes(fn_ptr))
                         elif inst == "label":

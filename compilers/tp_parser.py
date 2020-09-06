@@ -23,7 +23,8 @@ class Parser:
             "fn": self.process_fn,
             "var": self.process_var,
             "const": self.process_const,
-            "return": self.process_return
+            "return": self.process_return,
+            "->": self.process_right_arrow
         }
 
     def parse(self):
@@ -36,23 +37,33 @@ class Parser:
         builder.add_node(ast.Declaration(self.var_level, lf))
 
     def process_fn(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
-        fn_name = parent[index + 1].atom.identifier
-        arg_list = parent[index + 2]
-        args = self.parse_as_line(arg_list)
+        index += 1
+        next_ele = parent[index]
+        if isinstance(next_ele, tl.AtomicElement):
+            fn_name = next_ele.atom.identifier
+            index += 1
+        else:
+            fn_name = None
+        param_list = parent[index]
+        params = self.parse_as_line(param_list)
+        prob_arrow = parent[index + 1]
+        if identifier_of(prob_arrow, "->"):
+            builder.add_node(ast.FunctionTypeExpr(params, lf))
+            return index
+
         rtype_list = tl.CollectiveElement(tl.CE_BRACKET, None, lf)
-        i = index + 3
-        while not (tl.is_brace(parent[i]) or identifier_of(parent[i], ";")):
-            rtype_list.append(parent[i])
-            i += 1
+        while not (tl.is_brace(parent[index]) or identifier_of(parent[index], ";")):
+            rtype_list.append(parent[index])
+            index += 1
         rtype = self.parse_as_part(rtype_list)
-        body_list = parent[i]
+        body_list = parent[index]
         if identifier_of(body_list, ";"):
             body = None
         else:
             body = self.parse_as_block(body_list)
 
-        builder.add_node(ast.FunctionDef(fn_name, args, rtype, body, lf))
-        return i
+        builder.add_node(ast.FunctionDef(fn_name, params, rtype, body, lf))
+        return index
 
     def process_end_line(self, p, i, builder, lf):
         builder.finish_part()
@@ -69,6 +80,9 @@ class Parser:
 
     def process_return(self, p, i, builder, lf):
         builder.add_node(ast.ReturnStmt(lf))
+
+    def process_right_arrow(self, parent: tl.CollectiveElement, index, builder, lf):
+        builder.add_node(ast.RightArrowExpr(lf))
 
     def parse_as_block(self, lst: tl.CollectiveElement):
         builder = self.parse_as_builder(lst)
@@ -166,6 +180,8 @@ class Parser:
                         call_obj = builder.remove_last()
                         call = ast.FunctionCall(call_obj, args, lf)
                         builder.add_node(call)
+                        return index + 1
+
         else:
             raise Exception("Unexpected error. ")
 

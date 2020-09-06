@@ -33,6 +33,7 @@ class Manager:
         self.available_regs = [7, 6, 5, 4, 3, 2, 1, 0]
         self.gp = STACK_SIZE
         self.sp = 9
+        self.functions_positions = {}
 
     def allocate_stack(self, length):
         if len(self.blocks) == 0:
@@ -72,8 +73,8 @@ class TpaOutput:
         self.manager: Manager = manager
         self.output = []
 
-    def add_function(self, name):
-        self.output.append("fn " + name)
+    def add_function(self, name, fn_ptr):
+        self.output.append("fn " + name + " $" + str(fn_ptr))
         self.write_format("push_fp")
 
     def add_indefinite_push(self) -> int:
@@ -142,7 +143,27 @@ class TpaOutput:
 
         self.write_format("iload", register(reg1), number(rtn_addr))
         self.write_format("set_ret", register(reg1))
-        self.write_format("call", fn_name)
+        self.write_format("call_fn", fn_name)
+
+        self.manager.append_regs(reg2, reg1)
+
+    def call_ptr_function(self, fn_ptr: int, args: list, rtn_addr: int):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        count = 0
+        for arg in args:
+            arg_addr = arg[0]
+            arg_length = arg[1]
+            self.write_format("aload_sp", register(reg1), address(count))
+            if arg_length == util.INT_LEN:
+                self.write_format("load", register(reg2), address(arg_addr))
+                self.write_format("store_abs", register(reg1), register(reg2))
+
+            count += arg_length
+
+        self.write_format("iload", register(reg1), number(rtn_addr))
+        self.write_format("set_ret", register(reg1))
+        self.write_format("call", address(fn_ptr))
 
         self.manager.append_regs(reg2, reg1)
 
@@ -173,7 +194,7 @@ class TpaOutput:
         self.output.append("entry")
         self.write_format("aload", "%0", "$1")
         self.write_format("set_ret", "%0")
-        self.write_format("call", "main")
+        self.write_format("call_fn", "main")
         self.write_format("exit")
 
     def result(self):

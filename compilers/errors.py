@@ -41,3 +41,8 @@ class TplTypeError(TplError):
 class TplEnvironmentError(TplError):
     def __init__(self, msg="", lf=None):
         super().__init__(msg, lf)
+
+
+class NotCompileAbleError(TplCompileError):
+    def __init__(self, msg="", lf=None):
+        super().__init__(msg, lf)

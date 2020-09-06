@@ -96,7 +96,10 @@ class Environment:
         self.vars[name] = entry
 
     def set(self, name, addr, lf):
-        pass
+        entry = self._inner_get(name)
+        if entry is None:
+            raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+        entry.addr = addr
 
     def get_type(self, name, lf) -> Type:
         entry = self._inner_get(name)

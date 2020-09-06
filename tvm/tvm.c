@@ -171,6 +171,26 @@ void tvm_mainloop() {
                 reg2 = MEMORY[pc++];
                 regs[reg1].int_value = regs[reg1].int_value + regs[reg2].int_value;
                 break;
+            case 31:  // subi
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value - regs[reg2].int_value;
+                break;
+            case 32:  // muli
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value * regs[reg2].int_value;
+                break;
+            case 33:  // divi
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value / regs[reg2].int_value;
+                break;
+            case 34:  // modi
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value % regs[reg2].int_value;
+                break;
             default:
                 ERROR_CODE = ERR_INSTRUCTION;
                 break;
