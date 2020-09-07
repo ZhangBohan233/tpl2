@@ -444,8 +444,7 @@ class FunctionDef(AbstractExpression):
                 param.compile(scope, body_out)
 
         func_type = en.FuncType(param_types, rtype)
-        env.define_function(self.name, func_type, self.lf)
-        env.set(self.name, fn_ptr, self.lf)
+        env.define_function(self.name, func_type, fn_ptr, self.lf)
 
         if self.body is not None:
             body_out.add_function(self.name, fn_ptr)
@@ -509,7 +508,11 @@ class FunctionCall(AbstractExpression):
                 evaluated_args.append((arg_addr, arg_t.length))
             if isinstance(self.call_obj, NameNode):
                 rtn_addr = tpa.manager.allocate_stack(func_type.rtype.length)
-                tpa.call_named_function(self.call_obj.name, evaluated_args, rtn_addr)
+                if env.is_named_function(self.call_obj.name, self.lf):
+                    tpa.call_named_function(self.call_obj.name, evaluated_args, rtn_addr)
+                else:
+                    fn_ptr = env.get(self.call_obj.name, self.lf)
+                    tpa.call_ptr_function(fn_ptr, evaluated_args, rtn_addr)
                 return rtn_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:

@@ -59,6 +59,13 @@ class VarEntry:
         self.const = const
 
 
+class FunctionEntry(VarEntry):
+    def __init__(self, type_: Type, addr: int, const=True, named=False):
+        super().__init__(type_, addr, const)
+
+        self.named = named  # whether this function entry is defined by keyword 'fn'
+
+
 class Environment:
     def __init__(self, outer):
         self.outer: Environment = outer
@@ -89,10 +96,10 @@ class Environment:
         entry = VarEntry(type_, addr, True)
         self.vars[name] = entry
 
-    def define_function(self, name: str, func_type: CallableType, lf: tl.LineFile):
+    def define_function(self, name: str, func_type: CallableType, fn_ptr: int, lf: tl.LineFile):
         if self._inner_get(name) is not None:
             raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
-        entry = VarEntry(func_type, -1, True)
+        entry = FunctionEntry(func_type, fn_ptr, const=True, named=True)
         self.vars[name] = entry
 
     def set(self, name, addr, lf):
@@ -115,6 +122,14 @@ class Environment:
 
     def get_struct(self, name, lf):
         pass
+
+    def is_named_function(self, name: str, lf) -> bool:
+        entry = self._inner_get(name)
+        if entry is None:
+            raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+        if isinstance(entry, FunctionEntry):
+            return entry.named
+        return False
 
     def _inner_get(self, name) -> VarEntry:
         if name in self.vars:

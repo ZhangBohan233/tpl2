@@ -59,7 +59,7 @@ fn main $1040
     store_abs   %0      %1
     iload       %0      40
     set_ret     %0
-    call_fn     c
+    call        $32
     load        %0      $40
     put_ret     %0
     pull_fp
