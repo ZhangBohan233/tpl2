@@ -26,6 +26,22 @@ def number(num: int) -> str:
         raise errs.TplCompileError("Cannot compile '{}' to number. ".format(num))
 
 
+class LabelManager:
+    def __init__(self):
+        self.else_count = 0
+        self.endif_count = 0
+
+    def endif_label(self):
+        n = self.endif_count
+        self.endif_count += 1
+        return "ENDIF_" + str(n)
+
+    def else_label(self):
+        n = self.else_count
+        self.else_count += 1
+        return "ELSE_" + str(n)
+
+
 class Manager:
     def __init__(self, literal: bytes):
         self.literal = literal
@@ -34,6 +50,7 @@ class Manager:
         self.gp = STACK_SIZE
         self.sp = util.INT_LEN + 1
         self.functions_map = {}
+        self.label_manager = LabelManager()
 
     def allocate_stack(self, length):
         if len(self.blocks) == 0:
@@ -64,8 +81,8 @@ class Manager:
         for reg in regs:
             self.available_regs.append(reg)
 
-    def map_function(self, ptr: int, name: str, body: list):
-        self.functions_map[name] = (ptr, body)
+    def map_function(self, name: str, body: list):
+        self.functions_map[name] = body
 
     def global_length(self):
         return self.gp - STACK_SIZE
@@ -174,6 +191,14 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def if_zero_goto(self, cond_addr: int, label: str):
+        reg1 = self.manager.require_reg()
+
+        self.write_format("load", register(reg1), address(cond_addr))
+        self.write_format("if_zero_goto", register(reg1), label)
+
+        self.manager.append_regs(reg1)
+
     def write_format(self, *inst):
         self.output.append(self.format(*inst))
 
@@ -205,7 +230,7 @@ class TpaOutput:
 
         for fn_name in self.manager.functions_map:
             content = self.manager.functions_map[fn_name]
-            merged.extend(content[1])
+            merged.extend(content)
 
         self.output = merged + self.output
 

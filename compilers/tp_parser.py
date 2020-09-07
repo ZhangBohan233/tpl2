@@ -24,11 +24,18 @@ class Parser:
             "var": self.process_var,
             "const": self.process_const,
             "return": self.process_return,
-            "->": self.process_right_arrow
+            "->": self.process_right_arrow,
+            "if": self.process_if_stmt
         }
 
     def parse(self):
         return self.parse_as_block(self.tokens), self.literal_bytes
+
+    # processor methods of single identifiers
+    #
+    # returns None or 0 if this processor does not push the index,
+    # otherwise, return the last index used for this processor
+    # Note: do not return the index of the next
 
     def process_assign(self, p, i, builder, lf):
         builder.add_node(ast.Assignment(lf))
@@ -68,6 +75,7 @@ class Parser:
     def process_end_line(self, p, i, builder, lf):
         builder.finish_part()
         builder.finish_line()
+        self.var_level = ast.VAR_VAR
 
     def process_comma(self, p, i, builder, lf):
         builder.finish_part()
@@ -83,6 +91,27 @@ class Parser:
 
     def process_right_arrow(self, parent: tl.CollectiveElement, index, builder, lf):
         builder.add_node(ast.RightArrowExpr(lf))
+
+    def process_if_stmt(self, parent: tl.CollectiveElement, index, builder, lf):
+        index += 1
+        condition_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        item = parent[index]
+        while not (isinstance(item, tl.CollectiveElement) and item.is_brace()):
+            condition_list.append(item)
+            index += 1
+            item = parent[index]
+        cond = self.parse_as_part(condition_list)
+        body = self.parse_as_block(item)
+        if index + 1 < len(parent) and identifier_of(parent[index + 1], "else"):
+            index += 2
+            else_block = self.parse_as_block(parent[index])
+        else:
+            else_block = None
+        ifs = ast.IfStmt(cond, body, else_block, lf)
+        builder.add_node(ifs)
+        return index
+
+    # parser of collective elements
 
     def parse_as_block(self, lst: tl.CollectiveElement):
         builder = self.parse_as_builder(lst)

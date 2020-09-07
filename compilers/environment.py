@@ -50,6 +50,7 @@ class FuncType(CallableType):
 TYPE_INT = BasicType("int", util.INT_LEN)
 TYPE_FLOAT = BasicType("float", util.FLOAT_LEN)
 TYPE_CHAR = BasicType("char", util.CHAR_LEN)
+TYPE_VOID = BasicType("void", 0)
 
 
 class VarEntry:
@@ -170,3 +171,8 @@ class FunctionEnvironment(Environment):
         if not actual_rtype.convert_able(self.rtype):
             raise errs.TplCompileError("Function '{}' has declared return type '{}', got actual return type '{}'. "
                                        .format(self.name, self.rtype, actual_rtype), lf)
+
+
+class BlockEnvironment(SubAbstractEnvironment):
+    def __init__(self, outer):
+        super().__init__(outer)

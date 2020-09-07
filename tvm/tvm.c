@@ -29,7 +29,7 @@ int ERROR_CODE = 0;
 #define true_addr_sp(ptr) (ptr < stack_end ? ptr + sp : ptr)
 
 #define MEMORY_SIZE 8192
-#define RECURSION_LIMIT 1024
+#define RECURSION_LIMIT 1000
 
 tp_int stack_end;
 tp_int literal_end;
@@ -43,7 +43,7 @@ tp_int sp = 1 + INT_LEN;
 tp_int fp = 1;
 tp_int pc = 0;
 
-tp_int call_stack[RECURSION_LIMIT];  // recursion limit
+tp_int call_stack[RECURSION_LIMIT];  // stores fp (frame pointer)
 int call_p = -1;
 
 tp_int pc_stack[RECURSION_LIMIT];

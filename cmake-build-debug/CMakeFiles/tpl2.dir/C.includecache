@@ -6,13 +6,17 @@
 
 #IncludeRegexTransform: 
 
-E:/GitHub/tpl2/tvm/util.c
-stdio.h
--
+E:/GitHub/tpl2/tvm/tvm.c
 stdlib.h
+-
+stdio.h
 -
 string.h
 -
+tvm.h
+E:/GitHub/tpl2/tvm/tvm.h
+
+E:/GitHub/tpl2/tvm/tvm.h
 util.h
 E:/GitHub/tpl2/tvm/util.h
 

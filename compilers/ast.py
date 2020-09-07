@@ -458,7 +458,7 @@ class FunctionDef(AbstractExpression):
 
         tpa.manager.restore_stack()
         body_out.generate()
-        tpa.manager.map_function(fn_ptr, self.name, body_out.result())
+        tpa.manager.map_function(self.name, body_out.result())
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
         pass
@@ -532,6 +532,50 @@ class VoidExpr(AbstractExpression):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         pass
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+        pass
+
+    def definition_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+        return en.TYPE_VOID
+
+
+class IfStmt(AbstractStatement):
+    def __init__(self, condition: AbstractExpression, if_branch: BlockStmt, else_branch, lf):
+        super().__init__(lf)
+
+        self.condition = condition
+        self.if_branch = if_branch
+        self.else_branch = else_branch
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        cond_addr = self.condition.compile(env, tpa)
+
+        else_label = tpa.manager.label_manager.else_label()
+        endif_label = tpa.manager.label_manager.endif_label()
+
+        if self.else_branch:
+            tpa.if_zero_goto(cond_addr, else_label)
+        else:
+            tpa.if_zero_goto(cond_addr, endif_label)
+
+        if_env = en.BlockEnvironment(env)
+        self.if_branch.compile(if_env, tpa)
+
+        if self.else_branch:
+            tpa.write_format("goto", endif_label)
+            tpa.write_format("label", else_label)
+
+            else_env = en.BlockEnvironment(env)
+            self.else_branch.compile(else_env, tpa)
+
+        tpa.write_format("label", endif_label)
+
+    def __str__(self):
+        if self.else_branch:
+            return "if {} {} else {}".format(self.condition, self.if_branch, self.else_branch)
+        else:
+            return "if {} {}".format(self.condition, self.if_branch)
 
 
 INT_ARITH_TABLE = {
