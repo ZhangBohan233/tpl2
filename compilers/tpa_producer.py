@@ -32,7 +32,7 @@ class Manager:
         self.blocks = []
         self.available_regs = [7, 6, 5, 4, 3, 2, 1, 0]
         self.gp = STACK_SIZE
-        self.sp = 9
+        self.sp = util.INT_LEN + 1
         self.functions_map = {}
 
     def allocate_stack(self, length):
@@ -90,9 +90,12 @@ class TpaOutput:
         self.output[index] = push
 
     def end_func(self):
+        self.write_format("stop")
+        self.output.append("")
+
+    def return_func(self):
         self.write_format("pull_fp")
         self.write_format("ret")
-        self.output.append("")
 
     def assign(self, dst_addr, src_addr):
         reg1, reg2 = self.manager.require_regs(2)
@@ -100,13 +103,6 @@ class TpaOutput:
         self.write_format("load", register(reg1), address(src_addr))
         self.write_format("iload", register(reg2), address(dst_addr))
         self.write_format("store", register(reg2), register(reg1))
-
-        self.manager.append_regs(reg2, reg1)
-
-    def assign_fn(self, fn_name: str, fn_addr: int):
-        reg1, reg2 = self.manager.require_regs(2)
-
-        # self.write_format("assign_fn", fn_name, address(fn_addr), register(reg1), register(reg2))
 
         self.manager.append_regs(reg2, reg1)
 
@@ -185,7 +181,7 @@ class TpaOutput:
     def format(*inst):
         mne = inst[0]
         s = "    " + mne
-        s += " " * (12 - len(mne))
+        s += " " * (14 - len(mne))
         for i in range(1, len(inst)):
             x = str(inst[i])
             s += x
@@ -200,7 +196,8 @@ class TpaOutput:
 
     def _global_generate(self):
         literal_str = " ".join([str(int(b)) for b in self.manager.literal])
-        merged = ["stack_size", str(STACK_SIZE),
+        merged = ["bits", str(util.VM_BITS),
+                  "stack_size", str(STACK_SIZE),
                   "global_length", str(self.manager.global_length()),
                   "literal_length", str(len(self.manager.literal)),
                   "literal", literal_str,

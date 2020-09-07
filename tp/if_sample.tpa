@@ -1,0 +1,43 @@
+bits
+64
+stack_size
+1024
+global_length
+16
+literal
+1 0 0 0 0 0 0 0 9 0 0 0 0 0 0 0 11 0 0 0 0 0 0 0
+
+; this function do the same thing as
+;     var a: int;
+;     if lit_#0 {
+;         a = 1;
+;     } else {
+;         a = 4;
+;     }
+;     return a;
+
+fn main $1024
+    push_fp
+    push          8
+    load_lit      %0      $0
+    if_zero_goto  %0      ELSE    ; if lit #0 == 0, goto ELSE
+    load_lit      %1      $8      ; IF BRANCH
+    iload         %2      $0      ; addr 0 in this
+    store         %2      %1      ; store %1 to %2 (store lit #8 into $0)
+    goto          ENDIF           ; skip else part
+    label         ELSE
+    load_lit      %1      $16     ; ELSE BRANCH
+    iload         %2      $0      ; addr 0 in this
+    store         %2      %1      ; store %1 to %2 (store lit #16 into $0)
+    label         ENDIF
+    load          %0      $0
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    aload         %0      $1
+    set_ret       %0
+    call_fn       main
+    exit

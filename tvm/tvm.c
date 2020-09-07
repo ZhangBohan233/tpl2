@@ -15,6 +15,8 @@
 // 2: Native invoke error
 // 3: VM option error
 
+const unsigned char SIGNATURE[] = "TPC_";
+
 const int ERR_STACK_OVERFLOW = 1;
 const int ERR_NATIVE_INVOKE = 2;
 const int ERR_VM_OPT = 3;
@@ -37,7 +39,7 @@ tp_int entry_end;
 
 unsigned char MEMORY[MEMORY_SIZE];
 
-tp_int sp = 9;
+tp_int sp = 1 + INT_LEN;
 tp_int fp = 1;
 tp_int pc = 0;
 
@@ -50,16 +52,35 @@ int pc_p = -1;
 tp_int ret_stack[RECURSION_LIMIT];  // stores true addr of return addresses
 int ret_p = -1;
 
-int tvm_load(const unsigned char *src_code, const int code_length) {
-    tp_int entry_len = bytes_to_int(src_code + code_length - INT_LEN);
-    stack_end = bytes_to_int(src_code);
-    global_end = stack_end + bytes_to_int(src_code + INT_LEN);
-    literal_end = global_end + bytes_to_int(src_code + INT_LEN * 2);
+int vm_check(const unsigned char *src_code) {
+    for (int i = 0; i < 4; i++) {
+        if (src_code[i] != SIGNATURE[i]) {
+            fprintf(stderr, "This is not a compiled trash program. ");
+            return 1;
+        }
+    }
+    if (src_code[4] != VM_BITS) {
+        fprintf(stderr, "%d bits code cannot run on %d bits virtual machine. ", src_code[4], VM_BITS);
+        return 1;
+    }
 
-    tp_int copy_len = code_length - INT_LEN * 4;
+    return 0;
+}
+
+int tvm_load(const unsigned char *src_code, const int code_length) {
+    int check = vm_check(src_code);
+    if (check != 0) return check;
+
+    tp_int entry_len = bytes_to_int(src_code + code_length - INT_LEN);
+
+    stack_end = bytes_to_int(src_code + 16);  // 16 is fixed header length
+    global_end = stack_end + bytes_to_int(src_code + 16 + INT_LEN);
+    literal_end = global_end + bytes_to_int(src_code + 16 + INT_LEN * 2);
+
+    tp_int copy_len = code_length - 16 - INT_LEN * 4;  // stack, global, literal, entry
     entry_end = global_end + copy_len;
 
-    memcpy(MEMORY + global_end, src_code + INT_LEN * 3, copy_len);
+    memcpy(MEMORY + global_end, src_code + 16 + INT_LEN * 3, copy_len);
 
     functions_end = entry_end - entry_len;
     pc = functions_end;
@@ -71,7 +92,7 @@ void tvm_mainloop() {
     union reg64 {
         tp_int int_value;
         tp_float double_value;
-        unsigned char bytes[8];
+        unsigned char bytes[INT_LEN];
     };
     union reg64 regs[8];
 
@@ -122,6 +143,7 @@ void tvm_mainloop() {
                 memcpy(MEMORY + regs[reg1].int_value, regs[reg2].bytes, INT_LEN);
                 break;
             case 10:  // jump
+                pc += bytes_to_int(MEMORY + pc) + INT_LEN;
                 break;
             case 11:  // move
                 break;
@@ -146,6 +168,7 @@ void tvm_mainloop() {
 //                printf("ret %lld\n", ret_stack[ret_p]);
                 break;
             case 17:  // call fn
+//                printf("call\n");
                 pc_stack[++pc_p] = pc + INT_LEN;
                 pc = true_addr(bytes_to_int(MEMORY + true_addr(bytes_to_int(MEMORY + pc))));
                 break;
@@ -165,6 +188,15 @@ void tvm_mainloop() {
                 memcpy(MEMORY + regs[reg1].int_value,
                        MEMORY + regs[reg2].int_value,
                        INT_LEN);
+                break;
+            case 23:  // if_zero_jump
+                reg1 = MEMORY[pc++];
+//                printf("jump %lld\n", bytes_to_int(MEMORY + pc));
+                if (regs[reg1].int_value == 0) {
+                    pc += bytes_to_int(MEMORY + pc) + INT_LEN;
+                } else {
+                    pc += INT_LEN;
+                }
                 break;
             case 30:  // addi
                 reg1 = MEMORY[pc++];
@@ -211,33 +243,33 @@ void print_memory() {
     printf("Stack ");
     for (; i < stack_end; i++) {
         printf("%d ", MEMORY[i]);
-        if (i % 8 == 0) printf("| ");
+        if (i % INT_LEN == 0) printf("| ");
     }
 
-    printf("\nGlobal %lld: ", stack_end);
+    tp_printf("\nGlobal %d: ", stack_end)
     for (; i < global_end; ++i) {
         printf("%d ", MEMORY[i]);
     }
 
-    printf("\nLiteral %lld: ", global_end);
+    tp_printf("\nLiteral %d: ", global_end)
     for (; i < literal_end; ++i) {
         printf("%d ", MEMORY[i]);
     }
 
-    printf("\nFunctions %lld: ", literal_end);
+    tp_printf("\nFunctions %d: ", literal_end)
     for (; i < functions_end; i++) {
         printf("%d ", MEMORY[i]);
     }
 
-    printf("\nEntry %lld: ", functions_end);
+    tp_printf("\nEntry %d: ", functions_end);
     for (; i < entry_end; i++) {
         printf("%d ", MEMORY[i]);
     }
 
-    printf("\nHeap %lld: ", entry_end);
+    tp_printf("\nHeap %d: ", entry_end)
     for (; i < entry_end + 128; i++) {
         printf("%d ", MEMORY[i]);
-        if ((i - entry_end) % 8 == 7) printf("| ");
+        if ((i - entry_end) % INT_LEN == 7) printf("| ");
     }
     printf("\n");
 }
@@ -261,7 +293,7 @@ void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_a
     if (ERROR_CODE != 0) int_to_bytes(MEMORY + main_rtn_ptr, ERROR_CODE);
 
     if (p_memory) print_memory();
-    if (p_exit) printf("Process finished with exit code %lld\n", bytes_to_int(MEMORY + main_rtn_ptr));
+    if (p_exit) tp_printf("Trash program finished with exit code %d\n", bytes_to_int(MEMORY + main_rtn_ptr))
 
     tvm_shutdown();
 }

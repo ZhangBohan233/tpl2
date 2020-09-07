@@ -333,6 +333,7 @@ class ReturnStmt(UnaryStmt):
         env.validate_rtype(rtype, self.lf)
         value_addr = self.value.compile(env, tpa)
         tpa.return_value(value_addr)
+        tpa.return_func()
 
 
 class StarExpr(UnaryExpr):
@@ -458,7 +459,6 @@ class FunctionDef(AbstractExpression):
         tpa.manager.restore_stack()
         body_out.generate()
         tpa.manager.map_function(fn_ptr, self.name, body_out.result())
-        tpa.assign_fn(self.name, fn_ptr)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
         pass

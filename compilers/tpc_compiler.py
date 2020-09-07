@@ -3,6 +3,8 @@ import compilers.util as util
 import compilers.tokens_lib as tl
 import compilers.errors as errs
 
+SIGNATURE = "TPC_".encode()  # 84, 80, 67, 95
+
 INSTRUCTIONS = {
     "nop": (0,),
     "sleep": (1,),
@@ -10,7 +12,7 @@ INSTRUCTIONS = {
     "iload": (3, 1, util.INT_LEN),  # iload   %reg  value
     "aload": (4, 1, util.INT_LEN),  # aload   %reg  $rel_addr    | load the "address" relative to fp to reg
     "aload_sp": (5, 1, util.INT_LEN),  # aload_sp   %reg  $rel_addr    | load the "address" relative to sp to reg
-                                       # these two instructions just do a conversion from relative addr to absolute addr
+    #                                  # these two instructions just do a conversion from relative addr to absolute addr
     "store": (6, 1, 1),  # store   %reg1   %reg2    | store value in %reg2 to rel_addr in %reg1
     "astore": (7, 1),
     "astore_sp": (8,),
@@ -25,8 +27,10 @@ INSTRUCTIONS = {
     "call": (17, util.INT_LEN),
     "exit": (18,),
     "true_addr": (19, 1),  # true_addr   %reg    | relative addr to absolute addr
+    "stop": (20,),
     "put_ret": (21, 1),  # put_ret    %reg    | put value from %reg to returning addr previously set
     "copy": (22, 1, 1),  # copy     %reg1   %reg2   | copy content in (abs_addr %reg2) to (abs_addr %reg1)
+    "if_zero_jump": (23, 1, util.INT_LEN),
     "addi": (30, 1, 1),
     "subi": (31, 1, 1),
     "muli": (32, 1, 1),
@@ -35,11 +39,16 @@ INSTRUCTIONS = {
 }
 
 MNEMONIC = {
-    "fn", "entry", "call_fn", "label"
+    "fn", "entry", "call_fn", "label", "stop"
 }
 
 PSEUDO_INSTRUCTIONS = {
-    "load_lit": (0, 1, util.INT_LEN)
+    "load_lit": (256, 1, util.INT_LEN),
+}
+
+STR_PSEUDO_INSTRUCTIONS = {
+    "if_zero_goto": 257,
+    "goto": 258
 }
 
 LENGTHS = {
@@ -60,33 +69,45 @@ class TpcCompiler:
             out_name = util.replace_extension(self.tpc_file, "tpc")
 
         compiled = self.compile_bytes()
-        print(compiled)
+        # print(compiled)
         with open(out_name, "wb") as wf:
             wf.write(compiled)
 
     def compile_bytes(self):
         """
-        Compiled tpc structure:
+        Compiled 64 bits tpc structure:
 
-        stack_size: 0 ~ 8
-        global_length: 8 ~ 16
-        literal_length: 16 ~ 24
-        literal: 24 ~ (24 + literal_length)
-        functions: (24 + literal_length) ~ end of functions
+        signature: 0 ~ 4
+
+        # INFO HEADER
+        vm_bits: 4 ~ 5
+        extra_info: 5 ~ 16
+
+        stack_size: 16 ~ @24
+        global_length: @24 ~ @32
+        literal_length: @32 ~ @40
+        literal: @40 ~ (@40 + literal_length)
+        functions: (@40 + literal_length) ~ end of functions
         function_assignments: end of functions ~ end of functions + (function count * length of assignment)
-        entry: end of function_assignments ~ end - 8
-        entry_len: end - 8 ~ end
+        entry: end of function_assignments ~ end - @8
+        entry_len: (end - @8) ~ end
+
+        Note that '@' marks this depends on vm bits
 
         :return:
         """
+        vm_bits = 0
         literal_length = 0
         literal = bytearray()
         function_body_positions = {}
         function_pointers = {}
         function_list = []
         body = bytearray()  # body begins with index 'literal_length + global_length'
-        cur_fn_body = bytearray()
+        cur_fn_body = []
         entry_part = None
+        labels = {}
+        jumps = {}
+        goto_count = 0
 
         with open(self.tpc_file, "r") as rf:
             lines = [line.strip() for line in rf.readlines()]
@@ -95,7 +116,10 @@ class TpcCompiler:
             while i < length:
                 line = lines[i]
                 lf = tl.LineFile(self.tpc_file, i + 1)
-                if line == "stack_size":
+                if line == "bits":
+                    vm_bits = int(lines[i + 1])
+                    i += 1
+                elif line == "stack_size":
                     self.stack_size = int(lines[i + 1])
                     i += 1
                 elif line == "literal_length":
@@ -108,8 +132,10 @@ class TpcCompiler:
                     literal_str = lines[i + 1].split(" ")
                     for lit in literal_str:
                         literal.append(int(lit))
-                    if len(literal) != literal_length:
+                    if literal_length != 0 and len(literal) != literal_length:
                         raise errs.TpaError("Actual literal length does not match declared literal length.")
+                    else:
+                        literal_length = len(literal)
                     i += 1
                 else:
                     instructions = \
@@ -126,12 +152,12 @@ class TpcCompiler:
                             if not instructions[2].startswith("$"):
                                 raise errs.TpaError("Incorrect number format. ", lf)
                             cur_fn_ptr = int(instructions[2][1:])
-                            cur_fn_body = bytearray()
+                            cur_fn_body = []
                             function_pointers[cur_fn_name] = cur_fn_ptr
                             function_list.append(cur_fn_name)
                             function_body_positions[cur_fn_name] = len(body)
                         elif inst == "entry":
-                            cur_fn_body = bytearray()
+                            cur_fn_body = []
                         elif inst == "call_fn":
                             fn_name = instructions[1]
                             fn_ptr = function_pointers[fn_name]
@@ -139,16 +165,33 @@ class TpcCompiler:
                             cur_fn_body.append(tup[0])
                             cur_fn_body.extend(util.int_to_bytes(fn_ptr))
                         elif inst == "label":
-                            pass
+                            label_name = instructions[1]
+                            labels[label_name] = len(cur_fn_body)
+                        elif inst == "goto":
+                            label_name = instructions[1]
+                            cur_fn_body.append(STR_PSEUDO_INSTRUCTIONS["goto"])
+                            cur_fn_body.extend(util.int_to_bytes(goto_count))
+                            jumps[goto_count] = label_name
+                            goto_count += 1
+                        elif inst == "if_zero_goto":
+                            label_name = instructions[2]
+                            cur_fn_body.append(STR_PSEUDO_INSTRUCTIONS["if_zero_goto"])
+                            cur_fn_body.append(num_single(inst, instructions[1], 1, lf))
+                            cur_fn_body.extend(util.int_to_bytes(goto_count))
+                            jumps[goto_count] = label_name
+                            goto_count += 1
+                        elif inst == "stop":  # end of a function, not a 'return'
+                            compiled_fn_body = self.compile_function(cur_fn_body, labels, jumps)
+                            body.extend(compiled_fn_body)
+                            labels.clear()
+                            jumps.clear()
+                            goto_count = 0
                         elif inst in INSTRUCTIONS:
                             # real instructions
                             self.compile_inst(inst, instructions, cur_fn_body, lf)
 
-                            if inst == "ret":
-                                compiled_fn_body = self.compile_function(cur_fn_body)
-                                body.extend(compiled_fn_body)
-                            elif inst == "exit":
-                                entry_part = self.compile_function(cur_fn_body)
+                            if inst == "exit":  # end of program
+                                entry_part = self.compile_function(cur_fn_body, labels, jumps)
 
                         elif inst in PSEUDO_INSTRUCTIONS:
                             self.compile_pseudo_inst(inst, instructions, cur_fn_body, lf)
@@ -156,7 +199,8 @@ class TpcCompiler:
                             raise errs.TpaError("Unknown instruction {}. ".format(inst), lf)
                 i += 1
 
-        header = util.int_to_bytes(self.stack_size) + util.int_to_bytes(self.global_length) + \
+        header = SIGNATURE + bytes((vm_bits,)) + util.empty_bytes(11) + \
+                 util.int_to_bytes(self.stack_size) + util.int_to_bytes(self.global_length) + \
                  util.int_to_bytes(literal_length) + literal
 
         fn_assignments = bytearray()
@@ -173,10 +217,38 @@ class TpcCompiler:
         entry_len = len(entry_part) + len(fn_assignments)
         return header + body + fn_assignments + entry_part + util.int_to_bytes(entry_len)
 
-    def compile_function(self, body: bytearray) -> bytearray:
-        return body.copy()
+    def compile_function(self, body: iter, labels: dict, jumps: dict) -> bytearray:
+        goto = STR_PSEUDO_INSTRUCTIONS["goto"]
+        if_zero_goto = STR_PSEUDO_INSTRUCTIONS["if_zero_goto"]
+        jump = INSTRUCTIONS["jump"]
+        if_zero_jump = INSTRUCTIONS["if_zero_jump"]
+        i = 0
+        length = len(body)
+        while i < length:
+            b = body[i]
+            if b == goto:
+                goto_id = util.bytes_to_int(body[i + 1:i + 1 + util.INT_LEN])
+                tar_label = jumps[goto_id]
+                label_pos = labels[tar_label]
+                end_len = i + util.INT_LEN + 1
+                jump_len = label_pos - end_len
+                body[i] = jump[0]
+                body[i + 1: i + 1 + util.INT_LEN] = util.int_to_bytes(jump_len)
+                i = end_len
+            elif b == if_zero_goto:
+                goto_id = util.bytes_to_int(body[i + 2:i + 2 + util.INT_LEN])
+                tar_label = jumps[goto_id]
+                label_pos = labels[tar_label]
+                end_len = i + util.INT_LEN + 2
+                jump_len = label_pos - end_len
+                body[i] = if_zero_jump[0]
+                body[i + 2: i + 2 + util.INT_LEN] = util.int_to_bytes(jump_len)
+                i = end_len
+            else:
+                i += 1
+        return bytearray(body)
 
-    def compile_pseudo_inst(self, inst: str, instruction: list, cur_fn_body: bytearray, lf: tl.LineFile):
+    def compile_pseudo_inst(self, inst: str, instruction: iter, cur_fn_body: iter, lf: tl.LineFile):
         tup = PSEUDO_INSTRUCTIONS[inst]
         num_inst = inst_to_num(instruction, tup, lf)
         if inst == "load_lit":
@@ -186,7 +258,7 @@ class TpcCompiler:
                               cur_fn_body,
                               lf)
 
-    def compile_inst(self, inst: str, instruction: list, cur_fn_body: bytearray, lf: tl.LineFile):
+    def compile_inst(self, inst: str, instruction: list, cur_fn_body: iter, lf: tl.LineFile):
         tup = INSTRUCTIONS[inst]
         num_inst = inst_to_num(instruction, tup, lf)
 
@@ -210,24 +282,26 @@ def inst_to_num(actual_line: list, tup: tuple, lf) -> list:
 
     :param actual_line: the actual instruction line, with str inst head at first
     :param tup: the designated instruction
-    :param lf:
+    :param lf: debug info: line and file
     :return: a new list contained numeric instruction, with a None at the first position to maintain the same length
     """
     lst = [None]
     for j in range(1, len(tup)):
-        byte_len = tup[j]
-        sym = actual_line[j]
-        if sym.isdigit():
-            if byte_len != util.INT_LEN:
-                raise errs.TpaError("Instruction argument of {} length do not match. ".format(actual_line[0]), lf)
-            num = int(sym)
-        else:
-            leading = sym[0]
-            if byte_len != LENGTHS[leading]:
-                raise errs.TpaError("Instruction argument of {} length do not match. ".format(actual_line[0]), lf)
-            num = int(sym[1:])
-        lst.append(num)
+        lst.append(num_single(actual_line[0], actual_line[j], tup[j], lf))
     return lst
+
+
+def num_single(inst: str, symbol: str, expected_len: int, lf) -> int:
+    if symbol.isdigit():
+        if expected_len != util.INT_LEN:
+            raise errs.TpaError("Instruction argument of {} length do not match. ".format(inst), lf)
+        num = int(symbol)
+    else:
+        leading = symbol[0]
+        if expected_len != LENGTHS[leading]:
+            raise errs.TpaError("Instruction argument of {} length do not match. ".format(inst), lf)
+        num = int(symbol[1:])
+    return num
 
 
 if __name__ == '__main__':
