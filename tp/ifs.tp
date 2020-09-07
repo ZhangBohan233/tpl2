@@ -1,7 +1,7 @@
 fn main() int {
-    a: int = 1;
+    a: int = 0;
     b: int;
-    if a {
+    if a == 0 {
         b = 15;
     }
     return b;

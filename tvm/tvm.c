@@ -223,6 +223,36 @@ void tvm_mainloop() {
                 reg2 = MEMORY[pc++];
                 regs[reg1].int_value = regs[reg1].int_value % regs[reg2].int_value;
                 break;
+            case 35:  // eqi
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value == regs[reg2].int_value;
+                break;
+            case 36:  // nei
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value != regs[reg2].int_value;
+                break;
+            case 37:  // gti
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value > regs[reg2].int_value;
+                break;
+            case 38:  // lti
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value < regs[reg2].int_value;
+                break;
+            case 39:  // gei
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value >= regs[reg2].int_value;
+                break;
+            case 40:  // lei
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value <= regs[reg2].int_value;
+                break;
             default:
                 ERROR_CODE = ERR_INSTRUCTION;
                 break;

@@ -36,6 +36,14 @@ INSTRUCTIONS = {
     "muli": (32, 1, 1),
     "divi": (33, 1, 1),
     "modi": (34, 1, 1),
+    "eqi": (35, 1, 1),
+    "nei": (36, 1, 1),
+    "gti": (37, 1, 1),
+    "lti": (38, 1, 1),
+    "gei": (39, 1, 1),
+    "lei": (40, 1, 1),
+    "i_to_f": (60, 1),  # convert int in %reg to float, store in %reg
+    "f_to_i": (61, 1),
 }
 
 MNEMONIC = {

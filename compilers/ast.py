@@ -6,7 +6,6 @@ import compilers.tpa_producer as tp
 import compilers.util as util
 import compilers.errors as errs
 
-
 BIN_ARITH = 1
 BIN_LOGICAL = 2
 BIN_BITWISE = 3
@@ -282,7 +281,7 @@ class BinaryOperator(BinaryExpr):
         self.op_type = op_type
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        if self.op_type == BIN_ARITH:
+        if self.op_type == BIN_ARITH or self.op_type == BIN_LOGICAL:
             lt = self.left.evaluated_type(env, tpa.manager)
             rt = self.right.evaluated_type(env, tpa.manager)
             left_addr = self.left.compile(env, tpa)
@@ -292,8 +291,12 @@ class BinaryOperator(BinaryExpr):
                     if lt.type_name == "int":
                         if rt.type_name == "int":
                             res_addr = tpa.manager.allocate_stack(util.INT_LEN)
-                            int_int_arithmetic(self.op, left_addr, right_addr, res_addr, tpa)
+                            int_int_to_int(self.op, left_addr, right_addr, res_addr, tpa)
                             return res_addr
+        elif self.op_type == BIN_BITWISE:
+            pass
+        elif self.op_type == BIN_LAZY:
+            pass
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
         if self.op_type == BIN_ARITH:
@@ -304,6 +307,8 @@ class BinaryOperator(BinaryExpr):
                     if lt.type_name == "int":
                         if rt.type_name == "int":
                             return en.TYPE_INT
+        elif self.op_type == BIN_LOGICAL or self.op_type == BIN_BITWISE or self.op_type == BIN_LAZY:
+            return en.TYPE_INT
 
 
 class BinaryOperatorAssignment(BinaryExpr):
@@ -586,7 +591,21 @@ INT_ARITH_TABLE = {
     "%": "modi"
 }
 
+INT_LOGIC_TABLE = {
+    "==": "eqi",
+    "!=": "nei",
+    ">": "gti",
+    "<": "lti",
+    ">=": "gei",
+    "<=": "lei"
+}
 
-def int_int_arithmetic(op: str, left_addr: int, right_addr: int, res_addr:int, tpa: tp.TpaOutput):
-    op_inst = INT_ARITH_TABLE[op]
+
+def int_int_to_int(op: str, left_addr: int, right_addr: int, res_addr: int, tpa: tp.TpaOutput):
+    if op in INT_ARITH_TABLE:
+        op_inst = INT_ARITH_TABLE[op]
+    elif op in INT_LOGIC_TABLE:
+        op_inst = INT_LOGIC_TABLE[op]
+    else:
+        raise errs.TplCompileError("No such binary operator '" + op + "'. ")
     tpa.binary_arith(op_inst, left_addr, right_addr, res_addr)
