@@ -18,9 +18,14 @@
 const unsigned char SIGNATURE[] = "TPC_";
 
 int ERROR_CODE = 0;
+char *ERR_MSG = "";
 
 #define true_addr(ptr) (ptr < stack_end && call_p >= 0 ? ptr + fp : ptr)
 #define true_addr_sp(ptr) (ptr < stack_end ? ptr + sp : ptr)
+
+#define push(n) sp += n; if (sp >= stack_end) ERROR_CODE = ERR_STACK_OVERFLOW;
+#define push_fp call_stack[++call_p] = fp; fp = sp;
+#define pull_fp sp = fp; fp = call_stack[call_p--];
 
 #define MEMORY_SIZE 8192
 #define RECURSION_LIMIT 1000
@@ -80,6 +85,42 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
     pc = functions_end;
 
     return 0;
+}
+
+void nat_print_int() {
+    push_fp
+    push(8)
+
+    tp_int arg = bytes_to_int(MEMORY + true_addr(0));
+    tp_printf("%d", arg);
+
+    pull_fp
+}
+
+void nat_println_int() {
+    push_fp
+    push(8)
+
+    tp_int arg = bytes_to_int(MEMORY + true_addr(0));
+    tp_printf("%d\n", arg);
+
+    pull_fp
+}
+
+void invoke(tp_int func_ptr) {
+    tp_int func_id = bytes_to_int(MEMORY + func_ptr);
+    switch (func_id) {
+        case 1:  // print_int
+            nat_print_int();
+            break;
+        case 2:  // println_int
+            nat_println_int();
+            break;
+        default:
+            ERROR_CODE = ERR_NATIVE_INVOKE;
+            ERR_MSG = "No such native invoke. ";
+            break;
+    }
 }
 
 void tvm_mainloop() {
@@ -142,22 +183,17 @@ void tvm_mainloop() {
             case 11:  // move
                 break;
             case 12:  // push
-                sp += bytes_to_int(MEMORY + pc);
+            push(bytes_to_int(MEMORY + pc))
                 pc += INT_LEN;
-                if (sp >= stack_end) {
-                    ERROR_CODE = ERR_STACK_OVERFLOW;
-                }
                 break;
             case 13:  // ret
                 pc = pc_stack[pc_p--];
                 break;
             case 14:  // push fp
-                call_stack[++call_p] = fp;
-                fp = sp;
+            push_fp
                 break;
             case 15:  // pull fp
-                sp = fp;
-                fp = call_stack[call_p--];
+            pull_fp
                 break;
             case 16:  // set ret
                 reg1 = MEMORY[pc++];
@@ -194,6 +230,10 @@ void tvm_mainloop() {
                 } else {
                     pc += INT_LEN;
                 }
+                break;
+            case 24:  // invoke
+                invoke(true_addr(bytes_to_int(MEMORY + pc)));
+                pc += INT_LEN;
                 break;
             case 30:  // addi
                 reg1 = MEMORY[pc++];
@@ -304,21 +344,22 @@ void print_memory() {
 void print_error(int error_code) {
     switch (error_code) {
         case ERR_STACK_OVERFLOW:
-            fprintf(stderr, "\nStack overflow\n");
+            fprintf(stderr, "\nStack overflow: ");
             break;
         case ERR_NATIVE_INVOKE:
-            fprintf(stderr, "\nNative invoke error\n");
+            fprintf(stderr, "\nNative invoke error: ");
             break;
         case ERR_HEAP_COLLISION:
-            fprintf(stderr, "\nHeap collision\n");
+            fprintf(stderr, "\nHeap collision: ");
             break;
         case ERR_INSTRUCTION:
-            fprintf(stderr, "\nUnexpected instruction\n");
+            fprintf(stderr, "\nUnexpected instruction: ");
             break;
         default:
-            fprintf(stderr, "\nSomething wrong\n");
+            fprintf(stderr, "\nSomething wrong: ");
             break;
     }
+    fprintf(stderr, "%s\n", ERR_MSG);
 }
 
 void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_argv) {

@@ -1,7 +1,10 @@
 require {
     print_int;
+    println_int;
 }
 
 fn main() int {
-
+    print_int(3);
+    println_int(4);
+    return 12;
 }

@@ -152,7 +152,6 @@ class TpaOutput:
         reg1, reg2 = self.manager.require_regs(2)
 
         self.set_call(args, reg1, reg2, ret_len, rtn_addr)
-
         self.write_format("call_fn", fn_name)
 
         self.manager.append_regs(reg2, reg1)
@@ -161,7 +160,6 @@ class TpaOutput:
         reg1, reg2 = self.manager.require_regs(2)
 
         self.set_call(args, reg1, reg2, ret_len, rtn_addr)
-
         self.write_format("call", address(fn_ptr))
 
         self.manager.append_regs(reg2, reg1)
@@ -188,8 +186,28 @@ class TpaOutput:
             self.write_format("set_ret", register(reg1))
         # if void, do nothing
 
-    def invoke_name(self, name: str, args: list, rtn_addr: int):
-        pass
+    def require_name(self, name: str, fn_ptr: int):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("require", name, address(fn_ptr), register(reg1), register(reg2))
+
+        self.manager.append_regs(reg2, reg1)
+
+    # def invoke_name(self, fn_name: str, args: list, rtn_addr: int, ret_len: int):
+    #     reg1, reg2 = self.manager.require_regs(2)
+    #
+    #     self.set_call(args, reg1, reg2, ret_len, rtn_addr)
+    #     self.write_format("invoke_nat", fn_name)
+    #
+    #     self.manager.append_regs(reg2, reg1)
+
+    def invoke_ptr(self, fn_ptr: int, args: list, rtn_addr: int, ret_len: int):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.set_call(args, reg1, reg2, ret_len, rtn_addr)
+        self.write_format("invoke", address(fn_ptr))
+
+        self.manager.append_regs(reg2, reg1)
 
     def if_zero_goto(self, cond_addr: int, label: str):
         reg1 = self.manager.require_reg()
@@ -206,11 +224,11 @@ class TpaOutput:
     def format(*inst):
         mne = inst[0]
         s = "    " + mne
-        s += " " * (14 - len(mne))
+        s += " " * max(14 - len(mne), 1)
         for i in range(1, len(inst)):
             x = str(inst[i])
             s += x
-            s += " " * (8 - len(x))
+            s += " " * max(8 - len(x), 1)
         return s.rstrip()
 
     def generate(self):

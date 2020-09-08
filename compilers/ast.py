@@ -5,6 +5,7 @@ import compilers.environment as en
 import compilers.tpa_producer as tp
 import compilers.util as util
 import compilers.errors as errs
+import compilers.types as typ
 
 BIN_ARITH = 1
 BIN_LOGICAL = 2
@@ -43,10 +44,10 @@ class Node:
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         raise NotImplementedError()
 
-    def definition_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         raise errs.TplTypeError("Name '" + self.__class__.__name__ + "' is not a type. ", self.lf)
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         raise NotImplementedError()
 
 
@@ -59,7 +60,7 @@ class AbstractStatement(Node, ABC):
     def __init__(self, lf):
         super().__init__(lf)
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         raise errs.TplTypeError("Statements do not evaluate a type. ", self.lf)
 
 
@@ -75,7 +76,7 @@ class Line(AbstractExpression):
             res = part.compile(env, tpa)
         return res
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         pass
 
     def __len__(self):
@@ -125,13 +126,13 @@ class NameNode(AbstractExpression):
 
     def definition_type(self, env: en.Environment, manager: tp.Manager):
         if self.name == "int":
-            return en.TYPE_INT
+            return typ.TYPE_INT
         elif self.name == "float":
-            return en.TYPE_FLOAT
+            return typ.TYPE_FLOAT
         elif self.name == "char":
-            return en.TYPE_CHAR
+            return typ.TYPE_CHAR
         elif self.name == "void":
-            return en.TYPE_VOID
+            return typ.TYPE_VOID
         else:
             return env.get_struct(self.name, self.lf)
 
@@ -158,8 +159,8 @@ class IntLiteral(LiteralNode):
         tpa.load_literal(stack_addr, self.lit_pos)
         return stack_addr
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
-        return en.TYPE_INT
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        return typ.TYPE_INT
 
     def __str__(self):
         return "Int@" + str(self.lit_pos)
@@ -174,8 +175,8 @@ class FloatLiteral(LiteralNode):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         pass
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
-        return en.TYPE_FLOAT
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        return typ.TYPE_FLOAT
 
     def __str__(self):
         return "Float@" + str(self.lit_pos)
@@ -190,8 +191,8 @@ class CharLiteral(LiteralNode):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         pass
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
-        return en.TYPE_CHAR
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        return typ.TYPE_CHAR
 
     def __str__(self):
         return "Char@" + str(self.lit_pos)
@@ -275,7 +276,7 @@ class UnaryOperator(UnaryExpr):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         pass
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         pass
 
 
@@ -291,8 +292,8 @@ class BinaryOperator(BinaryExpr):
             rt = self.right.evaluated_type(env, tpa.manager)
             left_addr = self.left.compile(env, tpa)
             right_addr = self.right.compile(env, tpa)
-            if isinstance(lt, en.BasicType):
-                if isinstance(rt, en.BasicType):
+            if isinstance(lt, typ.BasicType):
+                if isinstance(rt, typ.BasicType):
                     if lt.type_name == "int":
                         if rt.type_name == "int":
                             res_addr = tpa.manager.allocate_stack(util.INT_LEN)
@@ -303,17 +304,17 @@ class BinaryOperator(BinaryExpr):
         elif self.op_type == BIN_LAZY:
             pass
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if self.op_type == BIN_ARITH:
             lt = self.left.evaluated_type(env, manager)
             rt = self.right.evaluated_type(env, manager)
-            if isinstance(lt, en.BasicType):
-                if isinstance(rt, en.BasicType):
+            if isinstance(lt, typ.BasicType):
+                if isinstance(rt, typ.BasicType):
                     if lt.type_name == "int":
                         if rt.type_name == "int":
-                            return en.TYPE_INT
+                            return typ.TYPE_INT
         elif self.op_type == BIN_LOGICAL or self.op_type == BIN_BITWISE or self.op_type == BIN_LAZY:
-            return en.TYPE_INT
+            return typ.TYPE_INT
 
 
 class BinaryOperatorAssignment(BinaryExpr):
@@ -344,7 +345,7 @@ class ReturnStmt(UnaryStmt):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.value, Nothing):  # 'return;'
-            env.validate_rtype(en.TYPE_VOID, self.lf)
+            env.validate_rtype(typ.TYPE_VOID, self.lf)
         else:
             rtype = self.value.evaluated_type(env, tpa.manager)
             env.validate_rtype(rtype, self.lf)
@@ -377,7 +378,7 @@ class Assignment(BinaryExpr):
         tpa.assign(left_addr, right_addr)
         return left_addr
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         pass
 
 
@@ -401,7 +402,7 @@ class Declaration(BinaryExpr):
         else:
             raise errs.TplCompileError("", self.lf)
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         pass
 
     def __str__(self):
@@ -422,16 +423,16 @@ class RightArrowExpr(BinaryExpr):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         pass
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         pass
 
-    def definition_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if isinstance(self.left, FunctionTypeExpr):
             pt = []
             for par in self.left.param_line:
                 pt.append(par.definition_type(env, manager))
             rt = self.right.definition_type(env, manager)
-            ft = en.FuncType(pt, rt)
+            ft = typ.FuncType(pt, rt)
             return ft
 
 
@@ -461,7 +462,7 @@ class FunctionDef(AbstractExpression):
                 param_types.append(pt)
                 param.compile(scope, body_out)
 
-        func_type = en.FuncType(param_types, rtype)
+        func_type = typ.FuncType(param_types, rtype)
         env.define_function(self.name, func_type, fn_ptr, self.lf)
 
         if self.body is not None:
@@ -480,7 +481,7 @@ class FunctionDef(AbstractExpression):
         body_out.generate()
         tpa.manager.map_function(self.name, body_out.result())
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         pass
 
     def __str__(self):
@@ -496,7 +497,7 @@ class FunctionTypeExpr(AbstractExpression):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         raise errs.NotCompileAbleError(lf=self.lf)
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         pass
 
     def __str__(self):
@@ -512,35 +513,40 @@ class FunctionCall(AbstractExpression):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         func_type = self.call_obj.evaluated_type(env, tpa.manager)
-        if not isinstance(func_type, en.CallableType):
+        if not isinstance(func_type, typ.CallableType):
             raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
-        if isinstance(func_type, en.FuncType):
-            if len(func_type.param_types) != len(self.args):
-                raise errs.TplCompileError("Parameter length does not match argument length. ", self.lf)
-            evaluated_args = []
-            for i in range(len(func_type.param_types)):
-                param_t = func_type.param_types[i]
-                arg_t: en.Type = self.args[i].evaluated_type(env, tpa.manager)
-                if not arg_t.convert_able(param_t):
-                    raise errs.TplCompileError("Argument type does not match param type. "
-                                               "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lf)
-                arg_addr = self.args[i].compile(env, tpa)
-                evaluated_args.append((arg_addr, arg_t.length))
-            if isinstance(self.call_obj, NameNode):
-                rtn_addr = tpa.manager.allocate_stack(func_type.rtype.length)
+
+        if len(func_type.param_types) != len(self.args):
+            raise errs.TplCompileError("Parameter length does not match argument length. ", self.lf)
+        evaluated_args = []
+        for i in range(len(func_type.param_types)):
+            param_t = func_type.param_types[i]
+            arg_t: typ.Type = self.args[i].evaluated_type(env, tpa.manager)
+            if not arg_t.convert_able(param_t):
+                raise errs.TplCompileError("Argument type does not match param type. "
+                                           "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lf)
+            arg_addr = self.args[i].compile(env, tpa)
+            evaluated_args.append((arg_addr, arg_t.length))
+        if isinstance(self.call_obj, NameNode):
+            rtn_addr = tpa.manager.allocate_stack(func_type.rtype.length)
+            if isinstance(func_type, typ.FuncType):
                 if env.is_named_function(self.call_obj.name, self.lf):
                     tpa.call_named_function(self.call_obj.name, evaluated_args, rtn_addr, func_type.rtype.length)
                 else:
                     fn_ptr = env.get(self.call_obj.name, self.lf)
                     tpa.call_ptr_function(fn_ptr, evaluated_args, rtn_addr, func_type.rtype.length)
-                return rtn_addr
+            elif isinstance(func_type, typ.NativeFuncType):
+                fn_ptr = env.get(self.call_obj.name, self.lf)
+                tpa.invoke_ptr(fn_ptr, evaluated_args, rtn_addr, func_type.rtype.length)
+            else:
+                raise errs.TplError("Unexpected error. ", self.lf)
+            return rtn_addr
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         func_type = self.call_obj.evaluated_type(env, manager)
-        if not isinstance(func_type, en.CallableType):
+        if not isinstance(func_type, typ.CallableType):
             raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
-        if isinstance(func_type, en.FuncType):
-            return func_type.rtype
+        return func_type.rtype
 
     def __str__(self):
         return "{}({})".format(self.call_obj, self.args)
@@ -553,7 +559,7 @@ class Nothing(AbstractExpression):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         pass
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         pass
 
     def __str__(self):
@@ -567,7 +573,24 @@ class RequireStmt(AbstractStatement):
         self.body = body
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
+        self.require(self.body, env, tpa)
+
+    def require(self, node: Node, env: en.Environment, tpa: tp.TpaOutput):
+        if isinstance(node, BlockStmt):
+            for line in node.lines:
+                self.require(line, env, tpa)
+        elif isinstance(node, Line):
+            for part in node.parts:
+                self.require(part, env, tpa)
+        elif isinstance(node, NameNode):
+            name = node.name
+            if name in typ.NATIVE_FUNCTIONS:
+                func_id, func_type = typ.NATIVE_FUNCTIONS[name]
+                fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
+                tpa.require_name(name, fn_ptr)
+                env.define_function(name, func_type, fn_ptr, node.lf)
+            else:
+                raise errs.TplCompileError("Cannot require '" + name + "'. ", node.lf)
 
     def __str__(self):
         return "require " + str(self.body)

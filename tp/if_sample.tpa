@@ -16,8 +16,6 @@ literal
 ;     }
 ;     return a;
 
-native print_int $1024
-
 fn main $1032
     push_fp
     push          8
@@ -39,6 +37,7 @@ fn main $1032
     stop
 
 entry
+    require       print_int $1024   %0    %1
     aload         %0      $1
     set_ret       %0
     call_fn       main

@@ -2,6 +2,7 @@ import sys
 import compilers.util as util
 import compilers.tokens_lib as tl
 import compilers.errors as errs
+import compilers.types as typ
 
 SIGNATURE = "TPC_".encode()  # 84, 80, 67, 95
 
@@ -173,6 +174,12 @@ class TpcCompiler:
                             tup = INSTRUCTIONS["call"]
                             cur_fn_body.append(tup[0])
                             cur_fn_body.extend(util.int_to_bytes(fn_ptr))
+                        # elif inst == "invoke_nat":
+                        #     fn_name = instructions[1]
+                        #     fn_ptr = function_pointers[fn_name]
+                        #     tup = INSTRUCTIONS["invoke"]
+                        #     cur_fn_body.append(tup[0])
+                        #     cur_fn_body.extend(util.int_to_bytes(fn_ptr))
                         elif inst == "label":
                             label_name = instructions[1]
                             labels[label_name] = len(cur_fn_body)
@@ -195,6 +202,18 @@ class TpcCompiler:
                             labels.clear()
                             jumps.clear()
                             goto_count = 0
+                        elif inst == "require":
+                            req_name = instructions[1]
+                            req_ptr_addr = num_single("require", instructions[2], util.PTR_LEN, lf)
+                            reg1 = instructions[3]
+                            reg2 = instructions[4]
+                            req_id, req_type = typ.NATIVE_FUNCTIONS[req_name]
+                            # function_pointers[req_name] = req_ptr_addr
+
+                            self.compile_inst("iload", ["iload", reg1, "$" + str(req_id)], cur_fn_body, lf)
+                            self.compile_inst("iload", ["iload", reg2, "$" + str(req_ptr_addr)], cur_fn_body, lf)
+                            self.compile_inst("store", ["store", reg2, reg1], cur_fn_body, lf)
+
                         elif inst in INSTRUCTIONS:
                             # real instructions
                             self.compile_inst(inst, instructions, cur_fn_body, lf)
