@@ -363,14 +363,6 @@ class BinaryOperatorAssignment(BinaryExpr):
         pass
 
 
-class FakeTernaryOperator(BinaryExpr):
-    def __init__(self, op: str, lf):
-        super().__init__(op, lf)
-
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
-
-
 class ReturnStmt(UnaryStmt):
     def __init__(self, lf):
         super().__init__("return", lf)
@@ -596,8 +588,8 @@ class FunctionCall(AbstractExpression):
         for i in range(len(func_type.param_types)):
             param_t = func_type.param_types[i]
             arg_t: typ.Type = self.args[i].evaluated_type(env, tpa.manager)
-            if not arg_t.strong_convert_able(param_t):
-                if not arg_t.weak_convert_able(param_t):
+            if not arg_t.strong_convertible(param_t):
+                if not arg_t.weak_convertible(param_t):
                     raise errs.TplCompileError("Argument type does not match param type. "
                                                "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lf)
                 else:
@@ -709,6 +701,56 @@ class IfStmt(AbstractStatement):
             return "if {} {} else {}".format(self.condition, self.if_branch, self.else_branch)
         else:
             return "if {} {}".format(self.condition, self.if_branch)
+
+
+class IfExpr(AbstractExpression):
+    def __init__(self,
+                 condition: AbstractExpression,
+                 then_expr: AbstractExpression,
+                 else_expr: AbstractExpression,
+                 lf):
+        super().__init__(lf)
+
+        self.condition = condition
+        self.then_expr = then_expr
+        self.else_expr = else_expr
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        cond_addr = self.condition.compile(env, tpa)
+        res_t = self.evaluated_type(env, tpa.manager)
+        res_addr = tpa.manager.allocate_stack(res_t.length)
+
+        else_label = tpa.manager.label_manager.else_label()
+        endif_label = tpa.manager.label_manager.endif_label()
+
+        tpa.if_zero_goto(cond_addr, else_label)
+
+        if_env = en.BlockEnvironment(env)
+        then_addr = self.then_expr.compile(if_env, tpa)
+        tpa.assign(res_addr, then_addr)
+
+        tpa.write_format("goto", endif_label)
+        tpa.write_format("label", else_label)
+
+        else_env = en.BlockEnvironment(env)
+        else_addr = self.else_expr.compile(else_env, tpa)
+        tpa.assign(res_addr, else_addr)
+
+        tpa.write_format("label", endif_label)
+        return res_addr
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        then_t = self.then_expr.evaluated_type(env, manager)
+        else_t = self.else_expr.evaluated_type(env, manager)
+        if not (then_t.strong_convertible(else_t) and else_t.strong_convertible(then_t)):
+            if not (then_t.weak_convertible(else_t) and else_t.weak_convertible(then_t)):
+                raise errs.TplCompileError("Two branches of if-expression must have compatible type. ", self.lf)
+            else:
+                print("Warning: converting between '{}' and '{}'. {}".format(then_t, else_t, self.lf))
+        return then_t
+
+    def __str__(self):
+        return "if {} then {} else {}".format(self.condition, self.then_expr, self.else_expr)
 
 
 class WhileStmt(AbstractStatement):

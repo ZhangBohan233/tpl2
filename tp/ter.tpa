@@ -1,0 +1,59 @@
+bits
+64
+stack_size
+1024
+global_length
+8
+literal_length
+32
+literal
+2 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 10 0 0 0 0 0 0 0 20 0 0 0 0 0 0 0
+
+fn main $1024
+    push_fp
+    push          64
+    load_lit      %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      $0
+    store         %1      %0
+    load_lit      %0      $8
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $0
+    load          %1      $24
+    nei           %0      %1
+    iload         %1      32
+    store         %1      %0
+    load          %0      $32
+    if_zero_goto  %0      ELSE_0
+    load_lit      %0      $16
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $48
+    iload         %1      $40
+    store         %1      %0
+    goto          ENDIF_0
+    label         ELSE_0
+    load_lit      %0      $24
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $56
+    iload         %1      $40
+    store         %1      %0
+    label         ENDIF_0
+    load          %0      $40
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    aload         %0      $1
+    set_ret       %0
+    call_fn       main
+    exit

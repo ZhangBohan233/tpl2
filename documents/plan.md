@@ -2,8 +2,8 @@
 
 ### Development Order
 * ~~Simple native call~~ Done
-* Unary operator
-* Pointer
+* ~~Unary operator~~ Done
+* ~~Pointer~~ Done
 * Ternary operator 
 * Lazy operator
 * Include

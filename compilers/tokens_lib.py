@@ -11,7 +11,7 @@ SYMBOLS = {"{", "}", "[", "]", "(", ")", ".", ",", ";", ":"}
 OTHERS = {"=", "->", ":=", "++", "--"}
 
 RESERVED = {"break", "const", "continue", "else", "fn", "for",
-            "if", "include", "require", "return", "var", "while"}
+            "if", "include", "require", "return", "then", "var", "while"}
 
 ALL_BINARY = set.union(
     ARITH_BINARY,

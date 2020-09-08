@@ -105,6 +105,8 @@ class Parser:
             condition_list.append(item)
             index += 1
             item = parent[index]
+            if identifier_of(item, "then"):  # is a if-expr instead of if-stmt
+                return self.process_if_expr(condition_list, parent, index, builder, lf)
         cond = self.parse_as_part(condition_list)
         body = self.parse_as_block(item)
         if index + 1 < len(parent) and identifier_of(parent[index + 1], "else"):
@@ -114,6 +116,27 @@ class Parser:
             else_block = None
         ifs = ast.IfStmt(cond, body, else_block, lf)
         builder.add_node(ifs)
+        return index
+
+    def process_if_expr(self, cond_list: tl.CollectiveElement,
+                        parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+        cond = self.parse_as_part(cond_list)
+        index += 1
+        then_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        while not identifier_of(parent[index], "else"):
+            then_list.append(parent[index])
+            index += 1
+        then_expr = self.parse_as_part(then_list)
+        index += 1
+        else_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        while index < len(parent) and not identifier_of(parent[index], ";"):
+            else_list.append(parent[index])
+            index += 1
+        else_expr = self.parse_as_part(else_list)
+        ife = ast.IfExpr(cond, then_expr, else_expr, lf)
+        builder.add_node(ife)
+        if index < len(parent):  # last loop terminated by a ';', add an eol
+            self.process_eol(parent, index, builder, lf)
         return index
 
     def process_while_stmt(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
