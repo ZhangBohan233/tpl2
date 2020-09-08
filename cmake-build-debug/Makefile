@@ -151,6 +151,33 @@ main.c.s:
 	$(MAKE) -f CMakeFiles\tpl2.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\tpl2.dir\main.c.s
 .PHONY : main.c.s
 
+tvm\os_spec.obj: tvm\os_spec.c.obj
+
+.PHONY : tvm\os_spec.obj
+
+# target to build an object file
+tvm\os_spec.c.obj:
+	$(MAKE) -f CMakeFiles\tpl2.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\tpl2.dir\tvm\os_spec.c.obj
+.PHONY : tvm\os_spec.c.obj
+
+tvm\os_spec.i: tvm\os_spec.c.i
+
+.PHONY : tvm\os_spec.i
+
+# target to preprocess a source file
+tvm\os_spec.c.i:
+	$(MAKE) -f CMakeFiles\tpl2.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\tpl2.dir\tvm\os_spec.c.i
+.PHONY : tvm\os_spec.c.i
+
+tvm\os_spec.s: tvm\os_spec.c.s
+
+.PHONY : tvm\os_spec.s
+
+# target to generate assembly for a file
+tvm\os_spec.c.s:
+	$(MAKE) -f CMakeFiles\tpl2.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\tpl2.dir\tvm\os_spec.c.s
+.PHONY : tvm\os_spec.c.s
+
 tvm\tvm.obj: tvm\tvm.c.obj
 
 .PHONY : tvm\tvm.obj
@@ -217,6 +244,9 @@ help:
 	@echo ... main.obj
 	@echo ... main.i
 	@echo ... main.s
+	@echo ... tvm/os_spec.obj
+	@echo ... tvm/os_spec.i
+	@echo ... tvm/os_spec.s
 	@echo ... tvm/tvm.obj
 	@echo ... tvm/tvm.i
 	@echo ... tvm/tvm.s

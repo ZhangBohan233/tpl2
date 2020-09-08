@@ -3,4 +3,4 @@ project(tpl2 C)
 
 set(CMAKE_C_STANDARD 11)
 
-add_executable(tpl2 main.c tvm/tvm.c tvm/tvm.h tvm/util.c tvm/util.h)
+add_executable(tpl2 main.c tvm/tvm.c tvm/tvm.h tvm/util.c tvm/util.h tvm/os_spec.c tvm/os_spec.h)

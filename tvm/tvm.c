@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "os_spec.h"
 #include "tvm.h"
 
 // The error code, set by virtual machine. Used to tell the main loop that the process is interrupted
@@ -87,6 +88,10 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
     return 0;
 }
 
+void nat_return_int(tp_int value) {
+    int_to_bytes(MEMORY + ret_stack[ret_p--], value);
+}
+
 void nat_print_int() {
     push_fp
     push(8)
@@ -107,6 +112,16 @@ void nat_println_int() {
     pull_fp
 }
 
+void nat_clock() {
+    push_fp
+//    push(0)
+
+    tp_int t = get_time();
+    nat_return_int(t);
+
+    pull_fp
+}
+
 void invoke(tp_int func_ptr) {
     tp_int func_id = bytes_to_int(MEMORY + func_ptr);
     switch (func_id) {
@@ -115,6 +130,9 @@ void invoke(tp_int func_ptr) {
             break;
         case 2:  // println_int
             nat_println_int();
+            break;
+        case 3:  // clock
+            nat_clock();
             break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;

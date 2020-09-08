@@ -85,6 +85,12 @@
 		<Unit filename="E:/GitHub/tpl2/main.c">
 			<Option target="tpl2"/>
 		</Unit>
+		<Unit filename="E:/GitHub/tpl2/tvm/os_spec.c">
+			<Option target="tpl2"/>
+		</Unit>
+		<Unit filename="E:/GitHub/tpl2/tvm/os_spec.h">
+			<Option target="tpl2"/>
+		</Unit>
 		<Unit filename="E:/GitHub/tpl2/tvm/tvm.c">
 			<Option target="tpl2"/>
 		</Unit>

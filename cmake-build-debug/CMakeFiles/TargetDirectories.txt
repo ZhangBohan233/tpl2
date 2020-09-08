@@ -1,3 +1,0 @@
-E:/GitHub/tpl2/cmake-build-debug/CMakeFiles/tpl2.dir
-E:/GitHub/tpl2/cmake-build-debug/CMakeFiles/edit_cache.dir
-E:/GitHub/tpl2/cmake-build-debug/CMakeFiles/rebuild_cache.dir
