@@ -5,8 +5,23 @@ class Type:
     def __init__(self, length: int):
         self.length = length
 
-    def convert_able(self, left_tar_type):
-        return self == left_tar_type  # todo:
+    def strong_convert_able(self, left_tar_type):
+        """
+        This method returns True iff self can be converted to the 'left_tar_type' without warning.
+
+        :param left_tar_type:
+        :return:
+        """
+        return self == left_tar_type
+
+    def weak_convert_able(self, left_tar_type):
+        """
+        This method returns True iff self can be converted to the 'left_tar_type', but a warning is produced.
+
+        :param left_tar_type:
+        :return:
+        """
+        return self.strong_convert_able(left_tar_type)
 
     def is_void(self):
         return self.length == 0
@@ -17,6 +32,12 @@ class BasicType(Type):
         super().__init__(length)
 
         self.type_name = type_name
+
+    def weak_convert_able(self, left_tar_type: Type):
+        if self.type_name == "int" and isinstance(left_tar_type, PointerType):
+            return True
+        else:
+            return super().weak_convert_able(left_tar_type)
 
     def __eq__(self, other):
         return isinstance(other, BasicType) and other.type_name == self.type_name
@@ -33,6 +54,18 @@ class PointerType(Type):
         super().__init__(util.PTR_LEN)
 
         self.base = base
+
+    def weak_convert_able(self, left_tar_type):
+        if isinstance(left_tar_type, BasicType) and left_tar_type.type_name == "int":
+            return True
+        else:
+            return super().weak_convert_able(left_tar_type)
+
+    def __str__(self):
+        return "*" + str(self.base)
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class CallableType(Type):

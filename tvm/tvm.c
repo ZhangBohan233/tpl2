@@ -253,6 +253,11 @@ void tvm_mainloop() {
                 invoke(true_addr(bytes_to_int(MEMORY + pc)));
                 pc += INT_LEN;
                 break;
+            case 25:  // rload_abs
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                memcpy(regs[reg1].bytes, MEMORY + regs[reg2].int_value, INT_LEN);
+                break;
             case 30:  // addi
                 reg1 = MEMORY[pc++];
                 reg2 = MEMORY[pc++];

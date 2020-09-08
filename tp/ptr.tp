@@ -1,4 +1,9 @@
 fn main() int {
-    a: int = 0;
-    return not a;
+    a: int = 32;
+    b: *int = &a;
+    c: **int = &b;
+
+    **c = 42;
+
+    return a;
 }

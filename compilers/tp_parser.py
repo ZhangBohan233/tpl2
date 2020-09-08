@@ -225,6 +225,11 @@ class Parser:
                         builder.add_node(ast.StarExpr(lf))
                     else:
                         builder.add_node(ast.BinaryOperator("*", ast.BIN_ARITH, lf))
+                elif symbol == "&":
+                    if index < 1 or is_unary(parent[index - 1]):
+                        builder.add_node(ast.AddrExpr(lf))
+                    else:
+                        builder.add_node(ast.BinaryOperator("&", ast.BIN_BITWISE, lf))
                 elif symbol in tl.ARITH_BINARY:
                     builder.add_node(ast.BinaryOperator(symbol, ast.BIN_ARITH, lf))
                 elif symbol in tl.LOGICAL_BINARY:
@@ -272,7 +277,7 @@ class Parser:
 
 
 UNARY_LEADING = {
-    ";", "=", "->", ".", ","
+    ";", ":", "=", "->", ".", ","
 }
 
 

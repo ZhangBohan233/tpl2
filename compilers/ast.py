@@ -395,7 +395,37 @@ class StarExpr(UnaryExpr):
         super().__init__("star", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
+        val = self.value.compile(env, tpa)
+        self_t = self.evaluated_type(env, tpa.manager)
+        res_addr = tpa.manager.allocate_stack(self_t.length)
+        tpa.value_in_addr_op(val, res_addr)
+        return res_addr
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        vt = self.value.evaluated_type(env, manager)
+        if isinstance(vt, typ.PointerType):
+            return vt.base
+        else:
+            raise errs.TplCompileError("Cannot unpack non-pointer type. ", self.lf)
+
+    def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        vt = self.value.definition_type(env, manager)
+        return typ.PointerType(vt)
+
+
+class AddrExpr(UnaryExpr):
+    def __init__(self, lf):
+        super().__init__("addr", lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        val = self.value.compile(env, tpa)
+        res_addr = tpa.manager.allocate_stack(util.PTR_LEN)
+        tpa.addr_op(val, res_addr)
+        return res_addr
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        vt = self.value.evaluated_type(env, manager)
+        return typ.PointerType(vt)
 
 
 class Assignment(BinaryExpr):
@@ -407,15 +437,23 @@ class Assignment(BinaryExpr):
             left_addr = self.left.compile(env, tpa)
         elif isinstance(self.left, Declaration):
             left_addr = self.left.compile(env, tpa)
+        elif isinstance(self.left, StarExpr):
+            return self.ptr_assign(self.left, env, tpa)
         else:
             raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.__class__.__name__), self.lf)
 
         right_addr = self.right.compile(env, tpa)
         tpa.assign(left_addr, right_addr)
-        return left_addr
+        return right_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        pass
+        return self.right.evaluated_type(env, manager)
+
+    def ptr_assign(self, left: StarExpr, env: en.Environment, tpa: tp.TpaOutput) -> int:
+        right_addr = self.right.compile(env, tpa)
+        inner_addr = left.value.compile(env, tpa)
+        tpa.ptr_assign(right_addr, inner_addr)
+        return right_addr
 
 
 class Declaration(BinaryExpr):
@@ -558,9 +596,12 @@ class FunctionCall(AbstractExpression):
         for i in range(len(func_type.param_types)):
             param_t = func_type.param_types[i]
             arg_t: typ.Type = self.args[i].evaluated_type(env, tpa.manager)
-            if not arg_t.convert_able(param_t):
-                raise errs.TplCompileError("Argument type does not match param type. "
-                                           "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lf)
+            if not arg_t.strong_convert_able(param_t):
+                if not arg_t.weak_convert_able(param_t):
+                    raise errs.TplCompileError("Argument type does not match param type. "
+                                               "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lf)
+                else:
+                    print("Warning: converting '{}' to '{}'. {}".format(arg_t, param_t, self.lf))
             arg_addr = self.args[i].compile(env, tpa)
             evaluated_args.append((arg_addr, arg_t.length))
         if isinstance(self.call_obj, NameNode):

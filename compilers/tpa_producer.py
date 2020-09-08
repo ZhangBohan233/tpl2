@@ -176,6 +176,34 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def addr_op(self, value_addr: int, res_addr: int):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("aload", register(reg1), address(value_addr))
+        self.write_format("iload", register(reg2), number(res_addr))
+        self.write_format("store", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
+    def value_in_addr_op(self, ptr_addr: int, res_addr: int):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("load", register(reg1), address(ptr_addr))
+        self.write_format("rload_abs", register(reg2), register(reg1))
+        self.write_format("iload", register(reg1), number(res_addr))
+        self.write_format("store", register(reg1), register(reg2))
+
+        self.manager.append_regs(reg2, reg1)
+
+    def ptr_assign(self, value_addr: int, ptr_addr: int):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("load", register(reg1), address(ptr_addr))
+        self.write_format("load", register(reg2), address(value_addr))
+        self.write_format("store_abs", register(reg1), register(reg2))
+
+        self.manager.append_regs(reg2, reg1)
+
     def call_named_function(self, fn_name: str, args: list, rtn_addr: int, ret_len: int):
         reg1, reg2 = self.manager.require_regs(2)
 

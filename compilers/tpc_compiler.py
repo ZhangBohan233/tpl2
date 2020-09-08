@@ -33,6 +33,8 @@ INSTRUCTIONS = {
     "copy": (22, 1, 1),  # copy     %reg1   %reg2   | copy content in (abs_addr %reg2) to (abs_addr %reg1)
     "if_zero_jump": (23, 1, util.INT_LEN),
     "invoke": (24, util.INT_LEN),
+    "rload_abs": (25, 1, 1),  # rload_abs   %reg1   %reg2   | load value with abs addr stored in %reg2 to %reg1
+    #                         # 使用存储在%reg2内的绝对地址，将该地址的内存读入%reg1
     "addi": (30, 1, 1),
     "subi": (31, 1, 1),
     "muli": (32, 1, 1),
