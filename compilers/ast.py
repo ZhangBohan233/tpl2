@@ -130,6 +130,8 @@ class NameNode(AbstractExpression):
             return en.TYPE_FLOAT
         elif self.name == "char":
             return en.TYPE_CHAR
+        elif self.name == "void":
+            return en.TYPE_VOID
         else:
             return env.get_struct(self.name, self.lf)
 
@@ -223,7 +225,7 @@ class UnaryBuildable(Buildable):
         return False
 
     def fulfilled(self):
-        return self.nullable() or self.value is not None
+        return self.value is not None
 
     def __str__(self):
         if self.operator_at_left:
@@ -271,6 +273,9 @@ class UnaryOperator(UnaryExpr):
         self.op_type = op_type
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        pass
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
         pass
 
 
@@ -333,11 +338,18 @@ class ReturnStmt(UnaryStmt):
     def __init__(self, lf):
         super().__init__("return", lf)
 
+    @classmethod
+    def nullable(cls):
+        return True
+
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        rtype = self.value.evaluated_type(env, tpa.manager)
-        env.validate_rtype(rtype, self.lf)
-        value_addr = self.value.compile(env, tpa)
-        tpa.return_value(value_addr)
+        if isinstance(self.value, Nothing):  # 'return;'
+            env.validate_rtype(en.TYPE_VOID, self.lf)
+        else:
+            rtype = self.value.evaluated_type(env, tpa.manager)
+            env.validate_rtype(rtype, self.lf)
+            value_addr = self.value.compile(env, tpa)
+            tpa.return_value(value_addr)
         tpa.return_func()
 
 
@@ -456,6 +468,9 @@ class FunctionDef(AbstractExpression):
             body_out.add_function(self.name, fn_ptr)
             push_index = body_out.add_indefinite_push()
             self.body.compile(scope, body_out)
+
+            if rtype.is_void():
+                body_out.return_func()
             body_out.end_func()
 
             stack_len = body_out.manager.sp - body_out.manager.blocks[-1]
@@ -514,10 +529,10 @@ class FunctionCall(AbstractExpression):
             if isinstance(self.call_obj, NameNode):
                 rtn_addr = tpa.manager.allocate_stack(func_type.rtype.length)
                 if env.is_named_function(self.call_obj.name, self.lf):
-                    tpa.call_named_function(self.call_obj.name, evaluated_args, rtn_addr)
+                    tpa.call_named_function(self.call_obj.name, evaluated_args, rtn_addr, func_type.rtype.length)
                 else:
                     fn_ptr = env.get(self.call_obj.name, self.lf)
-                    tpa.call_ptr_function(fn_ptr, evaluated_args, rtn_addr)
+                    tpa.call_ptr_function(fn_ptr, evaluated_args, rtn_addr, func_type.rtype.length)
                 return rtn_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
@@ -531,7 +546,7 @@ class FunctionCall(AbstractExpression):
         return "{}({})".format(self.call_obj, self.args)
 
 
-class VoidExpr(AbstractExpression):
+class Nothing(AbstractExpression):
     def __init__(self, lf):
         super().__init__(lf)
 
@@ -541,8 +556,21 @@ class VoidExpr(AbstractExpression):
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
         pass
 
-    def definition_type(self, env: en.Environment, manager: tp.Manager) -> en.Type:
-        return en.TYPE_VOID
+    def __str__(self):
+        return "nothing"
+
+
+class RequireStmt(AbstractStatement):
+    def __init__(self, body, lf):
+        super().__init__(lf)
+
+        self.body = body
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        pass
+
+    def __str__(self):
+        return "require " + str(self.body)
 
 
 class IfStmt(AbstractStatement):

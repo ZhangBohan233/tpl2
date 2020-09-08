@@ -17,12 +17,6 @@
 
 const unsigned char SIGNATURE[] = "TPC_";
 
-const int ERR_STACK_OVERFLOW = 1;
-const int ERR_NATIVE_INVOKE = 2;
-const int ERR_VM_OPT = 3;
-const int ERR_HEAP_COLLISION = 4;
-const int ERR_INSTRUCTION = 5;
-
 int ERROR_CODE = 0;
 
 #define true_addr(ptr) (ptr < stack_end && call_p >= 0 ? ptr + fp : ptr)
@@ -150,6 +144,9 @@ void tvm_mainloop() {
             case 12:  // push
                 sp += bytes_to_int(MEMORY + pc);
                 pc += INT_LEN;
+                if (sp >= stack_end) {
+                    ERROR_CODE = ERR_STACK_OVERFLOW;
+                }
                 break;
             case 13:  // ret
                 pc = pc_stack[pc_p--];
@@ -304,6 +301,26 @@ void print_memory() {
     printf("\n");
 }
 
+void print_error(int error_code) {
+    switch (error_code) {
+        case ERR_STACK_OVERFLOW:
+            fprintf(stderr, "\nStack overflow\n");
+            break;
+        case ERR_NATIVE_INVOKE:
+            fprintf(stderr, "\nNative invoke error\n");
+            break;
+        case ERR_HEAP_COLLISION:
+            fprintf(stderr, "\nHeap collision\n");
+            break;
+        case ERR_INSTRUCTION:
+            fprintf(stderr, "\nUnexpected instruction\n");
+            break;
+        default:
+            fprintf(stderr, "\nSomething wrong\n");
+            break;
+    }
+}
+
 void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_argv) {
     int read;
 
@@ -320,7 +337,10 @@ void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_a
 
     tp_int main_rtn_ptr = 1;
 
-    if (ERROR_CODE != 0) int_to_bytes(MEMORY + main_rtn_ptr, ERROR_CODE);
+    if (ERROR_CODE != 0) {
+        int_to_bytes(MEMORY + main_rtn_ptr, ERROR_CODE);
+        print_error(ERROR_CODE);
+    }
 
     if (p_memory) print_memory();
     if (p_exit) tp_printf("Trash program finished with exit code %d\n", bytes_to_int(MEMORY + main_rtn_ptr))

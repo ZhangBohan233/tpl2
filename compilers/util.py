@@ -2,6 +2,7 @@ import sys
 
 
 VM_BITS = 64
+STACK_SIZE = 1024
 INT_LEN = 8
 FLOAT_LEN = 8
 CHAR_LEN = 1

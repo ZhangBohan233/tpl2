@@ -7,6 +7,12 @@
 
 #include "util.h"
 
+#define ERR_STACK_OVERFLOW 1
+#define ERR_NATIVE_INVOKE 2
+#define ERR_VM_OPT 3
+#define ERR_HEAP_COLLISION 4
+#define ERR_INSTRUCTION 5
+
 void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_argv);
 
 #endif //TPL2_TVM_H

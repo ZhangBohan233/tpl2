@@ -19,13 +19,14 @@ class Parser:
             "=": self.process_assign,
             ":": self.process_declare,
             ",": self.process_comma,
-            ";": self.process_end_line,
+            ";": self.process_eol,
             "fn": self.process_fn,
             "var": self.process_var,
             "const": self.process_const,
             "return": self.process_return,
             "->": self.process_right_arrow,
-            "if": self.process_if_stmt
+            "if": self.process_if_stmt,
+            "require": self.process_require
         }
 
     def parse(self):
@@ -72,7 +73,7 @@ class Parser:
         builder.add_node(ast.FunctionDef(fn_name, params, rtype, body, lf))
         return index
 
-    def process_end_line(self, p, i, builder, lf):
+    def process_eol(self, p, i, builder, lf):
         builder.finish_part()
         builder.finish_line()
         self.var_level = ast.VAR_VAR
@@ -89,7 +90,7 @@ class Parser:
     def process_return(self, p, i, builder, lf):
         builder.add_node(ast.ReturnStmt(lf))
 
-    def process_right_arrow(self, parent: tl.CollectiveElement, index, builder, lf):
+    def process_right_arrow(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
         builder.add_node(ast.RightArrowExpr(lf))
 
     def process_if_stmt(self, parent: tl.CollectiveElement, index, builder, lf):
@@ -109,6 +110,23 @@ class Parser:
             else_block = None
         ifs = ast.IfStmt(cond, body, else_block, lf)
         builder.add_node(ifs)
+        return index
+
+    def process_require(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+        index += 1
+        item = parent[index]
+        if isinstance(item, tl.CollectiveElement):
+            content = self.parse_as_block(item)
+        else:
+            bracket = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+            bracket.append(item)
+            index += 1
+            while not identifier_of(parent[index], ";"):
+                bracket.append(parent[index])
+                index += 1
+            content = self.parse_as_part(bracket)
+        builder.add_node(ast.RequireStmt(content, lf))
+        self.process_eol(parent, index, builder, lf)
         return index
 
     # parser of collective elements

@@ -31,6 +31,7 @@ INSTRUCTIONS = {
     "put_ret": (21, 1),  # put_ret    %reg    | put value from %reg to returning addr previously set
     "copy": (22, 1, 1),  # copy     %reg1   %reg2   | copy content in (abs_addr %reg2) to (abs_addr %reg1)
     "if_zero_jump": (23, 1, util.INT_LEN),
+    "invoke": (24, util.INT_LEN),
     "addi": (30, 1, 1),
     "subi": (31, 1, 1),
     "muli": (32, 1, 1),

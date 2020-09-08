@@ -2,9 +2,6 @@ import compilers.errors as errs
 import compilers.util as util
 
 
-STACK_SIZE = 1024
-
-
 def register(num) -> str:
     if isinstance(num, int):
         return "%" + str(num)
@@ -47,7 +44,7 @@ class Manager:
         self.literal = literal
         self.blocks = []
         self.available_regs = [7, 6, 5, 4, 3, 2, 1, 0]
-        self.gp = STACK_SIZE
+        self.gp = util.STACK_SIZE
         self.sp = util.INT_LEN + 1
         self.functions_map = {}
         self.label_manager = LabelManager()
@@ -85,7 +82,7 @@ class Manager:
         self.functions_map[name] = body
 
     def global_length(self):
-        return self.gp - STACK_SIZE
+        return self.gp - util.STACK_SIZE
 
 
 class TpaOutput:
@@ -151,29 +148,25 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
-    def call_named_function(self, fn_name: str, args: list, rtn_addr: int):
+    def call_named_function(self, fn_name: str, args: list, rtn_addr: int, ret_len: int):
         reg1, reg2 = self.manager.require_regs(2)
 
-        count = 0
-        for arg in args:
-            arg_addr = arg[0]
-            arg_length = arg[1]
-            self.write_format("aload_sp", register(reg1), address(count))
-            if arg_length == util.INT_LEN:
-                self.write_format("load", register(reg2), address(arg_addr))
-                self.write_format("store_abs", register(reg1), register(reg2))
+        self.set_call(args, reg1, reg2, ret_len, rtn_addr)
 
-            count += arg_length
-
-        self.write_format("iload", register(reg1), number(rtn_addr))
-        self.write_format("set_ret", register(reg1))
         self.write_format("call_fn", fn_name)
 
         self.manager.append_regs(reg2, reg1)
 
-    def call_ptr_function(self, fn_ptr: int, args: list, rtn_addr: int):
+    def call_ptr_function(self, fn_ptr: int, args: list, rtn_addr: int, ret_len):
         reg1, reg2 = self.manager.require_regs(2)
 
+        self.set_call(args, reg1, reg2, ret_len, rtn_addr)
+
+        self.write_format("call", address(fn_ptr))
+
+        self.manager.append_regs(reg2, reg1)
+
+    def set_call(self, args: list, reg1, reg2, ret_len, rtn_addr):
         count = 0
         for arg in args:
             arg_addr = arg[0]
@@ -185,11 +178,18 @@ class TpaOutput:
 
             count += arg_length
 
-        self.write_format("iload", register(reg1), number(rtn_addr))
-        self.write_format("set_ret", register(reg1))
-        self.write_format("call", address(fn_ptr))
+        if ret_len == 1:  # char level
+            pass
+        elif ret_len == util.INT_LEN:
+            self.write_format("iload", register(reg1), number(rtn_addr))
+            self.write_format("set_ret", register(reg1))
+        elif ret_len == util.FLOAT_LEN:
+            self.write_format("iload", register(reg1), number(rtn_addr))
+            self.write_format("set_ret", register(reg1))
+        # if void, do nothing
 
-        self.manager.append_regs(reg2, reg1)
+    def invoke_name(self, name: str, args: list, rtn_addr: int):
+        pass
 
     def if_zero_goto(self, cond_addr: int, label: str):
         reg1 = self.manager.require_reg()
@@ -222,7 +222,7 @@ class TpaOutput:
     def _global_generate(self):
         literal_str = " ".join([str(int(b)) for b in self.manager.literal])
         merged = ["bits", str(util.VM_BITS),
-                  "stack_size", str(STACK_SIZE),
+                  "stack_size", str(util.STACK_SIZE),
                   "global_length", str(self.manager.global_length()),
                   "literal_length", str(len(self.manager.literal)),
                   "literal", literal_str,

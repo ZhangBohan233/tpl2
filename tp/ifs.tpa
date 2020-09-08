@@ -5,13 +5,13 @@ stack_size
 global_length
 8
 literal_length
-24
+32
 literal
-0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0 40 0 0 0 0 0 0 0
 
 fn main $1024
     push_fp
-    push          48
+    push          56
     load_lit      %0      $0
     iload         %1      $8
     store         %1      %0
@@ -32,10 +32,14 @@ fn main $1024
     iload         %1      $40
     store         %1      %0
     load          %0      $40
-    iload         %1      $16
-    store         %1      %0
+    put_ret       %0
+    pull_fp
+    ret
     label         ENDIF_0
-    load          %0      $16
+    load_lit      %0      $24
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $48
     put_ret       %0
     pull_fp
     ret

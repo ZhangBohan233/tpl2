@@ -1,0 +1,93 @@
+bits
+64
+stack_size
+8192
+global_length
+16
+literal_length
+32
+literal
+2 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 25 0 0 0 0 0 0 0
+
+fn fib $8192
+    push_fp
+    push          80
+    load_lit      %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $0
+    load          %1      $8
+    lti           %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    if_zero_goto  %0      ELSE_0
+    load          %0      $0
+    put_ret       %0
+    pull_fp
+    ret
+    goto          ENDIF_0
+    label         ELSE_0
+    load_lit      %0      $8
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $0
+    load          %1      $24
+    subi          %0      %1
+    iload         %1      32
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $32
+    store_abs     %0      %1
+    iload         %0      40
+    set_ret       %0
+    call_fn       fib
+    load_lit      %0      $16
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $0
+    load          %1      $48
+    subi          %0      %1
+    iload         %1      56
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $56
+    store_abs     %0      %1
+    iload         %0      64
+    set_ret       %0
+    call_fn       fib
+    load          %0      $40
+    load          %1      $64
+    addi          %0      %1
+    iload         %1      72
+    store         %1      %0
+    load          %0      $72
+    put_ret       %0
+    pull_fp
+    ret
+    label         ENDIF_0
+    stop
+
+fn main $8200
+    push_fp
+    push          16
+    load_lit      %0      $24
+    iload         %1      $0
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    call_fn       fib
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    aload         %0      $1
+    set_ret       %0
+    call_fn       main
+    exit

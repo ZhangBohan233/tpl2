@@ -1,0 +1,7 @@
+require {
+    print_int;
+}
+
+fn main() int {
+
+}

@@ -10,6 +10,9 @@ class Type:
     def convert_able(self, left_tar_type):
         return self == left_tar_type  # todo:
 
+    def is_void(self):
+        return self.length == 0
+
 
 class BasicType(Type):
     def __init__(self, type_name: str, length: int):

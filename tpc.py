@@ -34,8 +34,8 @@ USAGE = """Usage: python tpc.py [flags] source target
 
 
 def parse_args():
-    args_dict = {"py": sys.argv[0], "src_file": None, "tar_file": None, "optimize": 0, "no_lang": False,
-                 "tokens": False, "ast": False}
+    args_dict = {"py": sys.argv[0], "src_file": None, "tpc_file": None, "tpa_file": None,
+                 "optimize": 0, "no_lang": False, "tokens": False, "ast": False}
     i = 1
     while i < len(sys.argv):
         arg = sys.argv[i]
@@ -54,24 +54,44 @@ def parse_args():
                 args_dict["tokens"] = True
             elif arg[1:].lower() == "ast":
                 args_dict["ast"] = True
+            elif arg[1:].lower() == "tpa":
+                args_dict["tpa_file"] = sys.argv[i + 1]
+                i += 1
+            elif arg[1:].lower() == "tpc":
+                args_dict["tpc_file"] = sys.argv[i + 1]
+                i += 1
             else:
                 print("Unknown flag '{}'".format(arg))
         elif args_dict["src_file"] is None:
             args_dict["src_file"] = arg
-        elif args_dict["tar_file"] is None:
-            args_dict["tar_file"] = arg
         else:
             print("Unexpected argument")
         i += 1
+
+    if args_dict["src_file"] is None:
+        print(USAGE)
+        return None
+    if not args_dict["src_file"].endswith(".tp"):
+        print("Source file must be a Trash Program (*.tp). ")
+        return None
+
+    if args_dict["tpa_file"] is None:
+        args_dict["tpa_file"] = replace_extension(args_dict["src_file"], ".tpa")
+    if args_dict["tpc_file"] is None:
+        args_dict["tpc_file"] = replace_extension(args_dict["tpa_file"], ".tpc")
     return args_dict
+
+
+def replace_extension(orig_name: str, ext: str):
+    return orig_name[:orig_name.rfind(".")] + ext
 
 
 if __name__ == '__main__':
     t0 = time.time()
 
     args = parse_args()
-    if not args["src_file"] or not args["tar_file"]:
-        print(USAGE)
+    if args is None:
+        exit(1)
 
     # with open(args["src_file"], "r") as rf:
     lexer = lex.FileTokenizer(args["src_file"], not args["no_lang"])
@@ -97,9 +117,8 @@ if __name__ == '__main__':
     # compiler.configs(optimize=args["optimize"])
     tpa_content = compiler.compile()
 
-    tar_name = args["tar_file"]
-    pure_name = tar_name[:tar_name.rfind(".")]
-    tpa_name = pure_name + ".tpa"
+    tpc_name = args["tpc_file"]
+    tpa_name = args["tpa_file"]
 
     # with open(tpa_name, "r") as tpa_f:
     #     tpa_text = tpa_f.read()
@@ -115,7 +134,7 @@ if __name__ == '__main__':
         tpa_file.write(tpa_content)
 
     tpa_cmp = tpc.TpcCompiler(tpa_name)
-    tpa_cmp.compile(tar_name)
+    tpa_cmp.compile(tpc_name)
 
     t1 = time.time()
     print("Compilation finished in {} seconds.".format(t1 - t0))

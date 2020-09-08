@@ -1,0 +1,21 @@
+bits
+64
+stack_size
+1024
+global_length
+8
+literal_length
+0
+literal
+
+
+fn main $1024
+    push_fp
+    push          0
+    stop
+
+entry
+    aload         %0      $1
+    set_ret       %0
+    call_fn       main
+    exit
