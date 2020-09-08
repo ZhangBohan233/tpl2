@@ -1,0 +1,14 @@
+require {
+    println_int;
+}
+
+
+fn main() int {
+    for i: int = 0; i < 10; i = i + 1 {
+        if i == 6 {
+            continue;
+        }
+        println_int(i);
+    }
+    return 0;
+}

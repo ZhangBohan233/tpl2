@@ -44,6 +44,8 @@ INSTRUCTIONS = {
     "lti": (38, 1, 1),
     "gei": (39, 1, 1),
     "lei": (40, 1, 1),
+    "negi": (41, 1),
+    "not": (42, 1),
     "i_to_f": (60, 1),  # convert int in %reg to float, store in %reg
     "f_to_i": (61, 1),
 }

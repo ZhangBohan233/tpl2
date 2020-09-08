@@ -96,6 +96,12 @@ class Environment:
     def validate_rtype(self, actual_rtype: typ.Type, lf: tl.LineFile):
         raise errs.TplEnvironmentError("Return outside function. ", lf)
 
+    def break_label(self) -> str:
+        raise NotImplementedError()
+
+    def continue_label(self) -> str:
+        raise NotImplementedError()
+
 
 class SubAbstractEnvironment(Environment):
     def __init__(self, outer):
@@ -104,13 +110,30 @@ class SubAbstractEnvironment(Environment):
     def validate_rtype(self, actual_rtype: typ.Type, lf: tl.LineFile):
         self.outer.validate_rtype(actual_rtype, lf)
 
+    def break_label(self) -> str:
+        return self.outer.break_label()
 
-class GlobalEnvironment(Environment):
+    def continue_label(self) -> str:
+        return self.outer.continue_label()
+
+
+class MainAbstractEnvironment(Environment):
+    def __init__(self, outer):
+        super().__init__(outer)
+
+    def break_label(self) -> str:
+        raise errs.TplEnvironmentError()
+
+    def continue_label(self) -> str:
+        raise errs.TplEnvironmentError()
+
+
+class GlobalEnvironment(MainAbstractEnvironment):
     def __init__(self):
         super().__init__(None)
 
 
-class FunctionEnvironment(Environment):
+class FunctionEnvironment(MainAbstractEnvironment):
     def __init__(self, outer, name: str, rtype: typ.Type):
         super().__init__(outer)
 
@@ -126,3 +149,17 @@ class FunctionEnvironment(Environment):
 class BlockEnvironment(SubAbstractEnvironment):
     def __init__(self, outer):
         super().__init__(outer)
+
+
+class LoopEnvironment(SubAbstractEnvironment):
+    def __init__(self, continue_label: str, break_label: str, outer):
+        super().__init__(outer)
+
+        self._continue_label = continue_label
+        self._break_label = break_label
+
+    def break_label(self) -> str:
+        return self._break_label
+
+    def continue_label(self) -> str:
+        return self._continue_label

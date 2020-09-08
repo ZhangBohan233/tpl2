@@ -25,18 +25,36 @@ def number(num: int) -> str:
 
 class LabelManager:
     def __init__(self):
-        self.else_count = 0
-        self.endif_count = 0
+        self._else_count = 0
+        self._endif_count = 0
+        self._loop_title_count = 0
+        self._end_loop_count = 0
+        self._general_count = 0
 
     def endif_label(self):
-        n = self.endif_count
-        self.endif_count += 1
+        n = self._endif_count
+        self._endif_count += 1
         return "ENDIF_" + str(n)
 
     def else_label(self):
-        n = self.else_count
-        self.else_count += 1
+        n = self._else_count
+        self._else_count += 1
         return "ELSE_" + str(n)
+
+    def loop_title_label(self):
+        n = self._loop_title_count
+        self._loop_title_count += 1
+        return "LOOP_TITLE_" + str(n)
+
+    def end_loop_label(self):
+        n = self._end_loop_count
+        self._end_loop_count += 1
+        return "END_LOOP_" + str(n)
+
+    def general_label(self):
+        n = self._general_count
+        self._general_count += 1
+        return "LABEL_" + str(n)
 
 
 class Manager:
@@ -100,7 +118,7 @@ class TpaOutput:
         return len(self.output) - 1
 
     def modify_indefinite_push(self, index, length):
-        push = self.format("push", length)
+        push = self._format("push", length)
         self.output[index] = push
 
     def end_func(self):
@@ -218,10 +236,10 @@ class TpaOutput:
         self.manager.append_regs(reg1)
 
     def write_format(self, *inst):
-        self.output.append(self.format(*inst))
+        self.output.append(self._format(*inst))
 
     @staticmethod
-    def format(*inst):
+    def _format(*inst):
         mne = inst[0]
         s = "    " + mne
         s += " " * max(14 - len(mne), 1)

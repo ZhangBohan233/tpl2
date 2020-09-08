@@ -26,7 +26,11 @@ class Parser:
             "return": self.process_return,
             "->": self.process_right_arrow,
             "if": self.process_if_stmt,
-            "require": self.process_require
+            "while": self.process_while_stmt,
+            "for": self.process_for_stmt,
+            "require": self.process_require,
+            "break": self.process_break,
+            "continue": self.process_continue
         }
 
     def parse(self):
@@ -111,6 +115,38 @@ class Parser:
         ifs = ast.IfStmt(cond, body, else_block, lf)
         builder.add_node(ifs)
         return index
+
+    def process_while_stmt(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+        index += 1
+        item = parent[index]
+        cond_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        while not (isinstance(item, tl.CollectiveElement) and item.is_brace()):
+            cond_list.append(item)
+            index += 1
+            item = parent[index]
+
+        cond = self.parse_as_part(cond_list)
+        body = self.parse_as_block(item)
+        builder.add_node(ast.WhileStmt(cond, body, lf))
+
+    def process_for_stmt(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+        index += 1
+        item = parent[index]
+        cond_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        while not (isinstance(item, tl.CollectiveElement) and item.is_brace()):
+            cond_list.append(item)
+            index += 1
+            item = parent[index]
+
+        cond = self.parse_as_block(cond_list)
+        body = self.parse_as_block(item)
+        builder.add_node(ast.ForStmt(cond, body, lf))
+
+    def process_break(self, p, i, builder, lf):
+        builder.add_node(ast.BreakStmt(lf))
+
+    def process_continue(self, p, i, builder, lf):
+        builder.add_node(ast.ContinueStmt(lf))
 
     def process_require(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
         index += 1

@@ -102,6 +102,15 @@ class BlockStmt(AbstractStatement):
         for line in self.lines:
             line.compile(env, tpa)
 
+    def __len__(self):
+        return len(self.lines)
+
+    def __getitem__(self, item):
+        return self.lines[item]
+
+    def __setitem__(self, key, value):
+        self.lines[key] = value
+
     def __str__(self):
         s = "\n" + " " * SPACES.get() + "{"
         SPACES.add_space()
@@ -274,10 +283,22 @@ class UnaryOperator(UnaryExpr):
         self.op_type = op_type
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
+        if self.op_type == UNA_ARITH:
+            vt = self.value.evaluated_type(env, tpa.manager)
+            if isinstance(vt, typ.BasicType):
+                return vt
+        elif self.op_type == UNA_LOGICAL:
+            if self.op == "not":
+                pass
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        pass
+        if self.op_type == UNA_ARITH:
+            vt = self.value.evaluated_type(env, manager)
+            if isinstance(vt, typ.BasicType):
+                return vt
+        elif self.op_type == UNA_LOGICAL:
+            return typ.TYPE_INT
+        raise errs.TplCompileError("Value type is not supported by unary operator. ", self.lf)
 
 
 class BinaryOperator(BinaryExpr):
@@ -315,6 +336,7 @@ class BinaryOperator(BinaryExpr):
                             return typ.TYPE_INT
         elif self.op_type == BIN_LOGICAL or self.op_type == BIN_BITWISE or self.op_type == BIN_LAZY:
             return typ.TYPE_INT
+        raise errs.TplCompileError("Value type is not supported by binary operator. ", self.lf)
 
 
 class BinaryOperatorAssignment(BinaryExpr):
@@ -632,6 +654,90 @@ class IfStmt(AbstractStatement):
             return "if {} {} else {}".format(self.condition, self.if_branch, self.else_branch)
         else:
             return "if {} {}".format(self.condition, self.if_branch)
+
+
+class WhileStmt(AbstractStatement):
+    def __init__(self, condition: AbstractExpression, body: BlockStmt, lf):
+        super().__init__(lf)
+
+        self.condition = condition
+        self.body = body
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        loop_title_label = tpa.manager.label_manager.loop_title_label()
+        end_label = tpa.manager.label_manager.end_loop_label()
+
+        loop_env = en.LoopEnvironment(loop_title_label, end_label, env)
+
+        tpa.write_format("label", loop_title_label)
+        cond_addr = self.condition.compile(env, tpa)
+        tpa.if_zero_goto(cond_addr, end_label)
+
+        self.body.compile(loop_env, tpa)
+
+        tpa.write_format("goto", loop_title_label)
+        tpa.write_format("label", end_label)
+
+    def __str__(self):
+        return "while {} {}".format(self.condition, self.body)
+
+
+class ForStmt(AbstractStatement):
+    def __init__(self, title: BlockStmt, body: BlockStmt, lf):
+        super().__init__(lf)
+
+        self.body = body
+        if len(title) == 3:
+            self.init: Node = title[0]
+            self.cond: AbstractExpression = title[1]
+            self.step: Node = title[2]
+        else:
+            raise errs.TplCompileError("For loop title must contains 3 parts. ", lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        loop_title_label = tpa.manager.label_manager.loop_title_label()
+        end_label = tpa.manager.label_manager.end_loop_label()
+        continue_label = tpa.manager.label_manager.general_label()
+
+        loop_env = en.LoopEnvironment(continue_label, end_label, env)
+        self.init.compile(loop_env, tpa)
+        tpa.write_format("label", loop_title_label)
+        cond = self.cond.compile(loop_env, tpa)
+        tpa.if_zero_goto(cond, end_label)
+
+        self.body.compile(loop_env, tpa)
+
+        tpa.write_format("label", continue_label)
+        self.step.compile(loop_env, tpa)
+        tpa.write_format("goto", loop_title_label)
+        tpa.write_format("label", end_label)
+
+    def __str__(self):
+        return "for {}; {}; {} {}".format(self.init, self.cond, self.step, self.body)
+
+
+class BreakStmt(AbstractStatement):
+    def __init__(self, lf):
+        super().__init__(lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        end_label = env.break_label()
+        tpa.write_format("goto", end_label)
+
+    def __str__(self):
+        return "break"
+
+
+class ContinueStmt(AbstractStatement):
+    def __init__(self, lf):
+        super().__init__(lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        end_label = env.continue_label()
+        tpa.write_format("goto", end_label)
+
+    def __str__(self):
+        return "continue"
 
 
 INT_ARITH_TABLE = {
