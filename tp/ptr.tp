@@ -1,0 +1,4 @@
+fn main() int {
+    a: int = 0;
+    return not a;
+}

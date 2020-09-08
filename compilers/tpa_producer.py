@@ -166,6 +166,16 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def unary_arith(self, op_inst: str, value: int, res: int):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("load", register(reg1), address(value))
+        self.write_format(op_inst, register(reg1))
+        self.write_format("iload", register(reg2), number(res))
+        self.write_format("store", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
     def call_named_function(self, fn_name: str, args: list, rtn_addr: int, ret_len: int):
         reg1, reg2 = self.manager.require_regs(2)
 

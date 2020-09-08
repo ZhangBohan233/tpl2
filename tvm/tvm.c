@@ -308,6 +308,14 @@ void tvm_mainloop() {
                 reg2 = MEMORY[pc++];
                 regs[reg1].int_value = regs[reg1].int_value <= regs[reg2].int_value;
                 break;
+            case 41:  // negi
+                reg1 = MEMORY[pc++];
+                regs[reg1].int_value = -regs[reg1].int_value;
+                break;
+            case 42:  // not
+                reg1 = MEMORY[pc++];
+                regs[reg1].int_value = !regs[reg1].int_value;
+                break;
             default:
                 ERROR_CODE = ERR_INSTRUCTION;
                 break;

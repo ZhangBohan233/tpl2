@@ -283,13 +283,27 @@ class UnaryOperator(UnaryExpr):
         self.op_type = op_type
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        vt: typ.Type = self.value.evaluated_type(env, tpa.manager)
+        value = self.value.compile(env, tpa)
         if self.op_type == UNA_ARITH:
-            vt = self.value.evaluated_type(env, tpa.manager)
             if isinstance(vt, typ.BasicType):
-                return vt
+                if vt.type_name == "int":
+                    res_addr = tpa.manager.allocate_stack(vt.length)
+                    if self.op == "neg":
+                        tpa.unary_arith("negi", value, res_addr)
+                    else:
+                        raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lf)
+                    return res_addr
         elif self.op_type == UNA_LOGICAL:
-            if self.op == "not":
-                pass
+            if isinstance(vt, typ.BasicType):
+                res_addr = tpa.manager.allocate_stack(vt.length)
+                if self.op == "not":
+                    if vt.type_name != "int":
+                        raise errs.TplCompileError("Operator 'not' must take an int as value. ", self.lf)
+                    tpa.unary_arith("not", value, res_addr)
+                else:
+                    raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lf)
+                return res_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if self.op_type == UNA_ARITH:
