@@ -10,8 +10,8 @@ LOGICAL_UNARY = {"not"}
 SYMBOLS = {"{", "}", "[", "]", "(", ")", ".", ",", ";", ":"}
 OTHERS = {"=", "->", ":=", "++", "--"}
 
-RESERVED = {"break", "const", "continue", "else", "fn", "for",
-            "if", "include", "require", "return", "then", "var", "while"}
+RESERVED = {"as", "break", "const", "continue", "else", "export", "fn", "for",
+            "if", "import", "require", "return", "struct", "then", "var", "while"}
 
 ALL_BINARY = set.union(
     ARITH_BINARY,
@@ -106,6 +106,9 @@ class StrToken(Token):
 
         self.value = v
 
+    def __str__(self):
+        return "Str{" + self.value + "}"
+
 
 CE_BRACKET = 1
 CE_BRACE = 2
@@ -131,7 +134,7 @@ class AtomicElement(Element):
 
 
 class CollectiveElement(Element):
-    def __init__(self, ce_type: int, lf, parent):
+    def __init__(self, ce_type: int, lf: LineFile, parent):
         super().__init__(parent)
 
         self.ce_type = ce_type

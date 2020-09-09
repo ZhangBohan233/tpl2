@@ -433,6 +433,22 @@ class AddrExpr(UnaryExpr):
         return typ.PointerType(vt)
 
 
+class AsExpr(BinaryExpr):
+    """
+    Note that this expression may be used in multiple ways: cast / name changing
+
+    All methods of this class are defined for the use of 'cast'
+    """
+    def __init__(self, lf):
+        super().__init__("as", lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        pass
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        return self.right.definition_type(env, manager)
+
+
 class Assignment(BinaryExpr):
     def __init__(self, lf):
         super().__init__("=", lf)
@@ -845,6 +861,52 @@ class ContinueStmt(AbstractStatement):
 
     def __str__(self):
         return "continue"
+
+
+class ExportStmt(AbstractStatement):
+    def __init__(self, block: BlockStmt, lf):
+        super().__init__(lf)
+
+        self.block = block
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        exported_names = {}  # {real name in scope: export name}
+        for line in self.block:
+            for part in line:
+                if isinstance(part, NameNode):
+                    exported_names[part.name] = part.name
+                    continue
+                elif isinstance(part, AsExpr):
+                    if isinstance(part.left, NameNode) and isinstance(part.right, NameNode):
+                        exported_names[part.left.name] = part.right.name
+                        continue
+
+                raise errs.TplCompileError("Export statements must be name or 'as' expression. ", self.lf)
+        exported_entries = env.vars_subset(exported_names, self.lf)
+        if isinstance(env, en.ModuleEnvironment):
+            env.set_exports(exported_entries, self.lf)
+        else:
+            raise errs.TplCompileError("Export must directly under a file. ", self.lf)
+
+    def __str__(self):
+        return "export {}".format(self.block)
+
+
+class ImportStmt(AbstractStatement):
+    def __init__(self, file: str, tree: BlockStmt, lf):
+        super().__init__(lf)
+
+        self.file = file
+        self.tree = tree
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        module_env = en.ModuleEnvironment()
+        self.tree.compile(module_env, tpa)
+        if module_env.exports is not None:
+            env.import_vars(module_env.exports, self.lf)
+
+    def __str__(self):
+        return "import {}: {}".format(self.file, self.tree)
 
 
 INT_ARITH_TABLE = {

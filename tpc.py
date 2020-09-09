@@ -13,15 +13,12 @@ import compilers.tokens_lib as tl
 import compilers.compiler as cmp
 import compilers.tp_parser as psr
 import compilers.tokenizer as lex
+import compilers.text_preprocessor as txt_prep
 import compilers.tpc_compiler as tpc
 import compilers.ast_preprocessor as prep
 
 
-SPL_NAME = "spl.py"
-
-
-def get_spl_path():
-    return os.path.dirname(os.path.abspath(__file__))
+TPC_NAME = "tpc.py"
 
 
 USAGE = """Usage: python tpc.py [flags] source target
@@ -82,6 +79,15 @@ def parse_args():
     return args_dict
 
 
+def get_tpc_path():
+    """
+    Returns the absolute path of tpc.py
+
+    :return:
+    """
+    return os.path.dirname(os.path.abspath(__file__))
+
+
 def replace_extension(orig_name: str, ext: str):
     return orig_name[:orig_name.rfind(".")] + ext
 
@@ -95,12 +101,15 @@ if __name__ == '__main__':
 
     # with open(args["src_file"], "r") as rf:
     lexer = lex.FileTokenizer(args["src_file"], not args["no_lang"])
-    tokens: tl.CollectiveElement = lexer.tokenize()
+    tokens = lexer.tokenize()
 
     if args["tokens"]:
         print(tokens)
 
-    parser = psr.Parser(tokens)
+    txt_p = txt_prep.FileTextPreprocessor(tokens, {"tpc_path": get_tpc_path(), "import_lang": not args["no_lang"]})
+    processed_tks = txt_p.preprocess()
+
+    parser = psr.Parser(processed_tks)
     root, literal = parser.parse()
 
     # preprocessor = prep.Preprocessor()

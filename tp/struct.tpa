@@ -1,0 +1,50 @@
+bits
+64
+stack_size
+1024
+global_length
+56
+literal_length
+32
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 32 0 0 0 0 0 0 0
+
+fn mod $1056
+    push_fp
+    push          16
+    load_lit      %0      $16
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn main $1072
+    push_fp
+    push          0
+    load          %0      $1040
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    load_lit      %0      $0
+    iload         %1      $1032
+    store         %1      %0
+    load          %0      $1032
+    iload         %1      $1024
+    store         %1      %0
+    load_lit      %0      $8
+    iload         %1      $1048
+    store         %1      %0
+    load          %0      $1048
+    iload         %1      $1040
+    store         %1      %0
+    aload         %0      $1
+    set_ret       %0
+    call_fn       main
+    exit

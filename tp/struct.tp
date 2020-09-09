@@ -1,0 +1,7 @@
+import lang;
+import "tp/ptr.tp"
+
+
+fn main() int {
+    return true;
+}

@@ -1,9 +1,15 @@
+import lang
+
+fn mod(x: *int) void {
+    *x = 24;
+}
+
 fn main() int {
     a: int = 32;
     b: *int = &a;
     c: **int = &b;
 
-    **c = 42;
+    mod(b);
 
     return a;
 }

@@ -31,3 +31,7 @@ def empty_bytes(length: int) -> bytes:
 
 def initial_literal() -> bytearray:
     return bytearray(int_to_bytes(0) + int_to_bytes(1))  # false and true, related to FALSE_POS and TRUE_POS
+
+
+def initial_int_literal_dict() -> dict:
+    return {0: 0, 1: INT_LEN}

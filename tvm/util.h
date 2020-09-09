@@ -8,7 +8,10 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-// To modify this, also modify the typedef of 'tp_int' and 'tp_float', and 'bytes_to_int'... etc..
+//
+// To modify VM bits, modify all of the following
+//
+
 #define VM_BITS 64
 #define INT_LEN 8
 #define FLOAT_LEN 8
@@ -18,6 +21,10 @@
 
 typedef int_fast64_t tp_int;
 typedef double tp_float;
+
+//
+// end of modification
+//
 
 #define tp_printf(fmt, ...) {char *fmt_mod = format_bits(fmt); printf(fmt_mod, __VA_ARGS__); free(fmt_mod);}
 

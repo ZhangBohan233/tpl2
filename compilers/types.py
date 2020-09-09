@@ -81,6 +81,9 @@ class PointerType(Type):
         else:
             return super().weak_convertible(left_tar_type)
 
+    def __eq__(self, other):
+        return isinstance(other, PointerType) and self.base == other.base
+
     def __str__(self):
         return "*" + str(self.base)
 

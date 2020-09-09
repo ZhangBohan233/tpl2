@@ -20,7 +20,7 @@ class FileTokenizer:
         self.tokens = []
         self.in_doc = False
 
-    def tokenize(self):
+    def tokenize(self) -> tl.CollectiveElement:
         with open(self.file_name, "r") as rf:
             line = rf.readline()
             line_num = 1
@@ -88,7 +88,7 @@ class FileTokenizer:
                 if in_str:
                     if ch == '"':
                         in_str = False
-                        self.tokens.append(literal)
+                        self.tokens.append(tl.StrToken(literal, lf))
                         literal = ""
                     else:
                         literal += ch

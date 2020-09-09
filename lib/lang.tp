@@ -1,0 +1,6 @@
+FALSE: int = 0;
+TRUE: int = 1;
+
+export {
+    FALSE, TRUE as true
+}

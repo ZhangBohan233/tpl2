@@ -9,6 +9,13 @@ class VarEntry:
         self.addr = addr
         self.const = const
 
+    def __str__(self):
+        pre = "Const" if self.const else "Var"
+        return "{}Entry {} @{}".format(pre, self.type, self.addr)
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class FunctionEntry(VarEntry):
     def __init__(self, type_: typ.Type, addr: int, const=True, named=False):
@@ -90,8 +97,33 @@ class Environment:
         else:
             return None
 
-    def is_global(self):
-        return self.outer is None
+    @classmethod
+    def is_global(cls):
+        return False
+
+    def set_exports(self, exports, lf):
+        pass  # do nothing
+
+    def vars_subset(self, names: dict, lf) -> dict:
+        """
+        :param names: dict of {real name in scope: export name}
+        :param lf:
+        :return:
+        """
+        sub = {}
+        for name, export_name in names.items():
+            entry = self._inner_get(name)
+            if entry is None:
+                raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+            sub[export_name] = entry
+        return sub
+
+    def import_vars(self, module_exports: dict, lf):
+        for name, ve in module_exports.items():
+            if self._inner_get(name) is None:
+                self.vars[name] = ve
+            else:
+                raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
 
     def validate_rtype(self, actual_rtype: typ.Type, lf: tl.LineFile):
         raise errs.TplEnvironmentError("Return outside function. ", lf)
@@ -132,6 +164,10 @@ class GlobalEnvironment(MainAbstractEnvironment):
     def __init__(self):
         super().__init__(None)
 
+    @classmethod
+    def is_global(cls):
+        return True
+
 
 class FunctionEnvironment(MainAbstractEnvironment):
     def __init__(self, outer, name: str, rtype: typ.Type):
@@ -144,6 +180,19 @@ class FunctionEnvironment(MainAbstractEnvironment):
         if not actual_rtype.convertible_to(self.rtype, lf):
             raise errs.TplCompileError("Function '{}' has declared return type '{}', got actual return type '{}'. "
                                        .format(self.name, self.rtype, actual_rtype), lf)
+
+
+class ModuleEnvironment(MainAbstractEnvironment):
+    def __init__(self):
+        super().__init__(None)
+
+        self.exports = None
+
+    def set_exports(self, exports: dict, lf):
+        if self.exports is None:
+            self.exports = exports
+        else:
+            raise errs.TplEnvironmentError("Multiple exports in one module. ", lf)
 
 
 class BlockEnvironment(SubAbstractEnvironment):

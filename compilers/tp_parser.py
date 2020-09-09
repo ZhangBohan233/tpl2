@@ -11,7 +11,7 @@ class Parser:
         self.literal_bytes = util.initial_literal()
         self.var_level = ast.VAR_VAR
 
-        self.int_literals = {}  # int_lit : position in literal_bytes
+        self.int_literals = util.initial_int_literal_dict()  # int_lit : position in literal_bytes
         self.float_literals = {}
         self.char_literals = {}
 
@@ -30,7 +30,10 @@ class Parser:
             "for": self.process_for_stmt,
             "require": self.process_require,
             "break": self.process_break,
-            "continue": self.process_continue
+            "continue": self.process_continue,
+            "import": self.process_import,
+            "export": self.process_export,
+            "as": self.process_as_expr,
         }
 
     def parse(self):
@@ -40,6 +43,8 @@ class Parser:
     #
     # returns None or 0 if this processor does not push the index,
     # otherwise, return the last index used for this processor
+    # In other words, returns the extra number of elements processed
+    #
     # Note: do not return the index of the next
 
     def process_assign(self, p, i, builder, lf):
@@ -77,12 +82,12 @@ class Parser:
         builder.add_node(ast.FunctionDef(fn_name, params, rtype, body, lf))
         return index
 
-    def process_eol(self, p, i, builder, lf):
+    def process_eol(self, p, i, builder: ab.AstBuilder, lf):
         builder.finish_part()
         builder.finish_line()
         self.var_level = ast.VAR_VAR
 
-    def process_comma(self, p, i, builder, lf):
+    def process_comma(self, p, i, builder: ab.AstBuilder, lf):
         builder.finish_part()
 
     def process_var(self, p, i, b, lf):
@@ -91,7 +96,7 @@ class Parser:
     def process_const(self, p, i, b, lf):
         self.var_level = ast.VAR_CONST
 
-    def process_return(self, p, i, builder, lf):
+    def process_return(self, p, i, builder: ab.AstBuilder, lf):
         builder.add_node(ast.ReturnStmt(lf))
 
     def process_right_arrow(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
@@ -165,10 +170,10 @@ class Parser:
         body = self.parse_as_block(item)
         builder.add_node(ast.ForStmt(cond, body, lf))
 
-    def process_break(self, p, i, builder, lf):
+    def process_break(self, p, i, builder: ab.AstBuilder, lf):
         builder.add_node(ast.BreakStmt(lf))
 
-    def process_continue(self, p, i, builder, lf):
+    def process_continue(self, p, i, builder: ab.AstBuilder, lf):
         builder.add_node(ast.ContinueStmt(lf))
 
     def process_require(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
@@ -187,6 +192,29 @@ class Parser:
         builder.add_node(ast.RequireStmt(content, lf))
         self.process_eol(parent, index, builder, lf)
         return index
+
+    def process_import(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+        file_atom: tl.AtomicElement = parent[index + 1]
+        file_tk: tl.StrToken = file_atom.atom
+        includes: tl.CollectiveElement = parent[index + 2]
+        included_block = self.parse_as_block(includes)
+        builder.add_node(ast.ImportStmt(file_tk.value, included_block, lf))
+
+        return index + 2
+
+    def process_export(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+        index += 1
+        ele = parent[index]
+        if tl.is_brace(ele):
+            block = self.parse_as_block(ele)
+            builder.add_node(ast.ExportStmt(block, lf))
+        else:
+            raise errs.TplCompileError("Invalid export. ", lf)
+
+        return index
+
+    def process_as_expr(self, p, i, builder: ab.AstBuilder, lf):
+        builder.add_node(ast.AsExpr(lf))
 
     # parser of collective elements
 
