@@ -3,22 +3,31 @@ bits
 stack_size
 1024
 global_length
-8
+16
 literal_length
-32
+56
 literal
-2 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 10 0 0 0 0 0 0 0 20 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 10 0 0 0 0 0 0 0 20 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0
 
-fn main $1024
+fn get $1024
     push_fp
-    push          64
-    load_lit      %0      $0
+    push          8
+    load          %0      $0
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn main $1032
+    push_fp
+    push          112
+    load_lit      %0      $16
     iload         %1      $8
     store         %1      %0
     load          %0      $8
     iload         %1      $0
     store         %1      %0
-    load_lit      %0      $8
+    load_lit      %0      $24
     iload         %1      $24
     store         %1      %0
     load          %0      $0
@@ -28,7 +37,7 @@ fn main $1024
     store         %1      %0
     load          %0      $32
     if_zero_goto  %0      ELSE_0
-    load_lit      %0      $16
+    load_lit      %0      $32
     iload         %1      $48
     store         %1      %0
     load          %0      $48
@@ -36,17 +45,46 @@ fn main $1024
     store         %1      %0
     goto          ENDIF_0
     label         ELSE_0
-    load_lit      %0      $24
+    load_lit      %0      $40
     iload         %1      $56
     store         %1      %0
     load          %0      $56
     iload         %1      $40
     store         %1      %0
     label         ENDIF_0
-    load          %0      $40
+    aload_sp      %0      $0
+    load          %1      $40
+    store_abs     %0      %1
+    iload         %0      64
+    set_ret       %0
+    call_fn       get
+    load          %0      $64
     iload         %1      $16
     store         %1      %0
-    load          %0      $16
+    load_lit      %0      $48
+    iload         %1      $80
+    store         %1      %0
+    load          %0      $80
+    iload         %1      $72
+    store         %1      %0
+    load          %0      $0
+    if_zero_goto  %0      ELSE_1
+    load_lit      %0      $8
+    iload         %1      $104
+    store         %1      %0
+    load          %0      $104
+    iload         %1      $96
+    store         %1      %0
+    goto          ENDIF_1
+    label         ELSE_1
+    load          %0      $72
+    iload         %1      $96
+    store         %1      %0
+    label         ENDIF_1
+    load          %0      $96
+    iload         %1      $88
+    store         %1      %0
+    load          %0      $88
     put_ret       %0
     pull_fp
     ret

@@ -337,7 +337,20 @@ class BinaryOperator(BinaryExpr):
         elif self.op_type == BIN_BITWISE:
             pass
         elif self.op_type == BIN_LAZY:
-            pass
+            # x and y: if x then y else 0
+            # x or y: if x then 1 else y
+            if self.op == "and":
+                ife = IfExpr(self.left, self.right, IntLiteral(util.FALSE_POS, self.lf), self.lf)
+                if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
+                    raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
+                return ife.compile(env, tpa)
+            elif self.op == "or":
+                ife = IfExpr(self.left, IntLiteral(util.TRUE_POS, self.lf), self.right, self.lf)
+                if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
+                    raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
+                return ife.compile(env, tpa)
+            else:
+                raise errs.TplCompileError("Unexpected lazy operator. ", self.lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if self.op_type == BIN_ARITH:
@@ -588,12 +601,9 @@ class FunctionCall(AbstractExpression):
         for i in range(len(func_type.param_types)):
             param_t = func_type.param_types[i]
             arg_t: typ.Type = self.args[i].evaluated_type(env, tpa.manager)
-            if not arg_t.strong_convertible(param_t):
-                if not arg_t.weak_convertible(param_t):
-                    raise errs.TplCompileError("Argument type does not match param type. "
-                                               "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lf)
-                else:
-                    print("Warning: converting '{}' to '{}'. {}".format(arg_t, param_t, self.lf))
+            if not arg_t.convertible_to(param_t, self.lf):
+                raise errs.TplCompileError("Argument type does not match param type. "
+                                           "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lf)
             arg_addr = self.args[i].compile(env, tpa)
             evaluated_args.append((arg_addr, arg_t.length))
         if isinstance(self.call_obj, NameNode):

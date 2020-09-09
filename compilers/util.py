@@ -8,6 +8,9 @@ FLOAT_LEN = 8
 CHAR_LEN = 1
 PTR_LEN = INT_LEN
 
+FALSE_POS = 0
+TRUE_POS = INT_LEN
+
 
 def replace_extension(file_name: str, ext: str) -> str:
     ind = file_name.rfind(".")
@@ -24,3 +27,7 @@ def bytes_to_int(b: bytes) -> int:
 
 def empty_bytes(length: int) -> bytes:
     return bytes([0 for _ in range(length)])
+
+
+def initial_literal() -> bytearray:
+    return bytearray(int_to_bytes(0) + int_to_bytes(1))  # false and true, related to FALSE_POS and TRUE_POS

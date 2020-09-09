@@ -141,12 +141,9 @@ class FunctionEnvironment(MainAbstractEnvironment):
         self.rtype = rtype
 
     def validate_rtype(self, actual_rtype: typ.Type, lf: tl.LineFile):
-        if not actual_rtype.strong_convertible(self.rtype):
-            if not actual_rtype.weak_convertible(self.rtype):
-                raise errs.TplCompileError("Function '{}' has declared return type '{}', got actual return type '{}'. "
-                                           .format(self.name, self.rtype, actual_rtype), lf)
-            else:
-                print("Warning: converting '{}' to '{}'. {}".format(actual_rtype, self.rtype, lf))
+        if not actual_rtype.convertible_to(self.rtype, lf):
+            raise errs.TplCompileError("Function '{}' has declared return type '{}', got actual return type '{}'. "
+                                       .format(self.name, self.rtype, actual_rtype), lf)
 
 
 class BlockEnvironment(SubAbstractEnvironment):

@@ -8,7 +8,7 @@ import compilers.errors as errs
 class Parser:
     def __init__(self, tokens: tl.CollectiveElement):
         self.tokens = tokens
-        self.literal_bytes = bytearray()
+        self.literal_bytes = util.initial_literal()
         self.var_level = ast.VAR_VAR
 
         self.int_literals = {}  # int_lit : position in literal_bytes

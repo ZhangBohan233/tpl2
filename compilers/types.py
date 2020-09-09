@@ -18,10 +18,30 @@ class Type:
         """
         This method returns True iff self can be converted to the 'left_tar_type', but a warning is produced.
 
+        Note that this method does not necessarily returns True if strong_convertible returns True.
+
         :param left_tar_type:
         :return:
         """
         return self.strong_convertible(left_tar_type)
+
+    def convertible_to(self, left_tar_type, lf):
+        """
+        Returns True if strong_convertible or weak_convertible returns True.
+
+        Prints warning message if strong_convertible returns False, but weak_convertible returns True.
+
+        :param left_tar_type
+        :param lf
+        :return:
+        """
+        if self.strong_convertible(left_tar_type):
+            return True
+        elif self.weak_convertible(left_tar_type):
+            print("Warning: implicit conversion from {} to {}. {}".format(self, left_tar_type, lf))
+            return True
+        else:
+            return False
 
     def is_void(self):
         return self.length == 0
@@ -90,7 +110,6 @@ TYPE_INT = BasicType("int", util.INT_LEN)
 TYPE_FLOAT = BasicType("float", util.FLOAT_LEN)
 TYPE_CHAR = BasicType("char", util.CHAR_LEN)
 TYPE_VOID = BasicType("void", 0)
-
 
 NATIVE_FUNCTIONS = {
     "print_int": (1, NativeFuncType([TYPE_INT], TYPE_VOID)),
