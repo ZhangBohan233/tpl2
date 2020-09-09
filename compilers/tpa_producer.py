@@ -23,6 +23,10 @@ def number(num: int) -> str:
         raise errs.TplCompileError("Cannot compile '{}' to number. ".format(num))
 
 
+def function_path_name(fn_name, file):
+    return file + "." + fn_name
+
+
 class LabelManager:
     def __init__(self):
         self._else_count = 0
@@ -96,8 +100,8 @@ class Manager:
         for reg in regs:
             self.available_regs.append(reg)
 
-    def map_function(self, name: str, body: list):
-        self.functions_map[name] = body
+    def map_function(self, name: str, file_path, body: list):
+        self.functions_map[function_path_name(name, file_path)] = body
 
     def global_length(self):
         return self.gp - util.STACK_SIZE
@@ -109,8 +113,8 @@ class TpaOutput:
         self.is_global = is_global
         self.output = ["entry"] if is_global else []
 
-    def add_function(self, name, fn_ptr):
-        self.output.append("fn " + name + " " + address(fn_ptr))
+    def add_function(self, name, file_path, fn_ptr):
+        self.output.append("fn " + function_path_name(name, file_path) + " " + address(fn_ptr))
         self.write_format("push_fp")
 
     def add_indefinite_push(self) -> int:
@@ -249,14 +253,6 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
-    # def invoke_name(self, fn_name: str, args: list, rtn_addr: int, ret_len: int):
-    #     reg1, reg2 = self.manager.require_regs(2)
-    #
-    #     self.set_call(args, reg1, reg2, ret_len, rtn_addr)
-    #     self.write_format("invoke_nat", fn_name)
-    #
-    #     self.manager.append_regs(reg2, reg1)
-
     def invoke_ptr(self, fn_ptr: int, args: list, rtn_addr: int, ret_len: int):
         reg1, reg2 = self.manager.require_regs(2)
 
@@ -287,13 +283,13 @@ class TpaOutput:
             s += " " * max(8 - len(x), 1)
         return s.rstrip()
 
-    def generate(self):
+    def generate(self, main_file_path):
         if self.is_global:
-            self._global_generate()
+            self._global_generate(main_file_path)
         else:
-            self._local_generate()
+            self.local_generate()
 
-    def _global_generate(self):
+    def _global_generate(self, main_file_path):
         literal_str = " ".join([str(int(b)) for b in self.manager.literal])
         merged = ["bits", str(util.VM_BITS),
                   "stack_size", str(util.STACK_SIZE),
@@ -310,10 +306,10 @@ class TpaOutput:
 
         self.write_format("aload", "%0", "$1")
         self.write_format("set_ret", "%0")
-        self.write_format("call_fn", "main")
+        self.write_format("call_fn", function_path_name("main", main_file_path))
         self.write_format("exit")
 
-    def _local_generate(self):
+    def local_generate(self):
         pass
 
     def result(self):

@@ -178,12 +178,6 @@ class TpcCompiler:
                             tup = INSTRUCTIONS["call"]
                             cur_fn_body.append(tup[0])
                             cur_fn_body.extend(util.int_to_bytes(fn_ptr))
-                        # elif inst == "invoke_nat":
-                        #     fn_name = instructions[1]
-                        #     fn_ptr = function_pointers[fn_name]
-                        #     tup = INSTRUCTIONS["invoke"]
-                        #     cur_fn_body.append(tup[0])
-                        #     cur_fn_body.extend(util.int_to_bytes(fn_ptr))
                         elif inst == "label":
                             label_name = instructions[1]
                             labels[label_name] = len(cur_fn_body)

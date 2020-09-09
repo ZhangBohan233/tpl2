@@ -5,9 +5,10 @@ import compilers.ast as ast
 
 
 class Compiler:
-    def __init__(self, root: ast.BlockStmt, literals: bytes):
+    def __init__(self, root: ast.BlockStmt, literals: bytes, main_file_path):
         self.root = root
         self.literals = literals
+        self.main_path = main_file_path
 
     def compile(self) -> str:
         manager = prod.Manager(self.literals)
@@ -15,7 +16,7 @@ class Compiler:
         env = en.GlobalEnvironment()
 
         self.root.compile(env, out)
-        out.generate()
+        out.generate(self.main_path)
         res = out.result()
 
         return "\n".join(res)

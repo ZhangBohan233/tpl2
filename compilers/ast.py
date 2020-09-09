@@ -561,7 +561,7 @@ class FunctionDef(AbstractExpression):
         env.define_function(self.name, func_type, fn_ptr, self.lf)
 
         if self.body is not None:
-            body_out.add_function(self.name, fn_ptr)
+            body_out.add_function(self.name, self.lf.file_name, fn_ptr)
             push_index = body_out.add_indefinite_push()
             self.body.compile(scope, body_out)
 
@@ -573,8 +573,8 @@ class FunctionDef(AbstractExpression):
             body_out.modify_indefinite_push(push_index, stack_len)
 
         tpa.manager.restore_stack()
-        body_out.generate()
-        tpa.manager.map_function(self.name, body_out.result())
+        body_out.local_generate()
+        tpa.manager.map_function(self.name, self.lf.file_name, body_out.result())
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         pass
@@ -625,11 +625,11 @@ class FunctionCall(AbstractExpression):
         if isinstance(self.call_obj, NameNode):
             rtn_addr = tpa.manager.allocate_stack(func_type.rtype.length)
             if isinstance(func_type, typ.FuncType):
-                if env.is_named_function(self.call_obj.name, self.lf):
-                    tpa.call_named_function(self.call_obj.name, evaluated_args, rtn_addr, func_type.rtype.length)
-                else:
-                    fn_ptr = env.get(self.call_obj.name, self.lf)
-                    tpa.call_ptr_function(fn_ptr, evaluated_args, rtn_addr, func_type.rtype.length)
+                # if env.is_named_function(self.call_obj.name, self.lf):
+                #     tpa.call_named_function(self.call_obj.name, evaluated_args, rtn_addr, func_type.rtype.length)
+                # else:
+                fn_ptr = env.get(self.call_obj.name, self.lf)
+                tpa.call_ptr_function(fn_ptr, evaluated_args, rtn_addr, func_type.rtype.length)
             elif isinstance(func_type, typ.NativeFuncType):
                 fn_ptr = env.get(self.call_obj.name, self.lf)
                 tpa.invoke_ptr(fn_ptr, evaluated_args, rtn_addr, func_type.rtype.length)

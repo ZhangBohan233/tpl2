@@ -3,16 +3,54 @@ bits
 stack_size
 1024
 global_length
-56
+80
 literal_length
-32
+48
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 32 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 13 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 32 0 0 0 0 0 0 0
 
-fn mod $1056
+fn E:\GitHub\tpl2\lib\lang.tp.add $1056
+    push_fp
+    push          24
+    load          %0      $0
+    load          %1      $8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp.make $1064
+    push_fp
+    push          24
+    load_lit      %0      $16
+    iload         %1      $0
+    store         %1      %0
+    load_lit      %0      $24
+    iload         %1      $8
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $8
+    store_abs     %0      %1
+    iload         %0      16
+    set_ret       %0
+    call          $1056
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn tp/ptr.tp.mod $1072
     push_fp
     push          16
-    load_lit      %0      $16
+    load_lit      %0      $32
     iload         %1      $8
     store         %1      %0
     load          %0      $0
@@ -22,10 +60,58 @@ fn mod $1056
     ret
     stop
 
-fn main $1072
+fn tp/ptr.tp.main $1080
     push_fp
-    push          0
-    load          %0      $1040
+    push          48
+    load_lit      %0      $40
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      $0
+    store         %1      %0
+    aload         %0      $0
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      $16
+    store         %1      %0
+    aload         %0      $16
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      $32
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    call          $1072
+    load          %0      $0
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn tp/struct.tp.add $1088
+    push_fp
+    push          24
+    load          %0      $0
+    load          %1      $8
+    subi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn tp/struct.tp.main $1096
+    push_fp
+    push          8
+    iload         %0      0
+    set_ret       %0
+    call          $1064
+    load          %0      $0
     put_ret       %0
     pull_fp
     ret
@@ -46,5 +132,5 @@ entry
     store         %1      %0
     aload         %0      $1
     set_ret       %0
-    call_fn       main
+    call_fn       tp/struct.tp.main
     exit
