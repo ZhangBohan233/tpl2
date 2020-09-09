@@ -1,5 +1,5 @@
-FALSE: int = 0;
-TRUE: int = 1;
+const FALSE: int = 0;
+const TRUE: int = 1;
 
 fn add(x: int, y: int) int {
     return x + y;

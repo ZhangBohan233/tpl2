@@ -3,7 +3,6 @@ BITWISE_BINARY = {"&", "|", "^", ">>", "<<", ">>>"}
 ARITH_BINARY_ASS = {"+=", "-=", "*=", "/=", "%="}
 BITWISE_BINARY_ASS = {"&=", "|=", "^=", ">>=", "<<=", ">>>="}
 LOGICAL_BINARY = {"<", ">", "==", "!=", "<=", ">="}
-FAKE_TERNARY = {"?"}
 LAZY_BINARY = {"and", "or"}
 ARITH_UNARY = {"-", "*", "&"}
 LOGICAL_UNARY = {"not"}
@@ -28,7 +27,6 @@ ALL = set.union(
     ARITH_BINARY_ASS,
     BITWISE_BINARY_ASS,
     LOGICAL_BINARY,
-    FAKE_TERNARY,
     LAZY_BINARY,
     ARITH_UNARY,
     LOGICAL_UNARY,

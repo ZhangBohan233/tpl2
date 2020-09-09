@@ -51,12 +51,14 @@ class Node:
         raise NotImplementedError()
 
 
-class AbstractExpression(Node, ABC):
+# Expression returns a thing while Statement returns nothing
+
+class Expression(Node, ABC):
     def __init__(self, lf):
         super().__init__(lf)
 
 
-class AbstractStatement(Node, ABC):
+class Statement(Node, ABC):
     def __init__(self, lf):
         super().__init__(lf)
 
@@ -64,7 +66,7 @@ class AbstractStatement(Node, ABC):
         raise errs.TplTypeError("Statements do not evaluate a type. ", self.lf)
 
 
-class Line(AbstractExpression):
+class Line(Expression):
     def __init__(self, lf):
         super().__init__(lf)
 
@@ -92,7 +94,7 @@ class Line(AbstractExpression):
         return "Line"
 
 
-class BlockStmt(AbstractStatement):
+class BlockStmt(Statement):
     def __init__(self, lf):
         super().__init__(lf)
 
@@ -124,7 +126,7 @@ class BlockStmt(AbstractStatement):
         return "BlockStmt"
 
 
-class NameNode(AbstractExpression):
+class NameNode(Expression):
     def __init__(self, name: str, lf):
         super().__init__(lf)
 
@@ -143,7 +145,7 @@ class NameNode(AbstractExpression):
         elif self.name == "void":
             return typ.TYPE_VOID
         else:
-            return env.get_struct(self.name, self.lf)
+            return env.get_type(self.name, self.lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager):
         return env.get_type(self.name, self.lf)
@@ -152,7 +154,7 @@ class NameNode(AbstractExpression):
         return self.name
 
 
-class LiteralNode(AbstractExpression, ABC):
+class LiteralNode(Expression, ABC):
     def __init__(self, lf):
         super().__init__(lf)
 
@@ -214,6 +216,9 @@ class StringLiteral(LiteralNode):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         pass
 
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        pass
+
 
 class Buildable:
     def __init__(self, op: str):
@@ -227,7 +232,7 @@ class UnaryBuildable(Buildable):
     def __init__(self, op, operator_at_left):
         super().__init__(op)
 
-        self.value: AbstractExpression = None
+        self.value: Expression = None
         self.operator_at_left = operator_at_left
 
     @classmethod
@@ -248,8 +253,8 @@ class BinaryBuildable(Buildable):
     def __init__(self, op):
         super().__init__(op)
 
-        self.left: AbstractExpression = None
-        self.right: AbstractExpression = None
+        self.left: Expression = None
+        self.right: Expression = None
 
     def fulfilled(self):
         return self.left is not None and self.right is not None
@@ -258,21 +263,27 @@ class BinaryBuildable(Buildable):
         return "BE({} {} {})".format(self.left, self.op, self.right)
 
 
-class UnaryExpr(AbstractExpression, UnaryBuildable, ABC):
+class UnaryExpr(Expression, UnaryBuildable, ABC):
     def __init__(self, op: str, lf, operator_at_left=True):
-        AbstractExpression.__init__(self, lf)
+        Expression.__init__(self, lf)
         UnaryBuildable.__init__(self, op, operator_at_left)
 
 
-class UnaryStmt(AbstractStatement, UnaryBuildable, ABC):
+class UnaryStmt(Statement, UnaryBuildable, ABC):
     def __init__(self, op: str, lf, operator_at_left=True):
-        AbstractStatement.__init__(self, lf)
+        Statement.__init__(self, lf)
         UnaryBuildable.__init__(self, op, operator_at_left)
 
 
-class BinaryExpr(AbstractExpression, BinaryBuildable, ABC):
+class BinaryExpr(Expression, BinaryBuildable, ABC):
     def __init__(self, op: str, lf):
-        AbstractExpression.__init__(self, lf)
+        Expression.__init__(self, lf)
+        BinaryBuildable.__init__(self, op)
+
+
+class BinaryStmt(Statement, BinaryBuildable, ABC):
+    def __init__(self, op: str, lf):
+        Statement.__init__(self, lf)
         BinaryBuildable.__init__(self, op)
 
 
@@ -375,6 +386,9 @@ class BinaryOperatorAssignment(BinaryExpr):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         pass
 
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        pass
+
 
 class ReturnStmt(UnaryStmt):
     def __init__(self, lf):
@@ -449,19 +463,45 @@ class AsExpr(BinaryExpr):
         return self.right.definition_type(env, manager)
 
 
+class Dot(BinaryExpr):
+    def __init__(self, lf):
+        super().__init__(".", lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        struct_t = self.left.evaluated_type(env, tpa.manager)
+        if isinstance(struct_t, typ.StructType) and isinstance(self.right, NameNode):
+            struct_addr = self.left.compile(env, tpa)
+            pos, _ = struct_t.members[self.right.name]
+            return struct_addr + pos
+        else:
+            raise errs.TplCompileError("Left side of dot must be a struct. ", self.lf)
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        struct_t = self.left.evaluated_type(env, manager)
+        if isinstance(struct_t, typ.StructType) and isinstance(self.right, NameNode):
+            pos, attr_t = struct_t.members[self.right.name]
+            return attr_t
+        else:
+            raise errs.TplCompileError("Left side of dot must be a struct. ", self.lf)
+
+
 class Assignment(BinaryExpr):
     def __init__(self, lf):
         super().__init__("=", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.left, NameNode):
+            if env.is_const(self.left.name, self.lf):
+                raise errs.TplEnvironmentError("Cannot assign constant '{}'. ".format(self.left.name), self.lf)
             left_addr = self.left.compile(env, tpa)
         elif isinstance(self.left, Declaration):
             left_addr = self.left.compile(env, tpa)
         elif isinstance(self.left, StarExpr):
             return self.ptr_assign(self.left, env, tpa)
+        elif isinstance(self.left, Dot):
+            left_addr = self.left.compile(env, tpa)
         else:
-            raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.__class__.__name__), self.lf)
+            raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.left.__class__.__name__), self.lf)
 
         right_addr = self.right.compile(env, tpa)
         tpa.assign(left_addr, right_addr)
@@ -477,28 +517,25 @@ class Assignment(BinaryExpr):
         return right_addr
 
 
-class Declaration(BinaryExpr):
+class Declaration(BinaryStmt):
     def __init__(self, level, lf):
         super().__init__(":", lf)
 
         self.level = level
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        typ = self.right.definition_type(env, tpa.manager)
+        right_t = self.right.definition_type(env, tpa.manager)
         if isinstance(self.left, NameNode):
-            rel_addr = tpa.manager.allocate_stack(typ.length)
+            rel_addr = tpa.manager.allocate_stack(right_t.length)
             if self.level == VAR_CONST:
-                env.define_const_set(self.left.name, typ, rel_addr, self.lf)
+                env.define_const_set(self.left.name, right_t, rel_addr, self.lf)
             elif self.level == VAR_VAR:
-                env.define_var_set(self.left.name, typ, rel_addr, self.lf)
+                env.define_var_set(self.left.name, right_t, rel_addr, self.lf)
             else:
-                raise errs.TplCompileError("", self.lf)
+                raise errs.TplCompileError("Unexpected var level. ", self.lf)
             return rel_addr
         else:
-            raise errs.TplCompileError("", self.lf)
-
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        pass
+            raise errs.TplCompileError("Right side of declaration must be a name. ", self.lf)
 
     def __str__(self):
         if self.level == VAR_VAR:
@@ -531,8 +568,8 @@ class RightArrowExpr(BinaryExpr):
             return ft
 
 
-class FunctionDef(AbstractExpression):
-    def __init__(self, name: str, params: Line, rtype: AbstractExpression, body: BlockStmt, lf):
+class FunctionDef(Expression):
+    def __init__(self, name: str, params: Line, rtype: Expression, body: BlockStmt, lf):
         super().__init__(lf)
 
         self.name = name
@@ -577,13 +614,21 @@ class FunctionDef(AbstractExpression):
         tpa.manager.map_function(self.name, self.lf.file_name, body_out.result())
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        pass
+        rtype = self.rtype.definition_type(env, manager)
+        param_types = []
+        for i in range(len(self.params.parts)):
+            param = self.params.parts[i]
+            if isinstance(param, Declaration):
+                pt = param.right.definition_type(env, manager)
+                param_types.append(pt)
+
+        return typ.FuncType(param_types, rtype)
 
     def __str__(self):
         return "fn {}({}) {} {}".format(self.name, self.params, self.rtype, self.body)
 
 
-class FunctionTypeExpr(AbstractExpression):
+class FunctionTypeExpr(Expression):
     def __init__(self, param_line: Line, lf):
         super().__init__(lf)
 
@@ -599,7 +644,7 @@ class FunctionTypeExpr(AbstractExpression):
         return "fn({})".format(self.param_line)
 
 
-class FunctionCall(AbstractExpression):
+class FunctionCall(Expression):
     def __init__(self, call_obj: Node, args: Line, lf):
         super().__init__(lf)
 
@@ -647,7 +692,7 @@ class FunctionCall(AbstractExpression):
         return "{}({})".format(self.call_obj, self.args)
 
 
-class Nothing(AbstractExpression):
+class Nothing(Expression):
     def __init__(self, lf):
         super().__init__(lf)
 
@@ -661,7 +706,7 @@ class Nothing(AbstractExpression):
         return "nothing"
 
 
-class RequireStmt(AbstractStatement):
+class RequireStmt(Statement):
     def __init__(self, body, lf):
         super().__init__(lf)
 
@@ -691,8 +736,8 @@ class RequireStmt(AbstractStatement):
         return "require " + str(self.body)
 
 
-class IfStmt(AbstractStatement):
-    def __init__(self, condition: AbstractExpression, if_branch: BlockStmt, else_branch, lf):
+class IfStmt(Statement):
+    def __init__(self, condition: Expression, if_branch: BlockStmt, else_branch, lf):
         super().__init__(lf)
 
         self.condition = condition
@@ -729,11 +774,11 @@ class IfStmt(AbstractStatement):
             return "if {} {}".format(self.condition, self.if_branch)
 
 
-class IfExpr(AbstractExpression):
+class IfExpr(Expression):
     def __init__(self,
-                 condition: AbstractExpression,
-                 then_expr: AbstractExpression,
-                 else_expr: AbstractExpression,
+                 condition: Expression,
+                 then_expr: Expression,
+                 else_expr: Expression,
                  lf):
         super().__init__(lf)
 
@@ -779,8 +824,8 @@ class IfExpr(AbstractExpression):
         return "if {} then {} else {}".format(self.condition, self.then_expr, self.else_expr)
 
 
-class WhileStmt(AbstractStatement):
-    def __init__(self, condition: AbstractExpression, body: BlockStmt, lf):
+class WhileStmt(Statement):
+    def __init__(self, condition: Expression, body: BlockStmt, lf):
         super().__init__(lf)
 
         self.condition = condition
@@ -805,14 +850,14 @@ class WhileStmt(AbstractStatement):
         return "while {} {}".format(self.condition, self.body)
 
 
-class ForStmt(AbstractStatement):
+class ForStmt(Statement):
     def __init__(self, title: BlockStmt, body: BlockStmt, lf):
         super().__init__(lf)
 
         self.body = body
         if len(title) == 3:
             self.init: Node = title[0]
-            self.cond: AbstractExpression = title[1]
+            self.cond: Expression = title[1]
             self.step: Node = title[2]
         else:
             raise errs.TplCompileError("For loop title must contains 3 parts. ", lf)
@@ -839,7 +884,7 @@ class ForStmt(AbstractStatement):
         return "for {}; {}; {} {}".format(self.init, self.cond, self.step, self.body)
 
 
-class BreakStmt(AbstractStatement):
+class BreakStmt(Statement):
     def __init__(self, lf):
         super().__init__(lf)
 
@@ -851,7 +896,7 @@ class BreakStmt(AbstractStatement):
         return "break"
 
 
-class ContinueStmt(AbstractStatement):
+class ContinueStmt(Statement):
     def __init__(self, lf):
         super().__init__(lf)
 
@@ -863,7 +908,7 @@ class ContinueStmt(AbstractStatement):
         return "continue"
 
 
-class ExportStmt(AbstractStatement):
+class ExportStmt(Statement):
     def __init__(self, block: BlockStmt, lf):
         super().__init__(lf)
 
@@ -892,7 +937,7 @@ class ExportStmt(AbstractStatement):
         return "export {}".format(self.block)
 
 
-class ImportStmt(AbstractStatement):
+class ImportStmt(Statement):
     def __init__(self, file: str, tree: BlockStmt, lf):
         super().__init__(lf)
 
@@ -907,6 +952,34 @@ class ImportStmt(AbstractStatement):
 
     def __str__(self):
         return "import {}: {}".format(self.file, self.tree)
+
+
+class StructStmt(Statement):
+    def __init__(self, name: str, body: BlockStmt, lf):
+        super().__init__(lf)
+
+        self.name = name
+        self.body = body
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        struct_t = self.definition_type(env, tpa.manager)
+        env.define_const(self.name, struct_t, self.lf)
+
+    def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.StructType:
+        pos = 0
+        members = {}
+        for line in self.body:
+            for part in line:
+                if isinstance(part, Declaration) and isinstance(part.left, NameNode):
+                    right_t = part.right.definition_type(env, manager)
+                    members[part.left.name] = (pos, right_t)
+                    pos += right_t.length
+                else:
+                    raise errs.TplSyntaxError("Invalid struct member. ", self.lf)
+        return typ.StructType(self.name, self.lf.file_name, members, pos)
+
+    def __str__(self):
+        return "struct {} {}".format(self.name, self.body)
 
 
 INT_ARITH_TABLE = {

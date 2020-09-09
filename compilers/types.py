@@ -98,6 +98,14 @@ class CallableType(Type):
         self.param_types: [Type] = param_types
         self.rtype: Type = rtype
 
+    def __eq__(self, other):
+        return self.__class__ == other.__class__ and \
+               self.param_types == other.param_types and \
+               self.rtype == other.rtype
+
+    def __str__(self):
+        return "{}({} -> {})".format(self.__class__.__name__, self.param_types, self.rtype)
+
 
 class FuncType(CallableType):
     def __init__(self, param_types, rtype):
@@ -107,6 +115,21 @@ class FuncType(CallableType):
 class NativeFuncType(CallableType):
     def __init__(self, param_types, rtype):
         super().__init__(param_types, rtype)
+
+
+class StructType(Type):
+    def __init__(self, name: str, file_path: str, members: dict, length):
+        super().__init__(length)
+
+        self.name = name
+        self.file_path = file_path  # where this struct is defined, avoiding conflict struct def'ns in non-export part
+        self.members = members  # {name: (position, type)}
+
+    def __eq__(self, other):
+        return isinstance(other, StructType) and self.name == other.name and self.file_path == other.file_path
+
+    def __str__(self):
+        return "StructType(" + util.name_with_path(self.name, self.file_path) + ")"
 
 
 TYPE_INT = BasicType("int", util.INT_LEN)

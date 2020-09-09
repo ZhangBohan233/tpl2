@@ -35,3 +35,7 @@ def initial_literal() -> bytearray:
 
 def initial_int_literal_dict() -> dict:
     return {0: 0, 1: INT_LEN}
+
+
+def name_with_path(name: str, file: str):
+    return file + "$" + name

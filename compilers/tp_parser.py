@@ -15,8 +15,14 @@ class Parser:
         self.float_literals = {}
         self.char_literals = {}
 
+        self.special_binary = {
+            "=": ast.Assignment,
+            ".": ast.Dot,
+            "->": ast.RightArrowExpr,
+            "as": ast.AsExpr
+        }
+
         self.symbol_lib = {
-            "=": self.process_assign,
             ":": self.process_declare,
             ",": self.process_comma,
             ";": self.process_eol,
@@ -24,7 +30,6 @@ class Parser:
             "var": self.process_var,
             "const": self.process_const,
             "return": self.process_return,
-            "->": self.process_right_arrow,
             "if": self.process_if_stmt,
             "while": self.process_while_stmt,
             "for": self.process_for_stmt,
@@ -33,7 +38,7 @@ class Parser:
             "continue": self.process_continue,
             "import": self.process_import,
             "export": self.process_export,
-            "as": self.process_as_expr,
+            "struct": self.process_struct
         }
 
     def parse(self):
@@ -46,9 +51,6 @@ class Parser:
     # In other words, returns the extra number of elements processed
     #
     # Note: do not return the index of the next
-
-    def process_assign(self, p, i, builder, lf):
-        builder.add_node(ast.Assignment(lf))
 
     def process_declare(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
         builder.add_node(ast.Declaration(self.var_level, lf))
@@ -68,7 +70,8 @@ class Parser:
             builder.add_node(ast.FunctionTypeExpr(params, lf))
             return index
 
-        rtype_list = tl.CollectiveElement(tl.CE_BRACKET, None, lf)
+        index += 1
+        rtype_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
         while not (tl.is_brace(parent[index]) or identifier_of(parent[index], ";")):
             rtype_list.append(parent[index])
             index += 1
@@ -98,9 +101,6 @@ class Parser:
 
     def process_return(self, p, i, builder: ab.AstBuilder, lf):
         builder.add_node(ast.ReturnStmt(lf))
-
-    def process_right_arrow(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
-        builder.add_node(ast.RightArrowExpr(lf))
 
     def process_if_stmt(self, parent: tl.CollectiveElement, index, builder, lf):
         index += 1
@@ -213,8 +213,20 @@ class Parser:
 
         return index
 
-    def process_as_expr(self, p, i, builder: ab.AstBuilder, lf):
-        builder.add_node(ast.AsExpr(lf))
+    def process_struct(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+        name_ele = parent[index + 1]
+        body_ele = parent[index + 2]
+
+        if not (isinstance(name_ele, tl.AtomicElement) and
+                isinstance(name_ele.atom, tl.IdToken) and
+                tl.is_brace(body_ele)):
+            raise errs.TplSyntaxError("Invalid struct syntax. ", lf)
+
+        name = name_ele.atom.identifier
+        body = self.parse_as_block(body_ele)
+        builder.add_node(ast.StructStmt(name, body, lf))
+
+        return index + 2
 
     # parser of collective elements
 
@@ -297,8 +309,9 @@ class Parser:
                     builder.add_node(ast.BinaryOperatorAssignment(symbol, ast.BIN_ARITH, lf))
                 elif symbol in tl.BITWISE_BINARY_ASS:
                     builder.add_node(ast.BinaryOperatorAssignment(symbol, ast.BIN_BITWISE, lf))
-                elif symbol in tl.FAKE_TERNARY:
-                    builder.add_node(ast.FakeTernaryOperator(symbol, lf))
+                elif symbol in self.special_binary:
+                    node_class = self.special_binary[symbol]
+                    builder.add_node(node_class(lf))
                 elif symbol in self.symbol_lib:
                     ftn = self.symbol_lib[symbol]
                     res = ftn(parent, index, builder, lf)
@@ -320,7 +333,8 @@ class Parser:
                         call = ast.FunctionCall(call_obj, args, lf)
                         builder.add_node(call)
                         return index + 1
-
+                parenthesis = self.parse_as_part(ele)
+                builder.add_node(parenthesis)
         else:
             raise Exception("Unexpected error. ")
 

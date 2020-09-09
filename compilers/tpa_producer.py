@@ -23,10 +23,6 @@ def number(num: int) -> str:
         raise errs.TplCompileError("Cannot compile '{}' to number. ".format(num))
 
 
-def function_path_name(fn_name, file):
-    return file + "." + fn_name
-
-
 class LabelManager:
     def __init__(self):
         self._else_count = 0
@@ -101,7 +97,7 @@ class Manager:
             self.available_regs.append(reg)
 
     def map_function(self, name: str, file_path, body: list):
-        self.functions_map[function_path_name(name, file_path)] = body
+        self.functions_map[util.name_with_path(name, file_path)] = body
 
     def global_length(self):
         return self.gp - util.STACK_SIZE
@@ -114,7 +110,7 @@ class TpaOutput:
         self.output = ["entry"] if is_global else []
 
     def add_function(self, name, file_path, fn_ptr):
-        self.output.append("fn " + function_path_name(name, file_path) + " " + address(fn_ptr))
+        self.output.append("fn " + util.name_with_path(name, file_path) + " " + address(fn_ptr))
         self.write_format("push_fp")
 
     def add_indefinite_push(self) -> int:
@@ -306,7 +302,7 @@ class TpaOutput:
 
         self.write_format("aload", "%0", "$1")
         self.write_format("set_ret", "%0")
-        self.write_format("call_fn", function_path_name("main", main_file_path))
+        self.write_format("call_fn", util.name_with_path("main", main_file_path))
         self.write_format("exit")
 
     def local_generate(self):

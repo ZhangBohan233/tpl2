@@ -3,13 +3,13 @@ bits
 stack_size
 1024
 global_length
-80
+72
 literal_length
-48
+64
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 13 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 32 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 13 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0 24 0 0 0 0 0 0 0 32 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0
 
-fn E:\GitHub\tpl2\lib\lang.tp.add $1056
+fn E:\GitHub\tpl2\lib\lang.tp$add $1056
     push_fp
     push          24
     load          %0      $0
@@ -23,7 +23,7 @@ fn E:\GitHub\tpl2\lib\lang.tp.add $1056
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp.make $1064
+fn E:\GitHub\tpl2\lib\lang.tp$make $1064
     push_fp
     push          24
     load_lit      %0      $16
@@ -47,7 +47,7 @@ fn E:\GitHub\tpl2\lib\lang.tp.make $1064
     ret
     stop
 
-fn tp/ptr.tp.mod $1072
+fn tp/ptr.tp$mod $1072
     push_fp
     push          16
     load_lit      %0      $32
@@ -60,7 +60,7 @@ fn tp/ptr.tp.mod $1072
     ret
     stop
 
-fn tp/ptr.tp.main $1080
+fn tp/ptr.tp$main $1080
     push_fp
     push          48
     load_lit      %0      $40
@@ -91,27 +91,32 @@ fn tp/ptr.tp.main $1080
     ret
     stop
 
-fn tp/struct.tp.add $1088
+fn tp/struct.tp$main $1088
     push_fp
-    push          24
-    load          %0      $0
-    load          %1      $8
-    subi          %0      %1
-    iload         %1      16
+    push          64
+    load_lit      %0      $48
+    iload         %1      $16
     store         %1      %0
     load          %0      $16
-    put_ret       %0
-    pull_fp
-    ret
-    stop
-
-fn tp/struct.tp.main $1096
-    push_fp
-    push          8
-    iload         %0      0
-    set_ret       %0
-    call          $1064
-    load          %0      $0
+    iload         %1      $0
+    store         %1      %0
+    load_lit      %0      $56
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      $8
+    store         %1      %0
+    aload         %0      $0
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    rload_abs     %1      %0
+    iload         %0      48
+    store         %0      %1
+    load          %0      $56
     put_ret       %0
     pull_fp
     ret
@@ -132,5 +137,5 @@ entry
     store         %1      %0
     aload         %0      $1
     set_ret       %0
-    call_fn       tp/struct.tp.main
+    call_fn       tp/struct.tp$main
     exit

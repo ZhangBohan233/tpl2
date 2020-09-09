@@ -4,7 +4,7 @@ import compilers.types as typ
 
 
 class VarEntry:
-    def __init__(self, type_: typ.Type, addr: int, const=False):
+    def __init__(self, type_: typ.Type, addr: int, const: bool = False):
         self.type = type_
         self.addr = addr
         self.const = const
@@ -60,11 +60,17 @@ class Environment:
         entry = FunctionEntry(func_type, fn_ptr, const=True, named=True)
         self.vars[name] = entry
 
-    def set(self, name, addr, lf):
+    def is_const(self, name: str, lf) -> bool:
         entry = self._inner_get(name)
         if entry is None:
             raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
-        entry.addr = addr
+        return entry.const
+
+    # def set(self, name, addr, lf):
+    #     entry = self._inner_get(name)
+    #     if entry is None:
+    #         raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+    #     entry.addr = addr
 
     def get_type(self, name, lf) -> typ.Type:
         entry = self._inner_get(name)
@@ -78,8 +84,13 @@ class Environment:
             raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
         return entry.addr
 
-    def get_struct(self, name, lf):
-        pass
+    # def get_struct(self, name, lf) -> typ.StructType:
+    #     entry = self._inner_get(name)
+    #     if entry is None:
+    #         raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+    #     elif not isinstance(entry.type, typ.StructType):
+    #         raise errs.TplEnvironmentError("")
+    #     return entry.addr
 
     def is_named_function(self, name: str, lf) -> bool:
         entry = self._inner_get(name)

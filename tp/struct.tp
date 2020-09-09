@@ -1,10 +1,16 @@
 import lang;
 import "tp/ptr.tp"
 
-fn add(x: int, y: int) int {
-    return x - y;
+struct Vector {
+    x: int;
+    y: int;
 }
 
 fn main() int {
-    return make();
+    v1: Vector;
+    v1.x = 3;
+    v1.y = 4;
+    vv: *Vector = &v1;
+
+    return (*vv).y;
 }

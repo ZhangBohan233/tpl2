@@ -9,7 +9,7 @@
 * ~~Ternary operator~~ Redesigned to if-then-else expr
 * ~~Lazy operator~~ Done
 * ~~Import and export~~ Done
-* Struct
+* ~~Struct~~ Done
 * Array
 * Char related
 * Char array
