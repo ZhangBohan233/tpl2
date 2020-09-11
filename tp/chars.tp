@@ -1,3 +1,11 @@
-﻿fn main() int {
+﻿require {
+    print_char, println_char
+}
 
+fn main() int {
+    a: char = '啊';
+
+    println_char(a);
+
+    return 0;
 }

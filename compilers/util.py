@@ -28,12 +28,12 @@ def bytes_to_int(b: bytes) -> int:
     return int.from_bytes(b, sys.byteorder, signed=True)
 
 
-def char_to_bytes(i: int) -> bytes:
-    return i.to_bytes(CHAR_LEN, sys.byteorder, signed=True)
+def char_to_bytes(c: str) -> bytes:
+    return ord(c).to_bytes(CHAR_LEN, sys.byteorder, signed=False)
 
 
-def bytes_to_char(b: bytes) -> int:
-    return int.from_bytes(b, sys.byteorder, signed=True)
+def bytes_to_char(b: bytes) -> str:
+    return chr(int.from_bytes(b, sys.byteorder, signed=True))
 
 
 def float_to_bytes(f: float) -> bytes:

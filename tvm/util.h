@@ -15,9 +15,12 @@
 #define VM_BITS 64
 #define INT_LEN 8
 #define FLOAT_LEN 8
+#define CHAR_LEN 2
 
 #define bytes_to_int(b) bytes_to_int64(b)
 #define int_to_bytes(b, i) int_to_bytes64(b, i)
+#define bytes_to_float(b) bytes_to_float64(b)
+#define float_to_bytes(b, i) float_to_bytes64(b, i)
 
 typedef int_fast64_t tp_int;
 typedef double tp_float;
@@ -42,7 +45,7 @@ void int_to_bytes32(unsigned char *b, tp_int i);
 
 tp_char bytes_to_char(const unsigned char *bytes);
 
-void char_to_bytes32(unsigned char *b, tp_char i);
+void char_to_bytes(unsigned char *b, tp_char i);
 
 tp_float bytes_to_float64(const unsigned char *bytes);
 

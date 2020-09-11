@@ -95,7 +95,7 @@ void nat_return_int(tp_int value) {
 
 void nat_print_int() {
     push_fp
-    push(8)
+    push(INT_LEN)
 
     tp_int arg = bytes_to_int(MEMORY + true_addr(0));
     tp_printf("%d", arg);
@@ -105,7 +105,7 @@ void nat_print_int() {
 
 void nat_println_int() {
     push_fp
-    push(8)
+    push(INT_LEN)
 
     tp_int arg = bytes_to_int(MEMORY + true_addr(0));
     tp_printf("%d\n", arg);
@@ -113,9 +113,48 @@ void nat_println_int() {
     pull_fp
 }
 
+void nat_print_char() {
+    push_fp
+    push(CHAR_LEN)
+
+    tp_char arg = bytes_to_char(MEMORY + true_addr(0));
+    wprintf(L"%c", arg);
+
+    pull_fp
+}
+
+void nat_println_char() {
+    push_fp
+    push(CHAR_LEN)
+
+    tp_char arg = bytes_to_char(MEMORY + true_addr(0));
+    wprintf(L"%c\n", arg);
+
+    pull_fp
+}
+
+void nat_print_float() {
+    push_fp
+    push(FLOAT_LEN)
+
+    tp_float arg = bytes_to_float(MEMORY + true_addr(0));
+    tp_printf("%f", arg);
+
+    pull_fp
+}
+
+void nat_println_float() {
+    push_fp
+    push(FLOAT_LEN)
+
+    tp_float arg = bytes_to_float32(MEMORY + true_addr(0));
+    tp_printf("%f\n", arg);
+
+    pull_fp
+}
+
 void nat_clock() {
     push_fp
-//    push(0)
 
     tp_int t = get_time();
     nat_return_int(t);
@@ -135,6 +174,18 @@ void invoke(tp_int func_ptr) {
         case 3:  // clock
             nat_clock();
             break;
+        case 4:  // print_char
+            nat_print_char();
+            break;
+        case 5:  // println_char
+            nat_println_char();
+            break;
+        case 6:  // print_float
+            nat_print_float();
+            break;
+        case 7:  // println_float
+            nat_println_float();
+            break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;
             ERR_MSG = "No such native invoke. ";
@@ -146,6 +197,8 @@ void tvm_mainloop() {
     union reg64 {
         tp_int int_value;
         tp_float double_value;
+        tp_char char_value;
+        tp_byte byte_value;
         unsigned char bytes[INT_LEN];
     };
     union reg64 regs[8];
@@ -322,6 +375,17 @@ void tvm_mainloop() {
                 reg1 = MEMORY[pc++];
                 regs[reg1].int_value = !regs[reg1].int_value;
                 break;
+            case 70:  // loadc
+                reg1 = MEMORY[pc++];
+                memcpy(regs[reg1].bytes, MEMORY + pc, INT_LEN);
+                pc += INT_LEN;
+                regs[reg1].char_value = bytes_to_char(MEMORY + true_addr(regs[reg1].int_value));
+                break;
+            case 71:  // storec
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                char_to_bytes(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].char_value);
+                break;
             default:
                 ERROR_CODE = ERR_INSTRUCTION;
                 break;
@@ -396,6 +460,8 @@ void print_error(int error_code) {
 
 void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_argv) {
     int read;
+
+    setlocale(LC_ALL, "chs");
 
     unsigned char *codes = read_file(file_name, &read);
     if (codes == NULL) {

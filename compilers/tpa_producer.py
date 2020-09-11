@@ -147,6 +147,33 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def load_char_literal(self, dst_addr, lit_pos):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("loadc_lit", register(reg1), address(lit_pos))
+        self.write_format("iload", register(reg2), address(dst_addr))
+        self.write_format("storec", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
+    def convert_char_to_int(self, dst_addr, src_addr):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("loadc", register(reg1), address(src_addr))
+        self.write_format("iload", register(reg2), address(dst_addr))
+        self.write_format("store", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
+    def convert_int_to_char(self, dst_addr, src_addr):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("load", register(reg1), address(src_addr))
+        self.write_format("iload", register(reg2), address(dst_addr))
+        self.write_format("storec", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
     def return_value(self, src_addr):
         reg1 = self.manager.require_reg()
 
@@ -250,9 +277,16 @@ class TpaOutput:
             arg_addr = arg[0]
             arg_length = arg[1]
             self.write_format("aload_sp", register(reg1), address(count))
-            if arg_length == util.INT_LEN:
+            if arg_length == 1:
+                pass
+            elif arg_length == util.INT_LEN:
                 self.write_format("load", register(reg2), address(arg_addr))
                 self.write_format("store_abs", register(reg1), register(reg2))
+            elif arg_length == util.CHAR_LEN:
+                self.write_format("loadc", register(reg2), address(arg_addr))
+                self.write_format("store_abs", register(reg1), register(reg2))
+            else:
+                raise errs.TpaError("Unexpected arg length. ")
 
             count += arg_length
 

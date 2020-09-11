@@ -57,6 +57,8 @@ INSTRUCTIONS = {
     "not": (42, 1),
     "i_to_f": (60, 1),  # convert int in %reg to float, store in %reg
     "f_to_i": (61, 1),
+    "loadc": (70, 1, util.INT_LEN),
+    "storec": (71, 1, 1)
 }
 
 MNEMONIC = {
@@ -65,6 +67,7 @@ MNEMONIC = {
 
 PSEUDO_INSTRUCTIONS = {
     "load_lit": (256, 1, util.INT_LEN),
+    "loadc_lit": (257, 1, util.INT_LEN)
 }
 
 STR_PSEUDO_INSTRUCTIONS = {
@@ -288,6 +291,12 @@ class TpcCompiler:
             lit_start = self.stack_size + self.global_length
             self.compile_inst("load",
                               ["load", instruction[1], "$" + str(num_inst[2] + lit_start)],
+                              cur_fn_body,
+                              lf)
+        elif inst == "loadc_lit":
+            lit_start = self.stack_size + self.global_length
+            self.compile_inst("loadc",
+                              ["loadc", instruction[1], "$" + str(num_inst[2] + lit_start)],
                               cur_fn_body,
                               lf)
 

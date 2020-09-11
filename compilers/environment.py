@@ -66,12 +66,6 @@ class Environment:
             raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
         return entry.const
 
-    # def set(self, name, addr, lf):
-    #     entry = self._inner_get(name)
-    #     if entry is None:
-    #         raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
-    #     entry.addr = addr
-
     def get_type(self, name, lf) -> typ.Type:
         entry = self._inner_get(name)
         if entry is None:
@@ -83,14 +77,6 @@ class Environment:
         if entry is None:
             raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
         return entry.addr
-
-    # def get_struct(self, name, lf) -> typ.StructType:
-    #     entry = self._inner_get(name)
-    #     if entry is None:
-    #         raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
-    #     elif not isinstance(entry.type, typ.StructType):
-    #         raise errs.TplEnvironmentError("")
-    #     return entry.addr
 
     def is_named_function(self, name: str, lf) -> bool:
         entry = self._inner_get(name)

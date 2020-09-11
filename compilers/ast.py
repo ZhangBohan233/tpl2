@@ -241,7 +241,9 @@ class CharLiteral(LiteralNode):
         self.lit_pos: int = lit_pos
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
+        stack_addr = tpa.manager.allocate_stack(util.CHAR_LEN)
+        tpa.load_char_literal(stack_addr, self.lit_pos)
+        return stack_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return typ.TYPE_CHAR
@@ -502,7 +504,17 @@ class AsExpr(BinaryExpr):
         super().__init__("as", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
+        right_t = self.right.definition_type(env, tpa.manager)
+        left_t = self.left.evaluated_type(env, tpa.manager)
+        left = self.left.compile(env, tpa)
+        if right_t == typ.TYPE_INT:
+            res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+            if left_t == typ.TYPE_CHAR:
+                tpa.convert_char_to_int(res_addr, left)
+            else:
+                raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
+
+            return res_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return self.right.definition_type(env, manager)

@@ -83,12 +83,12 @@ void int_to_bytes32(unsigned char *b, tp_int i) {
 }
 
 tp_char bytes_to_char(const unsigned char *b) {
-    union i32 un;
+    union i16 un;
     memcpy(un.arr, b, 2);
     return un.value;
 }
 
-void char_to_bytes32(unsigned char *b, tp_char c) {
+void char_to_bytes(unsigned char *b, tp_char c) {
     union i16 un;
     un.value = c;
     memcpy(b, un.arr, 2);

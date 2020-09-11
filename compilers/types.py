@@ -141,5 +141,9 @@ TYPE_VOID = BasicType("void", 0)
 NATIVE_FUNCTIONS = {
     "print_int": (1, NativeFuncType([TYPE_INT], TYPE_VOID)),
     "println_int": (2, NativeFuncType([TYPE_INT], TYPE_VOID)),
-    "clock": (3, NativeFuncType([], TYPE_INT))
+    "clock": (3, NativeFuncType([], TYPE_INT)),
+    "print_char": (4, NativeFuncType([TYPE_CHAR], TYPE_VOID)),
+    "println_char": (5, NativeFuncType([TYPE_CHAR], TYPE_VOID)),
+    "print_float": (6, NativeFuncType([TYPE_FLOAT], TYPE_VOID)),
+    "println_float": (7, NativeFuncType([TYPE_FLOAT], TYPE_VOID)),
 }
