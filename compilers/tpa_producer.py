@@ -166,6 +166,17 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def binary_arith_i(self, op_inst: str, left: int, right_value: int, res: int):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("load", register(reg1), address(left))
+        self.write_format("iload", register(reg2), number(right_value))
+        self.write_format(op_inst, register(reg1), register(reg2))
+        self.write_format("iload", register(reg2), number(res))
+        self.write_format("store", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
     def unary_arith(self, op_inst: str, value: int, res: int):
         reg1, reg2 = self.manager.require_regs(2)
 
@@ -176,7 +187,7 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
-    def addr_op(self, value_addr: int, res_addr: int):
+    def take_addr(self, value_addr: int, res_addr: int):
         reg1, reg2 = self.manager.require_regs(2)
 
         self.write_format("aload", register(reg1), address(value_addr))
@@ -201,6 +212,19 @@ class TpaOutput:
         self.write_format("load", register(reg1), address(ptr_addr))
         self.write_format("load", register(reg2), address(value_addr))
         self.write_format("store_abs", register(reg1), register(reg2))
+
+        self.manager.append_regs(reg2, reg1)
+
+    def struct_attr(self, struct_addr, attr_pos, res_addr):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        print(struct_addr, res_addr)
+
+        self.write_format("aload", register(reg1), number(struct_addr))
+        self.write_format("iload", register(reg2), number(attr_pos))
+        self.write_format("addi", register(reg1), register(reg2))
+        self.write_format("iload", register(reg2), number(res_addr))
+        self.write_format("store", register(reg2), register(reg1))
 
         self.manager.append_regs(reg2, reg1)
 

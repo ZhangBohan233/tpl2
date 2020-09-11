@@ -1,6 +1,10 @@
 import lang;
 import "tp/ptr.tp"
 
+require {
+    println_int
+}
+
 struct Vector {
     x: int;
     y: int;
@@ -10,7 +14,12 @@ fn main() int {
     v1: Vector;
     v1.x = 3;
     v1.y = 4;
-    vv: *Vector = &v1;
+    println_int(v1.y);
 
-    return (*vv).y;
+    //return v1.y;
+    vv: *Vector = &v1;
+    vvv: **Vector = &vv;
+    (**(&vv)).y = 11;
+
+    return v1.y;
 }

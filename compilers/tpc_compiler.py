@@ -6,6 +6,13 @@ import compilers.types as typ
 
 SIGNATURE = "TPC_".encode()  # 84, 80, 67, 95
 
+"""
+Naming rule of instructions:
+[pre] + inst + [type] + _[special description]
+
+pre: aim for inst, for example, 'i' for instant, 'a' for address
+type: 'i' for int, 'f' for float, 'c' for char
+"""
 INSTRUCTIONS = {
     "nop": (0,),
     "sleep": (1,),

@@ -19,7 +19,8 @@ class Parser:
             "=": ast.Assignment,
             ".": ast.Dot,
             "->": ast.RightArrowExpr,
-            "as": ast.AsExpr
+            "as": ast.AsExpr,
+            "$": ast.DollarExpr
         }
 
         self.symbol_lib = {

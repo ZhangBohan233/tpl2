@@ -439,7 +439,7 @@ class AddrExpr(UnaryExpr):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         val = self.value.compile(env, tpa)
         res_addr = tpa.manager.allocate_stack(util.PTR_LEN)
-        tpa.addr_op(val, res_addr)
+        tpa.take_addr(val, res_addr)
         return res_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -468,13 +468,11 @@ class Dot(BinaryExpr):
         super().__init__(".", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        struct_t = self.left.evaluated_type(env, tpa.manager)
-        if isinstance(struct_t, typ.StructType) and isinstance(self.right, NameNode):
-            struct_addr = self.left.compile(env, tpa)
-            pos, _ = struct_t.members[self.right.name]
-            return struct_addr + pos
-        else:
-            raise errs.TplCompileError("Left side of dot must be a struct. ", self.lf)
+        attr_ptr, attr_t = self.get_attr_ptr_and_type(env, tpa)
+
+        res_ptr = tpa.manager.allocate_stack(attr_t.length)
+        tpa.value_in_addr_op(attr_ptr, res_ptr)
+        return res_ptr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         struct_t = self.left.evaluated_type(env, manager)
@@ -483,6 +481,70 @@ class Dot(BinaryExpr):
             return attr_t
         else:
             raise errs.TplCompileError("Left side of dot must be a struct. ", self.lf)
+
+    def get_attr_ptr_and_type(self, env: en.Environment, tpa: tp.TpaOutput) -> (int, typ.Type):
+        left_t = self.left.evaluated_type(env, tpa.manager)
+        if isinstance(self.right, NameNode):
+            if isinstance(left_t, typ.StructType):
+                if isinstance(self.left, StarExpr):
+                    dollar = DollarExpr(self.lf)
+                    dollar.left = self.left.value
+                    dollar.right = self.right
+                    return dollar.get_attr_ptr_and_type(env, tpa)
+                else:
+                    struct_addr = self.left.compile(env, tpa)
+                    pos, t = left_t.members[self.right.name]
+                    res_ptr = tpa.manager.allocate_stack(t.length)
+                    tpa.take_addr(struct_addr + pos, res_ptr)
+                    return res_ptr, t
+
+        raise errs.TplCompileError("Left side of dot must be a struct. ", self.lf)
+
+
+class DollarExpr(BinaryExpr):
+    """
+    This operator is logically equivalent to (Unpack and get attribute).
+
+    For example, s$x is logically equivalent to (*s).x, but due to the implementation, (*s).x would evaluate to
+    incorrect result.
+    """
+    def __init__(self, lf):
+        super().__init__("$", lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        attr_ptr, attr_t = self.get_attr_ptr_and_type(env, tpa)
+
+        res_ptr = tpa.manager.allocate_stack(attr_t.length)
+        tpa.value_in_addr_op(attr_ptr, res_ptr)
+        return res_ptr
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        left_t = self.left.evaluated_type(env, manager)
+        if isinstance(left_t, typ.PointerType):
+            struct_t = left_t.base
+            if isinstance(struct_t, typ.StructType) and isinstance(self.right, NameNode):
+                pos, attr_t = struct_t.members[self.right.name]
+                return attr_t
+
+        raise errs.TplCompileError("Left side of dollar must be a pointer to struct. ", self.lf)
+
+    def get_attr_ptr_and_type(self, env: en.Environment, tpa: tp.TpaOutput) -> (int, typ.Type):
+        left_t = self.left.evaluated_type(env, tpa.manager)
+        if isinstance(self.right, NameNode):
+            if isinstance(left_t, typ.PointerType):
+                struct_t = left_t.base
+                if isinstance(struct_t, typ.StructType):
+                    struct_addr = self.left.compile(env, tpa)
+                    pos, t = struct_t.members[self.right.name]
+                    real_attr_ptr = tpa.manager.allocate_stack(t.length)
+                    if t.length == util.INT_LEN:
+                        tpa.assign(real_attr_ptr, struct_addr)
+                        tpa.binary_arith_i("addi", real_attr_ptr, pos, real_attr_ptr)
+                    else:
+                        raise errs.TplCompileError("Unsupported length.", self.lf)
+                    return real_attr_ptr, t
+
+        raise errs.TplCompileError("Left side of dollar must be a pointer to struct. ", self.lf)
 
 
 class Assignment(BinaryExpr):
@@ -498,8 +560,8 @@ class Assignment(BinaryExpr):
             left_addr = self.left.compile(env, tpa)
         elif isinstance(self.left, StarExpr):
             return self.ptr_assign(self.left, env, tpa)
-        elif isinstance(self.left, Dot):
-            left_addr = self.left.compile(env, tpa)
+        elif isinstance(self.left, Dot) or isinstance(self.left, DollarExpr):
+            return self.struct_attr_assign(self.left, env, tpa)
         else:
             raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.left.__class__.__name__), self.lf)
 
@@ -509,6 +571,12 @@ class Assignment(BinaryExpr):
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return self.right.evaluated_type(env, manager)
+
+    def struct_attr_assign(self, dot, env: en.Environment, tpa: tp.TpaOutput):
+        attr_ptr, attr_t = dot.get_attr_ptr_and_type(env, tpa)
+        res_addr = self.right.compile(env, tpa)
+        tpa.ptr_assign(res_addr, attr_ptr)
+        return res_addr
 
     def ptr_assign(self, left: StarExpr, env: en.Environment, tpa: tp.TpaOutput) -> int:
         right_addr = self.right.compile(env, tpa)
