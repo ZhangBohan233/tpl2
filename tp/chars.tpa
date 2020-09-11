@@ -3,29 +3,64 @@ bits
 stack_size
 1024
 global_length
-24
+32
 literal_length
-18
+20
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 74 85
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 74 85 120 0
 
-fn tp/chars.tp$main $1040
+fn tp/chars.tp$test $1040
     push_fp
-    push          12
+    push          30
+    loadc         %0      $0
+    iload         %1      $4
+    store         %1      %0
+    loadc         %0      $2
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $4
+    load          %1      $12
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      $28
+    storec        %1      %0
+    loadc         %0      $28
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn tp/chars.tp$main $1048
+    push_fp
+    push          16
     loadc_lit     %0      $16
     iload         %1      $2
     storec        %1      %0
     load          %0      $2
     iload         %1      $0
     store         %1      %0
+    loadc_lit     %0      $18
+    iload         %1      $4
+    storec        %1      %0
     aload_sp      %0      $0
     loadc         %1      $0
     store_abs     %0      %1
+    aload_sp      %0      $2
+    loadc         %1      $4
+    store_abs     %0      %1
+    iload         %0      6
+    set_ret       %0
+    call          $1040
+    aload_sp      %0      $0
+    loadc         %1      $6
+    store_abs     %0      %1
     invoke        $1032
     load_lit      %0      $0
-    iload         %1      $4
+    iload         %1      $8
     store         %1      %0
-    load          %0      $4
+    load          %0      $8
     put_ret       %0
     pull_fp
     ret

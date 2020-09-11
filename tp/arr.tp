@@ -1,3 +1,5 @@
 fn main() int {
+    a: int[2];
 
+    return a[0];
 }

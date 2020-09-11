@@ -5,6 +5,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include "util.h"
 
 unsigned char *read_file(char *file_name, int *length_ptr) {
@@ -155,6 +156,6 @@ char *format_bits(const char *format) {
     return dst;
 }
 
-//void tp_printf(const char *format, ...) {
-//    printf(format, __VA_ARGS__);
-//}
+void test(int arr[][4]) {
+    int a[2][3] = {{1, 2, 3}, {4, 5, 6}};
+}

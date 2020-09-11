@@ -182,6 +182,14 @@ class TpaOutput:
 
         self.manager.append_regs(reg1)
 
+    def return_char_value(self, src_addr):
+        reg1 = self.manager.require_reg()
+
+        self.write_format("loadc", register(reg1), address(src_addr))
+        self.write_format("put_ret", register(reg1))
+
+        self.manager.append_regs(reg1)
+
     def binary_arith(self, op_inst: str, left: int, right: int, res: int):
         reg1, reg2 = self.manager.require_regs(2)
 
@@ -290,12 +298,16 @@ class TpaOutput:
 
             count += arg_length
 
-        if ret_len == 1:  # char level
-            pass
-        elif ret_len == util.INT_LEN:
-            self.write_format("iload", register(reg1), number(rtn_addr))
-            self.write_format("set_ret", register(reg1))
-        elif ret_len == util.FLOAT_LEN:
+        # if ret_len == 1:
+        #     pass
+        # elif ret_len == util.CHAR_LEN:
+        #     self.write_format("iload", register(reg1), number(rtn_addr))
+        #     self.write_format("set_ret", register(reg1))
+        # elif ret_len == util.INT_LEN:
+        #     self.write_format("iload", register(reg1), number(rtn_addr))
+        #     self.write_format("set_ret", register(reg1))
+        # elif ret_len == util.FLOAT_LEN:
+        if ret_len > 0:
             self.write_format("iload", register(reg1), number(rtn_addr))
             self.write_format("set_ret", register(reg1))
         # if void, do nothing

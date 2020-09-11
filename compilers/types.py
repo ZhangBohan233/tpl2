@@ -5,6 +5,9 @@ class Type:
     def __init__(self, length: int):
         self.length = length
 
+    def memory_length(self):
+        return self.length
+
     def strong_convertible(self, left_tar_type):
         """
         This method returns True iff self can be converted to the 'left_tar_type' without warning.
@@ -130,6 +133,20 @@ class StructType(Type):
 
     def __str__(self):
         return "StructType(" + util.name_with_path(self.name, self.file_path) + ")"
+
+
+class ArrayType(Type):
+    def __init__(self, base: Type, num_ele):
+        super().__init__(util.PTR_LEN)
+
+        self.base = base
+        self.num_ele = num_ele
+
+    def memory_length(self):
+        return self.base.memory_length() * self.num_ele
+
+    def __str__(self):
+        return f"{self.base}[{self.num_ele}]"
 
 
 TYPE_INT = BasicType("int", util.INT_LEN)

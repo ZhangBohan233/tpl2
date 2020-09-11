@@ -338,7 +338,7 @@ class Parser:
                 lf = ele.lf
                 if index > 0:
                     prob_call_obj = parent[index - 1]
-                    if isinstance(prob_call_obj, tl.AtomicElement) and is_call(prob_call_obj.atom):
+                    if is_call_obj(prob_call_obj):
                         args = self.parse_as_line(ele)
                         call_obj = builder.remove_last()
                         call = ast.FunctionCall(call_obj, args, lf)
@@ -350,7 +350,7 @@ class Parser:
                 lf = ele.lf
                 if index > 0:
                     prob_call_obj = parent[index - 1]
-                    if isinstance(prob_call_obj, tl.AtomicElement) and is_call(prob_call_obj.atom):
+                    if is_call_obj(prob_call_obj):
                         args = self.parse_as_line(ele)
                         call_obj = builder.remove_last()
                         call = ast.IndexingExpr(call_obj, args, lf)
@@ -393,3 +393,9 @@ def is_call(token_before: tl.Token) -> bool:
         symbol = token_before.identifier
         return symbol.isidentifier() and symbol not in tl.RESERVED
     return False
+
+
+def is_call_obj(prob_call_obj: tl.Element) -> bool:
+    return (isinstance(prob_call_obj, tl.AtomicElement) and is_call(prob_call_obj.atom)) or \
+           (isinstance(prob_call_obj, tl.CollectiveElement) and (
+                       prob_call_obj.is_sqr_bracket() or prob_call_obj.is_bracket()))

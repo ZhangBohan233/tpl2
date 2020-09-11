@@ -448,7 +448,10 @@ class ReturnStmt(UnaryStmt):
             rtype = self.value.evaluated_type(env, tpa.manager)
             env.validate_rtype(rtype, self.lf)
             value_addr = self.value.compile(env, tpa)
-            tpa.return_value(value_addr)
+            if rtype.length == util.INT_LEN:
+                tpa.return_value(value_addr)
+            elif rtype.length == util.CHAR_LEN:
+                tpa.return_char_value(value_addr)
         tpa.return_func()
 
     def return_check(self):
@@ -507,13 +510,21 @@ class AsExpr(BinaryExpr):
         right_t = self.right.definition_type(env, tpa.manager)
         left_t = self.left.evaluated_type(env, tpa.manager)
         left = self.left.compile(env, tpa)
+        if left_t == right_t:
+            return left
         if right_t == typ.TYPE_INT:
             res_addr = tpa.manager.allocate_stack(util.INT_LEN)
             if left_t == typ.TYPE_CHAR:
                 tpa.convert_char_to_int(res_addr, left)
             else:
                 raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
-
+            return res_addr
+        elif right_t == typ.TYPE_CHAR:
+            res_addr = tpa.manager.allocate_stack(util.CHAR_LEN)
+            if left_t == typ.TYPE_INT:
+                tpa.convert_int_to_char(res_addr, left)
+            else:
+                raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
             return res_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -652,7 +663,8 @@ class Declaration(BinaryStmt):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         right_t = self.right.definition_type(env, tpa.manager)
         if isinstance(self.left, NameNode):
-            rel_addr = tpa.manager.allocate_stack(right_t.length)
+            rel_addr = tpa.manager.allocate_stack(right_t.memory_length())
+            print(right_t)
             if self.level == VAR_CONST:
                 env.define_const_set(self.left.name, right_t, rel_addr, self.lf)
             elif self.level == VAR_VAR:
@@ -728,7 +740,7 @@ class FunctionDef(Expression):
             complete_return = self.body.return_check()
             if not complete_return:
                 if not rtype.is_void():
-                    raise errs.TplCompileError(f"Function '{self.name}' missing return statement. ", self.lf)
+                    raise errs.TplCompileError(f"Function '{self.name}' missing a return statement. ", self.lf)
 
             # compiling
             body_out.add_function(self.name, self.lf.file_name, fn_ptr)
@@ -1135,10 +1147,36 @@ class IndexingExpr(Expression):
         self.args = args
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
+        arg_node = self._get_index_node()
+        arg_t = arg_node.evaluated_type(env, tpa.manager)
+        if arg_t != typ.TYPE_INT:
+            raise errs.TplCompileError("Index must be int. ", self.lf)
+        arg_addr = arg_node.compile(env, tpa)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        pass
+        obj_t = self.indexing_obj.evaluated_type(env, manager)
+        if isinstance(obj_t, typ.ArrayType):
+            return obj_t.base
+        else:
+            raise errs.TplCompileError("Only array type supports indexing. ", self.lf)
+
+    def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        base = self.indexing_obj.definition_type(env, manager)
+        return typ.ArrayType(base, self._get_index_literal(manager))
+
+    def _get_index_node(self) -> Node:
+        if len(self.args) != 1:
+            raise errs.TplCompileError("Array type must contain exactly one element. ", self.lf)
+        return self.args[0]
+
+    def _get_index_literal(self, manager: tp.Manager):
+        node = self._get_index_node()
+        if not isinstance(node, IntLiteral):
+            raise errs.TplCompileError("Array type declaration must be an int literal. ", self.lf)
+        return util.bytes_to_int(manager.literal[node.lit_pos: node.lit_pos + util.INT_LEN])
+
+    def __str__(self):
+        return f"({self.indexing_obj})[{self.args}]"
 
 
 INT_ARITH_TABLE = {
