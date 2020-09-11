@@ -1050,6 +1050,17 @@ class StructStmt(Statement):
         return "struct {} {}".format(self.name, self.body)
 
 
+class IndexingExpr(Expression):
+    def __init__(self, lf):
+        super().__init__(lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        pass
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        pass
+
+
 INT_ARITH_TABLE = {
     "+": "addi",
     "-": "subi",
