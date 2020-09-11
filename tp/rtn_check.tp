@@ -1,0 +1,17 @@
+﻿fn test() void {
+    return;
+}
+
+fn main() int {
+    if not 1 {
+        return 1;
+    } else {
+        while 1 {
+            if 0 {
+                return 0;
+            }
+        }
+    }
+    return 2;
+}
+

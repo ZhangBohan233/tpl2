@@ -272,9 +272,19 @@ class Parser:
                     self.literal_bytes.extend(util.int_to_bytes(token.value))
                 builder.add_node(ast.IntLiteral(pos, lf))
             elif isinstance(token, tl.FloatToken):
-                pass
+                if token.value in self.float_literals:
+                    pos = self.float_literals[token.value]
+                else:
+                    pos = len(self.literal_bytes)
+                    self.literal_bytes.extend(util.float_to_bytes(token.value))
+                builder.add_node(ast.FloatLiteral(pos, lf))
             elif isinstance(token, tl.CharToken):
-                pass
+                if token.char in self.char_literals:
+                    pos = self.char_literals[token.char]
+                else:
+                    pos = len(self.literal_bytes)
+                    self.literal_bytes.extend(util.char_to_bytes(token.char))
+                builder.add_node(ast.CharLiteral(pos, lf))
             elif isinstance(token, tl.StrToken):
                 pass
             elif isinstance(token, tl.IdToken):
@@ -336,6 +346,16 @@ class Parser:
                         return index + 1
                 parenthesis = self.parse_as_part(ele)
                 builder.add_node(parenthesis)
+            elif ele.is_sqr_bracket():
+                lf = ele.lf
+                if index > 0:
+                    prob_call_obj = parent[index - 1]
+                    if isinstance(prob_call_obj, tl.AtomicElement) and is_call(prob_call_obj.atom):
+                        args = self.parse_as_line(ele)
+                        call_obj = builder.remove_last()
+                        call = ast.IndexingExpr(call_obj, args, lf)
+                        builder.add_node(call)
+                        return index + 1
         else:
             raise Exception("Unexpected error. ")
 

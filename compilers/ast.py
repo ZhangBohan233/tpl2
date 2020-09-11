@@ -42,13 +42,46 @@ class Node:
         self.lf: tl.LineFile = lf
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        """
+        Compile this node, returns the evaluated address if this node is an 'Expression', otherwise return None
+
+        :param env:
+        :param tpa:
+        :return:
+        """
         raise NotImplementedError()
 
     def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        """
+        Returns the type when this node is used for representing a type.
+
+        Two typical use of this method is:
+        Right side of ':' when defining variable, e.g. 'x: int';
+        Return type of function, e.g. 'fn main() int'
+
+        :param env:
+        :param manager:
+        :return:
+        """
         raise errs.TplTypeError("Name '" + self.__class__.__name__ + "' is not a type. ", self.lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        """
+        Returns the type of the evaluation value of this node.
+
+        :param env:
+        :param manager:
+        :return:
+        """
         raise NotImplementedError()
+
+    def return_check(self):
+        """
+        Returns True iff there is a child of this node is a ReturnStmt.
+
+        :return:
+        """
+        return False
 
 
 # Expression returns a thing while Statement returns nothing
@@ -81,6 +114,9 @@ class Line(Expression):
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         pass
 
+    def return_check(self):
+        return any([part.return_check() for part in self.parts])
+
     def __len__(self):
         return len(self.parts)
 
@@ -103,6 +139,9 @@ class BlockStmt(Statement):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         for line in self.lines:
             line.compile(env, tpa)
+
+    def return_check(self):
+        return any([line.return_check() for line in self.lines])
 
     def __len__(self):
         return len(self.lines)
@@ -142,6 +181,8 @@ class NameNode(Expression):
             return typ.TYPE_FLOAT
         elif self.name == "char":
             return typ.TYPE_CHAR
+        elif self.name == "byte":
+            return typ.TYPE_BYTE
         elif self.name == "void":
             return typ.TYPE_VOID
         else:
@@ -408,6 +449,9 @@ class ReturnStmt(UnaryStmt):
             tpa.return_value(value_addr)
         tpa.return_func()
 
+    def return_check(self):
+        return True
+
 
 class StarExpr(UnaryExpr):
     def __init__(self, lf):
@@ -453,6 +497,7 @@ class AsExpr(BinaryExpr):
 
     All methods of this class are defined for the use of 'cast'
     """
+
     def __init__(self, lf):
         super().__init__("as", lf)
 
@@ -508,6 +553,7 @@ class DollarExpr(BinaryExpr):
     For example, s$x is logically equivalent to (*s).x, but due to the implementation, (*s).x would evaluate to
     incorrect result.
     """
+
     def __init__(self, lf):
         super().__init__("$", lf)
 
@@ -666,10 +712,18 @@ class FunctionDef(Expression):
         env.define_function(self.name, func_type, fn_ptr, self.lf)
 
         if self.body is not None:
+            # check return
+            complete_return = self.body.return_check()
+            if not complete_return:
+                if not rtype.is_void():
+                    raise errs.TplCompileError(f"Function '{self.name}' missing return statement. ", self.lf)
+
+            # compiling
             body_out.add_function(self.name, self.lf.file_name, fn_ptr)
             push_index = body_out.add_indefinite_push()
             self.body.compile(scope, body_out)
 
+            # ending
             if rtype.is_void():
                 body_out.return_func()
             body_out.end_func()
@@ -835,6 +889,11 @@ class IfStmt(Statement):
 
         tpa.write_format("label", endif_label)
 
+    def return_check(self):
+        # Note that an 'if' without 'else' does not return this function anyway
+        return self.if_branch.return_check() and \
+               (self.else_branch.return_check() if self.else_branch is not None else False)
+
     def __str__(self):
         if self.else_branch:
             return "if {} {} else {}".format(self.condition, self.if_branch, self.else_branch)
@@ -914,6 +973,9 @@ class WhileStmt(Statement):
         tpa.write_format("goto", loop_title_label)
         tpa.write_format("label", end_label)
 
+    def return_check(self):
+        return self.body.return_check()
+
     def __str__(self):
         return "while {} {}".format(self.condition, self.body)
 
@@ -947,6 +1009,9 @@ class ForStmt(Statement):
         self.step.compile(loop_env, tpa)
         tpa.write_format("goto", loop_title_label)
         tpa.write_format("label", end_label)
+
+    def return_check(self):
+        return self.body.return_check()
 
     def __str__(self):
         return "for {}; {}; {} {}".format(self.init, self.cond, self.step, self.body)
@@ -1051,8 +1116,11 @@ class StructStmt(Statement):
 
 
 class IndexingExpr(Expression):
-    def __init__(self, lf):
+    def __init__(self, indexing_obj: Node, args: Line, lf):
         super().__init__(lf)
+
+        self.indexing_obj = indexing_obj
+        self.args = args
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         pass

@@ -135,6 +135,7 @@ class StructType(Type):
 TYPE_INT = BasicType("int", util.INT_LEN)
 TYPE_FLOAT = BasicType("float", util.FLOAT_LEN)
 TYPE_CHAR = BasicType("char", util.CHAR_LEN)
+TYPE_BYTE = BasicType("byte", 1)
 TYPE_VOID = BasicType("void", 0)
 
 NATIVE_FUNCTIONS = {

@@ -30,31 +30,47 @@ unsigned char *read_file(char *file_name, int *length_ptr) {
     return array;
 }
 
+union i64 {
+    tp_int value;
+    unsigned char arr[8];
+};
+
+union i32 {
+    tp_int value;
+    unsigned char arr[4];
+};
+
+union i16 {
+    tp_char value;
+    unsigned char arr[2];
+};
+
+union f64 {
+    tp_float d;
+    unsigned char b[8];
+};
+
+union f32 {
+    tp_float d;
+    unsigned char b[4];
+};
+
 tp_int bytes_to_int64(const unsigned char *b) {
-    union {
-        tp_int value;
-        unsigned char arr[8];
-    } i64;
-    memcpy(i64.arr, b, 8);
-    return i64.value;
+    union i64 un;
+    memcpy(un.arr, b, 8);
+    return un.value;
 }
 
 void int_to_bytes64(unsigned char *b, tp_int i) {
-    union {
-        tp_int value;
-        unsigned char arr[8];
-    } i64;
-    i64.value = i;
-    memcpy(b, i64.arr, 8);
+    union i64 un;
+    un.value = i;
+    memcpy(b, un.arr, 8);
 }
 
 tp_int bytes_to_int32(const unsigned char *b) {
-    union {
-        tp_int value;
-        unsigned char arr[4];
-    } i32;
-    memcpy(i32.arr, b, 4);
-    return i32.value;
+    union i32 un;
+    memcpy(un.arr, b, 4);
+    return un.value;
 }
 
 void int_to_bytes32(unsigned char *b, tp_int i) {
@@ -66,40 +82,40 @@ void int_to_bytes32(unsigned char *b, tp_int i) {
     memcpy(b, i32.arr, 4);
 }
 
+tp_char bytes_to_char(const unsigned char *b) {
+    union i32 un;
+    memcpy(un.arr, b, 2);
+    return un.value;
+}
+
+void char_to_bytes32(unsigned char *b, tp_char c) {
+    union i16 un;
+    un.value = c;
+    memcpy(b, un.arr, 2);
+}
+
 tp_float bytes_to_float64(const unsigned char *bytes) {
-    union {
-        tp_float d;
-        unsigned char b[8];
-    } dou;
-    memcpy(dou.b, bytes, 8);
-    return dou.d;
+    union f64 un;
+    memcpy(un.b, bytes, 8);
+    return un.d;
 }
 
 void float_to_bytes64(unsigned char *bytes, tp_float d) {
-    union {
-        tp_float d;
-        unsigned char b[8];
-    } dou;
-    dou.d = d;
-    memcpy(bytes, dou.b, 8);
+    union f64 un;
+    un.d = d;
+    memcpy(bytes, un.b, 8);
 }
 
 tp_float bytes_to_float32(const unsigned char *bytes) {
-    union {
-        tp_float d;
-        unsigned char b[4];
-    } dou;
-    memcpy(dou.b, bytes, 4);
-    return dou.d;
+    union f32 un;
+    memcpy(un.b, bytes, 4);
+    return un.d;
 }
 
 void float_to_bytes32(unsigned char *bytes, tp_float d) {
-    union {
-        tp_float d;
-        unsigned char b[4];
-    } dou;
-    dou.d = d;
-    memcpy(bytes, dou.b, 4);
+    union f32 un;
+    un.d = d;
+    memcpy(bytes, un.b, 4);
 }
 
 char *format_bits(const char *format) {

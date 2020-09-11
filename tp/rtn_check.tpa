@@ -1,0 +1,80 @@
+bits
+64
+stack_size
+1024
+global_length
+16
+literal_length
+24
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0
+
+fn tp/rtn_check.tp$test $1024
+    push_fp
+    push          0
+    pull_fp
+    ret
+    pull_fp
+    ret
+    stop
+
+fn tp/rtn_check.tp$main $1032
+    push_fp
+    push          64
+    load_lit      %0      $8
+    iload         %1      $0
+    store         %1      %0
+    load          %0      $0
+    not           %0
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    if_zero_goto  %0      ELSE_0
+    load_lit      %0      $8
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    goto          ENDIF_0
+    label         ELSE_0
+    label         LOOP_TITLE_0
+    load_lit      %0      $8
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    if_zero_goto  %0      END_LOOP_0
+    load_lit      %0      $0
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    if_zero_goto  %0      ENDIF_1
+    load_lit      %0      $0
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $40
+    put_ret       %0
+    pull_fp
+    ret
+    label         ENDIF_1
+    goto          LOOP_TITLE_0
+    label         END_LOOP_0
+    load_lit      %0      $8
+    iload         %1      $48
+    store         %1      %0
+    label         ENDIF_0
+    load_lit      %0      $16
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $56
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    aload         %0      $1
+    set_ret       %0
+    call_fn       tp/rtn_check.tp$main
+    exit

@@ -11,7 +11,7 @@ Naming rule of instructions:
 [pre] + inst + [type] + _[special description]
 
 pre: aim for inst, for example, 'i' for instant, 'a' for address
-type: 'i' for int, 'f' for float, 'c' for char
+type: 'i' for int, 'f' for float, 'c' for char, 'b' for byte
 """
 INSTRUCTIONS = {
     "nop": (0,),

@@ -21,6 +21,8 @@
 
 typedef int_fast64_t tp_int;
 typedef double tp_float;
+typedef wchar_t tp_char;
+typedef unsigned char tp_byte;
 
 //
 // end of modification
@@ -37,6 +39,10 @@ void int_to_bytes64(unsigned char *b, tp_int i);
 tp_int bytes_to_int32(const unsigned char *bytes);
 
 void int_to_bytes32(unsigned char *b, tp_int i);
+
+tp_char bytes_to_char(const unsigned char *bytes);
+
+void char_to_bytes32(unsigned char *b, tp_char i);
 
 tp_float bytes_to_float64(const unsigned char *bytes);
 

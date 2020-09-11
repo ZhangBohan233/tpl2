@@ -1,3 +1,4 @@
+import os
 import compilers.errors as errs
 import compilers.util as util
 import compilers.tokens_lib as tl
@@ -21,15 +22,23 @@ class FileTokenizer:
         self.in_doc = False
 
     def tokenize(self) -> tl.CollectiveElement:
-        with open(self.file_name, "r") as rf:
+        utf8bom = False
+        if os.stat(self.file_name).st_size >= 3:
+            with open(self.file_name, "rb") as test:
+                if test.read(3) == b'\xef\xbb\xbf':
+                    utf8bom = True
+        if utf8bom:
+            rf = open(self.file_name, "r", encoding="utf-8-sig")
+        else:
+            rf = open(self.file_name, "r")
+        line = rf.readline()
+        line_num = 1
+        while line:
+            lf = tl.LineFile(self.file_name, line_num)
+            self.proceed_line(line, lf)
             line = rf.readline()
-            line_num = 1
-            while line:
-                lf = tl.LineFile(self.file_name, line_num)
-                self.proceed_line(line, lf)
-                line = rf.readline()
-                line_num += 1
-        # print(self.tokens)
+            line_num += 1
+        rf.close()
         return self.make_root_tree()
 
     def make_root_tree(self):
