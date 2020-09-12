@@ -66,7 +66,7 @@ class BasicType(Type):
         return isinstance(other, BasicType) and other.type_name == self.type_name
 
     def __str__(self):
-        return "Type(" + self.type_name + ")"
+        return self.type_name
 
     def __repr__(self):
         return self.__str__()

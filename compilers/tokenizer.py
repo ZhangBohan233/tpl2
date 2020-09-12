@@ -110,7 +110,7 @@ class FileTokenizer:
                         # enter comment, end of this line
                         if len(non_literal) > 2:
                             self.line_tokenize(non_literal[0:len(non_literal) - 2], lf)
-                            # non_literal = ""
+                            non_literal = ""
                         break
                     elif ch == '"':
                         # enter string literal

@@ -1,0 +1,126 @@
+bits
+64
+stack_size
+1024
+global_length
+8
+literal_length
+32
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 140 52 0 0 0 0 0 0
+
+fn tp/arr.tp$main $1024
+    push_fp
+    push          152
+    load_lit      %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    iload         %1      8
+    muli          %0      %1
+    iload         %1      32
+    store         %1      %0
+    aload         %0      $0
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    load          %1      $32
+    addi          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load_lit      %0      $8
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $24
+    load          %1      $40
+    store_abs     %0      %1
+    load_lit      %0      $8
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $48
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $64
+    iload         %1      8
+    muli          %0      %1
+    iload         %1      64
+    store         %1      %0
+    aload         %0      $0
+    iload         %1      56
+    store         %1      %0
+    load          %0      $56
+    load          %1      $64
+    addi          %0      %1
+    iload         %1      56
+    store         %1      %0
+    load_lit      %0      $24
+    iload         %1      $72
+    store         %1      %0
+    load          %0      $56
+    load          %1      $72
+    store_abs     %0      %1
+    load_lit      %0      $0
+    iload         %1      $80
+    store         %1      %0
+    load          %0      $80
+    iload         %1      $96
+    store         %1      %0
+    load          %0      $96
+    iload         %1      8
+    muli          %0      %1
+    iload         %1      96
+    store         %1      %0
+    aload         %0      $0
+    iload         %1      88
+    store         %1      %0
+    load          %0      $88
+    load          %1      $96
+    addi          %0      %1
+    iload         %1      88
+    store         %1      %0
+    load          %0      $88
+    rload_abs     %1      %0
+    iload         %0      104
+    store         %0      %1
+    load_lit      %0      $8
+    iload         %1      $112
+    store         %1      %0
+    load          %0      $112
+    iload         %1      $128
+    store         %1      %0
+    load          %0      $128
+    iload         %1      8
+    muli          %0      %1
+    iload         %1      128
+    store         %1      %0
+    aload         %0      $0
+    iload         %1      120
+    store         %1      %0
+    load          %0      $120
+    load          %1      $128
+    addi          %0      %1
+    iload         %1      120
+    store         %1      %0
+    load          %0      $120
+    rload_abs     %1      %0
+    iload         %0      136
+    store         %0      %1
+    load          %0      $104
+    load          %1      $136
+    addi          %0      %1
+    iload         %1      144
+    store         %1      %0
+    load          %0      $144
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    aload         %0      $1
+    set_ret       %0
+    call_fn       tp/arr.tp$main
+    exit
