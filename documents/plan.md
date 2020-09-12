@@ -10,12 +10,13 @@
 * ~~Lazy operator~~ Done
 * ~~Import and export~~ Done
 * ~~Struct~~ Done
-* Array
-* Char related
+* ~~Array~~ Done
+* ~~Char related~~ Done
 * Char array
-* Indexing
+* ~~Indexing~~ Done
 * More native call (print)
 * ~~Loop~~ Done
+* Variable length argument
 
 #### Stage 2
 * Tpa optimizer: load literal

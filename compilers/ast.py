@@ -1162,13 +1162,7 @@ class IndexingExpr(Expression):
         self.args = args
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        # arg_node = self._get_index_node()
-        # arg_t = arg_node.evaluated_type(env, tpa.manager)
-        # if arg_t != typ.TYPE_INT:
-        #     raise errs.TplCompileError("Index must be int. ", self.lf)
-        # arg_addr = arg_node.compile(env, tpa)
         bast_t = self.evaluated_type(env, tpa.manager)
-        # array_addr = self.indexing_obj.compile(env, tpa)
         index_addr = self.get_indexed_addr(env, tpa)
         # print(index_addr)
 
@@ -1195,32 +1189,49 @@ class IndexingExpr(Expression):
         arg_t = arg_node.evaluated_type(env, tpa.manager)
         if arg_t != typ.TYPE_INT:
             raise errs.TplCompileError("Index must be int. ", self.lf)
-        arg_addr = arg_node.compile(env, tpa)
-        bast_t = self.evaluated_type(env, tpa.manager)
-        array_addr = self.indexing_obj.compile(env, tpa)
-        return self._get_abs_addr_of_index(bast_t, array_addr, arg_addr, tpa)
+        return self._get_abs_addr_of_index(env, tpa)
 
-    @staticmethod
-    def _get_abs_addr_of_index(base_t: typ.Type, array_addr, index_addr, tpa: tp.TpaOutput) -> int:
+    def _get_abs_addr_of_index(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
         """
         Returns an address, which stores the absolute addr of the
         返回一个相对地址，在此相对地址中存有“数组第i个值”的地址
-
-        :param base_t:
-        :param array_addr:
-        :param index_addr:
-        :param tpa:
-        :return:
         """
         res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+        acc_addr = tpa.manager.allocate_stack(util.INT_LEN)
         arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
-        base_len = base_t.memory_length()
-        tpa.assign(arith_addr, index_addr)
-        tpa.binary_arith_i("muli", arith_addr, base_len, arith_addr)
+
+        orig_t = self._get_orig_type(env, tpa.manager)
+
+        base = self
+        base_t = orig_t
+        while isinstance(base, IndexingExpr):
+            if not isinstance(base_t, typ.ArrayType):
+                raise errs.TplCompileError("Cannot take index on non-array type. ", self.lf)
+
+            base_t = base_t.base
+            cur_arg = base._get_index_node()
+            cur_unit_len = base_t.memory_length()
+
+            tpa.assign(arith_addr, cur_arg.compile(env, tpa))
+            tpa.binary_arith_i("muli", arith_addr, cur_unit_len, arith_addr)
+            tpa.binary_arith("addi", acc_addr, arith_addr, acc_addr)
+
+            base = base.indexing_obj
+
+        if isinstance(base_t, typ.ArrayType):
+            raise errs.TplCompileError("Cannot take array as value. ", self.lf)
+
+        array_addr = base.compile(env, tpa)
 
         tpa.take_addr(array_addr, res_addr)
-        tpa.binary_arith("addi", res_addr, arith_addr, res_addr)
+        tpa.binary_arith("addi", res_addr, acc_addr, res_addr)
         return res_addr
+
+    def _get_orig_type(self, env, manager):
+        if isinstance(self.indexing_obj, IndexingExpr):
+            return self.indexing_obj._get_orig_type(env, manager)
+        else:
+            return self.indexing_obj.evaluated_type(env, manager)
 
     def _get_index_node(self) -> Node:
         if len(self.args) != 1:
@@ -1234,7 +1245,7 @@ class IndexingExpr(Expression):
         return util.bytes_to_int(manager.literal[node.lit_pos: node.lit_pos + util.INT_LEN])
 
     def __str__(self):
-        return f"({self.indexing_obj})[{self.args}]"
+        return f"{self.indexing_obj}[{self.args}]"
 
 
 INT_ARITH_TABLE = {
