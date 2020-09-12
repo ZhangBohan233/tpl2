@@ -1,6 +1,10 @@
 const FALSE: int = 0;
 const TRUE: int = 1;
 
+struct String {
+
+}
+
 fn add(x: int, y: int) int {
     return x + y;
 }

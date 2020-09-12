@@ -12,11 +12,13 @@
 * ~~Struct~~ Done
 * ~~Array~~ Done
 * ~~Char related~~ Done
-* Char array
+* Char array/String
 * ~~Indexing~~ Done
-* More native call (print)
 * ~~Loop~~ Done
-* Variable length argument
+* Macro
 
 #### Stage 2
+* Heap memory management
+* Variable length argument
+* More native call (print)
 * Tpa optimizer: load literal

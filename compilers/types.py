@@ -148,6 +148,9 @@ class ArrayType(Type):
     def __str__(self):
         return f"{self.base}[{self.num_ele}]"
 
+    def __eq__(self, other):
+        return isinstance(other, ArrayType) and self.base == other.base and self.num_ele == other.num_ele
+
 
 TYPE_INT = BasicType("int", util.INT_LEN)
 TYPE_FLOAT = BasicType("float", util.FLOAT_LEN)
