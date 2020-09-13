@@ -120,7 +120,7 @@ class Line(Expression):
     def __len__(self):
         return len(self.parts)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> Node:
         return self.parts[item]
 
     def __str__(self):
@@ -146,7 +146,7 @@ class BlockStmt(Statement):
     def __len__(self):
         return len(self.lines)
 
-    def __getitem__(self, item):
+    def __getitem__(self, item) -> Line:
         return self.lines[item]
 
     def __setitem__(self, key, value):
@@ -891,20 +891,26 @@ class RequireStmt(Statement):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         self.require(self.body, env, tpa)
 
-    def require(self, node: Node, env: en.Environment, tpa: tp.TpaOutput):
+    @classmethod
+    def require(cls, node: Node, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(node, BlockStmt):
             for line in node.lines:
-                self.require(line, env, tpa)
+                cls.require(line, env, tpa)
         elif isinstance(node, Line):
             for part in node.parts:
-                self.require(part, env, tpa)
+                cls.require(part, env, tpa)
         elif isinstance(node, NameNode):
             name = node.name
             if name in typ.NATIVE_FUNCTIONS:
-                func_id, func_type = typ.NATIVE_FUNCTIONS[name]
-                fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
-                tpa.require_name(name, fn_ptr)
-                env.define_function(name, func_type, fn_ptr, node.lf)
+                if env.has_name(name):
+                    if not isinstance(env.get_type(name, node.lf), typ.NativeFuncType):
+                        raise errs.TplCompileError(
+                            f"Cannot require name '{name}': name already defined in this scope. ", node.lf)
+                else:
+                    func_id, func_type = typ.NATIVE_FUNCTIONS[name]
+                    fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
+                    tpa.require_name(name, fn_ptr)
+                    env.define_function(name, func_type, fn_ptr, node.lf)
             else:
                 raise errs.TplCompileError("Cannot require '" + name + "'. ", node.lf)
 
@@ -1373,28 +1379,60 @@ def validate_arg_count(args: Line, expected_arg_count):
 
 def ctf_sizeof(args: Line, env: en.Environment, tpa: tp.TpaOutput):
     validate_arg_count(args, 1)
-    arg: Expression = args[0]
-    t = arg.evaluated_type(env, tpa.manager)
+    t = args[0].evaluated_type(env, tpa.manager)
     res_addr = tpa.manager.allocate_stack(util.INT_LEN)
     tpa.assign_i(res_addr, t.memory_length())
     return res_addr
 
 
+PRINT_FUNCTIONS = {
+    typ.TYPE_INT: "print_int",
+    typ.TYPE_FLOAT: "print_float",
+    typ.TYPE_CHAR: "print_char",
+    typ.TYPE_CHAR_ARR: "print_str"
+}
+
+PRINTLN_FUNCTIONS = {
+    typ.TYPE_INT: "println_int",
+    typ.TYPE_FLOAT: "println_float",
+    typ.TYPE_CHAR: "println_char",
+    typ.TYPE_CHAR_ARR: "println_str"
+}
+
+
 def ctf_cprint(args: Line, env: en.Environment, tpa: tp.TpaOutput):
-    pass
+    validate_arg_count(args, 1)
+    arg: Node = args[0]
+    et = arg.evaluated_type(env, tpa.manager)
+    if et in PRINT_FUNCTIONS:
+        name_node = NameNode(PRINT_FUNCTIONS[et], args.lf)
+        RequireStmt.require(name_node, env, tpa)
+        call = FunctionCall(name_node, args, args.lf)
+        return call.compile(env, tpa)
+    else:
+        raise errs.TplCompileError("Unexpected argument type of 'cprint'. ", args.lf)
 
 
 def ctf_cprintln(args: Line, env: en.Environment, tpa: tp.TpaOutput):
-    pass
+    validate_arg_count(args, 1)
+    arg: Node = args[0]
+    et = arg.evaluated_type(env, tpa.manager)
+    if et in PRINTLN_FUNCTIONS:
+        name_node = NameNode(PRINTLN_FUNCTIONS[et], args.lf)
+        RequireStmt.require(name_node, env, tpa)
+        call = FunctionCall(name_node, args, args.lf)
+        return call.compile(env, tpa)
+    else:
+        raise errs.TplCompileError("Unexpected argument type of 'cprint'. ", args.lf)
 
 
 COMPILE_TIME_FUNCTIONS = {
-    "sizeof": (ctf_sizeof, typ.CompileTimeFunctionType("sizeof", typ.TYPE_INT)),
-    "cprint": (ctf_cprint, typ.CompileTimeFunctionType("cprint", typ.TYPE_VOID)),
-    "cprintln": (ctf_cprintln, typ.CompileTimeFunctionType("cprintln", typ.TYPE_VOID))
+    typ.CompileTimeFunctionType("sizeof", typ.TYPE_INT): ctf_sizeof,
+    typ.CompileTimeFunctionType("cprint", typ.TYPE_VOID): ctf_cprint,
+    typ.CompileTimeFunctionType("cprintln", typ.TYPE_VOID): ctf_cprintln
 }
 
 
 def call_compile_time_function(func_t: typ.CompileTimeFunctionType, arg: Line, env: en.Environment, tpa: tp.TpaOutput):
-    f, t = COMPILE_TIME_FUNCTIONS[func_t.name]
+    f = COMPILE_TIME_FUNCTIONS[func_t]
     return f(arg, env, tpa)

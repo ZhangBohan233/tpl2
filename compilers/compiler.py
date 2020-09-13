@@ -25,5 +25,5 @@ class Compiler:
 
 
 def _init_compile_time_functions(env: en.GlobalEnvironment):
-    for name, tup in ast.COMPILE_TIME_FUNCTIONS.items():
-        env.define_const(name, tup[1], tl.LF_COMPILER)
+    for func_t in ast.COMPILE_TIME_FUNCTIONS:
+        env.define_const(func_t.name, func_t, tl.LF_COMPILER)

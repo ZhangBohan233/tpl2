@@ -2,7 +2,7 @@
 
 ### Development Order
 
-#### Stage 1
+#### Phase 1
 * ~~Simple native call~~ Done
 * ~~Unary operator~~ Done
 * ~~Pointer~~ Done
@@ -16,9 +16,9 @@
 * ~~Indexing~~ Done
 * ~~Loop~~ Done
 * Macro
-* Compile time function
+* ~~Compile time function~~ Done
 
-#### Stage 2
+#### Phase 2
 * Heap memory management
 * Variable length argument
 * More native call (print)

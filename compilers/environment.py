@@ -96,6 +96,9 @@ class Environment:
             return entry.named
         return False
 
+    def has_name(self, name) -> bool:
+        return self._inner_get(name) is not None
+
     def _inner_get(self, name) -> VarEntry:
         if name in self.vars:
             return self.vars[name]

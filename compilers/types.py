@@ -70,6 +70,9 @@ class BasicType(Type):
     def __eq__(self, other):
         return isinstance(other, BasicType) and other.type_name == self.type_name
 
+    def __hash__(self):
+        return hash(self.type_name)
+
     def __str__(self):
         return self.type_name
 
@@ -111,6 +114,9 @@ class CompileTimeFunctionType(Type):
 
     def __str__(self):
         return self.name
+
+    def __hash__(self):
+        return hash(self.name)
 
     def __eq__(self, other):
         return isinstance(other, CompileTimeFunctionType) and self.name == other.name
@@ -185,6 +191,9 @@ class ArrayType(Type):
 
     def __str__(self):
         return f"{self.ele_type}[]"
+
+    def __hash__(self):
+        return hash(self.ele_type) + 1
 
     def __eq__(self, other):
         return isinstance(other, ArrayType) and self.ele_type == other.ele_type
