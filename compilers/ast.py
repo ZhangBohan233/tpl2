@@ -616,6 +616,9 @@ class DollarExpr(BinaryExpr):
 
     def array_attributes(self, env: en.Environment, tpa: tp.TpaOutput):
         res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+        arr_ptr = self.left.compile(env, tpa)
+        tpa.value_in_addr_op(arr_ptr, res_addr)  # since first value in array is the length
+        return res_addr
 
 
 class Assignment(BinaryExpr):

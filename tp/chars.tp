@@ -1,5 +1,5 @@
 ﻿require {
-    print_char, println_char, println_str, println_int
+    print_char, println_char, println_str, println_int, print_int
 }
 
 fn test(x: char, y: char) char {
@@ -7,6 +7,7 @@ fn test(x: char, y: char) char {
 }
 
 fn ppp(a: char[]) void {
+    print_int(a$length);
     println_str(a);
 }
 
@@ -15,7 +16,6 @@ fn main() int {
     b: char[] = "abc";
 
     ppp(b);
-    println_int(b$length);
     println_char(test(a, 'x'));
 
     return b[1] as int;

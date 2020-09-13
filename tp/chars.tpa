@@ -3,13 +3,13 @@ bits
 stack_size
 1024
 global_length
-48
+64
 literal_length
 34
 literal
 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 74 85 3 0 0 0 0 0 0 0 97 0 98 0 99 0 120 0
 
-fn tp/chars.tp$test $1048
+fn tp/chars.tp$test $1064
     push_fp
     push          30
     loadc         %0      $0
@@ -32,9 +32,17 @@ fn tp/chars.tp$test $1048
     ret
     stop
 
-fn tp/chars.tp$ppp $1056
+fn tp/chars.tp$ppp $1072
     push_fp
-    push          8
+    push          16
+    load          %0      $0
+    rload_abs     %1      %0
+    iload         %0      8
+    store         %0      %1
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    invoke        $1056
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
@@ -43,7 +51,7 @@ fn tp/chars.tp$ppp $1056
     ret
     stop
 
-fn tp/chars.tp$main $1064
+fn tp/chars.tp$main $1080
     push_fp
     push          50
     loadc_lit     %0      $16
@@ -61,7 +69,7 @@ fn tp/chars.tp$main $1064
     aload_sp      %0      $0
     load          %1      $4
     store_abs     %0      %1
-    call          $1056
+    call          $1072
     loadc_lit     %0      $32
     iload         %1      $20
     storec        %1      %0
@@ -73,7 +81,7 @@ fn tp/chars.tp$main $1064
     store_abs     %0      %1
     iload         %0      22
     set_ret       %0
-    call          $1048
+    call          $1064
     aload_sp      %0      $0
     loadc         %1      $22
     store_abs     %0      %1
@@ -116,6 +124,8 @@ entry
     require       print_char $1024   %0      %1
     require       println_char $1032   %0      %1
     require       println_str $1040   %0      %1
+    require       println_int $1048   %0      %1
+    require       print_int $1056   %0      %1
     aload         %0      $1
     set_ret       %0
     call_fn       tp/chars.tp$main
