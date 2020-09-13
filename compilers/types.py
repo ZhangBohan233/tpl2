@@ -179,6 +179,8 @@ TYPE_CHAR = BasicType("char", util.CHAR_LEN)
 TYPE_BYTE = BasicType("byte", 1)
 TYPE_VOID = BasicType("void", 0)
 
+TYPE_CHAR_ARR = ArrayType(TYPE_CHAR)
+
 PRIMITIVE_TYPES = {"int": TYPE_INT, "float": TYPE_FLOAT, "char": TYPE_CHAR, "byte": TYPE_BYTE, "void": TYPE_VOID}
 
 NATIVE_FUNCTIONS = {
@@ -189,4 +191,6 @@ NATIVE_FUNCTIONS = {
     "println_char": (5, NativeFuncType([TYPE_CHAR], TYPE_VOID)),
     "print_float": (6, NativeFuncType([TYPE_FLOAT], TYPE_VOID)),
     "println_float": (7, NativeFuncType([TYPE_FLOAT], TYPE_VOID)),
+    "print_str": (8, NativeFuncType([TYPE_CHAR_ARR], TYPE_VOID)),
+    "println_str": (9, NativeFuncType([TYPE_CHAR_ARR], TYPE_VOID)),
 }

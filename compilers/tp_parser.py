@@ -14,6 +14,7 @@ class Parser:
         self.int_literals = util.initial_int_literal_dict()  # int_lit : position in literal_bytes
         self.float_literals = {}
         self.char_literals = {}
+        self.str_literals = {}
 
         self.special_binary = {
             "=": ast.Assignment,
@@ -286,7 +287,12 @@ class Parser:
                     self.literal_bytes.extend(util.char_to_bytes(token.char))
                 builder.add_node(ast.CharLiteral(pos, lf))
             elif isinstance(token, tl.StrToken):
-                pass
+                if token.value in self.str_literals:
+                    pos = self.str_literals[token.value]
+                else:
+                    pos = len(self.literal_bytes)
+                    self.literal_bytes.extend(util.string_to_bytes(token.value))
+                builder.add_node(ast.StringLiteral(pos, lf))
             elif isinstance(token, tl.IdToken):
                 symbol = token.identifier
                 if symbol == "-":

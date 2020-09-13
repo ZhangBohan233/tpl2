@@ -188,15 +188,15 @@ class NameNode(Expression):
 
 
 class LiteralNode(Expression, ABC):
-    def __init__(self, lf):
+    def __init__(self, lit_pos: int, lf):
         super().__init__(lf)
+
+        self.lit_pos = lit_pos
 
 
 class IntLiteral(LiteralNode):
     def __init__(self, lit_pos, lf):
-        super().__init__(lf)
-
-        self.lit_pos: int = lit_pos
+        super().__init__(lit_pos, lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         stack_addr = tpa.manager.allocate_stack(util.INT_LEN)
@@ -212,9 +212,7 @@ class IntLiteral(LiteralNode):
 
 class FloatLiteral(LiteralNode):
     def __init__(self, lit_pos, lf):
-        super().__init__(lf)
-
-        self.lit_pos: int = lit_pos
+        super().__init__(lit_pos, lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         pass
@@ -228,9 +226,7 @@ class FloatLiteral(LiteralNode):
 
 class CharLiteral(LiteralNode):
     def __init__(self, lit_pos, lf):
-        super().__init__(lf)
-
-        self.lit_pos: int = lit_pos
+        super().__init__(lit_pos, lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         stack_addr = tpa.manager.allocate_stack(util.CHAR_LEN)
@@ -245,14 +241,17 @@ class CharLiteral(LiteralNode):
 
 
 class StringLiteral(LiteralNode):
-    def __init__(self, lf):
-        super().__init__(lf)
+    def __init__(self, lit_pos, lf):
+        super().__init__(lit_pos, lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
+        res_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
+        tpa.load_literal_ptr(res_ptr, self.lit_pos)
+
+        return res_ptr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        pass
+        return typ.TYPE_CHAR_ARR
 
 
 class Buildable:
@@ -573,21 +572,29 @@ class DollarExpr(BinaryExpr):
         super().__init__("$", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        attr_ptr, attr_t = self.get_attr_ptr_and_type(env, tpa)
+        left_t = self.left.evaluated_type(env, tpa.manager)
+        if isinstance(left_t, typ.PointerType) and isinstance(left_t.base, typ.StructType):
+            attr_ptr, attr_t = self.get_attr_ptr_and_type(env, tpa)
 
-        res_ptr = tpa.manager.allocate_stack(attr_t.length)
-        tpa.value_in_addr_op(attr_ptr, res_ptr)
-        return res_ptr
+            res_ptr = tpa.manager.allocate_stack(attr_t.length)
+            tpa.value_in_addr_op(attr_ptr, res_ptr)
+            return res_ptr
+        elif isinstance(left_t, typ.ArrayType) and isinstance(self.right, NameNode):
+            return self.array_attributes(env, tpa)
+
+        raise errs.TplCompileError("Left side of dollar must be a pointer to struct or an array. ", self.lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         left_t = self.left.evaluated_type(env, manager)
         if isinstance(left_t, typ.PointerType):
             struct_t = left_t.base
-            if isinstance(struct_t, typ.StructType) and isinstance(self.right, NameNode):
+            if isinstance(struct_t, typ.StructType)  and isinstance(self.right, NameNode):
                 pos, attr_t = struct_t.members[self.right.name]
                 return attr_t
+        elif isinstance(left_t, typ.ArrayType) and isinstance(self.right, NameNode):
+            return array_attribute_types(self.right.name, self.lf)
 
-        raise errs.TplCompileError("Left side of dollar must be a pointer to struct. ", self.lf)
+        raise errs.TplCompileError("Left side of dollar must be a pointer to struct or an array. ", self.lf)
 
     def get_attr_ptr_and_type(self, env: en.Environment, tpa: tp.TpaOutput) -> (int, typ.Type):
         left_t = self.left.evaluated_type(env, tpa.manager)
@@ -606,6 +613,9 @@ class DollarExpr(BinaryExpr):
                     return real_attr_ptr, t
 
         raise errs.TplCompileError("Left side of dollar must be a pointer to struct. ", self.lf)
+
+    def array_attributes(self, env: en.Environment, tpa: tp.TpaOutput):
+        res_addr = tpa.manager.allocate_stack(util.INT_LEN)
 
 
 class Assignment(BinaryExpr):
@@ -1235,7 +1245,6 @@ class IndexingExpr(Expression):
         return res_addr
 
     def get_indexed_addr(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
-        res_addr = tpa.manager.allocate_stack(util.PTR_LEN)
         ele_t = self.evaluated_type(env, tpa.manager)
         array_ptr_addr = self.indexing_obj.compile(env, tpa)
         index_addr = self._get_index_node(env, tpa.manager).compile(env, tpa)
@@ -1245,9 +1254,9 @@ class IndexingExpr(Expression):
         tpa.binary_arith_i("muli", arith_addr, ele_t.memory_length(), arith_addr)
         tpa.binary_arith_i("addi", arith_addr, util.INT_LEN, arith_addr)  # this step skips the space storing array size
 
-        tpa.binary_arith("addi", array_ptr_addr, arith_addr, res_addr)
+        tpa.binary_arith("addi", array_ptr_addr, arith_addr, arith_addr)
         # tpa.to_abs(arith_addr, res_addr)
-        return res_addr
+        return arith_addr
 
         # arg_node = self._get_index_node()
         # arg_t = arg_node.evaluated_type(env, tpa.manager)
@@ -1343,3 +1352,10 @@ def int_int_to_int(op: str, left_addr: int, right_addr: int, res_addr: int, tpa:
     else:
         raise errs.TplCompileError("No such binary operator '" + op + "'. ")
     tpa.binary_arith(op_inst, left_addr, right_addr, res_addr)
+
+
+def array_attribute_types(attr_name: str, lf):
+    if attr_name == "length":
+        return typ.TYPE_INT
+
+    raise errs.TplCompileError(f"Array does not have attribute '{attr_name}'. ", lf)

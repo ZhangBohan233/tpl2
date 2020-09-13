@@ -68,7 +68,8 @@ MNEMONIC = {
 
 PSEUDO_INSTRUCTIONS = {
     "load_lit": (256, 1, util.INT_LEN),
-    "loadc_lit": (257, 1, util.INT_LEN)
+    "loadc_lit": (257, 1, util.INT_LEN),
+    "lit_abs": (259, 1, util.INT_LEN),  # convert the lit_pos to addr
 }
 
 STR_PSEUDO_INSTRUCTIONS = {
@@ -298,6 +299,12 @@ class TpcCompiler:
             lit_start = self.stack_size + self.global_length
             self.compile_inst("loadc",
                               ["loadc", instruction[1], "$" + str(num_inst[2] + lit_start)],
+                              cur_fn_body,
+                              lf)
+        elif inst == "lit_abs":
+            lit_start = self.stack_size + self.global_length
+            self.compile_inst("aload",
+                              ["aload", instruction[1], "$" + str(num_inst[2] + lit_start)],
                               cur_fn_body,
                               lf)
 

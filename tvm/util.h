@@ -16,6 +16,7 @@
 #define INT_LEN 8
 #define FLOAT_LEN 8
 #define CHAR_LEN 2
+#define PTR_LEN INT_LEN
 
 #define bytes_to_int(b) bytes_to_int64(b)
 #define int_to_bytes(b, i) int_to_bytes64(b, i)

@@ -12,10 +12,11 @@
 * ~~Struct~~ Done
 * ~~Array~~ Done
 * ~~Char related~~ Done
-* Char array/String
+* ~~Char array/String~~ Done
 * ~~Indexing~~ Done
 * ~~Loop~~ Done
 * Macro
+* Compile time function
 
 #### Stage 2
 * Heap memory management

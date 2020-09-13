@@ -1,15 +1,22 @@
 ﻿require {
-    print_char, println_char
+    print_char, println_char, println_str, println_int
 }
 
 fn test(x: char, y: char) char {
     return (x as int + y as int) as char;
 }
 
+fn ppp(a: char[]) void {
+    println_str(a);
+}
+
 fn main() int {
     a: char = '啊';
+    b: char[] = "abc";
 
+    ppp(b);
+    println_int(b$length);
     println_char(test(a, 'x'));
 
-    return 0;
+    return b[1] as int;
 }

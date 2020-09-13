@@ -44,6 +44,13 @@ def bytes_to_float(b: bytes) -> float:
     return struct.unpack(float_pack, b)[0]
 
 
+def string_to_bytes(s: str) -> bytes:
+    res = bytearray(int_to_bytes(len(s)))
+    for c in s:
+        res.extend(char_to_bytes(c))
+    return res
+
+
 def empty_bytes(length: int) -> bytes:
     return bytes([0 for _ in range(length)])
 

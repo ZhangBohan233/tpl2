@@ -165,6 +165,15 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def load_literal_ptr(self, dst_addr, lit_pos):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("lit_abs", register(reg1), address(lit_pos))
+        self.write_format("iload", register(reg2), address(dst_addr))
+        self.write_format("store", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
     def convert_char_to_int(self, dst_addr, src_addr):
         reg1, reg2 = self.manager.require_regs(2)
 

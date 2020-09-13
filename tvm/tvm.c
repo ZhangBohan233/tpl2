@@ -153,6 +153,35 @@ void nat_println_float() {
     pull_fp
 }
 
+void nat_print_str() {
+    push_fp
+    push(PTR_LEN)
+
+    tp_int arr_ptr = bytes_to_int(MEMORY + true_addr(0));
+    tp_int arr_len = bytes_to_int(MEMORY + true_addr(arr_ptr));
+    for (int i = 0; i < arr_len; i++) {
+        tp_char arg = bytes_to_char(MEMORY + true_addr(arr_ptr + INT_LEN + i * CHAR_LEN));
+        wprintf(L"%c", arg);
+    }
+
+    pull_fp
+}
+
+void nat_println_str() {
+    push_fp
+    push(FLOAT_LEN)
+
+    tp_int arr_ptr = bytes_to_int(MEMORY + true_addr(0));
+    tp_int arr_len = bytes_to_int(MEMORY + true_addr(arr_ptr));
+    for (int i = 0; i < arr_len; i++) {
+        tp_char arg = bytes_to_char(MEMORY + true_addr(arr_ptr + INT_LEN + i * CHAR_LEN));
+        wprintf(L"%c", arg);
+    }
+    printf("\n");
+
+    pull_fp
+}
+
 void nat_clock() {
     push_fp
 
@@ -185,6 +214,12 @@ void invoke(tp_int func_ptr) {
             break;
         case 7:  // println_float
             nat_println_float();
+            break;
+        case 8:  // print_str
+            nat_print_str();
+            break;
+        case 9:  // println_str
+            nat_println_str();
             break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;
