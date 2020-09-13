@@ -243,6 +243,11 @@ void tvm_mainloop() {
                 memcpy(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].bytes, INT_LEN);
                 break;
             case 7:  // astore
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                int_to_bytes(MEMORY + true_addr(regs[reg1].int_value), true_addr(regs[reg2].int_value));
+//                memcpy(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].bytes, INT_LEN);
+                break;
             case 8:  // astore_sp
             case 9:  // store_abs
                 reg1 = MEMORY[pc++];

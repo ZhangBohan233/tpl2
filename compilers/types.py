@@ -1,4 +1,5 @@
 import compilers.util as util
+import compilers.errors as errs
 
 
 class Type:
@@ -45,6 +46,10 @@ class Type:
             return True
         else:
             return False
+
+    def check_convertibility(self, left_tar_type, lf) -> None:
+        if not self.convertible_to(left_tar_type, lf):
+            raise errs.TplCompileError(f"Cannot convert '{self}' to '{left_tar_type}'. ", lf)
 
     def is_void(self):
         return self.length == 0
@@ -135,21 +140,37 @@ class StructType(Type):
         return "StructType(" + util.name_with_path(self.name, self.file_path) + ")"
 
 
+# class MemoryArrayType(Type):
+#     def __init__(self, ele_type: Type, num_ele=-1):
+#         super().__init__(ele_type.memory_length() * num_ele)
+#
+#         self.ele_type = ele_type
+#         self.num_ele = num_ele
+#
+#     def strong_convertible(self, left_tar_type):
+#         return self == left_tar_type or (isinstance(left_tar_type, MemoryArrayType) and )
+#
+#     def __eq__(self, other):
+#         return isinstance(other, MemoryArrayType) and self.ele_type == other.ele_type and self.num_ele == other.num_ele
+#
+#     def __str__(self):
+#         if self.num_ele >= 0:
+#             return f"{self.ele_type}[{self.num_ele}]"
+#         else:
+#             return f"{self.ele_type}[]"
+
+
 class ArrayType(Type):
-    def __init__(self, base: Type, num_ele):
+    def __init__(self, ele_type: Type):
         super().__init__(util.PTR_LEN)
 
-        self.base = base
-        self.num_ele = num_ele
-
-    def memory_length(self):
-        return self.base.memory_length() * self.num_ele
+        self.ele_type = ele_type
 
     def __str__(self):
-        return f"{self.base}[{self.num_ele}]"
+        return f"{self.ele_type}[]"
 
     def __eq__(self, other):
-        return isinstance(other, ArrayType) and self.base == other.base and self.num_ele == other.num_ele
+        return isinstance(other, ArrayType) and self.ele_type == other.ele_type
 
 
 TYPE_INT = BasicType("int", util.INT_LEN)
@@ -157,6 +178,8 @@ TYPE_FLOAT = BasicType("float", util.FLOAT_LEN)
 TYPE_CHAR = BasicType("char", util.CHAR_LEN)
 TYPE_BYTE = BasicType("byte", 1)
 TYPE_VOID = BasicType("void", 0)
+
+PRIMITIVE_TYPES = {"int": TYPE_INT, "float": TYPE_FLOAT, "char": TYPE_CHAR, "byte": TYPE_BYTE, "void": TYPE_VOID}
 
 NATIVE_FUNCTIONS = {
     "print_int": (1, NativeFuncType([TYPE_INT], TYPE_VOID)),

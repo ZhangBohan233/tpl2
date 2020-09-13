@@ -175,18 +175,10 @@ class NameNode(Expression):
         return env.get(self.name, self.lf)
 
     def definition_type(self, env: en.Environment, manager: tp.Manager):
-        if self.name == "int":
-            return typ.TYPE_INT
-        elif self.name == "float":
-            return typ.TYPE_FLOAT
-        elif self.name == "char":
-            return typ.TYPE_CHAR
-        elif self.name == "byte":
-            return typ.TYPE_BYTE
-        elif self.name == "void":
-            return typ.TYPE_VOID
-        else:
+        if env.is_type(self.name, self.lf):
             return env.get_type(self.name, self.lf)
+        else:
+            raise errs.TplCompileError(f"Name '{self.name}' is not a type. ", self.lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager):
         return env.get_type(self.name, self.lf)
@@ -621,17 +613,25 @@ class Assignment(BinaryExpr):
         super().__init__("=", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        right_t = self.right.evaluated_type(env, tpa.manager)
         if isinstance(self.left, NameNode):
             if env.is_const(self.left.name, self.lf):
                 raise errs.TplEnvironmentError("Cannot assign constant '{}'. ".format(self.left.name), self.lf)
+            left_t = self.left.evaluated_type(env, tpa.manager)
+            right_t.check_convertibility(left_t, self.lf)
             left_addr = self.left.compile(env, tpa)
         elif isinstance(self.left, Declaration):
+            left_t = self.left.right.definition_type(env, tpa.manager)
+            right_t.check_convertibility(left_t, self.lf)
             left_addr = self.left.compile(env, tpa)
         elif isinstance(self.left, StarExpr):
+            right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lf)
             return self.ptr_assign(self.left, env, tpa)
         elif isinstance(self.left, Dot) or isinstance(self.left, DollarExpr):
+            right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lf)
             return self.struct_attr_assign(self.left, env, tpa)
         elif isinstance(self.left, IndexingExpr):
+            right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lf)
             return self.array_index_assign(self.left, env, tpa)
         else:
             raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.left.__class__.__name__), self.lf)
@@ -1162,84 +1162,153 @@ class IndexingExpr(Expression):
         self.args = args
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        bast_t = self.evaluated_type(env, tpa.manager)
-        index_addr = self.get_indexed_addr(env, tpa)
-        # print(index_addr)
-
-        if isinstance(bast_t, typ.ArrayType):
-            res_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
+        if self.is_array_initialization(env):
+            return self.array_initialization(env, tpa)
         else:
-            res_ptr = tpa.manager.allocate_stack(bast_t.memory_length())
-        tpa.value_in_addr_op(index_addr, res_ptr)
-        return res_ptr
+            return self.indexing(env, tpa)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        if self.is_array_initialization(env):
+            return self.definition_type(env, manager)
         obj_t = self.indexing_obj.evaluated_type(env, manager)
         if isinstance(obj_t, typ.ArrayType):
-            return obj_t.base
+            return obj_t.ele_type
         else:
             raise errs.TplCompileError("Only array type supports indexing. ", self.lf)
 
     def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         base = self.indexing_obj.definition_type(env, manager)
-        return typ.ArrayType(base, self._get_index_literal(manager))
+        return typ.ArrayType(base)
 
-    def get_indexed_addr(self, env: en.Environment, tpa: tp.TpaOutput):
-        arg_node = self._get_index_node()
-        arg_t = arg_node.evaluated_type(env, tpa.manager)
-        if arg_t != typ.TYPE_INT:
-            raise errs.TplCompileError("Index must be int. ", self.lf)
-        return self._get_abs_addr_of_index(env, tpa)
+    def is_array_initialization(self, env: en.Environment):
+        if isinstance(self.indexing_obj, IndexingExpr):
+            return self.indexing_obj.is_array_initialization(env)
+        elif isinstance(self.indexing_obj, NameNode):
+            return env.is_type(self.indexing_obj.name, self.lf)
+        else:
+            return False
 
-    def _get_abs_addr_of_index(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
-        """
-        Returns an address, which stores the absolute addr of the
-        返回一个相对地址，在此相对地址中存有“数组第i个值”的地址
-        """
-        res_addr = tpa.manager.allocate_stack(util.INT_LEN)
-        acc_addr = tpa.manager.allocate_stack(util.INT_LEN)
-        arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
+    def array_initialization(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
+        res_addr = tpa.manager.allocate_stack(util.PTR_LEN)
 
-        orig_t = self._get_orig_type(env, tpa.manager)
+        dimensions = []
+        node = self
+        while isinstance(node, IndexingExpr):
+            dimensions.insert(0, node._get_index_literal(env, tpa.manager))
+            node = node.indexing_obj
 
-        base = self
-        base_t = orig_t
-        while isinstance(base, IndexingExpr):
-            if not isinstance(base_t, typ.ArrayType):
-                raise errs.TplCompileError("Cannot take index on non-array type. ", self.lf)
+        root_t = node.evaluated_type(env, tpa.manager)
 
-            base_t = base_t.base
-            cur_arg = base._get_index_node()
-            cur_unit_len = base_t.memory_length()
+        self.array_creation(res_addr, root_t, dimensions, 0, env, tpa)
 
-            tpa.assign(arith_addr, cur_arg.compile(env, tpa))
-            tpa.binary_arith_i("muli", arith_addr, cur_unit_len, arith_addr)
-            tpa.binary_arith("addi", acc_addr, arith_addr, acc_addr)
-
-            base = base.indexing_obj
-
-        if isinstance(base_t, typ.ArrayType):
-            raise errs.TplCompileError("Cannot take array as value. ", self.lf)
-
-        array_addr = base.compile(env, tpa)
-
-        tpa.take_addr(array_addr, res_addr)
-        tpa.binary_arith("addi", res_addr, acc_addr, res_addr)
         return res_addr
 
-    def _get_orig_type(self, env, manager):
+    def array_creation(self, this_ptr_addr, atom_t: typ.Type, dimensions: list, index_in_dim: int,
+                       env: en.Environment, tpa: tp.TpaOutput):
+
+        if index_in_dim == len(dimensions) - 1:
+            ele_len = atom_t.memory_length()
+        else:
+            ele_len = util.PTR_LEN
+        arr_size = dimensions[index_in_dim]
+        arr_addr = tpa.manager.allocate_stack(ele_len * arr_size + util.INT_LEN)
+        tpa.assign_i(arr_addr, arr_size)
+        tpa.take_addr(arr_addr, this_ptr_addr)
+
+        if index_in_dim == len(dimensions) - 1:
+            pass
+        else:
+            first_ele_addr = arr_addr + util.INT_LEN
+            for i in range(arr_size):
+                self.array_creation(first_ele_addr + i * util.PTR_LEN, atom_t, dimensions, index_in_dim + 1, env, tpa)
+
+    # def allocate_one_array(self, ptr_to_array, ele_size, ele_count, tpa: tp.TpaOutput):
+    #     array_addr = tpa.manager.allocate_stack(ele_size * ele_count + util.INT_LEN)
+    #     tpa.assign_i(array_addr, ele_count)
+    #     tpa.take_addr(array_addr, ptr_to_array)
+
+    def indexing(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
+        res_addr = tpa.manager.allocate_stack(self.evaluated_type(env, tpa.manager).memory_length())
+        indexed_addr = self.get_indexed_addr(env, tpa)
+
+        tpa.value_in_addr_op(indexed_addr, res_addr)
+        return res_addr
+
+    def get_indexed_addr(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
+        res_addr = tpa.manager.allocate_stack(util.PTR_LEN)
+        ele_t = self.evaluated_type(env, tpa.manager)
+        array_ptr_addr = self.indexing_obj.compile(env, tpa)
+        index_addr = self._get_index_node(env, tpa.manager).compile(env, tpa)
+
+        arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
+        tpa.assign(arith_addr, index_addr)
+        tpa.binary_arith_i("muli", arith_addr, ele_t.memory_length(), arith_addr)
+        tpa.binary_arith_i("addi", arith_addr, util.INT_LEN, arith_addr)  # this step skips the space storing array size
+
+        tpa.binary_arith("addi", array_ptr_addr, arith_addr, res_addr)
+        # tpa.to_abs(arith_addr, res_addr)
+        return res_addr
+
+        # arg_node = self._get_index_node()
+        # arg_t = arg_node.evaluated_type(env, tpa.manager)
+        # if arg_t != typ.TYPE_INT:
+        #     raise errs.TplCompileError("Index must be int. ", self.lf)
+        # return self._get_abs_addr_of_index(env, tpa)
+
+    # def _get_abs_addr_of_index(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
+    #     """
+    #     Returns an address, which stores the absolute addr of the
+    #     返回一个相对地址，在此相对地址中存有“数组第i个值”的地址
+    #     """
+    #     res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+    #     acc_addr = tpa.manager.allocate_stack(util.INT_LEN)
+    #     arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
+    #
+    #     orig_t = self._get_orig_type(env, tpa.manager)
+    #
+    #     base = self
+    #     base_t = orig_t
+    #     while isinstance(base, IndexingExpr):
+    #         if not isinstance(base_t, typ.ArrayType):
+    #             raise errs.TplCompileError("Cannot take index on non-array type. ", self.lf)
+    #
+    #         base_t = base_t.base
+    #         cur_arg = base._get_index_node()
+    #         cur_unit_len = base_t.memory_length()
+    #
+    #         tpa.assign(arith_addr, cur_arg.compile(env, tpa))
+    #         tpa.binary_arith_i("muli", arith_addr, cur_unit_len, arith_addr)
+    #         tpa.binary_arith("addi", acc_addr, arith_addr, acc_addr)
+    #
+    #         base = base.indexing_obj
+    #
+    #     if isinstance(base_t, typ.ArrayType):
+    #         raise errs.TplCompileError("Cannot take array as value. ", self.lf)
+    #
+    #     array_addr = base.compile(env, tpa)
+    #
+    #     tpa.take_addr(array_addr, res_addr)
+    #     tpa.binary_arith("addi", res_addr, acc_addr, res_addr)
+    #     return res_addr
+
+    def _get_atom_type(self, env, manager):
         if isinstance(self.indexing_obj, IndexingExpr):
-            return self.indexing_obj._get_orig_type(env, manager)
+            return self.indexing_obj._get_atom_type(env, manager)
         else:
             return self.indexing_obj.evaluated_type(env, manager)
 
-    def _get_index_node(self) -> Node:
+    def _get_index_node(self, env, manager) -> Node:
         if len(self.args) != 1:
-            raise errs.TplCompileError("Array type must contain exactly one element. ", self.lf)
-        return self.args[0]
+            raise errs.TplCompileError("Array initialization or indexing must contain exactly one int element. ",
+                                       self.lf)
+        arg: Node = self.args[0]
+        if arg.evaluated_type(env, manager) != typ.TYPE_INT:
+            raise errs.TplCompileError("Array initialization or indexing must contain exactly one int element. ",
+                                       self.lf)
+        return arg
 
-    def _get_index_literal(self, manager: tp.Manager):
-        node = self._get_index_node()
+    def _get_index_literal(self, env, manager: tp.Manager):
+        node = self._get_index_node(env, manager)
         if not isinstance(node, IntLiteral):
             raise errs.TplCompileError("Array type declaration must be an int literal. ", self.lf)
         return util.bytes_to_int(manager.literal[node.lit_pos: node.lit_pos + util.INT_LEN])

@@ -138,6 +138,15 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def assign_i(self, dst_addr, value):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("iload", register(reg1), address(value))
+        self.write_format("iload", register(reg2), address(dst_addr))
+        self.write_format("store", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
     def load_literal(self, dst_addr, lit_pos):
         reg1, reg2 = self.manager.require_regs(2)
 
@@ -222,7 +231,23 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def to_abs(self, value_addr, res_addr):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("load", register(reg1), address(value_addr))
+        self.write_format("iload", register(reg2), number(res_addr))
+        self.write_format("astore", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
     def take_addr(self, value_addr: int, res_addr: int):
+        """
+        This instruction set just convert 'value_addr' to absolute addr and write it to 'res_addr'
+
+        :param value_addr:
+        :param res_addr:
+        :return:
+        """
         reg1, reg2 = self.manager.require_regs(2)
 
         self.write_format("aload", register(reg1), address(value_addr))

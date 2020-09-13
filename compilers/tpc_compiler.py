@@ -22,7 +22,8 @@ INSTRUCTIONS = {
     "aload_sp": (5, 1, util.INT_LEN),  # aload_sp   %reg  $rel_addr    | load the "address" relative to sp to reg
     #                                  # these two instructions just do a conversion from relative addr to absolute addr
     "store": (6, 1, 1),  # store   %reg1   %reg2    | store value in %reg2 to rel_addr in %reg1
-    "astore": (7, 1),
+    "astore": (7, 1, 1),  # astore   %reg1   %reg2    | converts value in %reg2 to abs addr
+    #                                  # then store to rel_addr in %reg1
     "astore_sp": (8,),
     "store_abs": (9, 1, 1),  # store_abs   %reg1   %reg2    | store value in %reg2 to abs_addr in %reg1
     "jump": (10, util.INT_LEN),
