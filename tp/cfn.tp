@@ -1,0 +1,8 @@
+﻿struct S {
+    x: int;
+    y : char;
+}
+
+fn main() int {
+    return sizeof(S);
+}

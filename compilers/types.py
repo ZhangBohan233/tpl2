@@ -99,6 +99,23 @@ class PointerType(Type):
         return self.__str__()
 
 
+class CompileTimeFunctionType(Type):
+    def __init__(self, name, rtype: Type):
+        super().__init__(0)
+
+        self.name = name
+        self.rtype = rtype
+
+    def memory_length(self):
+        raise errs.TplCompileError(f"Compile time function '{self.name}' does not occupy memory. ")
+
+    def __str__(self):
+        return self.name
+
+    def __eq__(self, other):
+        return isinstance(other, CompileTimeFunctionType) and self.name == other.name
+
+
 class CallableType(Type):
     def __init__(self, param_types, rtype):
         super().__init__(util.PTR_LEN)

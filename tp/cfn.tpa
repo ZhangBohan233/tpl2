@@ -1,0 +1,28 @@
+bits
+64
+stack_size
+1024
+global_length
+8
+literal_length
+16
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0
+
+fn tp/cfn.tp$main $1024
+    push_fp
+    push          8
+    iload         %0      $10
+    iload         %1      $0
+    store         %1      %0
+    load          %0      $0
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    aload         %0      $1
+    set_ret       %0
+    call_fn       tp/cfn.tp$main
+    exit

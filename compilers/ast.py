@@ -588,7 +588,7 @@ class DollarExpr(BinaryExpr):
         left_t = self.left.evaluated_type(env, manager)
         if isinstance(left_t, typ.PointerType):
             struct_t = left_t.base
-            if isinstance(struct_t, typ.StructType)  and isinstance(self.right, NameNode):
+            if isinstance(struct_t, typ.StructType) and isinstance(self.right, NameNode):
                 pos, attr_t = struct_t.members[self.right.name]
                 return attr_t
         elif isinstance(left_t, typ.ArrayType) and isinstance(self.right, NameNode):
@@ -827,6 +827,9 @@ class FunctionCall(Expression):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         func_type = self.call_obj.evaluated_type(env, tpa.manager)
+        if isinstance(func_type, typ.CompileTimeFunctionType):
+            return call_compile_time_function(func_type, self.args, env, tpa)
+
         if not isinstance(func_type, typ.CallableType):
             raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
 
@@ -844,9 +847,6 @@ class FunctionCall(Expression):
         if isinstance(self.call_obj, NameNode):
             rtn_addr = tpa.manager.allocate_stack(func_type.rtype.length)
             if isinstance(func_type, typ.FuncType):
-                # if env.is_named_function(self.call_obj.name, self.lf):
-                #     tpa.call_named_function(self.call_obj.name, evaluated_args, rtn_addr, func_type.rtype.length)
-                # else:
                 fn_ptr = env.get(self.call_obj.name, self.lf)
                 tpa.call_ptr_function(fn_ptr, evaluated_args, rtn_addr, func_type.rtype.length)
             elif isinstance(func_type, typ.NativeFuncType):
@@ -858,6 +858,8 @@ class FunctionCall(Expression):
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         func_type = self.call_obj.evaluated_type(env, manager)
+        if isinstance(func_type, typ.CompileTimeFunctionType):
+            return func_type.rtype
         if not isinstance(func_type, typ.CallableType):
             raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
         return func_type.rtype
@@ -1362,3 +1364,37 @@ def array_attribute_types(attr_name: str, lf):
         return typ.TYPE_INT
 
     raise errs.TplCompileError(f"Array does not have attribute '{attr_name}'. ", lf)
+
+
+def validate_arg_count(args: Line, expected_arg_count):
+    if len(args) != expected_arg_count:
+        raise errs.TplCompileError("Arity mismatch for compile time function. ", args.lf)
+
+
+def ctf_sizeof(args: Line, env: en.Environment, tpa: tp.TpaOutput):
+    validate_arg_count(args, 1)
+    arg: Expression = args[0]
+    t = arg.evaluated_type(env, tpa.manager)
+    res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+    tpa.assign_i(res_addr, t.memory_length())
+    return res_addr
+
+
+def ctf_cprint(args: Line, env: en.Environment, tpa: tp.TpaOutput):
+    pass
+
+
+def ctf_cprintln(args: Line, env: en.Environment, tpa: tp.TpaOutput):
+    pass
+
+
+COMPILE_TIME_FUNCTIONS = {
+    "sizeof": (ctf_sizeof, typ.CompileTimeFunctionType("sizeof", typ.TYPE_INT)),
+    "cprint": (ctf_cprint, typ.CompileTimeFunctionType("cprint", typ.TYPE_VOID)),
+    "cprintln": (ctf_cprintln, typ.CompileTimeFunctionType("cprintln", typ.TYPE_VOID))
+}
+
+
+def call_compile_time_function(func_t: typ.CompileTimeFunctionType, arg: Line, env: en.Environment, tpa: tp.TpaOutput):
+    f, t = COMPILE_TIME_FUNCTIONS[func_t.name]
+    return f(arg, env, tpa)
