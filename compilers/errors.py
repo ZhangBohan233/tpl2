@@ -18,7 +18,17 @@ class TplError(Exception):
         return super().__str__() + (str(self.lf) if self.lf else "")
 
 
+class TplTokenizeError(TplError):
+    def __init__(self, msg="", lf=None):
+        super().__init__(msg, lf)
+
+
 class TplSyntaxError(TplError):
+    def __init__(self, msg="", lf=None):
+        super().__init__(msg, lf)
+
+
+class TplMacroError(TplError):
     def __init__(self, msg="", lf=None):
         super().__init__(msg, lf)
 

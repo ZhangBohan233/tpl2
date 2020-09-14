@@ -253,6 +253,9 @@ class StringLiteral(LiteralNode):
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return typ.TYPE_CHAR_ARR
 
+    def __str__(self):
+        return "String@" + str(self.lit_pos)
+
 
 class Buildable:
     def __init__(self, op: str):

@@ -1,9 +1,13 @@
+macro ONE {
+    1
+}
+
+macro TWO {
+    2
+}
+
 const FALSE: int = 0;
 const TRUE: int = 1;
-
-struct String {
-
-}
 
 fn add(x: int, y: int) int {
     return x + y;
@@ -15,4 +19,8 @@ fn make() int {
 
 export {
     FALSE, TRUE, make
+}
+
+exportmacro {
+    ONE, TWO
 }

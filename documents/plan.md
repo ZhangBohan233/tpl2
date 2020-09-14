@@ -20,6 +20,7 @@
 
 #### Phase 2
 * Heap memory management
+* Main arguments
 * Variable length argument
 * More native call (print)
 * Tpa optimizer: load literal

@@ -5,6 +5,10 @@ import compilers.util as util
 import compilers.errors as errs
 
 
+def process_empty(p, i, b, lf):
+    pass
+
+
 class Parser:
     def __init__(self, tokens: tl.CollectiveElement):
         self.tokens = tokens
@@ -40,7 +44,8 @@ class Parser:
             "continue": self.process_continue,
             "import": self.process_import,
             "export": self.process_export,
-            "struct": self.process_struct
+            "struct": self.process_struct,
+            "\n": process_empty
         }
 
     def parse(self):
@@ -209,6 +214,12 @@ class Parser:
         ele = parent[index]
         if tl.is_brace(ele):
             block = self.parse_as_block(ele)
+            builder.add_node(ast.ExportStmt(block, lf))
+        elif isinstance(ele, tl.AtomicElement) and isinstance(ele.atom, tl.IdToken):
+            block = ast.BlockStmt(lf)
+            line = ast.Line(lf)
+            line.parts.append(ele.atom)
+            block.lines.append(line)
             builder.add_node(ast.ExportStmt(block, lf))
         else:
             raise errs.TplCompileError("Invalid export. ", lf)

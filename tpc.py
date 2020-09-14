@@ -79,7 +79,7 @@ def parse_args():
     return args_dict
 
 
-def get_tpc_path():
+def get_tpc_dir():
     """
     Returns the absolute path of tpc.py
 
@@ -100,13 +100,17 @@ if __name__ == '__main__':
         exit(1)
 
     # with open(args["src_file"], "r") as rf:
-    lexer = lex.FileTokenizer(args["src_file"], not args["no_lang"])
+    src_abs_path = os.path.abspath(args["src_file"])
+    lexer = lex.FileTokenizer(src_abs_path, not args["no_lang"])
     tokens = lexer.tokenize()
 
     if args["tokens"]:
         print(tokens)
 
-    txt_p = txt_prep.FileTextPreprocessor(tokens, {"tpc_path": get_tpc_path(), "import_lang": not args["no_lang"]})
+    txt_p = txt_prep.FileTextPreprocessor(tokens,
+                                          {"tpc_dir": get_tpc_dir(),
+                                           "main_dir": os.path.dirname(src_abs_path),
+                                           "import_lang": not args["no_lang"]})
     processed_tks = txt_p.preprocess()
 
     parser = psr.Parser(processed_tks)
@@ -122,7 +126,7 @@ if __name__ == '__main__':
         print(root)
         print("========== End of AST ==========")
 
-    compiler = cmp.Compiler(root, literal, args["src_file"])
+    compiler = cmp.Compiler(root, literal, src_abs_path)
     # compiler.configs(optimize=args["optimize"])
     tpa_content = compiler.compile()
 

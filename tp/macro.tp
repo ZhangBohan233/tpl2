@@ -1,0 +1,24 @@
+﻿import lang;
+import "recur.tp";
+
+
+macro plus_two(x) {x + two}
+
+macro mul_line {
+    b: int = two;
+    c: int = 3;
+}
+
+macro two {
+    2
+}
+
+macro bb {
+    b
+}
+
+fn main() int {
+    mul_line
+    //return bb;
+    return plus_two(ONE);
+}
