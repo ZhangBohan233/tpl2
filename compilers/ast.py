@@ -388,12 +388,12 @@ class BinaryOperator(BinaryExpr):
             # x and y: if x then y else 0
             # x or y: if x then 1 else y
             if self.op == "and":
-                ife = IfExpr(self.left, self.right, IntLiteral(util.FALSE_POS, self.lf), self.lf)
+                ife = IfExpr(self.left, self.right, IntLiteral(util.ZERO_POS, self.lf), self.lf)
                 if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
                     raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
                 return ife.compile(env, tpa)
             elif self.op == "or":
-                ife = IfExpr(self.left, IntLiteral(util.TRUE_POS, self.lf), self.right, self.lf)
+                ife = IfExpr(self.left, IntLiteral(util.ONE_POS, self.lf), self.right, self.lf)
                 if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
                     raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
                 return ife.compile(env, tpa)
@@ -1338,6 +1338,92 @@ class IndexingExpr(Expression):
 
     def __str__(self):
         return f"{self.indexing_obj}[{self.args}]"
+
+
+class PreIncDecOperator(UnaryExpr):
+    def __init__(self, op, lf):
+        super().__init__(op, lf, True)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        if isinstance(self.value, PreIncDecOperator) or isinstance(self.value, PostIncDecOperator):
+            raise errs.TplCompileError("Expression not assignable. ", self.lf)
+        if isinstance(self.value, Dot) or isinstance(self.value, DollarExpr) or isinstance(self.value, IndexingExpr):
+            return self.compile_non_suitable(env, tpa)
+
+        vt = self.value.evaluated_type(env, tpa.manager)
+        if vt == typ.TYPE_INT:
+            op = "addi" if self.op == "++" else "subi"
+            v_addr = self.value.compile(env, tpa)
+            tpa.binary_arith_i(op, v_addr, 1, v_addr)
+            return v_addr
+        elif vt == typ.TYPE_FLOAT:
+            pass
+        else:
+            raise errs.TplCompileError(f"Cannot apply '{self.op}' to type '{vt}'. ", self.lf)
+
+    def compile_non_suitable(self, env: en.Environment, tpa: tp.TpaOutput):
+        # replace ++expr by expr = expr + 1
+        ass = Assignment(self.lf)
+        one = IntLiteral(util.ONE_POS, self.lf)
+        opn = BinaryOperator("+" if self.op == "++" else "-", BIN_ARITH, self.lf)
+        opn.left = self.value
+        opn.right = one
+        ass.left = self.value
+        ass.right = opn
+        ass.compile(env, tpa)
+
+        return self.value.compile(env, tpa)
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        return self.value.evaluated_type(env, manager)
+
+    def __str__(self):
+        return f"{self.op}{self.value}"
+
+
+class PostIncDecOperator(UnaryExpr):
+    def __init__(self, op, lf):
+        super().__init__(op, lf, False)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        if isinstance(self.value, PreIncDecOperator) or isinstance(self.value, PostIncDecOperator):
+            raise errs.TplCompileError("Expression not assignable. ", self.lf)
+        if isinstance(self.value, Dot) or isinstance(self.value, DollarExpr) or isinstance(self.value, IndexingExpr):
+            return self.compile_attr_op(env, tpa)
+
+        vt = self.value.evaluated_type(env, tpa.manager)
+        if vt == typ.TYPE_INT:
+            op = "addi" if self.op == "++" else "subi"
+            res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+            v_addr = self.value.compile(env, tpa)
+            tpa.assign(res_addr, v_addr)
+            tpa.binary_arith_i(op, v_addr, 1, v_addr)
+            return res_addr
+        elif vt == typ.TYPE_FLOAT:
+            pass
+        else:
+            raise errs.TplCompileError(f"Cannot apply '{self.op}' to type '{vt}'. ", self.lf)
+
+    def compile_attr_op(self, env: en.Environment, tpa: tp.TpaOutput):
+        # replace a.x by a.x = a.x + 1
+        v = self.value.compile(env, tpa)
+
+        ass = Assignment(self.lf)
+        one = IntLiteral(util.ONE_POS, self.lf)
+        opn = BinaryOperator("+" if self.op == "++" else "-", BIN_ARITH, self.lf)
+        opn.left = self.value
+        opn.right = one
+        ass.left = self.value
+        ass.right = opn
+        ass.compile(env, tpa)
+
+        return v
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        return self.value.evaluated_type(env, manager)
+
+    def __str__(self):
+        return f"{self.value}{self.op}"
 
 
 INT_ARITH_TABLE = {

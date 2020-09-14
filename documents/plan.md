@@ -19,9 +19,11 @@
 * ~~Compile time function~~ Done
 
 #### Phase 2
-* Increment, decrement
+* ~~Increment, decrement~~ Done
+* ~~Function param polymorphism~~ Discarded
 * Heap memory management
 * Main arguments
 * Variable length argument
 * More native call (print)
+* Separate pseudo-inst compiler
 * Tpa optimizer: load literal

@@ -45,7 +45,8 @@ class Parser:
             "import": self.process_import,
             "export": self.process_export,
             "struct": self.process_struct,
-            "\n": process_empty
+            "++": self.process_inc_operator,
+            "--": self.process_dec_operator
         }
 
     def parse(self):
@@ -241,6 +242,32 @@ class Parser:
 
         return index + 2
 
+    def _process_inc_dec_operator(self, op, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
+                                  lf: tl.LineFile):
+        if index == 0:  # e.g.  ++i;
+            post = True
+        elif index == len(parent) - 1:
+            post = False
+        else:
+            if is_call_obj(parent[index - 1]):  # a trick here is that all callable 'thing' can be use with ++ or --
+                post = True
+            elif is_call_obj(parent[index + 1]):
+                post = False
+            else:
+                raise errs.TplParseError(f"Invalid syntax with {op}. ", lf)
+        if post:
+            builder.add_node(ast.PostIncDecOperator(op, lf))
+        else:
+            builder.add_node(ast.PreIncDecOperator(op, lf))
+
+    def process_inc_operator(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
+                             lf: tl.LineFile):
+        return self._process_inc_dec_operator("++", parent, index, builder, lf)
+
+    def process_dec_operator(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
+                             lf: tl.LineFile):
+        return self._process_inc_dec_operator("--", parent, index, builder, lf)
+
     # parser of collective elements
 
     def parse_as_block(self, lst: tl.CollectiveElement):
@@ -411,4 +438,4 @@ def is_call(token_before: tl.Token) -> bool:
 def is_call_obj(prob_call_obj: tl.Element) -> bool:
     return (isinstance(prob_call_obj, tl.AtomicElement) and is_call(prob_call_obj.atom)) or \
            (isinstance(prob_call_obj, tl.CollectiveElement) and (
-                       prob_call_obj.is_sqr_bracket() or prob_call_obj.is_bracket()))
+                   prob_call_obj.is_sqr_bracket() or prob_call_obj.is_bracket()))

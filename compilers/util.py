@@ -9,8 +9,8 @@ FLOAT_LEN = 8
 CHAR_LEN = 2
 PTR_LEN = INT_LEN
 
-FALSE_POS = 0
-TRUE_POS = INT_LEN
+ZERO_POS = 0
+ONE_POS = INT_LEN
 
 float_pack = "d" if FLOAT_LEN == 8 else "f"
 

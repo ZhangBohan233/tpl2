@@ -1,0 +1,19 @@
+﻿struct S {
+    x: int;
+}
+
+
+fn main() int {
+    a: int = 2;
+    b: int = a++;
+    c: int = ++a;
+
+    arr: int[2] = int[2];
+    arr[0] = 99;
+    arr[1] = 201;
+
+    b = arr[0]++;
+    cprintln(arr[0]);
+
+    return --arr[1];
+}

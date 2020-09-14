@@ -86,7 +86,7 @@ class Environment:
         entry = self._inner_get(name)
         if entry is None:
             raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
-        return isinstance(entry, typ.StructType)
+        return isinstance(entry.type, typ.StructType)
 
     def is_named_function(self, name: str, lf) -> bool:
         entry = self._inner_get(name)
