@@ -5,9 +5,9 @@ stack_size
 global_length
 72
 literal_length
-80
+88
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 13 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 10 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 13 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 10 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0
 
 fn E:\GitHub\tpl2\lib\lang.tp$add $1056
     push_fp
@@ -126,7 +126,7 @@ fn E:\GitHub\tpl2\tp\recur.tp$main $1080
 
 fn E:\GitHub\tpl2\tp\macro.tp$main $1088
     push_fp
-    push          56
+    push          80
     load_lit      %0      $56
     iload         %1      $8
     store         %1      %0
@@ -145,12 +145,26 @@ fn E:\GitHub\tpl2\tp\macro.tp$main $1088
     load_lit      %0      $72
     iload         %1      $40
     store         %1      %0
-    load          %0      $32
+    aload_sp      %0      $0
     load          %1      $40
+    store_abs     %0      %1
+    iload         %0      48
+    set_ret       %0
+    call          $1072
+    load          %0      $32
+    load          %1      $48
     addi          %0      %1
-    iload         %1      48
+    iload         %1      56
     store         %1      %0
-    load          %0      $48
+    load_lit      %0      $80
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $56
+    load          %1      $64
+    addi          %0      %1
+    iload         %1      72
+    store         %1      %0
+    load          %0      $72
     put_ret       %0
     pull_fp
     ret

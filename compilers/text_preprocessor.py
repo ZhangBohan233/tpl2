@@ -118,34 +118,13 @@ class FileTextPreprocessor:
                     index += 1
                     includes = parent[index]
                     if isinstance(includes, tl.AtomicElement):
-                        if isinstance(includes.atom, tl.IdToken):
-                            # library import
-                            file = "{}{}lib{}{}.tp".format(self.pref["tpc_dir"],
-                                                           os.sep, os.sep, includes.atom.identifier)
-                        elif isinstance(includes.atom, tl.StrToken):
-                            # user import
-                            file = os.path.join(self.pref["main_dir"], includes.atom.value)
-                        else:
-                            raise errs.TplCompileError("Invalid include. ", lf)
-
-                        if not os.path.exists(file):
-                            raise errs.TplTokenizeError(f"File '{file}' does not exist. ", lf)
-
-                        if file not in self.included_files:
-                            self.included_files.add(file)
-                            lexer = tkn.FileTokenizer(file, self.pref["import_lang"])
-                            tokens = lexer.tokenize()
-
-                            module_macros = MacroEnv()
-                            txt_p = FileTextPreprocessor(tokens, self.pref, self.included_files, module_macros)
-                            processed_tks = txt_p.preprocess()
-
-                            for en in module_macros.export_names:
-                                self.macros.add_macro(en, module_macros.get_macro(en), lf)
-
-                            result_parent.append(ele)
-                            result_parent.append(tl.AtomicElement(tl.StrToken(file, lf), result_parent))
-                            result_parent.append(processed_tks)
+                        self.import_one(includes.atom, result_parent, lf)
+                    elif tl.is_brace(includes):
+                        for inc in includes:
+                            if isinstance(inc, tl.AtomicElement):
+                                self.import_one(inc.atom, result_parent, lf)
+                            else:
+                                raise errs.TplSyntaxError("Invalid include. ", lf)
                     else:
                         raise errs.TplSyntaxError("Invalid include. ", lf)
                     return index + 1
@@ -157,7 +136,9 @@ class FileTextPreprocessor:
                         if not tl.is_bracket(args):
                             raise errs.TplSyntaxError("Invalid macro syntax. ", args.lf)
 
-                        if len(args) != len(macro.params):
+                        arg_list = list_ify_macro_arg(args)
+
+                        if len(arg_list) != len(macro.params):
                             raise errs.TplSyntaxError("Macro syntax arity mismatch. ", args.lf)
 
                         body_with_arg = tl.CollectiveElement(tl.CE_BRACE, lf, None)
@@ -166,7 +147,7 @@ class FileTextPreprocessor:
                                     isinstance(body_ele.atom, tl.IdToken) and \
                                     body_ele.atom.identifier in macro.params:
                                 arg_index = macro.params.index(body_ele.atom.identifier)
-                                body_with_arg.append(args[arg_index])
+                                body_with_arg.extend(arg_list[arg_index])
                             else:
                                 body_with_arg.append(body_ele)
                         macro_res = self.process_block(body_with_arg, None)
@@ -185,9 +166,52 @@ class FileTextPreprocessor:
 
         return index + 1
 
+    def import_one(self, include: tl.Token, result_parent, lf):
+        if isinstance(include, tl.IdToken):
+            # library import
+            file = "{}{}lib{}{}.tp".format(self.pref["tpc_dir"],
+                                           os.sep, os.sep, include.identifier)
+        elif isinstance(include, tl.StrToken):
+            # user import
+            file = os.path.join(self.pref["main_dir"], include.value)
+        else:
+            raise errs.TplCompileError("Invalid include. ", lf)
+
+        if not os.path.exists(file):
+            raise errs.TplTokenizeError(f"File '{file}' does not exist. ", lf)
+
+        if file not in self.included_files:
+            self.included_files.add(file)
+            lexer = tkn.FileTokenizer(file, self.pref["import_lang"])
+            tokens = lexer.tokenize()
+
+            module_macros = MacroEnv()
+            txt_p = FileTextPreprocessor(tokens, self.pref, self.included_files, module_macros)
+            processed_tks = txt_p.preprocess()
+
+            for en in module_macros.export_names:
+                self.macros.add_macro(en, module_macros.get_macro(en), lf)
+
+            result_parent.append(tl.AtomicElement(tl.IdToken("import", lf), result_parent))
+            result_parent.append(tl.AtomicElement(tl.StrToken(file, lf), result_parent))
+            result_parent.append(processed_tks)
+
     def process_block(self, block: tl.CollectiveElement, result_parent: tl.CollectiveElement) -> tl.CollectiveElement:
         result = tl.CollectiveElement(block.ce_type, block.lf, result_parent)
         i = 0
         while i < len(block):
             i = self.process_one(block, i, result)
         return result
+
+
+def list_ify_macro_arg(args: tl.CollectiveElement) -> list:
+    res = []
+    cur = tl.CollectiveElement(tl.CE_BRACE, args.lf, None)
+    for arg in args:
+        if tl.identifier_of(arg, ","):
+            res.append(cur)
+            cur = tl.CollectiveElement(tl.CE_BRACE, args.lf, None)
+        else:
+            cur.append(arg)
+    res.append(cur)
+    return res

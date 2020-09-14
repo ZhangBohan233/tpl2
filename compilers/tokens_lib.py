@@ -183,3 +183,7 @@ def is_brace(ele: Element):
 
 def is_bracket(ele: Element):
     return isinstance(ele, CollectiveElement) and ele.is_bracket()
+
+
+def identifier_of(ele: Element, target: str) -> bool:
+    return isinstance(ele, AtomicElement) and isinstance(ele.atom, IdToken) and ele.atom.identifier == target

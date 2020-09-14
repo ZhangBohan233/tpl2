@@ -2,7 +2,7 @@
 
 ### Development Order
 
-#### Phase 1
+#### ~~Phase 1~~ Done
 * ~~Simple native call~~ Done
 * ~~Unary operator~~ Done
 * ~~Pointer~~ Done
@@ -15,10 +15,11 @@
 * ~~Char array/String~~ Done
 * ~~Indexing~~ Done
 * ~~Loop~~ Done
-* Macro
+* ~~Macro~~ Done
 * ~~Compile time function~~ Done
 
 #### Phase 2
+* Increment, decrement
 * Heap memory management
 * Main arguments
 * Variable length argument

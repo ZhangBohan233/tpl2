@@ -20,5 +20,5 @@ macro bb {
 fn main() int {
     mul_line
     //return bb;
-    return plus_two(ONE);
+    return plus_two(ONE + fib(8));
 }

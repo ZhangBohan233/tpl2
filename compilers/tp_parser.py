@@ -73,18 +73,18 @@ class Parser:
         param_list = parent[index]
         params = self.parse_as_line(param_list)
         prob_arrow = parent[index + 1]
-        if identifier_of(prob_arrow, "->"):
+        if tl.identifier_of(prob_arrow, "->"):
             builder.add_node(ast.FunctionTypeExpr(params, lf))
             return index
 
         index += 1
         rtype_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
-        while not (tl.is_brace(parent[index]) or identifier_of(parent[index], ";")):
+        while not (tl.is_brace(parent[index]) or tl.identifier_of(parent[index], ";")):
             rtype_list.append(parent[index])
             index += 1
         rtype = self.parse_as_part(rtype_list)
         body_list = parent[index]
-        if identifier_of(body_list, ";"):
+        if tl.identifier_of(body_list, ";"):
             body = None
         else:
             body = self.parse_as_block(body_list)
@@ -117,11 +117,11 @@ class Parser:
             condition_list.append(item)
             index += 1
             item = parent[index]
-            if identifier_of(item, "then"):  # is a if-expr instead of if-stmt
+            if tl.identifier_of(item, "then"):  # is a if-expr instead of if-stmt
                 return self.process_if_expr(condition_list, parent, index, builder, lf)
         cond = self.parse_as_part(condition_list)
         body = self.parse_as_block(item)
-        if index + 1 < len(parent) and identifier_of(parent[index + 1], "else"):
+        if index + 1 < len(parent) and tl.identifier_of(parent[index + 1], "else"):
             index += 2
             else_block = self.parse_as_block(parent[index])
         else:
@@ -135,13 +135,13 @@ class Parser:
         cond = self.parse_as_part(cond_list)
         index += 1
         then_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
-        while not identifier_of(parent[index], "else"):
+        while not tl.identifier_of(parent[index], "else"):
             then_list.append(parent[index])
             index += 1
         then_expr = self.parse_as_part(then_list)
         index += 1
         else_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
-        while index < len(parent) and not identifier_of(parent[index], ";"):
+        while index < len(parent) and not tl.identifier_of(parent[index], ";"):
             else_list.append(parent[index])
             index += 1
         else_expr = self.parse_as_part(else_list)
@@ -192,7 +192,7 @@ class Parser:
             bracket = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
             bracket.append(item)
             index += 1
-            while not identifier_of(parent[index], ";"):
+            while not tl.identifier_of(parent[index], ";"):
                 bracket.append(parent[index])
                 index += 1
             content = self.parse_as_part(bracket)
@@ -218,7 +218,7 @@ class Parser:
         elif isinstance(ele, tl.AtomicElement) and isinstance(ele.atom, tl.IdToken):
             block = ast.BlockStmt(lf)
             line = ast.Line(lf)
-            line.parts.append(ele.atom)
+            line.parts.append(ast.NameNode(ele.atom.identifier, lf))
             block.lines.append(line)
             builder.add_node(ast.ExportStmt(block, lf))
         else:
@@ -382,10 +382,6 @@ class Parser:
 UNARY_LEADING = {
     ";", ":", "=", "->", ".", ","
 }
-
-
-def identifier_of(ele: tl.Element, target: str) -> bool:
-    return isinstance(ele, tl.AtomicElement) and isinstance(ele.atom, tl.IdToken) and ele.atom.identifier == target
 
 
 def is_unary(leading_ele: tl.Element) -> bool:
