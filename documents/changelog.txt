@@ -1,4 +1,11 @@
-﻿===== VERSION 2001 =====
+﻿===== VERSION 2002 =====
+2020/09/14
+
+* Changed the final executable format from .tac to .tpe
+* Added an intermediate compiler from .tpa to .tpc
+* Created tpc optimizer
+
+===== VERSION 2001 =====
 2020/09/14
 
 * Created changelog

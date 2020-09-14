@@ -394,7 +394,6 @@ class TpaOutput:
         merged = ["bits", str(util.VM_BITS),
                   "stack_size", str(util.STACK_SIZE),
                   "global_length", str(self.manager.global_length()),
-                  "literal_length", str(len(self.manager.literal)),
                   "literal", literal_str,
                   ""]
 

@@ -1,8 +1,11 @@
+fn tt() void {
+
+}
 
 fn main() int {
     i: int;
     for ; i < 8; ++i {
-
+        cprintln(i);
     }
     return i;
 }

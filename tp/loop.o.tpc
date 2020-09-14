@@ -18,7 +18,7 @@ fn E:\GitHub\tpl2\tp\loop.tp$main $8200
     push_fp
     push          32
     label         LOOP_TITLE_0
-    load_lit      %0      $16
+    load          %0      $8224
     iload         %1      $8
     store         %1      %0
     load          %0      $0
@@ -48,7 +48,8 @@ fn E:\GitHub\tpl2\tp\loop.tp$main $8200
     stop
 
 entry
+    entry
     aload         %0      $1
     set_ret       %0
-    call_fn       E:\GitHub\tpl2\tp\loop.tp$main
+    call          $8200
     exit
