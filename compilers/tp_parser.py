@@ -165,6 +165,8 @@ class Parser:
         body = self.parse_as_block(item)
         builder.add_node(ast.WhileStmt(cond, body, lf))
 
+        return index
+
     def process_for_stmt(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
         index += 1
         item = parent[index]
@@ -177,6 +179,8 @@ class Parser:
         cond = self.parse_as_block(cond_list)
         body = self.parse_as_block(item)
         builder.add_node(ast.ForStmt(cond, body, lf))
+
+        return index
 
     def process_break(self, p, i, builder: ab.AstBuilder, lf):
         builder.add_node(ast.BreakStmt(lf))
@@ -245,9 +249,9 @@ class Parser:
     def _process_inc_dec_operator(self, op, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
                                   lf: tl.LineFile):
         if index == 0:  # e.g.  ++i;
-            post = True
-        elif index == len(parent) - 1:
             post = False
+        elif index == len(parent) - 1:
+            post = True
         else:
             if is_call_obj(parent[index - 1]):  # a trick here is that all callable 'thing' can be use with ++ or --
                 post = True
@@ -309,6 +313,7 @@ class Parser:
                 else:
                     pos = len(self.literal_bytes)
                     self.literal_bytes.extend(util.int_to_bytes(token.value))
+                    self.int_literals[token.value] = pos
                 builder.add_node(ast.IntLiteral(pos, lf))
             elif isinstance(token, tl.FloatToken):
                 if token.value in self.float_literals:
@@ -316,6 +321,7 @@ class Parser:
                 else:
                     pos = len(self.literal_bytes)
                     self.literal_bytes.extend(util.float_to_bytes(token.value))
+                    self.float_literals[token.value] = pos
                 builder.add_node(ast.FloatLiteral(pos, lf))
             elif isinstance(token, tl.CharToken):
                 if token.char in self.char_literals:
@@ -323,6 +329,7 @@ class Parser:
                 else:
                     pos = len(self.literal_bytes)
                     self.literal_bytes.extend(util.char_to_bytes(token.char))
+                    self.char_literals[token.char] = pos
                 builder.add_node(ast.CharLiteral(pos, lf))
             elif isinstance(token, tl.StrToken):
                 if token.value in self.str_literals:
@@ -330,6 +337,7 @@ class Parser:
                 else:
                     pos = len(self.literal_bytes)
                     self.literal_bytes.extend(util.string_to_bytes(token.value))
+                    self.str_literals[token.value] = pos
                 builder.add_node(ast.StringLiteral(pos, lf))
             elif isinstance(token, tl.IdToken):
                 symbol = token.identifier

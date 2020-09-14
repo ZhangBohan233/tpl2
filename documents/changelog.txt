@@ -1,0 +1,13 @@
+﻿===== VERSION 2001 =====
+2020/09/14
+
+* Created changelog
+* Bug fixes:
+    * Repeat literal in .tpa file
+    * Parse error of ++/--
+    * Loop title repeat parse error
+
+===== VERSION 2000 =====
+2020/08/31
+
+* Initial commit

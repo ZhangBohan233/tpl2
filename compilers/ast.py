@@ -654,7 +654,7 @@ class Assignment(BinaryExpr):
 
         right_addr = self.right.compile(env, tpa)
         tpa.assign(left_addr, right_addr)
-        return right_addr
+        return left_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return self.right.evaluated_type(env, manager)

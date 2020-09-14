@@ -1,0 +1,4 @@
+﻿===== VERSION 2001 =====
+
+1000000 loop with ++i time 76
+30 fib time 389

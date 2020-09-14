@@ -1,19 +1,35 @@
-﻿struct S {
-    x: int;
+﻿require {
+    clock
 }
 
+fn fib(n: int) int {
+    if n < 2 {
+        return n;
+    } else {
+        return fib(n - 2) + fib(n - 1);
+    }
+}
 
 fn main() int {
-    a: int = 2;
-    b: int = a++;
-    c: int = ++a;
+    t0: int = clock();
 
-    arr: int[2] = int[2];
-    arr[0] = 99;
-    arr[1] = 201;
+    i: int;
+    for i = 0; i < 1_000_000; ++i {
+    }
 
-    b = arr[0]++;
-    cprintln(arr[0]);
+    t1: int = clock();
+    cprint(i);
+    cprint(" loop with ++i time ");
+    cprintln(t1 - t0);
 
-    return --arr[1];
+    n: int = 30;
+    x: int = fib(n);
+
+    t2: int = clock();
+    cprint(n);
+    cprint(" fib time ");
+    cprintln(t2 - t1);
+
+    return x;
+
 }
