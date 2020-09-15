@@ -1,38 +1,44 @@
 bits
 64
 stack_size
-8192
+1024
 global_length
 16
 literal
 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0
 
-fn E:\GitHub\tpl2\tp\loop.tp$tt $8192
+fn E:\GitHub\tpl2\tp\loop.tp$tt $1024
     push_fp
     push          0
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\loop.tp$main $8200
+fn E:\GitHub\tpl2\tp\loop.tp$main $1032
     push_fp
-    push          32
-    label         LOOP_TITLE_0
-    load          %0      $8224
+    push          40
+    load          %0      $1048
     iload         %1      $8
     store         %1      %0
-    load          %0      $0
-    load          %1      $8
-    lti           %0      %1
-    iload         %1      16
+    load          %0      $8
+    iload         %1      $0
     store         %1      %0
-    load          %0      $16
+    label         LOOP_TITLE_0
+    load          %0      $1056
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $0
+    load          %1      $16
+    lti           %0      %1
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
     if_zero_goto  %0      END_LOOP_0
-    require       println_int $24     %0      %1
+    require       println_int $32     %0      %1
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    invoke        $24
+    invoke        $32
     label         LABEL_0
     load          %0      $0
     iload         %1      1
@@ -51,5 +57,5 @@ entry
     entry
     aload         %0      $1
     set_ret       %0
-    call          $8200
+    call          $1032
     exit

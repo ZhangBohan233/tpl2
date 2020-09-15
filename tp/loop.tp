@@ -3,7 +3,7 @@ fn tt() void {
 }
 
 fn main() int {
-    i: int;
+    i: int = 1;
     for ; i < 8; ++i {
         cprintln(i);
     }

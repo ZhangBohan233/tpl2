@@ -6,6 +6,9 @@ class TpcOptimizer:
         self.tpc_file = tpc_file
         self.opt_level = opt_level
 
+        self.opt_literal = opt_level >= 1
+        self.retract_literal = opt_level >= 2
+
         self.bits = 0
         self.stack_size = 0
         self.global_length = 0
@@ -14,6 +17,9 @@ class TpcOptimizer:
         self.functions = {}
         self.function_orders = []
         self.entry = []
+
+    def addr_is_literal(self, addr):
+        return self.stack_size + self.global_length <= addr
 
     def optimize(self, out_name: str):
         self.read_instructions()
@@ -79,6 +85,10 @@ class TpcOptimizer:
         body = []
         for fn_name in self.function_orders:
             fn_addr, fn_body = self.functions[fn_name]
+
+            if self.opt_literal:
+                self.optimize_literal(fn_body)
+
             body.append(f"\nfn {fn_name} {fn_addr}")
             for inst in fn_body:
                 self.write_format(body, *inst)
@@ -88,8 +98,22 @@ class TpcOptimizer:
             self.write_format(entry, *inst)
         return self.header + body + entry
 
-    def matches(self):
-        pass
+    def optimize_literal(self, func_body: list):
+        i = 0
+        length = len(func_body)
+        fmt = [["load", "ra", "aa"],
+               ["iload", "rb", "ab"],
+               ["store", "rb", "ra"]]
+        lit_int_stacks = {}
+        while i < length:
+            if matches(func_body, i, fmt):
+                lit_addr = int(func_body[i][2][1:])
+                if self.addr_is_literal(lit_addr):
+                    stack_addr = int(func_body[i + 1][2][1:])
+                    lit_int_stacks[stack_addr] = lit_addr
+                    i += 2
+            i += 1
+        print(lit_int_stacks)
 
     def write_format(self, output: list, *inst):
         output.append(self._format(*inst))
@@ -104,3 +128,52 @@ class TpcOptimizer:
             s += x
             s += " " * max(8 - len(x), 1)
         return s.rstrip()
+
+
+def matches(tar_list: list, cur_index, fmt_list: list):
+    """
+    This method matches the given format
+
+    Example:
+    >>> lst = [["load", "%0", "$1048"], \
+              ["iload", "%1", "$8"], \
+              ["store", "%1", "%0"]]
+    >>> fmt = [["load", "ra", "aa"], \
+              ["iload", "rb", "ab"], \
+              ["store", "rb", "ra"]]
+    >>> matches(lst, 0, fmt)
+    True
+
+    :param tar_list:
+    :param cur_index:
+    :param fmt_list:
+    :return:
+    """
+    if cur_index + len(fmt_list) > len(tar_list):
+        return False
+    patterns = {}
+    for i in range(len(fmt_list)):
+        tar = tar_list[i + cur_index]
+        fmt = fmt_list[i]
+        if len(tar) != len(fmt):
+            return False
+        for j in range(len(fmt)):
+            pat = fmt[j]
+            src = tar[j]
+            if pat != src:
+                if pat in patterns:
+                    if patterns[pat] != src:
+                        return False
+                else:
+                    patterns[pat] = src
+    return True
+
+
+if __name__ == '__main__':
+    lst_test = [["load", "%0", "$1048"],
+                ["iload", "%1", "$8"],
+                ["store", "%1", "%0"]]
+    fmt_test = [["load", "ra", "aa"],
+                ["iload", "rb", "ab"],
+                ["store", "rb", "ra"]]
+    print(matches(lst_test, 0, fmt_test))
