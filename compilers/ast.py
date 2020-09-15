@@ -163,10 +163,10 @@ class Statement(Node, ABC):
 
 
 class Line(Expression):
-    def __init__(self, lf):
+    def __init__(self, lf, *nodes):
         super().__init__(lf)
 
-        self.parts: [Node] = []
+        self.parts: [Node] = list(nodes)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         res = 0
@@ -602,10 +602,18 @@ class NewExpr(UnaryExpr):
         super().__init__("new", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
+        call_res = tpa.manager.allocate_stack(util.PTR_LEN)
+        self.compile_to(env, tpa, call_res)
+        return call_res
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
-        pass
+        t = self.evaluated_type(env, tpa.manager)
+        malloc = NameNode("malloc", self.lf)
+        req = RequireStmt(malloc, self.lf)
+        req.compile(env, tpa)
+        malloc_size = tpa.manager.allocate_stack(util.INT_LEN)
+        tpa.assign_i(malloc_size, t.memory_length())
+        FunctionCall.call(malloc, [(malloc_size, util.INT_LEN)], env, tpa, dst_addr, self.lf)
 
     def use_compile_to(self) -> bool:
         return use_compile_to
@@ -985,7 +993,40 @@ class FunctionCall(Expression):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         func_type = self.call_obj.evaluated_type(env, tpa.manager)
         if isinstance(func_type, typ.CompileTimeFunctionType):
-            return call_compile_time_function(func_type, self.args, env, tpa)
+            dst_addr = tpa.manager.allocate_stack(func_type.rtype.memory_length())
+            call_compile_time_function(func_type, self.args, env, tpa, dst_addr)
+            return dst_addr
+
+        if not isinstance(func_type, typ.CallableType):
+            raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
+
+        rtn_addr = tpa.manager.allocate_stack(func_type.rtype.length)
+        self.compile_to(env, tpa, rtn_addr)
+        return rtn_addr
+
+    @staticmethod
+    def call(call_obj: Node, evaluated_args: list, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int,
+             lf, func_type=None):
+        if func_type is None:
+            func_type = call_obj.evaluated_type(env, tpa.manager)
+        if isinstance(call_obj, NameNode):
+            if isinstance(func_type, typ.FuncType):
+                fn_ptr = env.get(call_obj.name, lf)
+                tpa.call_ptr_function(fn_ptr, evaluated_args, dst_addr, func_type.rtype.length)
+            elif isinstance(func_type, typ.NativeFuncType):
+                fn_ptr = env.get(call_obj.name, lf)
+                tpa.invoke_ptr(fn_ptr, evaluated_args, dst_addr, func_type.rtype.length)
+            else:
+                raise errs.TplError("Unexpected error. ", lf)
+
+    def use_compile_to(self) -> bool:
+        return use_compile_to
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        func_type = self.call_obj.evaluated_type(env, tpa.manager)
+        if isinstance(func_type, typ.CompileTimeFunctionType):
+            call_compile_time_function(func_type, self.args, env, tpa, dst_addr)
+            return
 
         if not isinstance(func_type, typ.CallableType):
             raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
@@ -1001,17 +1042,7 @@ class FunctionCall(Expression):
                                            "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lf)
             arg_addr = self.args[i].compile(env, tpa)
             evaluated_args.append((arg_addr, arg_t.length))
-        if isinstance(self.call_obj, NameNode):
-            rtn_addr = tpa.manager.allocate_stack(func_type.rtype.length)
-            if isinstance(func_type, typ.FuncType):
-                fn_ptr = env.get(self.call_obj.name, self.lf)
-                tpa.call_ptr_function(fn_ptr, evaluated_args, rtn_addr, func_type.rtype.length)
-            elif isinstance(func_type, typ.NativeFuncType):
-                fn_ptr = env.get(self.call_obj.name, self.lf)
-                tpa.invoke_ptr(fn_ptr, evaluated_args, rtn_addr, func_type.rtype.length)
-            else:
-                raise errs.TplError("Unexpected error. ", self.lf)
-            return rtn_addr
+        self.call(self.call_obj, evaluated_args, env, tpa, dst_addr, self.lf, func_type)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         func_type = self.call_obj.evaluated_type(env, manager)
@@ -1382,9 +1413,7 @@ class IndexingExpr(Expression):
             node = node.indexing_obj
 
         root_t = node.evaluated_type(env, tpa.manager)
-
         self.array_creation(res_addr, root_t, dimensions, 0, env, tpa)
-
         return res_addr
 
     def array_creation(self, this_ptr_addr, atom_t: typ.Type, dimensions: list, index_in_dim: int,
@@ -1626,12 +1655,10 @@ def validate_arg_count(args: Line, expected_arg_count):
         raise errs.TplCompileError("Arity mismatch for compile time function. ", args.lf)
 
 
-def ctf_sizeof(args: Line, env: en.Environment, tpa: tp.TpaOutput):
+def ctf_sizeof(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
     validate_arg_count(args, 1)
     t = args[0].evaluated_type(env, tpa.manager)
-    res_addr = tpa.manager.allocate_stack(util.INT_LEN)
-    tpa.assign_i(res_addr, t.memory_length())
-    return res_addr
+    tpa.assign_i(dst_addr, t.memory_length())
 
 
 PRINT_FUNCTIONS = {
@@ -1682,6 +1709,10 @@ COMPILE_TIME_FUNCTIONS = {
 }
 
 
-def call_compile_time_function(func_t: typ.CompileTimeFunctionType, arg: Line, env: en.Environment, tpa: tp.TpaOutput):
+def call_compile_time_function(func_t: typ.CompileTimeFunctionType, arg: Line,
+                               env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
     f = COMPILE_TIME_FUNCTIONS[func_t]
-    return f(arg, env, tpa)
+    if f.__code__.co_argcount == 3:
+        f(arg, env, tpa)
+    else:
+        f(arg, env, tpa, dst_addr)

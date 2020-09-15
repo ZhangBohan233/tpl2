@@ -1,4 +1,9 @@
-﻿===== VERSION 2006 =====
+﻿===== VERSION 2007 =====
+2020/09/15
+
+* New in basic use
+
+===== VERSION 2006 =====
 2020/09/15
 
 * Implemented heap memory management

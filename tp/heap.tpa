@@ -5,86 +5,31 @@ stack_size
 global_length
 24
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 224 3 0 0 0 0 0 0 7 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 224 3 0 0 0 0 0 0
 
 fn E:\GitHub\tpl2\tp\heap.tp$main $1040
     push_fp
-    push          104
+    push          32
     iload         %0      $8
     iload         %1      $8
     store         %1      %0
     aload_sp      %0      $0
     load          %1      $8
     store_abs     %0      %1
-    iload         %0      16
+    iload         %0      0
     set_ret       %0
     invoke        $1024
-    load          %0      $16
-    iload         %1      $0
-    store         %1      %0
     load_lit      %0      $16
-    iload         %1      $24
+    iload         %1      $16
     store         %1      %0
     load          %0      $0
-    load          %1      $24
+    load          %1      $16
     store_abs     %0      %1
-    aload_sp      %0      $0
-    load          %1      $0
-    store_abs     %0      %1
-    invoke        $1032
-    iload         %0      $16
-    iload         %1      $40
-    store         %1      %0
-    aload_sp      %0      $0
-    load          %1      $40
-    store_abs     %0      %1
-    iload         %0      48
-    set_ret       %0
-    invoke        $1024
-    load          %0      $48
-    iload         %1      $32
-    store         %1      %0
-    load          %0      $32
-    iload         %1      $56
-    store         %1      %0
-    load          %0      $56
-    iload         %1      0
-    addi          %0      %1
-    iload         %1      56
-    store         %1      %0
-    load_lit      %0      $24
-    iload         %1      $64
-    store         %1      %0
-    load          %0      $56
-    load          %1      $64
-    store_abs     %0      %1
-    load          %0      $32
-    iload         %1      $72
-    store         %1      %0
-    load          %0      $72
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      72
-    store         %1      %0
-    load_lit      %0      $32
-    iload         %1      $80
-    store         %1      %0
-    load          %0      $72
-    load          %1      $80
-    store_abs     %0      %1
-    load          %0      $32
-    iload         %1      $88
-    store         %1      %0
-    load          %0      $88
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      88
-    store         %1      %0
-    load          %0      $88
+    load          %0      $0
     rload_abs     %1      %0
-    iload         %0      96
+    iload         %0      24
     store         %0      %1
-    load          %0      $96
+    load          %0      $24
     put_ret       %0
     pull_fp
     ret
