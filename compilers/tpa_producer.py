@@ -138,6 +138,15 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def assign_char(self, dst_addr, src_addr):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("loadc", register(reg1), address(src_addr))
+        self.write_format("iload", register(reg2), address(dst_addr))
+        self.write_format("storec", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
     def assign_i(self, dst_addr, value):
         reg1, reg2 = self.manager.require_regs(2)
 

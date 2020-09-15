@@ -113,7 +113,7 @@ class TpcOptimizer:
                     lit_int_stacks[stack_addr] = lit_addr
                     i += 2
             i += 1
-        print(lit_int_stacks)
+        # print(lit_int_stacks)
 
     def write_format(self, output: list, *inst):
         output.append(self._format(*inst))

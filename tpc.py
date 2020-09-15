@@ -135,7 +135,7 @@ if __name__ == '__main__':
         print(root)
         print("========== End of AST ==========")
 
-    compiler = cmp.Compiler(root, literal, src_abs_path)
+    compiler = cmp.Compiler(root, literal, src_abs_path, args["optimize"])
     # compiler.configs(optimize=args["optimize"])
     tpa_content = compiler.compile()
 

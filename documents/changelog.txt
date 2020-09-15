@@ -1,4 +1,9 @@
-﻿===== VERSION 2002 =====
+﻿===== VERSION 2003 =====
+2020/09/15
+
+* Added ast compiler optimizer (compile_to in expressions)
+
+===== VERSION 2002 =====
 2020/09/14
 
 * Changed the final executable format from .tac to .tpe

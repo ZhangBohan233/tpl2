@@ -6,10 +6,12 @@ import compilers.tokens_lib as tl
 
 
 class Compiler:
-    def __init__(self, root: ast.BlockStmt, literals: bytes, main_file_path: str):
+    def __init__(self, root: ast.BlockStmt, literals: bytes, main_file_path: str, optimize_level: int):
         self.root = root
         self.literals = literals
         self.main_path = main_file_path
+
+        ast.set_optimize_level(optimize_level)
 
     def compile(self) -> str:
         manager = prod.Manager(self.literals)

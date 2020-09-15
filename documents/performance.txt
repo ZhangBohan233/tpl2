@@ -1,4 +1,11 @@
-﻿===== VERSION 2001 =====
+﻿===== VERSION 2003 =====
+
+-o1
+1000000 loop with ++i time 68
+1000000 loop with i = i + 1 time 100
+30 fib time 397
+
+===== VERSION 2001 =====
 
 1000000 loop with ++i time 68
 1000000 loop with i = i + 1 time 115

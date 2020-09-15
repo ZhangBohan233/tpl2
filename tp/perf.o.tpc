@@ -222,6 +222,7 @@ fn E:\GitHub\tpl2\tp\perf.tp$main $8208
     stop
 
 entry
+    entry
     require       clock   $8192   %0      %1
     aload         %0      $1
     set_ret       %0

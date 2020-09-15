@@ -20,6 +20,15 @@ VAR_VAR = 1
 VAR_CONST = 2
 
 
+use_compile_to = False
+
+
+def set_optimize_level(opt_level: int):
+    if opt_level >= 1:
+        global use_compile_to
+        use_compile_to = True
+
+
 class SpaceCounter:
     def __init__(self):
         self.count = 0
@@ -89,6 +98,19 @@ class Node:
 class Expression(Node, ABC):
     def __init__(self, lf):
         super().__init__(lf)
+
+    def use_compile_to(self) -> bool:
+        return False
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        et = self.evaluated_type(env, tpa.manager)
+        res = self.compile(env, tpa)
+        if et.memory_length() == util.INT_LEN:
+            tpa.assign(dst_addr, res)
+        elif et.memory_length() == util.CHAR_LEN:
+            tpa.assign_char(dst_addr, res)
+        else:
+            pass
 
 
 class Statement(Node, ABC):
@@ -203,6 +225,12 @@ class IntLiteral(LiteralNode):
         tpa.load_literal(stack_addr, self.lit_pos)
         return stack_addr
 
+    def use_compile_to(self) -> bool:
+        return use_compile_to
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        tpa.load_literal(dst_addr, self.lit_pos)
+
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return typ.TYPE_INT
 
@@ -232,6 +260,12 @@ class CharLiteral(LiteralNode):
         stack_addr = tpa.manager.allocate_stack(util.CHAR_LEN)
         tpa.load_char_literal(stack_addr, self.lit_pos)
         return stack_addr
+
+    def use_compile_to(self) -> bool:
+        return use_compile_to
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        tpa.load_char_literal(dst_addr, self.lit_pos)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return typ.TYPE_CHAR
@@ -391,7 +425,10 @@ class BinaryOperator(BinaryExpr):
                 ife = IfExpr(self.left, self.right, IntLiteral(util.ZERO_POS, self.lf), self.lf)
                 if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
                     raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
-                return ife.compile(env, tpa)
+                if ife.use_compile_to():
+                    pass
+                else:
+                    return ife.compile(env, tpa)
             elif self.op == "or":
                 ife = IfExpr(self.left, IntLiteral(util.ONE_POS, self.lf), self.right, self.lf)
                 if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
@@ -399,6 +436,40 @@ class BinaryOperator(BinaryExpr):
                 return ife.compile(env, tpa)
             else:
                 raise errs.TplCompileError("Unexpected lazy operator. ", self.lf)
+
+    def use_compile_to(self) -> bool:
+        return use_compile_to
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        if self.op_type == BIN_ARITH or self.op_type == BIN_LOGICAL:
+            lt = self.left.evaluated_type(env, tpa.manager)
+            rt = self.right.evaluated_type(env, tpa.manager)
+            left_addr = self.left.compile(env, tpa)
+            right_addr = self.right.compile(env, tpa)
+            if isinstance(lt, typ.BasicType):
+                if isinstance(rt, typ.BasicType):
+                    if lt.type_name == "int":
+                        if rt.type_name == "int":
+                            # res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+                            int_int_to_int(self.op, left_addr, right_addr, dst_addr, tpa)
+                            return dst_addr
+        elif self.op_type == BIN_BITWISE:
+            pass
+        elif self.op_type == BIN_LAZY:
+            # x and y: if x then y else 0
+            # x or y: if x then 1 else y
+            if self.op == "and":
+                ife = IfExpr(self.left, self.right, IntLiteral(util.ZERO_POS, self.lf), self.lf)
+            elif self.op == "or":
+                ife = IfExpr(self.left, IntLiteral(util.ONE_POS, self.lf), self.right, self.lf)
+            else:
+                raise errs.TplCompileError("Unexpected lazy operator. ", self.lf)
+
+            if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
+                raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
+
+            ife.compile_to(env, tpa, dst_addr)
+            return dst_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if self.op_type == BIN_ARITH:
@@ -652,8 +723,11 @@ class Assignment(BinaryExpr):
         else:
             raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.left.__class__.__name__), self.lf)
 
-        right_addr = self.right.compile(env, tpa)
-        tpa.assign(left_addr, right_addr)
+        if self.right.use_compile_to():
+            self.right.compile_to(env, tpa, left_addr)
+        else:
+            right_addr = self.right.compile(env, tpa)
+            tpa.assign(left_addr, right_addr)
         return left_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -977,9 +1051,16 @@ class IfExpr(Expression):
         self.else_expr = else_expr
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        cond_addr = self.condition.compile(env, tpa)
         res_t = self.evaluated_type(env, tpa.manager)
         res_addr = tpa.manager.allocate_stack(res_t.length)
+        self.compile_to(env, tpa, res_addr)
+        return res_addr
+
+    def use_compile_to(self) -> bool:
+        return use_compile_to
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        cond_addr = self.condition.compile(env, tpa)
 
         else_label = tpa.manager.label_manager.else_label()
         endif_label = tpa.manager.label_manager.endif_label()
@@ -988,17 +1069,16 @@ class IfExpr(Expression):
 
         if_env = en.BlockEnvironment(env)
         then_addr = self.then_expr.compile(if_env, tpa)
-        tpa.assign(res_addr, then_addr)
+        tpa.assign(dst_addr, then_addr)
 
         tpa.write_format("goto", endif_label)
         tpa.write_format("label", else_label)
 
         else_env = en.BlockEnvironment(env)
         else_addr = self.else_expr.compile(else_env, tpa)
-        tpa.assign(res_addr, else_addr)
+        tpa.assign(dst_addr, else_addr)
 
         tpa.write_format("label", endif_label)
-        return res_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         then_t = self.then_expr.evaluated_type(env, manager)
