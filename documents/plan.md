@@ -23,6 +23,7 @@
 * ~~Function param polymorphism~~ Discarded
 * Heap memory management
 * Main arguments
+* Pref in file
 * Variable length argument
 * More native call (print)
 * Separate pseudo-inst compiler

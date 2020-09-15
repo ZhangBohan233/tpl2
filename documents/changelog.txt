@@ -1,4 +1,9 @@
-﻿===== VERSION 2004 =====
+﻿===== VERSION 2005 =====
+2020/09/15
+
+* Ast optimizer for unary operator
+
+===== VERSION 2004 =====
 2020/09/15
 
 * Added ast preprocessor and ast optimizer

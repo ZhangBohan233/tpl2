@@ -34,6 +34,15 @@ class AstOptimizer:
                     if isinstance(node.right, ast.FakeIntLit) or isinstance(node.right, ast.FakeFloatLit):
                         op_fn = BINARY_OP_FLOAT_RES[node.op]
                         return ast.FakeFloatLit(op_fn(node.left.value, node.right.value), node.lf)
+            elif isinstance(node, ast.UnaryOperator):
+                if isinstance(node.value, ast.FakeIntLit):
+                    if node.op == "neg":
+                        return ast.FakeIntLit(-node.value.value, node.lf)
+                    elif node.op == "not":
+                        return ast.FakeIntLit(int(not node.value.value), node.lf)
+                elif isinstance(node.value, ast.FakeFloatLit):
+                    if node.op == "neg":
+                        return ast.FakeFloatLit(-node.value.value, node.lf)
 
         return node
 

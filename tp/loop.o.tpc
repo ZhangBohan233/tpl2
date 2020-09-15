@@ -5,7 +5,7 @@ stack_size
 global_length
 16
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 247 255 255 255 255 255 255 255 8 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0
 
 fn E:\GitHub\tpl2\tp\loop.tp$tt $8192
     push_fp
