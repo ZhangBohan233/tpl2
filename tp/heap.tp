@@ -1,0 +1,18 @@
+﻿require {
+    malloc, free
+}
+
+struct S {
+    x: int;
+    y: int;
+}
+
+fn main() int {
+    a: *int = malloc(sizeof(int));
+    *a = 992;
+    free(a);
+    b: *S = malloc(sizeof(S));
+    b$x = 7;
+    (*b).y = 8;
+    return b$y;
+}

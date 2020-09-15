@@ -25,7 +25,14 @@ class Parser:
             ".": ast.Dot,
             "->": ast.RightArrowExpr,
             "as": ast.AsExpr,
-            "$": ast.DollarExpr
+            "$": ast.DollarExpr,
+            ":=": ast.QuickAssignment
+        }
+
+        self.special_unary = {
+            "return": ast.ReturnStmt,
+            "new": ast.NewExpr,
+            "del": ast.DelStmt
         }
 
         self.symbol_lib = {
@@ -35,7 +42,6 @@ class Parser:
             "fn": self.process_fn,
             "var": self.process_var,
             "const": self.process_const,
-            "return": self.process_return,
             "if": self.process_if_stmt,
             "while": self.process_while_stmt,
             "for": self.process_for_stmt,
@@ -106,9 +112,6 @@ class Parser:
 
     def process_const(self, p, i, b, lf):
         self.var_level = ast.VAR_CONST
-
-    def process_return(self, p, i, builder: ab.AstBuilder, lf):
-        builder.add_node(ast.ReturnStmt(lf))
 
     def process_if_stmt(self, parent: tl.CollectiveElement, index, builder, lf):
         index += 1
@@ -350,6 +353,9 @@ class Parser:
                     builder.add_node(ast.BinaryOperatorAssignment(symbol, ast.BIN_BITWISE, lf))
                 elif symbol in self.special_binary:
                     node_class = self.special_binary[symbol]
+                    builder.add_node(node_class(lf))
+                elif symbol in self.special_unary:
+                    node_class = self.special_unary[symbol]
                     builder.add_node(node_class(lf))
                 elif symbol in self.symbol_lib:
                     ftn = self.symbol_lib[symbol]

@@ -21,7 +21,9 @@
 #### Phase 2
 * ~~Increment, decrement~~ Done
 * ~~Function param polymorphism~~ Discarded
-* Heap memory management
+* ~~Quick assignment~~ Done
+* ~~Heap memory management~~ Done
+* New and del operators
 * Main arguments
 * Pref in file
 * Variable length argument

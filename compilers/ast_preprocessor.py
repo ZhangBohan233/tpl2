@@ -49,6 +49,16 @@ class AstPreprocessor:
                 self.literal_bytes.extend(util.string_to_bytes(node.value))
                 self.str_literals[node.value] = pos
             return ast.StringLiteral(pos, node.lf)
+        elif isinstance(node, ast.BinaryOperatorAssignment):
+            left = self.process_node(node.left)
+            right = self.process_node(node.right)
+            bo = ast.BinaryOperator(node.op[:-1], node.op_type, node.lf)
+            bo.left = left
+            bo.right = right
+            ass = ast.Assignment(node.lf)
+            ass.left = left
+            ass.right = bo
+            return ass
         else:
             attrs = dir(node)
 

@@ -1,4 +1,10 @@
-﻿===== VERSION 2005 =====
+﻿===== VERSION 2006 =====
+2020/09/15
+
+* Implemented heap memory management
+* Implemented native functions malloc, free
+
+===== VERSION 2005 =====
 2020/09/15
 
 * Ast optimizer for unary operator

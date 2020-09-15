@@ -7,6 +7,7 @@
 #include <string.h>
 #include <locale.h>
 #include "os_spec.h"
+#include "mem.h"
 #include "tvm.h"
 
 // The error code, set by virtual machine. Used to tell the main loop that the process is interrupted
@@ -29,7 +30,7 @@ char *ERR_MSG = "";
 #define push_fp call_stack[++call_p] = fp; fp = sp;
 #define pull_fp sp = fp; fp = call_stack[call_p--];
 
-#define MEMORY_SIZE 8192
+#define MEMORY_SIZE 16384
 #define RECURSION_LIMIT 1000
 
 tp_int stack_end;
@@ -81,10 +82,18 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
     tp_int copy_len = code_length - 16 - INT_LEN * 4;  // stack, global, literal, entry
     entry_end = global_end + copy_len;
 
+    if (global_end + copy_len > MEMORY_SIZE) {
+        fprintf(stderr, "Not enough memory to start vm. \n");
+        ERROR_CODE = ERR_MEMORY_OUT;
+        return 1;
+    }
+
     memcpy(MEMORY + global_end, src_code + 16 + INT_LEN * 3, copy_len);
 
     functions_end = entry_end - entry_len;
     pc = functions_end;
+
+    available = build_ava_link(entry_end, MEMORY_SIZE);
 
     return 0;
 }
@@ -191,6 +200,71 @@ void nat_clock() {
     pull_fp
 }
 
+void nat_malloc() {
+    push_fp
+
+    tp_int asked_len = bytes_to_int(MEMORY + true_addr(0));
+
+    tp_int real_len = asked_len + INT_LEN;
+    tp_int allocate_len =
+            real_len % MEM_BLOCK == 0 ? real_len / MEM_BLOCK : real_len / MEM_BLOCK + 1;
+    tp_int location = malloc_link(allocate_len);
+
+    if (location <= 0) {
+        int ava_size = link_len(available) * MEM_BLOCK - INT_LEN;
+        fprintf(stderr, "Cannot allocate length %lld, available memory %d\n", asked_len, ava_size);
+        ERROR_CODE = ERR_MEMORY_OUT;
+        return;
+    }
+
+    int_to_bytes(MEMORY + location, allocate_len);  // stores the allocated length
+    nat_return_int(location + INT_LEN);
+
+    pull_fp
+}
+
+void _free_link(int_fast64_t real_ptr, int_fast64_t alloc_len) {
+    LinkedNode *head = available;
+    LinkedNode *after = available;
+    while (after->addr < real_ptr) {
+        head = after;
+        after = after->next;
+    }
+//    printf("%lld, %lld\n", head->addr, after->addr);
+    int_fast64_t index_in_pool = (real_ptr - entry_end) / MEM_BLOCK + 1;
+//    printf("%lld\n", index_in_pool);
+    for (int_fast64_t i = 0; i < alloc_len; ++i) {
+        LinkedNode *node = &ava_pool[index_in_pool++];
+        node->addr = real_ptr + i * MEM_BLOCK;
+        head->next = node;
+        head = node;
+    }
+    if (head->addr >= after->addr) {
+        fprintf(stderr, "Heap memory collision");
+        ERROR_CODE = ERR_HEAP_COLLISION;
+        head->next = NULL;  // avoid cyclic reference
+        return;
+    }
+    head->next = after;
+}
+
+void nat_free() {
+    push_fp
+
+    tp_int free_ptr = bytes_to_int(MEMORY + true_addr(0));
+    int_fast64_t real_addr = free_ptr - INT_LEN;
+    int_fast64_t alloc_len = bytes_to_int(MEMORY + real_addr);
+
+    if (real_addr < entry_end || real_addr > MEMORY_SIZE) {
+        printf("Cannot free pointer: %lld outside heap\n", real_addr);
+        ERROR_CODE = ERR_HEAP_COLLISION;
+        return;
+    }
+    _free_link(real_addr, alloc_len);
+
+    pull_fp
+}
+
 void invoke(tp_int func_ptr) {
     tp_int func_id = bytes_to_int(MEMORY + func_ptr);
     switch (func_id) {
@@ -220,6 +294,12 @@ void invoke(tp_int func_ptr) {
             break;
         case 9:  // println_str
             nat_println_str();
+            break;
+        case 10:  // malloc
+            nat_malloc();
+            break;
+        case 11:  // free
+            nat_free();
             break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;
@@ -434,7 +514,7 @@ void tvm_mainloop() {
 }
 
 void tvm_shutdown() {
-
+    free_link_pool(ava_pool);
 }
 
 void tvm_set_args(int argc, char **argv) {

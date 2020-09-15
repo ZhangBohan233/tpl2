@@ -86,6 +86,14 @@ class PointerType(Type):
 
         self.base = base
 
+    def strong_convertible(self, left_tar_type):
+        if self == TYPE_VOID_PTR:
+            return isinstance(left_tar_type, PointerType)
+        elif left_tar_type == TYPE_VOID_PTR:
+            return True
+        else:
+            return super().strong_convertible(left_tar_type)
+
     def weak_convertible(self, left_tar_type):
         if isinstance(left_tar_type, BasicType) and left_tar_type.type_name == "int":
             return True
@@ -206,6 +214,7 @@ TYPE_BYTE = BasicType("byte", 1)
 TYPE_VOID = BasicType("void", 0)
 
 TYPE_CHAR_ARR = ArrayType(TYPE_CHAR)
+TYPE_VOID_PTR = PointerType(TYPE_VOID)
 
 PRIMITIVE_TYPES = {"int": TYPE_INT, "float": TYPE_FLOAT, "char": TYPE_CHAR, "byte": TYPE_BYTE, "void": TYPE_VOID}
 
@@ -219,4 +228,6 @@ NATIVE_FUNCTIONS = {
     "println_float": (7, NativeFuncType([TYPE_FLOAT], TYPE_VOID)),
     "print_str": (8, NativeFuncType([TYPE_CHAR_ARR], TYPE_VOID)),
     "println_str": (9, NativeFuncType([TYPE_CHAR_ARR], TYPE_VOID)),
+    "malloc": (10, NativeFuncType([TYPE_INT], TYPE_VOID_PTR)),
+    "free": (11, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID))
 }

@@ -597,6 +597,31 @@ class AddrExpr(UnaryExpr):
         return typ.PointerType(vt)
 
 
+class NewExpr(UnaryExpr):
+    def __init__(self, lf):
+        super().__init__("new", lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        pass
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        pass
+
+    def use_compile_to(self) -> bool:
+        return use_compile_to
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        return typ.PointerType(self.value.definition_type(env, manager))
+
+
+class DelStmt(UnaryStmt):
+    def __init__(self, lf):
+        super().__init__("del", lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        pass
+
+
 class AsExpr(BinaryExpr):
     """
     Note that this expression may be used in multiple ways: cast / name changing
@@ -825,6 +850,25 @@ class Declaration(BinaryStmt):
             raise Exception("Unexpected error. ")
 
         return "BE({} {}: {})".format(level, self.left, self.right)
+
+
+class QuickAssignment(BinaryStmt):
+    def __init__(self, lf):
+        super().__init__(":=", lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        t = self.right.evaluated_type(env, tpa.manager)
+        if not isinstance(self.left, NameNode):
+            raise errs.TplCompileError("Left side of ':=' must be name. ", self.lf)
+
+        res_addr = tpa.manager.allocate_stack(t.memory_length())
+        env.define_var_set(self.left.name, t, res_addr, self.lf)
+
+        if self.right.use_compile_to():
+            self.right.compile_to(env, tpa, res_addr)
+        else:
+            right_addr = self.right.compile(env, tpa)
+            tpa.assign(res_addr, right_addr)
 
 
 class RightArrowExpr(BinaryExpr):
