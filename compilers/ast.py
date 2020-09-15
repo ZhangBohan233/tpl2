@@ -113,6 +113,47 @@ class Expression(Node, ABC):
             pass
 
 
+class FakeNode(Node):
+    def __init__(self, lf):
+        super().__init__(lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        raise errs.NotCompileAbleError("Fake node does not compile. ", self.lf)
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        raise errs.NotCompileAbleError("Fake node does not compile. ", self.lf)
+
+
+class FakeLiteral(FakeNode):
+    def __init__(self, value, lf):
+        super().__init__(lf)
+
+        self.value = value
+
+    def __str__(self):
+        return str(self.value)
+
+
+class FakeIntLit(FakeLiteral):
+    def __init__(self, value, lf):
+        super().__init__(value, lf)
+
+
+class FakeFloatLit(FakeLiteral):
+    def __init__(self, value, lf):
+        super().__init__(value, lf)
+
+
+class FakeCharLit(FakeLiteral):
+    def __init__(self, value, lf):
+        super().__init__(value, lf)
+
+
+class FakeStrLit(FakeLiteral):
+    def __init__(self, value, lf):
+        super().__init__(value, lf)
+
+
 class Statement(Node, ABC):
     def __init__(self, lf):
         super().__init__(lf)
@@ -485,17 +526,12 @@ class BinaryOperator(BinaryExpr):
         raise errs.TplCompileError("Value type is not supported by binary operator. ", self.lf)
 
 
-class BinaryOperatorAssignment(BinaryExpr):
+class BinaryOperatorAssignment(BinaryExpr, FakeNode):
     def __init__(self, op: str, op_type: int, lf):
-        super().__init__(op, lf)
+        BinaryExpr.__init__(self, op, lf)
+        FakeNode.__init__(self, lf)
 
         self.op_type = op_type
-
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
-
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        pass
 
 
 class ReturnStmt(UnaryStmt):

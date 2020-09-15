@@ -18,6 +18,7 @@ import compilers.text_preprocessor as txt_prep
 import compilers.tpc_compiler as tpc
 import compilers.tpc_optimizer as tpc_o
 import compilers.ast_preprocessor as prep
+import compilers.ast_optimizer as ast_o
 
 
 TPC_NAME = "tpc.py"
@@ -123,13 +124,14 @@ if __name__ == '__main__':
     processed_tks = txt_p.preprocess()
 
     parser = psr.Parser(processed_tks)
-    root, literal = parser.parse()
+    fake_root = parser.parse()
 
-    # preprocessor = prep.Preprocessor()
-    # preprocessor.preprocess(root)
+    if args["optimize"] > 0:
+        ast_opt = ast_o.AstOptimizer(fake_root, args["optimize"])
+        fake_root = ast_opt.optimize()
 
-    # tree_optimizer = aso.AstOptimizer(root, parser, args["optimize"])
-    # tree_optimizer.optimize()
+    tree_pre = prep.AstPreprocessor(fake_root)
+    root, literal = tree_pre.preprocess()
 
     if args["ast"]:
         print(root)

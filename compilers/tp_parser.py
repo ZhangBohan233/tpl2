@@ -12,13 +12,13 @@ def process_empty(p, i, b, lf):
 class Parser:
     def __init__(self, tokens: tl.CollectiveElement):
         self.tokens = tokens
-        self.literal_bytes = util.initial_literal()
+        # self.literal_bytes = util.initial_literal()
         self.var_level = ast.VAR_VAR
 
-        self.int_literals = util.initial_int_literal_dict()  # int_lit : position in literal_bytes
-        self.float_literals = {}
-        self.char_literals = {}
-        self.str_literals = {}
+        # self.int_literals = util.initial_int_literal_dict()  # int_lit : position in literal_bytes
+        # self.float_literals = {}
+        # self.char_literals = {}
+        # self.str_literals = {}
 
         self.special_binary = {
             "=": ast.Assignment,
@@ -50,7 +50,7 @@ class Parser:
         }
 
     def parse(self):
-        return self.parse_as_block(self.tokens), self.literal_bytes
+        return self.parse_as_block(self.tokens)
 
     # processor methods of single identifiers
     #
@@ -308,37 +308,13 @@ class Parser:
             token = ele.atom
             lf = token.lf
             if isinstance(token, tl.IntToken):
-                if token.value in self.int_literals:
-                    pos = self.int_literals[token.value]
-                else:
-                    pos = len(self.literal_bytes)
-                    self.literal_bytes.extend(util.int_to_bytes(token.value))
-                    self.int_literals[token.value] = pos
-                builder.add_node(ast.IntLiteral(pos, lf))
+                builder.add_node(ast.FakeIntLit(token.value, lf))
             elif isinstance(token, tl.FloatToken):
-                if token.value in self.float_literals:
-                    pos = self.float_literals[token.value]
-                else:
-                    pos = len(self.literal_bytes)
-                    self.literal_bytes.extend(util.float_to_bytes(token.value))
-                    self.float_literals[token.value] = pos
-                builder.add_node(ast.FloatLiteral(pos, lf))
+                builder.add_node(ast.FakeFloatLit(token.value, lf))
             elif isinstance(token, tl.CharToken):
-                if token.char in self.char_literals:
-                    pos = self.char_literals[token.char]
-                else:
-                    pos = len(self.literal_bytes)
-                    self.literal_bytes.extend(util.char_to_bytes(token.char))
-                    self.char_literals[token.char] = pos
-                builder.add_node(ast.CharLiteral(pos, lf))
+                builder.add_node(ast.FakeCharLit(token.char, lf))
             elif isinstance(token, tl.StrToken):
-                if token.value in self.str_literals:
-                    pos = self.str_literals[token.value]
-                else:
-                    pos = len(self.literal_bytes)
-                    self.literal_bytes.extend(util.string_to_bytes(token.value))
-                    self.str_literals[token.value] = pos
-                builder.add_node(ast.StringLiteral(pos, lf))
+                builder.add_node(ast.FakeStrLit(token.value, lf))
             elif isinstance(token, tl.IdToken):
                 symbol = token.identifier
                 if symbol == "-":
