@@ -88,7 +88,7 @@ class PointerType(Type):
 
     def strong_convertible(self, left_tar_type):
         if self == TYPE_VOID_PTR:
-            return isinstance(left_tar_type, PointerType)
+            return isinstance(left_tar_type, PointerType) or isinstance(left_tar_type, ArrayType)
         elif left_tar_type == TYPE_VOID_PTR:
             return True
         else:
@@ -171,31 +171,17 @@ class StructType(Type):
         return "StructType(" + util.name_with_path(self.name, self.file_path) + ")"
 
 
-# class MemoryArrayType(Type):
-#     def __init__(self, ele_type: Type, num_ele=-1):
-#         super().__init__(ele_type.memory_length() * num_ele)
-#
-#         self.ele_type = ele_type
-#         self.num_ele = num_ele
-#
-#     def strong_convertible(self, left_tar_type):
-#         return self == left_tar_type or (isinstance(left_tar_type, MemoryArrayType) and )
-#
-#     def __eq__(self, other):
-#         return isinstance(other, MemoryArrayType) and self.ele_type == other.ele_type and self.num_ele == other.num_ele
-#
-#     def __str__(self):
-#         if self.num_ele >= 0:
-#             return f"{self.ele_type}[{self.num_ele}]"
-#         else:
-#             return f"{self.ele_type}[]"
-
-
 class ArrayType(Type):
     def __init__(self, ele_type: Type):
         super().__init__(util.PTR_LEN)
 
         self.ele_type = ele_type
+
+    def strong_convertible(self, left_tar_type):
+        if left_tar_type == TYPE_VOID_PTR:
+            return True
+        else:
+            return super().strong_convertible(left_tar_type)
 
     def __str__(self):
         return f"{self.ele_type}[]"
@@ -229,5 +215,6 @@ NATIVE_FUNCTIONS = {
     "print_str": (8, NativeFuncType([TYPE_CHAR_ARR], TYPE_VOID)),
     "println_str": (9, NativeFuncType([TYPE_CHAR_ARR], TYPE_VOID)),
     "malloc": (10, NativeFuncType([TYPE_INT], TYPE_VOID_PTR)),
-    "free": (11, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID))
+    "free": (11, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID)),
+    "heap_array": (12, NativeFuncType([TYPE_INT, ArrayType(TYPE_INT)], TYPE_VOID_PTR))
 }

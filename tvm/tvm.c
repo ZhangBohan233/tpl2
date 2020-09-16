@@ -102,6 +102,23 @@ void nat_return_int(tp_int value) {
     int_to_bytes(MEMORY + ret_stack[ret_p--], value);
 }
 
+void nat_return() {
+    ret_p--;
+}
+
+tp_int get_nat_return_addr() {
+    return ret_stack[ret_p];
+}
+
+/*
+ * Rule of nat_ function:
+ *
+ * 1. First code line must be push_fp
+ * 2. Second code line must be push(stack length of this function)
+ * 3. Last code line must be pull_fp
+ * 4. If this function has a declared non-void return type, call some 'nat_return' function before pull_fp
+ */
+
 void nat_print_int() {
     push_fp
     push(INT_LEN)
@@ -200,11 +217,7 @@ void nat_clock() {
     pull_fp
 }
 
-void nat_malloc() {
-    push_fp
-
-    tp_int asked_len = bytes_to_int(MEMORY + true_addr(0));
-
+tp_int _malloc_essential(tp_int asked_len) {
     tp_int real_len = asked_len + INT_LEN;
     tp_int allocate_len =
             real_len % MEM_BLOCK == 0 ? real_len / MEM_BLOCK : real_len / MEM_BLOCK + 1;
@@ -214,11 +227,21 @@ void nat_malloc() {
         int ava_size = link_len(available) * MEM_BLOCK - INT_LEN;
         fprintf(stderr, "Cannot allocate length %lld, available memory %d\n", asked_len, ava_size);
         ERROR_CODE = ERR_MEMORY_OUT;
-        return;
+        return 0;
     }
 
     int_to_bytes(MEMORY + location, allocate_len);  // stores the allocated length
-    nat_return_int(location + INT_LEN);
+    return location + INT_LEN;
+}
+
+void nat_malloc() {
+    push_fp
+    push(INT_LEN)
+
+    tp_int asked_len = bytes_to_int(MEMORY + true_addr(0));
+    tp_int malloc_res = _malloc_essential(asked_len);
+
+    nat_return_int(malloc_res);
 
     pull_fp
 }
@@ -250,6 +273,7 @@ void _free_link(int_fast64_t real_ptr, int_fast64_t alloc_len) {
 
 void nat_free() {
     push_fp
+    push(PTR_LEN)
 
     tp_int free_ptr = bytes_to_int(MEMORY + true_addr(0));
     int_fast64_t real_addr = free_ptr - INT_LEN;
@@ -261,6 +285,74 @@ void nat_free() {
         return;
     }
     _free_link(real_addr, alloc_len);
+
+    pull_fp
+}
+
+tp_int _array_total_len(tp_int atom_len, const tp_int *dimensions, int dim_arr_len, int index_in_dim) {
+    if (index_in_dim == dim_arr_len - 1) return dimensions[index_in_dim] * atom_len + INT_LEN;
+    else {
+        tp_int dim = dimensions[index_in_dim];
+        tp_int res = dim * PTR_LEN + INT_LEN;
+        for (int i = 0; i < dim; i++) {
+            res += _array_total_len(atom_len, dimensions, dim_arr_len, index_in_dim + 1);
+        }
+        return res;
+    }
+}
+
+void _create_arr_rec(tp_int to_write, tp_int atom_len,
+                     const tp_int *dimensions, int dim_arr_len, int index_in_dim, tp_int *cur_heap) {
+    int_to_bytes(MEMORY + to_write, *cur_heap);
+
+    tp_int ele_len;
+    if (index_in_dim == dim_arr_len - 1) ele_len = atom_len;
+    else ele_len = PTR_LEN;
+
+    tp_int dim = dimensions[index_in_dim];
+    int_to_bytes(MEMORY + *cur_heap, dim);  // write array size
+
+    tp_int first_ele_addr = *cur_heap + INT_LEN;
+
+    *cur_heap += (dim * ele_len) + INT_LEN;
+    if (index_in_dim < dim_arr_len - 1) {
+        for (int i = 0; i < dim; i++) {
+            _create_arr_rec(first_ele_addr + i * PTR_LEN,
+                    atom_len,
+                    dimensions,
+                    dim_arr_len,
+                    index_in_dim + 1,
+                    cur_heap);
+        }
+    }
+
+}
+
+void nat_heap_array() {
+    push_fp
+    push(INT_LEN * 2)
+
+    tp_int atom_size = bytes_to_int(MEMORY + true_addr(0));
+    tp_int dim_arr_addr = bytes_to_int(MEMORY + true_addr(INT_LEN));
+
+    tp_int dim_arr_len = bytes_to_int(MEMORY + dim_arr_addr);
+    tp_int *dimension = malloc(sizeof(tp_int) * dim_arr_len);
+
+    for (int i = 0; i < dim_arr_len; i++) {
+        dimension[i] = bytes_to_int(MEMORY + dim_arr_addr + i * INT_LEN);
+    }
+
+    tp_int total_heap_len = _array_total_len(atom_size, dimension, dim_arr_len, 0);
+//    printf("%lld %lld %lld\n", atom_size, dim_arr_addr, total_heap_len);
+
+    tp_int heap_loc = _malloc_essential(total_heap_len);
+//    printf("%lld\n", heap_loc);
+
+    tp_int cur_heap_loc = heap_loc;
+    _create_arr_rec(get_nat_return_addr(), atom_size, dimension, dim_arr_len, 0, &cur_heap_loc);
+
+    free(dimension);
+    nat_return();
 
     pull_fp
 }
@@ -300,6 +392,9 @@ void invoke(tp_int func_ptr) {
             break;
         case 11:  // free
             nat_free();
+            break;
+        case 12:  // heap_array
+            nat_heap_array();
             break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;

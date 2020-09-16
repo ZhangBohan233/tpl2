@@ -1,4 +1,10 @@
-﻿===== VERSION 2007 =====
+﻿===== VERSION 2008 =====
+2020/09/16
+
+* Implemented heap array with compile time function 'array' and native invoke 'heap_array'
+* Implemented heap array creation with operator 'new'
+
+===== VERSION 2007 =====
 2020/09/15
 
 * New in basic use

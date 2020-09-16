@@ -19,7 +19,6 @@ UNA_LOGICAL = 2
 VAR_VAR = 1
 VAR_CONST = 2
 
-
 use_compile_to = False
 
 
@@ -248,6 +247,9 @@ class NameNode(Expression):
 
     def __str__(self):
         return self.name
+
+    def __repr__(self):
+        return f"NameNode({self.name})"
 
 
 class LiteralNode(Expression, ABC):
@@ -607,6 +609,8 @@ class NewExpr(UnaryExpr):
         return call_res
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        if isinstance(self.value, IndexingExpr):
+            return self.compile_heap_arr_init(env, tpa, dst_addr)
         t = self.evaluated_type(env, tpa.manager)
         malloc = NameNode("malloc", self.lf)
         req = RequireStmt(malloc, self.lf)
@@ -618,7 +622,14 @@ class NewExpr(UnaryExpr):
     def use_compile_to(self) -> bool:
         return use_compile_to
 
+    def compile_heap_arr_init(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
+        self.value: IndexingExpr
+        args = [self.value.get_atomic_node()] + self.value.flatten_args(env, tpa.manager)
+        FunctionCall(NameNode("array", self.lf), Line(self.lf, *args), self.lf).compile_to(env, tpa, dst_addr)
+
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        if isinstance(self.value, IndexingExpr):
+            return self.value.definition_type(env, manager)
         return typ.PointerType(self.value.definition_type(env, manager))
 
 
@@ -627,7 +638,11 @@ class DelStmt(UnaryStmt):
         super().__init__("del", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
+        free = NameNode("free", self.lf)
+        req = RequireStmt(free, self.lf)
+        req.compile(env, tpa)
+        fc = FunctionCall(free, Line(self.lf, self.value), self.value)
+        fc.compile(env, tpa)
 
 
 class AsExpr(BinaryExpr):
@@ -788,7 +803,7 @@ class Assignment(BinaryExpr):
             return self.struct_attr_assign(self.left, env, tpa)
         elif isinstance(self.left, IndexingExpr):
             right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lf)
-            return self.array_index_assign(self.left, env, tpa)
+            return self.array_index_assign(self.left, self.right, env, tpa, self.lf)
         else:
             raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.left.__class__.__name__), self.lf)
 
@@ -808,16 +823,17 @@ class Assignment(BinaryExpr):
         tpa.ptr_assign(res_addr, attr_ptr)
         return res_addr
 
-    def array_index_assign(self, indexing, env: en.Environment, tpa: tp.TpaOutput):
+    @staticmethod
+    def array_index_assign(indexing, right, env: en.Environment, tpa: tp.TpaOutput, lf):
         indexed_t = indexing.evaluated_type(env, tpa.manager)
-        right_t = self.right.evaluated_type(env, tpa.manager)
+        right_t = right.evaluated_type(env, tpa.manager)
         if isinstance(right_t, typ.ArrayType):
-            raise errs.TplCompileError("Cannot assign an array as an element. ", self.lf)
-        if not right_t.convertible_to(indexed_t, self.lf):
-            raise errs.TplCompileError(f"Cannot convert type '{right_t}' to '{indexed_t}'. ", self.lf)
+            raise errs.TplCompileError("Cannot assign an array as an element. ", lf)
+        if not right_t.convertible_to(indexed_t, lf):
+            raise errs.TplCompileError(f"Cannot convert type '{right_t}' to '{indexed_t}'. ", lf)
 
         indexed_ptr = indexing.get_indexed_addr(env, tpa)
-        res_addr = self.right.compile(env, tpa)
+        res_addr = right.compile(env, tpa)
         tpa.ptr_assign(res_addr, indexed_ptr)
         return res_addr
 
@@ -1378,7 +1394,7 @@ class IndexingExpr(Expression):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if self.is_array_initialization(env):
-            return self.array_initialization(env, tpa)
+            return array_creation(self, env, tpa)
         else:
             return self.indexing(env, tpa)
 
@@ -1403,43 +1419,6 @@ class IndexingExpr(Expression):
         else:
             return False
 
-    def array_initialization(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
-        res_addr = tpa.manager.allocate_stack(util.PTR_LEN)
-
-        dimensions = []
-        node = self
-        while isinstance(node, IndexingExpr):
-            dimensions.insert(0, node._get_index_literal(env, tpa.manager))
-            node = node.indexing_obj
-
-        root_t = node.evaluated_type(env, tpa.manager)
-        self.array_creation(res_addr, root_t, dimensions, 0, env, tpa)
-        return res_addr
-
-    def array_creation(self, this_ptr_addr, atom_t: typ.Type, dimensions: list, index_in_dim: int,
-                       env: en.Environment, tpa: tp.TpaOutput):
-
-        if index_in_dim == len(dimensions) - 1:
-            ele_len = atom_t.memory_length()
-        else:
-            ele_len = util.PTR_LEN
-        arr_size = dimensions[index_in_dim]
-        arr_addr = tpa.manager.allocate_stack(ele_len * arr_size + util.INT_LEN)
-        tpa.assign_i(arr_addr, arr_size)
-        tpa.take_addr(arr_addr, this_ptr_addr)
-
-        if index_in_dim == len(dimensions) - 1:
-            pass
-        else:
-            first_ele_addr = arr_addr + util.INT_LEN
-            for i in range(arr_size):
-                self.array_creation(first_ele_addr + i * util.PTR_LEN, atom_t, dimensions, index_in_dim + 1, env, tpa)
-
-    # def allocate_one_array(self, ptr_to_array, ele_size, ele_count, tpa: tp.TpaOutput):
-    #     array_addr = tpa.manager.allocate_stack(ele_size * ele_count + util.INT_LEN)
-    #     tpa.assign_i(array_addr, ele_count)
-    #     tpa.take_addr(array_addr, ptr_to_array)
-
     def indexing(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
         res_addr = tpa.manager.allocate_stack(self.evaluated_type(env, tpa.manager).memory_length())
         indexed_addr = self.get_indexed_addr(env, tpa)
@@ -1461,53 +1440,22 @@ class IndexingExpr(Expression):
         # tpa.to_abs(arith_addr, res_addr)
         return arith_addr
 
-        # arg_node = self._get_index_node()
-        # arg_t = arg_node.evaluated_type(env, tpa.manager)
-        # if arg_t != typ.TYPE_INT:
-        #     raise errs.TplCompileError("Index must be int. ", self.lf)
-        # return self._get_abs_addr_of_index(env, tpa)
+    def flatten_args(self,env, manager):
+        args = []
+        node = self
+        while isinstance(node, IndexingExpr):
+            args.insert(0, node._get_index_node(env, manager))
+            node = node.indexing_obj
+        return args
 
-    # def _get_abs_addr_of_index(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
-    #     """
-    #     Returns an address, which stores the absolute addr of the
-    #     返回一个相对地址，在此相对地址中存有“数组第i个值”的地址
-    #     """
-    #     res_addr = tpa.manager.allocate_stack(util.INT_LEN)
-    #     acc_addr = tpa.manager.allocate_stack(util.INT_LEN)
-    #     arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
-    #
-    #     orig_t = self._get_orig_type(env, tpa.manager)
-    #
-    #     base = self
-    #     base_t = orig_t
-    #     while isinstance(base, IndexingExpr):
-    #         if not isinstance(base_t, typ.ArrayType):
-    #             raise errs.TplCompileError("Cannot take index on non-array type. ", self.lf)
-    #
-    #         base_t = base_t.base
-    #         cur_arg = base._get_index_node()
-    #         cur_unit_len = base_t.memory_length()
-    #
-    #         tpa.assign(arith_addr, cur_arg.compile(env, tpa))
-    #         tpa.binary_arith_i("muli", arith_addr, cur_unit_len, arith_addr)
-    #         tpa.binary_arith("addi", acc_addr, arith_addr, acc_addr)
-    #
-    #         base = base.indexing_obj
-    #
-    #     if isinstance(base_t, typ.ArrayType):
-    #         raise errs.TplCompileError("Cannot take array as value. ", self.lf)
-    #
-    #     array_addr = base.compile(env, tpa)
-    #
-    #     tpa.take_addr(array_addr, res_addr)
-    #     tpa.binary_arith("addi", res_addr, acc_addr, res_addr)
-    #     return res_addr
+    def get_atomic_node(self):
+        if isinstance(self.indexing_obj, IndexingExpr):
+            return self.indexing_obj.get_atomic_node()
+        else:
+            return self.indexing_obj
 
     def _get_atom_type(self, env, manager):
-        if isinstance(self.indexing_obj, IndexingExpr):
-            return self.indexing_obj._get_atom_type(env, manager)
-        else:
-            return self.indexing_obj.evaluated_type(env, manager)
+        return self.get_atomic_node().evaluated_type(env, manager)
 
     def _get_index_node(self, env, manager) -> Node:
         if len(self.args) != 1:
@@ -1519,7 +1467,7 @@ class IndexingExpr(Expression):
                                        self.lf)
         return arg
 
-    def _get_index_literal(self, env, manager: tp.Manager):
+    def get_index_literal(self, env, manager: tp.Manager):
         node = self._get_index_node(env, manager)
         if not isinstance(node, IntLiteral):
             raise errs.TplCompileError("Array type declaration must be an int literal. ", self.lf)
@@ -1643,6 +1591,38 @@ def int_int_to_int(op: str, left_addr: int, right_addr: int, res_addr: int, tpa:
     tpa.binary_arith(op_inst, left_addr, right_addr, res_addr)
 
 
+def array_creation(node, env: en.Environment, tpa: tp.TpaOutput) -> int:
+    res_addr = tpa.manager.allocate_stack(util.PTR_LEN)
+
+    dimensions = []
+    while isinstance(node, IndexingExpr):
+        dimensions.insert(0, node.get_index_literal(env, tpa.manager))
+        node = node.indexing_obj
+
+    root_t = node.evaluated_type(env, tpa.manager)
+    create_array_rec(res_addr, root_t, dimensions, 0, env, tpa)
+    return res_addr
+
+
+def create_array_rec(this_ptr_addr, atom_t: typ.Type, dimensions: list, index_in_dim: int,
+                     env: en.Environment, tpa: tp.TpaOutput):
+    if index_in_dim == len(dimensions) - 1:
+        ele_len = atom_t.memory_length()
+    else:
+        ele_len = util.PTR_LEN
+    arr_size = dimensions[index_in_dim]
+    arr_addr = tpa.manager.allocate_stack(ele_len * arr_size + util.INT_LEN)
+    tpa.assign_i(arr_addr, arr_size)
+    tpa.take_addr(arr_addr, this_ptr_addr)
+
+    if index_in_dim == len(dimensions) - 1:
+        pass
+    else:
+        first_ele_addr = arr_addr + util.INT_LEN
+        for i in range(arr_size):
+            create_array_rec(first_ele_addr + i * util.PTR_LEN, atom_t, dimensions, index_in_dim + 1, env, tpa)
+
+
 def array_attribute_types(attr_name: str, lf):
     if attr_name == "length":
         return typ.TYPE_INT
@@ -1702,10 +1682,38 @@ def ctf_cprintln(args: Line, env: en.Environment, tpa: tp.TpaOutput):
         raise errs.TplCompileError("Unexpected argument type of 'cprint'. ", args.lf)
 
 
+def ctf_array(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
+    if len(args) < 2:
+        raise errs.TplCompileError("Function 'array' requires at least 2 arguments: element type, dimension. ", args.lf)
+    dim = [len(args) - 1]
+    arr_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
+    create_array_rec(arr_ptr, typ.TYPE_INT, dim, 0, env, tpa)
+    arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
+    argc = len(args)
+    for i in range(1, argc):
+        arg = args[argc - i]  # reverse dimension array like in 'IndexingExpr'
+        arg_t = arg.evaluated_type(env, tpa.manager)
+        if arg_t != typ.TYPE_INT:
+            raise errs.TplCompileError(f"Expected argument type 'int', got '{arg_t}'. ", arg.lf)
+        tpa.binary_arith_i("addi", arr_ptr, i * util.INT_LEN, arith_addr)  # (i - 1) * INT_LEN + INT_LEN
+        tpa.ptr_assign(arg.compile(env, tpa), arith_addr)
+
+    sizeof_name = NameNode("sizeof", args.lf)
+    sizeof_call = FunctionCall(sizeof_name, Line(args.lf, args[0]), args.lf)
+    sizeof_res = sizeof_call.compile(env, tpa)
+
+    fn_name = NameNode("heap_array", args.lf)
+    req = RequireStmt(fn_name, args.lf)
+    req.compile(env, tpa)
+    FunctionCall.call(fn_name, [(sizeof_res, util.INT_LEN), (arr_ptr, util.PTR_LEN)],
+                      env, tpa, dst_addr, args.lf)
+
+
 COMPILE_TIME_FUNCTIONS = {
     typ.CompileTimeFunctionType("sizeof", typ.TYPE_INT): ctf_sizeof,
     typ.CompileTimeFunctionType("cprint", typ.TYPE_VOID): ctf_cprint,
-    typ.CompileTimeFunctionType("cprintln", typ.TYPE_VOID): ctf_cprintln
+    typ.CompileTimeFunctionType("cprintln", typ.TYPE_VOID): ctf_cprintln,
+    typ.CompileTimeFunctionType("array", typ.TYPE_VOID_PTR): ctf_array
 }
 
 
