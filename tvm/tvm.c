@@ -54,6 +54,11 @@ int pc_p = -1;
 tp_int ret_stack[RECURSION_LIMIT];  // stores true addr of return addresses
 int ret_p = -1;
 
+int argc;
+char **argv;
+
+tp_int tvm_set_args();
+
 int vm_check(const unsigned char *src_code) {
     for (int i = 0; i < 4; i++) {
         if (src_code[i] != SIGNATURE[i]) {
@@ -318,11 +323,11 @@ void _create_arr_rec(tp_int to_write, tp_int atom_len,
     if (index_in_dim < dim_arr_len - 1) {
         for (int i = 0; i < dim; i++) {
             _create_arr_rec(first_ele_addr + i * PTR_LEN,
-                    atom_len,
-                    dimensions,
-                    dim_arr_len,
-                    index_in_dim + 1,
-                    cur_heap);
+                            atom_len,
+                            dimensions,
+                            dim_arr_len,
+                            index_in_dim + 1,
+                            cur_heap);
         }
     }
 
@@ -601,6 +606,9 @@ void tvm_mainloop() {
                 reg2 = MEMORY[pc++];
                 char_to_bytes(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].char_value);
                 break;
+            case 72:  // main args
+                int_to_bytes(MEMORY + true_addr_sp(0), tvm_set_args());
+                break;
             default:
                 ERROR_CODE = ERR_INSTRUCTION;
                 break;
@@ -612,8 +620,34 @@ void tvm_shutdown() {
     free_link_pool(ava_pool);
 }
 
-void tvm_set_args(int argc, char **argv) {
+tp_int tvm_set_args() {
+    tp_int total_malloc_len = INT_LEN;
+    tp_int *lengths = malloc(sizeof(tp_int) * argc);
+    for (int i = 0; i < argc; i++) {
+        tp_int len = (tp_int) strlen(argv[i]);
+        lengths[i] = len;
+        total_malloc_len += INT_LEN + len * CHAR_LEN;
+    }
 
+    tp_int arr_ptr = _malloc_essential(total_malloc_len);
+    int_to_bytes(MEMORY + arr_ptr, (tp_int) argc);
+
+    tp_int cur_ptr = arr_ptr + INT_LEN + argc * PTR_LEN;
+    for (int i = 0; i < argc; i++) {
+        char *str = argv[i];
+        tp_int len = lengths[i];
+        tp_int str_ptr = cur_ptr;
+        cur_ptr += INT_LEN + len * CHAR_LEN;
+        int_to_bytes(MEMORY + str_ptr, len);  // write string length
+        for (int j = 0; j < len; j++) {
+            char_to_bytes(MEMORY + str_ptr + INT_LEN + j * CHAR_LEN, str[j]);  // write char to string
+        }
+        int_to_bytes(MEMORY + arr_ptr + INT_LEN + i * INT_LEN, str_ptr);  // write string ptr to string[]
+    }
+
+    free(lengths);
+
+    return arr_ptr;
 }
 
 void print_memory() {
@@ -678,6 +712,9 @@ void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_a
 
     setlocale(LC_ALL, "chs");
 
+    argc = vm_argc;
+    argv = vm_argv;
+
     unsigned char *codes = read_file(file_name, &read);
     if (codes == NULL) {
         fprintf(stderr, "Cannot read file. ");
@@ -685,7 +722,7 @@ void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_a
     }
 
     if (tvm_load(codes, read)) exit(ERR_VM_OPT);
-    tvm_set_args(vm_argc, vm_argv);
+//    tvm_set_args(vm_argc, vm_argv);
 
     tvm_mainloop();
 

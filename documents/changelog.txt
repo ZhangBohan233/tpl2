@@ -1,4 +1,10 @@
-﻿===== VERSION 2008 =====
+﻿===== VERSION 2009 =====
+2020/09/17
+
+* Implemented command-line argument
+* Added type check of main function
+
+===== VERSION 2008 =====
 2020/09/16
 
 * Implemented heap array with compile time function 'array' and native invoke 'heap_array'

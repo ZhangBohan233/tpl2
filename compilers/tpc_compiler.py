@@ -59,7 +59,8 @@ INSTRUCTIONS = {
     "i_to_f": (60, 1),  # convert int in %reg to float, store in %reg
     "f_to_i": (61, 1),
     "loadc": (70, 1, util.INT_LEN),
-    "storec": (71, 1, 1)
+    "storec": (71, 1, 1),
+    "main_arg": (72,)
 }
 
 MNEMONIC = {
@@ -89,6 +90,7 @@ class TpcCompiler:
 
     Which compiles all pseudo instructions to real instructions, and produces function list
     """
+
     def __init__(self, tpa_file: str):
         self.tpa_file = tpa_file
 

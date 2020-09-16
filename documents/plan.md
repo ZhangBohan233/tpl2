@@ -23,10 +23,10 @@
 * ~~Function param polymorphism~~ Discarded
 * ~~Quick assignment~~ Done
 * ~~Heap memory management~~ Done
-* New and del operators
-* Main arguments
+* ~~New and del operators~~ Done
+* ~~Main arguments~~ Done
 * Pref in file
 * Variable length argument
 * More native call (print)
-* Separate pseudo-inst compiler
-* Tpa optimizer: load literal
+* ~~Separate pseudo-inst compiler~~ Done
+* ~~Tpa optimizer: load literal~~ Changed to compile_to

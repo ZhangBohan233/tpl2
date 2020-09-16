@@ -392,13 +392,13 @@ class TpaOutput:
             s += " " * max(8 - len(x), 1)
         return s.rstrip()
 
-    def generate(self, main_file_path):
+    def generate(self, main_file_path, main_has_arg=False):
         if self.is_global:
-            self._global_generate(main_file_path)
+            self._global_generate(main_file_path, main_has_arg)
         else:
             self.local_generate()
 
-    def _global_generate(self, main_file_path):
+    def _global_generate(self, main_file_path, main_has_arg):
         literal_str = " ".join([str(int(b)) for b in self.manager.literal])
         merged = ["bits", str(util.VM_BITS),
                   "stack_size", str(util.STACK_SIZE),
@@ -412,6 +412,8 @@ class TpaOutput:
 
         self.output = merged + self.output
 
+        if main_has_arg:
+            self.write_format("main_arg")
         self.write_format("aload", "%0", "$1")
         self.write_format("set_ret", "%0")
         self.write_format("call_fn", util.name_with_path("main", main_file_path))
