@@ -58,6 +58,8 @@ void float_to_bytes32(unsigned char *b, tp_float d);
 
 char *format_bits(const char *format);
 
+void print_array(tp_int *array, int len);
+
 //void tp_printf(const char *format, ...);
 
 #endif //TPL2_UTIL_H

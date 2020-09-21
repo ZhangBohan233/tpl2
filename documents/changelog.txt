@@ -1,4 +1,11 @@
-﻿===== VERSION 2009 =====
+﻿===== VERSION 2010 =====
+2020/09/21
+
+* Implemented null-array initialization
+* Added some invoke error check
+* Fixed heap array initialization error
+
+===== VERSION 2009 =====
 2020/09/17
 
 * Implemented command-line argument

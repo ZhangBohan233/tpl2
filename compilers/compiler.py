@@ -5,9 +5,9 @@ import compilers.types as typ
 import compilers.errors as errs
 import compilers.tokens_lib as tl
 
-MAIN_FN_ERR_MSG = "Main function should either be "
-"main() int, main(void) int, main(args: char[][]) int,"
-"main() void, main(void) void, main(args: char[][]) void"
+MAIN_FN_ERR_MSG = "Main function should be one of\n" + \
+                  "main() int, main(void) int, main(args: char[][]) int, " + \
+                  "main() void, main(void) void, main(args: char[][]) void"
 
 
 class Compiler:

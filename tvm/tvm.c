@@ -295,9 +295,11 @@ void nat_free() {
 }
 
 tp_int _array_total_len(tp_int atom_len, const tp_int *dimensions, int dim_arr_len, int index_in_dim) {
+    tp_int dim = dimensions[index_in_dim];
+    if (dim == -1) return PTR_LEN;
+
     if (index_in_dim == dim_arr_len - 1) return dimensions[index_in_dim] * atom_len + INT_LEN;
     else {
-        tp_int dim = dimensions[index_in_dim];
         tp_int res = dim * PTR_LEN + INT_LEN;
         for (int i = 0; i < dim; i++) {
             res += _array_total_len(atom_len, dimensions, dim_arr_len, index_in_dim + 1);
@@ -308,18 +310,26 @@ tp_int _array_total_len(tp_int atom_len, const tp_int *dimensions, int dim_arr_l
 
 void _create_arr_rec(tp_int to_write, tp_int atom_len,
                      const tp_int *dimensions, int dim_arr_len, int index_in_dim, tp_int *cur_heap) {
+    tp_int dim = dimensions[index_in_dim];
+//    printf("%lld\n", dim);
+    if (dim == -1) {
+        *cur_heap += PTR_LEN;
+        return;
+    }
+
     int_to_bytes(MEMORY + to_write, *cur_heap);
 
     tp_int ele_len;
     if (index_in_dim == dim_arr_len - 1) ele_len = atom_len;
     else ele_len = PTR_LEN;
 
-    tp_int dim = dimensions[index_in_dim];
-    int_to_bytes(MEMORY + *cur_heap, dim);  // write array size
-
-    tp_int first_ele_addr = *cur_heap + INT_LEN;
-
+    tp_int cur_arr_addr = *cur_heap;
     *cur_heap += (dim * ele_len) + INT_LEN;
+
+    int_to_bytes(MEMORY + cur_arr_addr, dim);  // write array size
+
+    tp_int first_ele_addr = cur_arr_addr + INT_LEN;
+
     if (index_in_dim < dim_arr_len - 1) {
         for (int i = 0; i < dim; i++) {
             _create_arr_rec(first_ele_addr + i * PTR_LEN,
@@ -344,8 +354,15 @@ void nat_heap_array() {
     tp_int *dimension = malloc(sizeof(tp_int) * dim_arr_len);
 
     for (int i = 0; i < dim_arr_len; i++) {
-        dimension[i] = bytes_to_int(MEMORY + dim_arr_addr + i * INT_LEN);
+        dimension[i] = bytes_to_int(MEMORY + dim_arr_addr + (i + 1) * INT_LEN);
+//        printf("%lld, ", dimension[i]);
     }
+    if (dimension[0] < 0) {
+        fprintf(stderr, "Cannot create heap array of unspecified size. ");
+        ERROR_CODE = ERR_NATIVE_INVOKE;
+        return;
+    }
+//    print_array(dimension, dim_arr_len);
 
     tp_int total_heap_len = _array_total_len(atom_size, dimension, dim_arr_len, 0);
 //    printf("%lld %lld %lld\n", atom_size, dim_arr_addr, total_heap_len);

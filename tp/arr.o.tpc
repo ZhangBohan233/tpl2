@@ -10,7 +10,7 @@ literal
 fn E:\GitHub\tpl2\tp\arr.tp$test $1032
     push_fp
     push          32
-    load_lit      %0      $24
+    load          %0      $1072
     iload         %1      $16
     store         %1      %0
     load          %0      $16
@@ -57,7 +57,7 @@ fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     addi          %0      %1
     iload         %1      40
     store         %1      %0
-    load_lit      %0      $32
+    load          %0      $1080
     iload         %1      $48
     store         %1      %0
     load          %0      $40
@@ -68,7 +68,7 @@ fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     addi          %0      %1
     iload         %1      40
     store         %1      %0
-    load_lit      %0      $16
+    load          %0      $1064
     iload         %1      $56
     store         %1      %0
     load          %0      $40
@@ -87,7 +87,7 @@ fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     iload         %0      0
     set_ret       %0
     invoke        $72
-    load_lit      %0      $8
+    load          %0      $1056
     iload         %1      $80
     store         %1      %0
     load          %0      $80
@@ -119,7 +119,7 @@ fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     addi          %0      %1
     iload         %1      128
     store         %1      %0
-    load_lit      %0      $32
+    load          %0      $1080
     iload         %1      $136
     store         %1      %0
     load          %0      $128
@@ -140,7 +140,7 @@ fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     load          %0      $88
     load          %1      $96
     store_abs     %0      %1
-    load_lit      %0      $8
+    load          %0      $1056
     iload         %1      $160
     store         %1      %0
     load          %0      $160
@@ -165,7 +165,7 @@ fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     rload_abs     %1      %0
     iload         %0      152
     store         %0      %1
-    load_lit      %0      $0
+    load          %0      $1048
     iload         %1      $176
     store         %1      %0
     load          %0      $176
@@ -186,13 +186,13 @@ fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     addi          %0      %1
     iload         %1      184
     store         %1      %0
-    load_lit      %0      $40
+    load          %0      $1088
     iload         %1      $192
     store         %1      %0
     load          %0      $184
     load          %1      $192
     store_abs     %0      %1
-    load_lit      %0      $8
+    load          %0      $1056
     iload         %1      $208
     store         %1      %0
     load          %0      $208
@@ -217,7 +217,7 @@ fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     rload_abs     %1      %0
     iload         %0      200
     store         %0      %1
-    load_lit      %0      $8
+    load          %0      $1056
     iload         %1      $224
     store         %1      %0
     load          %0      $224
@@ -238,13 +238,13 @@ fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     addi          %0      %1
     iload         %1      232
     store         %1      %0
-    load_lit      %0      $48
+    load          %0      $1096
     iload         %1      $240
     store         %1      %0
     load          %0      $232
     load          %1      $240
     store_abs     %0      %1
-    load_lit      %0      $8
+    load          %0      $1056
     iload         %1      $256
     store         %1      %0
     load          %0      $256
@@ -269,7 +269,7 @@ fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     rload_abs     %1      %0
     iload         %0      248
     store         %0      %1
-    load_lit      %0      $24
+    load          %0      $1072
     iload         %1      $272
     store         %1      %0
     load          %0      $272
@@ -290,13 +290,13 @@ fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     addi          %0      %1
     iload         %1      280
     store         %1      %0
-    load_lit      %0      $56
+    load          %0      $1104
     iload         %1      $288
     store         %1      %0
     load          %0      $280
     load          %1      $288
     store_abs     %0      %1
-    load_lit      %0      $8
+    load          %0      $1056
     iload         %1      $296
     store         %1      %0
     load          %0      $296
@@ -306,8 +306,9 @@ fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     stop
 
 entry
+    entry
     require       println_int $1024   %0      %1
     aload         %0      $1
     set_ret       %0
-    call_fn       E:\GitHub\tpl2\tp\arr.tp$main
+    call          $1040
     exit

@@ -624,7 +624,7 @@ class NewExpr(UnaryExpr):
 
     def compile_heap_arr_init(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
         self.value: IndexingExpr
-        args = [self.value.get_atomic_node()] + self.value.flatten_args(env, tpa.manager)
+        args = [self.value.get_atomic_node()] + self.value.flatten_args(env, tpa.manager, True)
         FunctionCall(NameNode("array", self.lf), Line(self.lf, *args), self.lf).compile_to(env, tpa, dst_addr)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -827,8 +827,6 @@ class Assignment(BinaryExpr):
     def array_index_assign(indexing, right, env: en.Environment, tpa: tp.TpaOutput, lf):
         indexed_t = indexing.evaluated_type(env, tpa.manager)
         right_t = right.evaluated_type(env, tpa.manager)
-        if isinstance(right_t, typ.ArrayType):
-            raise errs.TplCompileError("Cannot assign an array as an element. ", lf)
         if not right_t.convertible_to(indexed_t, lf):
             raise errs.TplCompileError(f"Cannot convert type '{right_t}' to '{indexed_t}'. ", lf)
 
@@ -1440,11 +1438,17 @@ class IndexingExpr(Expression):
         # tpa.to_abs(arith_addr, res_addr)
         return arith_addr
 
-    def flatten_args(self,env, manager):
+    def flatten_args(self, env, manager, neg_one_ifn=False):
         args = []
         node = self
         while isinstance(node, IndexingExpr):
-            args.insert(0, node._get_index_node(env, manager))
+            if len(node.args) == 0:
+                if neg_one_ifn:
+                    args.insert(0, IntLiteral(util.NEG_ONE_POS, self.lf))
+                else:
+                    raise errs.TplCompileError("Array arg must contain exactly one value. ", self.lf)
+            else:
+                args.insert(0, node._get_index_node(env, manager))
             node = node.indexing_obj
         return args
 
@@ -1596,8 +1600,14 @@ def array_creation(node, env: en.Environment, tpa: tp.TpaOutput) -> int:
 
     dimensions = []
     while isinstance(node, IndexingExpr):
-        dimensions.insert(0, node.get_index_literal(env, tpa.manager))
+        if len(node.args) == 0:
+            dimensions.insert(0, -1)
+        else:
+            dimensions.insert(0, node.get_index_literal(env, tpa.manager))
         node = node.indexing_obj
+
+    if dimensions[0] == -1:
+        raise errs.TplCompileError("Outermost array must have a declared size. ", node.lf)
 
     root_t = node.evaluated_type(env, tpa.manager)
     create_array_rec(res_addr, root_t, dimensions, 0, env, tpa)
@@ -1606,11 +1616,13 @@ def array_creation(node, env: en.Environment, tpa: tp.TpaOutput) -> int:
 
 def create_array_rec(this_ptr_addr, atom_t: typ.Type, dimensions: list, index_in_dim: int,
                      env: en.Environment, tpa: tp.TpaOutput):
+    arr_size = dimensions[index_in_dim]
+    if arr_size == -1:
+        return
     if index_in_dim == len(dimensions) - 1:
         ele_len = atom_t.memory_length()
     else:
         ele_len = util.PTR_LEN
-    arr_size = dimensions[index_in_dim]
     arr_addr = tpa.manager.allocate_stack(ele_len * arr_size + util.INT_LEN)
     tpa.assign_i(arr_addr, arr_size)
     tpa.take_addr(arr_addr, this_ptr_addr)
@@ -1691,12 +1703,13 @@ def ctf_array(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
     arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
     argc = len(args)
     for i in range(1, argc):
-        arg = args[argc - i]  # reverse dimension array like in 'IndexingExpr'
+        arg = args[i]  # reverse dimension array like in 'IndexingExpr'
         arg_t = arg.evaluated_type(env, tpa.manager)
         if arg_t != typ.TYPE_INT:
             raise errs.TplCompileError(f"Expected argument type 'int', got '{arg_t}'. ", arg.lf)
         tpa.binary_arith_i("addi", arr_ptr, i * util.INT_LEN, arith_addr)  # (i - 1) * INT_LEN + INT_LEN
-        tpa.ptr_assign(arg.compile(env, tpa), arith_addr)
+        arg_addr = arg.compile(env, tpa)
+        tpa.ptr_assign(arg_addr, arith_addr)
 
     sizeof_name = NameNode("sizeof", args.lf)
     sizeof_call = FunctionCall(sizeof_name, Line(args.lf, args[0]), args.lf)

@@ -5,72 +5,27 @@ stack_size
 global_length
 8
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 97 0
 
 fn E:\GitHub\tpl2\tp\args.tp$main $1024
     push_fp
-    push          64
-    load          %0      $1032
+    push          18
+    load          %0      $1048
+    iload         %1      $0
+    store         %1      %0
+    loadc         %0      $1056
     iload         %1      $8
+    storec        %1      %0
+    loadc         %0      $8
+    iload         %1      $10
     store         %1      %0
-    label         LOOP_TITLE_0
-    load          %0      $0
-    rload_abs     %1      %0
-    iload         %0      16
-    store         %0      %1
-    load          %0      $8
-    load          %1      $16
-    lti           %0      %1
-    iload         %1      24
-    store         %1      %0
-    load          %0      $24
-    if_zero_goto  %0      END_LOOP_0
-    require       println_str $32     %0      %1
-    load          %0      $8
-    iload         %1      $48
-    store         %1      %0
-    load          %0      $48
-    iload         %1      8
-    muli          %0      %1
-    iload         %1      48
-    store         %1      %0
-    load          %0      $48
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      48
-    store         %1      %0
-    load          %0      $0
-    load          %1      $48
-    addi          %0      %1
-    iload         %1      48
-    store         %1      %0
-    load          %0      $48
-    rload_abs     %1      %0
-    iload         %0      40
-    store         %0      %1
-    aload_sp      %0      $0
-    load          %1      $40
-    store_abs     %0      %1
-    invoke        $32
-    label         LABEL_0
-    load          %0      $8
-    iload         %1      1
-    addi          %0      %1
-    iload         %1      8
-    store         %1      %0
-    goto          LOOP_TITLE_0
-    label         END_LOOP_0
-    load          %0      $1032
-    iload         %1      $56
-    store         %1      %0
-    load          %0      $56
+    load          %0      $10
     put_ret       %0
     pull_fp
     ret
     stop
 
 entry
-    main_arg
     aload         %0      $1
     set_ret       %0
     call          $1024
