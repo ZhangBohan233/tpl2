@@ -1,0 +1,6 @@
+﻿
+fn main(void) int {
+
+    a: int = 6;
+    return 'a' as int;
+}

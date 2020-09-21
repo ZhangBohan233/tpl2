@@ -2,7 +2,7 @@
 
 ### Development Order
 
-#### Stage 1
+#### ~~Phase 1~~ Done
 * ~~Simple native call~~ Done
 * ~~Unary operator~~ Done
 * ~~Pointer~~ Done
@@ -12,13 +12,21 @@
 * ~~Struct~~ Done
 * ~~Array~~ Done
 * ~~Char related~~ Done
-* Char array/String
+* ~~Char array/String~~ Done
 * ~~Indexing~~ Done
 * ~~Loop~~ Done
-* Macro
+* ~~Macro~~ Done
+* ~~Compile time function~~ Done
 
-#### Stage 2
-* Heap memory management
+#### Phase 2
+* ~~Increment, decrement~~ Done
+* ~~Function param polymorphism~~ Discarded
+* ~~Quick assignment~~ Done
+* ~~Heap memory management~~ Done
+* ~~New and del operators~~ Done
+* ~~Main arguments~~ Done
+* Pref in file
 * Variable length argument
 * More native call (print)
-* Tpa optimizer: load literal
+* ~~Separate pseudo-inst compiler~~ Done
+* ~~Tpa optimizer: load literal~~ Changed to compile_to

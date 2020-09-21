@@ -138,6 +138,24 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def assign_char(self, dst_addr, src_addr):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("loadc", register(reg1), address(src_addr))
+        self.write_format("iload", register(reg2), address(dst_addr))
+        self.write_format("storec", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
+    def assign_i(self, dst_addr, value):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("iload", register(reg1), address(value))
+        self.write_format("iload", register(reg2), address(dst_addr))
+        self.write_format("store", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
     def load_literal(self, dst_addr, lit_pos):
         reg1, reg2 = self.manager.require_regs(2)
 
@@ -153,6 +171,15 @@ class TpaOutput:
         self.write_format("loadc_lit", register(reg1), address(lit_pos))
         self.write_format("iload", register(reg2), address(dst_addr))
         self.write_format("storec", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
+    def load_literal_ptr(self, dst_addr, lit_pos):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("lit_abs", register(reg1), address(lit_pos))
+        self.write_format("iload", register(reg2), address(dst_addr))
+        self.write_format("store", register(reg2), register(reg1))
 
         self.manager.append_regs(reg2, reg1)
 
@@ -222,7 +249,23 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def to_abs(self, value_addr, res_addr):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("load", register(reg1), address(value_addr))
+        self.write_format("iload", register(reg2), number(res_addr))
+        self.write_format("astore", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
     def take_addr(self, value_addr: int, res_addr: int):
+        """
+        This instruction set just convert 'value_addr' to absolute addr and write it to 'res_addr'
+
+        :param value_addr:
+        :param res_addr:
+        :return:
+        """
         reg1, reg2 = self.manager.require_regs(2)
 
         self.write_format("aload", register(reg1), address(value_addr))
@@ -349,18 +392,17 @@ class TpaOutput:
             s += " " * max(8 - len(x), 1)
         return s.rstrip()
 
-    def generate(self, main_file_path):
+    def generate(self, main_file_path, main_has_arg=False):
         if self.is_global:
-            self._global_generate(main_file_path)
+            self._global_generate(main_file_path, main_has_arg)
         else:
             self.local_generate()
 
-    def _global_generate(self, main_file_path):
+    def _global_generate(self, main_file_path, main_has_arg):
         literal_str = " ".join([str(int(b)) for b in self.manager.literal])
         merged = ["bits", str(util.VM_BITS),
                   "stack_size", str(util.STACK_SIZE),
                   "global_length", str(self.manager.global_length()),
-                  "literal_length", str(len(self.manager.literal)),
                   "literal", literal_str,
                   ""]
 
@@ -370,6 +412,8 @@ class TpaOutput:
 
         self.output = merged + self.output
 
+        if main_has_arg:
+            self.write_format("main_arg")
         self.write_format("aload", "%0", "$1")
         self.write_format("set_ret", "%0")
         self.write_format("call_fn", util.name_with_path("main", main_file_path))

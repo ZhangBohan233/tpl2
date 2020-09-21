@@ -1,0 +1,229 @@
+bits
+64
+stack_size
+8192
+global_length
+24
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 64 66 15 0 0 0 0 0 20 0 0 0 0 0 0 0 32 0 108 0 111 0 111 0 112 0 32 0 119 0 105 0 116 0 104 0 32 0 43 0 43 0 105 0 32 0 116 0 105 0 109 0 101 0 32 0 26 0 0 0 0 0 0 0 32 0 108 0 111 0 111 0 112 0 32 0 119 0 105 0 116 0 104 0 32 0 105 0 32 0 61 0 32 0 105 0 32 0 43 0 32 0 49 0 32 0 116 0 105 0 109 0 101 0 32 0 30 0 0 0 0 0 0 0 10 0 0 0 0 0 0 0 32 0 102 0 105 0 98 0 32 0 116 0 105 0 109 0 101 0 32 0
+
+fn E:\GitHub\tpl2\tp\perf.tp$fib $8200
+    push_fp
+    push          80
+    load_lit      %0      $16
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $0
+    load          %1      $8
+    lti           %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    if_zero_goto  %0      ELSE_0
+    load          %0      $0
+    put_ret       %0
+    pull_fp
+    ret
+    goto          ENDIF_0
+    label         ELSE_0
+    load_lit      %0      $16
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $0
+    load          %1      $24
+    subi          %0      %1
+    iload         %1      32
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $32
+    store_abs     %0      %1
+    iload         %0      40
+    set_ret       %0
+    call          $8200
+    load_lit      %0      $8
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $0
+    load          %1      $48
+    subi          %0      %1
+    iload         %1      56
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $56
+    store_abs     %0      %1
+    iload         %0      64
+    set_ret       %0
+    call          $8200
+    load          %0      $40
+    load          %1      $64
+    addi          %0      %1
+    iload         %1      72
+    store         %1      %0
+    load          %0      $72
+    put_ret       %0
+    pull_fp
+    ret
+    label         ENDIF_0
+    stop
+
+fn E:\GitHub\tpl2\tp\perf.tp$main $8208
+    push_fp
+    push          208
+    iload         %0      8
+    set_ret       %0
+    invoke        $8192
+    load          %0      $8
+    iload         %1      $0
+    store         %1      %0
+    load_lit      %0      $0
+    iload         %1      $16
+    store         %1      %0
+    label         LOOP_TITLE_0
+    load_lit      %0      $24
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $16
+    load          %1      $24
+    lti           %0      %1
+    iload         %1      32
+    store         %1      %0
+    load          %0      $32
+    if_zero_goto  %0      END_LOOP_0
+    label         LABEL_0
+    load          %0      $16
+    iload         %1      1
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    goto          LOOP_TITLE_0
+    label         END_LOOP_0
+    iload         %0      48
+    set_ret       %0
+    invoke        $8192
+    load          %0      $48
+    iload         %1      $40
+    store         %1      %0
+    require       print_int $56     %0      %1
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    invoke        $56
+    require       print_str $64     %0      %1
+    lit_abs       %0      $32
+    iload         %1      $72
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $72
+    store_abs     %0      %1
+    invoke        $64
+    require       println_int $80     %0      %1
+    load          %0      $40
+    load          %1      $0
+    subi          %0      %1
+    iload         %1      88
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $88
+    store_abs     %0      %1
+    invoke        $80
+    load_lit      %0      $0
+    iload         %1      $16
+    store         %1      %0
+    label         LOOP_TITLE_1
+    load_lit      %0      $24
+    iload         %1      $96
+    store         %1      %0
+    load          %0      $16
+    load          %1      $96
+    lti           %0      %1
+    iload         %1      104
+    store         %1      %0
+    load          %0      $104
+    if_zero_goto  %0      END_LOOP_1
+    label         LABEL_1
+    load_lit      %0      $8
+    iload         %1      $112
+    store         %1      %0
+    load          %0      $16
+    load          %1      $112
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    goto          LOOP_TITLE_1
+    label         END_LOOP_1
+    iload         %0      128
+    set_ret       %0
+    invoke        $8192
+    load          %0      $128
+    iload         %1      $120
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    invoke        $56
+    lit_abs       %0      $80
+    iload         %1      $136
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $136
+    store_abs     %0      %1
+    invoke        $64
+    load          %0      $120
+    load          %1      $40
+    subi          %0      %1
+    iload         %1      144
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $144
+    store_abs     %0      %1
+    invoke        $80
+    load_lit      %0      $140
+    iload         %1      $152
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $152
+    store_abs     %0      %1
+    iload         %0      168
+    set_ret       %0
+    call          $8200
+    load          %0      $168
+    iload         %1      $160
+    store         %1      %0
+    iload         %0      184
+    set_ret       %0
+    invoke        $8192
+    load          %0      $184
+    iload         %1      $176
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $152
+    store_abs     %0      %1
+    invoke        $56
+    lit_abs       %0      $148
+    iload         %1      $192
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $192
+    store_abs     %0      %1
+    invoke        $64
+    load          %0      $176
+    load          %1      $120
+    subi          %0      %1
+    iload         %1      200
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $200
+    store_abs     %0      %1
+    invoke        $80
+    load          %0      $160
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    require       clock   $8192   %0      %1
+    aload         %0      $1
+    set_ret       %0
+    call_fn       E:\GitHub\tpl2\tp\perf.tp$main
+    exit

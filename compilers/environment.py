@@ -67,6 +67,8 @@ class Environment:
         return entry.const
 
     def get_type(self, name, lf) -> typ.Type:
+        if name in typ.PRIMITIVE_TYPES:
+            return typ.PRIMITIVE_TYPES[name]
         entry = self._inner_get(name)
         if entry is None:
             raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
@@ -78,6 +80,14 @@ class Environment:
             raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
         return entry.addr
 
+    def is_type(self, name, lf) -> bool:
+        if name in typ.PRIMITIVE_TYPES:
+            return True
+        entry = self._inner_get(name)
+        if entry is None:
+            raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+        return isinstance(entry.type, typ.StructType)
+
     def is_named_function(self, name: str, lf) -> bool:
         entry = self._inner_get(name)
         if entry is None:
@@ -85,6 +95,9 @@ class Environment:
         if isinstance(entry, FunctionEntry):
             return entry.named
         return False
+
+    def has_name(self, name) -> bool:
+        return self._inner_get(name) is not None
 
     def _inner_get(self, name) -> VarEntry:
         if name in self.vars:

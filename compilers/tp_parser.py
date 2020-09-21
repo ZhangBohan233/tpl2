@@ -5,22 +5,34 @@ import compilers.util as util
 import compilers.errors as errs
 
 
+def process_empty(p, i, b, lf):
+    pass
+
+
 class Parser:
     def __init__(self, tokens: tl.CollectiveElement):
         self.tokens = tokens
-        self.literal_bytes = util.initial_literal()
+        # self.literal_bytes = util.initial_literal()
         self.var_level = ast.VAR_VAR
 
-        self.int_literals = util.initial_int_literal_dict()  # int_lit : position in literal_bytes
-        self.float_literals = {}
-        self.char_literals = {}
+        # self.int_literals = util.initial_int_literal_dict()  # int_lit : position in literal_bytes
+        # self.float_literals = {}
+        # self.char_literals = {}
+        # self.str_literals = {}
 
         self.special_binary = {
             "=": ast.Assignment,
             ".": ast.Dot,
             "->": ast.RightArrowExpr,
             "as": ast.AsExpr,
-            "$": ast.DollarExpr
+            "$": ast.DollarExpr,
+            ":=": ast.QuickAssignment
+        }
+
+        self.special_unary = {
+            "return": ast.ReturnStmt,
+            "new": ast.NewExpr,
+            "del": ast.DelStmt
         }
 
         self.symbol_lib = {
@@ -30,7 +42,6 @@ class Parser:
             "fn": self.process_fn,
             "var": self.process_var,
             "const": self.process_const,
-            "return": self.process_return,
             "if": self.process_if_stmt,
             "while": self.process_while_stmt,
             "for": self.process_for_stmt,
@@ -39,11 +50,13 @@ class Parser:
             "continue": self.process_continue,
             "import": self.process_import,
             "export": self.process_export,
-            "struct": self.process_struct
+            "struct": self.process_struct,
+            "++": self.process_inc_operator,
+            "--": self.process_dec_operator
         }
 
     def parse(self):
-        return self.parse_as_block(self.tokens), self.literal_bytes
+        return self.parse_as_block(self.tokens)
 
     # processor methods of single identifiers
     #
@@ -67,18 +80,18 @@ class Parser:
         param_list = parent[index]
         params = self.parse_as_line(param_list)
         prob_arrow = parent[index + 1]
-        if identifier_of(prob_arrow, "->"):
+        if tl.identifier_of(prob_arrow, "->"):
             builder.add_node(ast.FunctionTypeExpr(params, lf))
             return index
 
         index += 1
         rtype_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
-        while not (tl.is_brace(parent[index]) or identifier_of(parent[index], ";")):
+        while not (tl.is_brace(parent[index]) or tl.identifier_of(parent[index], ";")):
             rtype_list.append(parent[index])
             index += 1
         rtype = self.parse_as_part(rtype_list)
         body_list = parent[index]
-        if identifier_of(body_list, ";"):
+        if tl.identifier_of(body_list, ";"):
             body = None
         else:
             body = self.parse_as_block(body_list)
@@ -100,9 +113,6 @@ class Parser:
     def process_const(self, p, i, b, lf):
         self.var_level = ast.VAR_CONST
 
-    def process_return(self, p, i, builder: ab.AstBuilder, lf):
-        builder.add_node(ast.ReturnStmt(lf))
-
     def process_if_stmt(self, parent: tl.CollectiveElement, index, builder, lf):
         index += 1
         condition_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
@@ -111,11 +121,11 @@ class Parser:
             condition_list.append(item)
             index += 1
             item = parent[index]
-            if identifier_of(item, "then"):  # is a if-expr instead of if-stmt
+            if tl.identifier_of(item, "then"):  # is a if-expr instead of if-stmt
                 return self.process_if_expr(condition_list, parent, index, builder, lf)
         cond = self.parse_as_part(condition_list)
         body = self.parse_as_block(item)
-        if index + 1 < len(parent) and identifier_of(parent[index + 1], "else"):
+        if index + 1 < len(parent) and tl.identifier_of(parent[index + 1], "else"):
             index += 2
             else_block = self.parse_as_block(parent[index])
         else:
@@ -129,13 +139,13 @@ class Parser:
         cond = self.parse_as_part(cond_list)
         index += 1
         then_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
-        while not identifier_of(parent[index], "else"):
+        while not tl.identifier_of(parent[index], "else"):
             then_list.append(parent[index])
             index += 1
         then_expr = self.parse_as_part(then_list)
         index += 1
         else_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
-        while index < len(parent) and not identifier_of(parent[index], ";"):
+        while index < len(parent) and not tl.identifier_of(parent[index], ";"):
             else_list.append(parent[index])
             index += 1
         else_expr = self.parse_as_part(else_list)
@@ -158,6 +168,8 @@ class Parser:
         body = self.parse_as_block(item)
         builder.add_node(ast.WhileStmt(cond, body, lf))
 
+        return index
+
     def process_for_stmt(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
         index += 1
         item = parent[index]
@@ -170,6 +182,8 @@ class Parser:
         cond = self.parse_as_block(cond_list)
         body = self.parse_as_block(item)
         builder.add_node(ast.ForStmt(cond, body, lf))
+
+        return index
 
     def process_break(self, p, i, builder: ab.AstBuilder, lf):
         builder.add_node(ast.BreakStmt(lf))
@@ -186,7 +200,7 @@ class Parser:
             bracket = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
             bracket.append(item)
             index += 1
-            while not identifier_of(parent[index], ";"):
+            while not tl.identifier_of(parent[index], ";"):
                 bracket.append(parent[index])
                 index += 1
             content = self.parse_as_part(bracket)
@@ -209,6 +223,12 @@ class Parser:
         if tl.is_brace(ele):
             block = self.parse_as_block(ele)
             builder.add_node(ast.ExportStmt(block, lf))
+        elif isinstance(ele, tl.AtomicElement) and isinstance(ele.atom, tl.IdToken):
+            block = ast.BlockStmt(lf)
+            line = ast.Line(lf)
+            line.parts.append(ast.NameNode(ele.atom.identifier, lf))
+            block.lines.append(line)
+            builder.add_node(ast.ExportStmt(block, lf))
         else:
             raise errs.TplCompileError("Invalid export. ", lf)
 
@@ -228,6 +248,32 @@ class Parser:
         builder.add_node(ast.StructStmt(name, body, lf))
 
         return index + 2
+
+    def _process_inc_dec_operator(self, op, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
+                                  lf: tl.LineFile):
+        if index == 0:  # e.g.  ++i;
+            post = False
+        elif index == len(parent) - 1:
+            post = True
+        else:
+            if is_call_obj(parent[index - 1]):  # a trick here is that all callable 'thing' can be use with ++ or --
+                post = True
+            elif is_call_obj(parent[index + 1]):
+                post = False
+            else:
+                raise errs.TplParseError(f"Invalid syntax with {op}. ", lf)
+        if post:
+            builder.add_node(ast.PostIncDecOperator(op, lf))
+        else:
+            builder.add_node(ast.PreIncDecOperator(op, lf))
+
+    def process_inc_operator(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
+                             lf: tl.LineFile):
+        return self._process_inc_dec_operator("++", parent, index, builder, lf)
+
+    def process_dec_operator(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
+                             lf: tl.LineFile):
+        return self._process_inc_dec_operator("--", parent, index, builder, lf)
 
     # parser of collective elements
 
@@ -265,28 +311,13 @@ class Parser:
             token = ele.atom
             lf = token.lf
             if isinstance(token, tl.IntToken):
-                if token.value in self.int_literals:
-                    pos = self.int_literals[token.value]
-                else:
-                    pos = len(self.literal_bytes)
-                    self.literal_bytes.extend(util.int_to_bytes(token.value))
-                builder.add_node(ast.IntLiteral(pos, lf))
+                builder.add_node(ast.FakeIntLit(token.value, lf))
             elif isinstance(token, tl.FloatToken):
-                if token.value in self.float_literals:
-                    pos = self.float_literals[token.value]
-                else:
-                    pos = len(self.literal_bytes)
-                    self.literal_bytes.extend(util.float_to_bytes(token.value))
-                builder.add_node(ast.FloatLiteral(pos, lf))
+                builder.add_node(ast.FakeFloatLit(token.value, lf))
             elif isinstance(token, tl.CharToken):
-                if token.char in self.char_literals:
-                    pos = self.char_literals[token.char]
-                else:
-                    pos = len(self.literal_bytes)
-                    self.literal_bytes.extend(util.char_to_bytes(token.char))
-                builder.add_node(ast.CharLiteral(pos, lf))
+                builder.add_node(ast.FakeCharLit(token.char, lf))
             elif isinstance(token, tl.StrToken):
-                pass
+                builder.add_node(ast.FakeStrLit(token.value, lf))
             elif isinstance(token, tl.IdToken):
                 symbol = token.identifier
                 if symbol == "-":
@@ -322,6 +353,9 @@ class Parser:
                     builder.add_node(ast.BinaryOperatorAssignment(symbol, ast.BIN_BITWISE, lf))
                 elif symbol in self.special_binary:
                     node_class = self.special_binary[symbol]
+                    builder.add_node(node_class(lf))
+                elif symbol in self.special_unary:
+                    node_class = self.special_unary[symbol]
                     builder.add_node(node_class(lf))
                 elif symbol in self.symbol_lib:
                     ftn = self.symbol_lib[symbol]
@@ -367,10 +401,6 @@ UNARY_LEADING = {
 }
 
 
-def identifier_of(ele: tl.Element, target: str) -> bool:
-    return isinstance(ele, tl.AtomicElement) and isinstance(ele.atom, tl.IdToken) and ele.atom.identifier == target
-
-
 def is_unary(leading_ele: tl.Element) -> bool:
     if isinstance(leading_ele, tl.AtomicElement):
         token = leading_ele.atom
@@ -398,4 +428,4 @@ def is_call(token_before: tl.Token) -> bool:
 def is_call_obj(prob_call_obj: tl.Element) -> bool:
     return (isinstance(prob_call_obj, tl.AtomicElement) and is_call(prob_call_obj.atom)) or \
            (isinstance(prob_call_obj, tl.CollectiveElement) and (
-                       prob_call_obj.is_sqr_bracket() or prob_call_obj.is_bracket()))
+                   prob_call_obj.is_sqr_bracket() or prob_call_obj.is_bracket()))

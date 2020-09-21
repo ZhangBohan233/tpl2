@@ -1,0 +1,66 @@
+﻿===== VERSION 2010 =====
+2020/09/21
+
+* Implemented null-array initialization
+* Added some invoke error check
+* Fixed heap array initialization error
+
+===== VERSION 2009 =====
+2020/09/17
+
+* Implemented command-line argument
+* Added type check of main function
+
+===== VERSION 2008 =====
+2020/09/16
+
+* Implemented heap array with compile time function 'array' and native invoke 'heap_array'
+* Implemented heap array creation with operator 'new'
+
+===== VERSION 2007 =====
+2020/09/15
+
+* New in basic use
+
+===== VERSION 2006 =====
+2020/09/15
+
+* Implemented heap memory management
+* Implemented native functions malloc, free
+
+===== VERSION 2005 =====
+2020/09/15
+
+* Ast optimizer for unary operator
+
+===== VERSION 2004 =====
+2020/09/15
+
+* Added ast preprocessor and ast optimizer
+* Implemented literal pre-calculate
+
+===== VERSION 2003 =====
+2020/09/15
+
+* Added ast compiler optimizer (compile_to in expressions)
+
+===== VERSION 2002 =====
+2020/09/14
+
+* Changed the final executable format from .tac to .tpe
+* Added an intermediate compiler from .tpa to .tpc
+* Created tpc optimizer
+
+===== VERSION 2001 =====
+2020/09/14
+
+* Created changelog
+* Bug fixes:
+    * Repeat literal in .tpa file
+    * Parse error of ++/--
+    * Loop title repeat parse error
+
+===== VERSION 2000 =====
+2020/08/31
+
+* Initial commit

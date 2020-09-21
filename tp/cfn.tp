@@ -1,0 +1,17 @@
+﻿struct S {
+    x: int;
+    y : char;
+}
+
+fn tt2() void {
+    require {println_int};
+
+    println_int(12321)
+}
+
+fn main() int {
+
+    cprintln(324);
+    cprintln("我吃屎")
+    return 1;
+}

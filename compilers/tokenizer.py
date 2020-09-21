@@ -158,6 +158,8 @@ class FileTokenizer:
                     i += 2
                 else:
                     self.tokens.append(tl.IntToken(s, lf))
+            # elif s == "\n":
+            #     self.tokens.append(tl.IdToken(s, lf))
             elif s.isidentifier():
                 self.tokens.append(tl.IdToken(s, lf))
             elif s in tl.ALL:

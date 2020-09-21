@@ -1,0 +1,33 @@
+bits
+64
+stack_size
+1024
+global_length
+8
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 97 0
+
+fn E:\GitHub\tpl2\tp\args.tp$main $1024
+    push_fp
+    push          18
+    load          %0      $1048
+    iload         %1      $0
+    store         %1      %0
+    loadc         %0      $1056
+    iload         %1      $8
+    storec        %1      %0
+    loadc         %0      $8
+    iload         %1      $10
+    store         %1      %0
+    load          %0      $10
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    entry
+    aload         %0      $1
+    set_ret       %0
+    call          $1024
+    exit

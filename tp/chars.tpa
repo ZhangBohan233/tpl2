@@ -3,13 +3,13 @@ bits
 stack_size
 1024
 global_length
-32
+64
 literal_length
-20
+34
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 74 85 120 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 74 85 3 0 0 0 0 0 0 0 97 0 98 0 99 0 120 0
 
-fn tp/chars.tp$test $1040
+fn tp/chars.tp$test $1064
     push_fp
     push          30
     loadc         %0      $0
@@ -32,35 +32,89 @@ fn tp/chars.tp$test $1040
     ret
     stop
 
-fn tp/chars.tp$main $1048
+fn tp/chars.tp$ppp $1072
     push_fp
     push          16
+    load          %0      $0
+    rload_abs     %1      %0
+    iload         %0      8
+    store         %0      %1
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    invoke        $1056
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    invoke        $1040
+    pull_fp
+    ret
+    stop
+
+fn tp/chars.tp$main $1080
+    push_fp
+    push          50
     loadc_lit     %0      $16
     iload         %1      $2
     storec        %1      %0
     load          %0      $2
     iload         %1      $0
     store         %1      %0
-    loadc_lit     %0      $18
+    lit_abs       %0      $18
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
     iload         %1      $4
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $4
+    store_abs     %0      %1
+    call          $1072
+    loadc_lit     %0      $32
+    iload         %1      $20
     storec        %1      %0
     aload_sp      %0      $0
     loadc         %1      $0
     store_abs     %0      %1
     aload_sp      %0      $2
-    loadc         %1      $4
+    loadc         %1      $20
     store_abs     %0      %1
-    iload         %0      6
+    iload         %0      22
     set_ret       %0
-    call          $1040
+    call          $1064
     aload_sp      %0      $0
-    loadc         %1      $6
+    loadc         %1      $22
     store_abs     %0      %1
     invoke        $1032
-    load_lit      %0      $0
-    iload         %1      $8
+    load_lit      %0      $8
+    iload         %1      $26
     store         %1      %0
-    load          %0      $8
+    load          %0      $26
+    iload         %1      $34
+    store         %1      %0
+    load          %0      $34
+    iload         %1      2
+    muli          %0      %1
+    iload         %1      34
+    store         %1      %0
+    load          %0      $34
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      34
+    store         %1      %0
+    load          %0      $4
+    load          %1      $34
+    addi          %0      %1
+    iload         %1      34
+    store         %1      %0
+    load          %0      $34
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    loadc         %0      $24
+    iload         %1      $42
+    store         %1      %0
+    load          %0      $42
     put_ret       %0
     pull_fp
     ret
@@ -69,6 +123,9 @@ fn tp/chars.tp$main $1048
 entry
     require       print_char $1024   %0      %1
     require       println_char $1032   %0      %1
+    require       println_str $1040   %0      %1
+    require       println_int $1048   %0      %1
+    require       print_int $1056   %0      %1
     aload         %0      $1
     set_ret       %0
     call_fn       tp/chars.tp$main

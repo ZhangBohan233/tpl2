@@ -16,6 +16,7 @@
 #define INT_LEN 8
 #define FLOAT_LEN 8
 #define CHAR_LEN 2
+#define PTR_LEN INT_LEN
 
 #define bytes_to_int(b) bytes_to_int64(b)
 #define int_to_bytes(b, i) int_to_bytes64(b, i)
@@ -56,6 +57,8 @@ tp_float bytes_to_float32(const unsigned char *bytes);
 void float_to_bytes32(unsigned char *b, tp_float d);
 
 char *format_bits(const char *format);
+
+void print_array(tp_int *array, int len);
 
 //void tp_printf(const char *format, ...);
 

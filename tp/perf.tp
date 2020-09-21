@@ -1,0 +1,43 @@
+﻿require {
+    clock
+}
+
+fn fib(n: int) int {
+    if n < 2 {
+        return n;
+    } else {
+        return fib(n - 2) + fib(n - 1);
+    }
+}
+
+fn main() int {
+    t0: int = clock();
+
+    i: int;
+    for i = 0; i < 1_000_000; ++i {
+    }
+
+    t1: int = clock();
+    cprint(i);
+    cprint(" loop with ++i time ");
+    cprintln(t1 - t0);
+
+    for i = 0; i < 1_000_000; i = i + 1 {
+    }
+
+    t2: int = clock();
+    cprint(i);
+    cprint(" loop with i = i + 1 time ");
+    cprintln(t2 - t1);
+
+    n: int = 30;
+    x: int = fib(n);
+
+    t3: int = clock();
+    cprint(n);
+    cprint(" fib time ");
+    cprintln(t3 - t2);
+
+    return x;
+
+}

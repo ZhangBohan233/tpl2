@@ -22,7 +22,8 @@ INSTRUCTIONS = {
     "aload_sp": (5, 1, util.INT_LEN),  # aload_sp   %reg  $rel_addr    | load the "address" relative to sp to reg
     #                                  # these two instructions just do a conversion from relative addr to absolute addr
     "store": (6, 1, 1),  # store   %reg1   %reg2    | store value in %reg2 to rel_addr in %reg1
-    "astore": (7, 1),
+    "astore": (7, 1, 1),  # astore   %reg1   %reg2    | converts value in %reg2 to abs addr
+    #                                  # then store to rel_addr in %reg1
     "astore_sp": (8,),
     "store_abs": (9, 1, 1),  # store_abs   %reg1   %reg2    | store value in %reg2 to abs_addr in %reg1
     "jump": (10, util.INT_LEN),
@@ -58,7 +59,8 @@ INSTRUCTIONS = {
     "i_to_f": (60, 1),  # convert int in %reg to float, store in %reg
     "f_to_i": (61, 1),
     "loadc": (70, 1, util.INT_LEN),
-    "storec": (71, 1, 1)
+    "storec": (71, 1, 1),
+    "main_arg": (72,)
 }
 
 MNEMONIC = {
@@ -67,7 +69,8 @@ MNEMONIC = {
 
 PSEUDO_INSTRUCTIONS = {
     "load_lit": (256, 1, util.INT_LEN),
-    "loadc_lit": (257, 1, util.INT_LEN)
+    "loadc_lit": (257, 1, util.INT_LEN),
+    "lit_abs": (259, 1, util.INT_LEN),  # convert the lit_pos to addr
 }
 
 STR_PSEUDO_INSTRUCTIONS = {
@@ -82,15 +85,141 @@ LENGTHS = {
 
 
 class TpcCompiler:
-    def __init__(self, tpc_file: str):
-        self.tpc_file = tpc_file
+    """
+    This class takes a tpa file and compile it to a tpc file.
 
-        self.stack_size = 1024
+    Which compiles all pseudo instructions to real instructions, and produces function list
+    """
+
+    def __init__(self, tpa_file: str):
+        self.tpa_file = tpa_file
+
+        self.stack_size = 0
         self.global_length = 0
 
     def compile(self, out_name=None):
         if out_name is None:
-            out_name = util.replace_extension(self.tpc_file, "tpc")
+            out_name = util.replace_extension(self.tpa_file, "tpc")
+
+        out_list = self.compile_to_list()
+
+        out_str = "\n".join(out_list)
+
+        with open(out_name, "w") as wf:
+            wf.write(out_str)
+
+    def compile_to_list(self):
+        literal = []
+        header_out = []
+        body_out = []
+        entry_out = []
+        cur_out = header_out
+
+        function_pointers = {}
+
+        with open(self.tpa_file, "r") as rf:
+            lines = [line.strip("\n") for line in rf.readlines()]
+            i = 0
+            length = len(lines)
+            while i < length:
+                orig_line = lines[i]
+                line = orig_line.strip()
+                lf = tl.LineFile(self.tpa_file, i + 1)
+
+                if line == "stack_size":
+                    cur_out.append(lines[i])
+                    cur_out.append(lines[i + 1])
+                    self.stack_size = int(lines[i + 1])
+                    i += 1
+                elif line == "global_length":
+                    cur_out.append(lines[i])
+                    cur_out.append(lines[i + 1])
+                    self.global_length = int(lines[i + 1])
+                    i += 1
+                elif line == "literal":
+                    cur_out.append(lines[i])
+                    cur_out.append(lines[i + 1])
+                    literal_str = lines[i + 1].split(" ")
+                    for lit in literal_str:
+                        literal.append(int(lit))
+                    i += 1
+                else:
+                    instructions = \
+                        [part for part in [part.strip() for part in line.split(" ")] if len(part) > 0]
+                    for j in range(len(instructions)):
+                        part = instructions[j]
+                        if part == ";" or part.startswith(";", 0, -1):
+                            instructions = instructions[:j]
+                            break
+
+                    if len(instructions) > 0:
+                        inst = instructions[0]
+                        if inst == "fn":
+                            cur_out = body_out
+                            cur_out.append(orig_line)
+
+                            cur_fn_name = instructions[1]
+                            cur_fn_ptr = int(instructions[2][1:])
+                            function_pointers[cur_fn_name] = cur_fn_ptr
+
+                        elif inst == "entry":
+                            cur_out = entry_out
+                            cur_out.append(orig_line)
+                        elif inst == "call_fn":
+                            fn_name = instructions[1]
+                            fn_ptr = function_pointers[fn_name]
+
+                            self.write_format(cur_out, "call", "$" + str(fn_ptr))
+                        elif inst in PSEUDO_INSTRUCTIONS:
+                            self.compile_pseudo_inst(instructions, cur_out, lf)
+                        else:
+                            cur_out.append(orig_line)
+                    else:
+                        cur_out.append(orig_line)
+
+                i += 1
+
+        return header_out + body_out + entry_out
+
+    def compile_pseudo_inst(self, inst_line, output: list, lf):
+        inst = inst_line[0]
+        tup = PSEUDO_INSTRUCTIONS[inst]
+        num_inst = inst_to_num(inst_line, tup, lf)
+        if inst == "load_lit":
+            lit_start = self.stack_size + self.global_length
+            self.write_format(output, "load", inst_line[1], "$" + str(num_inst[2] + lit_start))
+        elif inst == "loadc_lit":
+            lit_start = self.stack_size + self.global_length
+            self.write_format(output, "loadc", inst_line[1], "$" + str(num_inst[2] + lit_start))
+        elif inst == "lit_abs":
+            lit_start = self.stack_size + self.global_length
+            self.write_format(output, "aload", inst_line[1], "$" + str(num_inst[2] + lit_start))
+
+    def write_format(self, output: list, *inst):
+        output.append(self._format(*inst))
+
+    @staticmethod
+    def _format(*inst):
+        mne = inst[0]
+        s = "    " + mne
+        s += " " * max(14 - len(mne), 1)
+        for i in range(1, len(inst)):
+            x = str(inst[i])
+            s += x
+            s += " " * max(8 - len(x), 1)
+        return s.rstrip()
+
+
+class TpeCompiler:
+    def __init__(self, tpc_file: str):
+        self.tpc_file = tpc_file
+
+        self.stack_size = 0
+        self.global_length = 0
+
+    def compile(self, out_name=None):
+        if out_name is None:
+            out_name = util.replace_extension(self.tpc_file, "tpe")
 
         compiled = self.compile_bytes()
         # print(compiled)
@@ -121,7 +250,6 @@ class TpcCompiler:
         :return:
         """
         vm_bits = 0
-        literal_length = 0
         literal = bytearray()
         function_body_positions = {}
         function_pointers = {}
@@ -146,9 +274,6 @@ class TpcCompiler:
                 elif line == "stack_size":
                     self.stack_size = int(lines[i + 1])
                     i += 1
-                elif line == "literal_length":
-                    literal_length = int(lines[i + 1])
-                    i += 1
                 elif line == "global_length":
                     self.global_length = int(lines[i + 1])
                     i += 1
@@ -156,10 +281,6 @@ class TpcCompiler:
                     literal_str = lines[i + 1].split(" ")
                     for lit in literal_str:
                         literal.append(int(lit))
-                    if literal_length != 0 and len(literal) != literal_length:
-                        raise errs.TpaError("Actual literal length does not match declared literal length.")
-                    else:
-                        literal_length = len(literal)
                     i += 1
                 else:
                     instructions = \
@@ -229,18 +350,18 @@ class TpcCompiler:
                             if inst == "exit":  # end of program
                                 entry_part = self.compile_function(cur_fn_body, labels, jumps)
 
-                        elif inst in PSEUDO_INSTRUCTIONS:
-                            self.compile_pseudo_inst(inst, instructions, cur_fn_body, lf)
+                        # elif inst in PSEUDO_INSTRUCTIONS:
+                        #     self.compile_pseudo_inst(inst, instructions, cur_fn_body, lf)
                         else:
                             raise errs.TpaError("Unknown instruction {}. ".format(inst), lf)
                 i += 1
 
         header = SIGNATURE + bytes((vm_bits,)) + util.empty_bytes(11) + \
                  util.int_to_bytes(self.stack_size) + util.int_to_bytes(self.global_length) + \
-                 util.int_to_bytes(literal_length) + literal
+                 util.int_to_bytes(len(literal)) + literal
 
         fn_assignments = bytearray()
-        all_len_before_real_fn = self.stack_size + self.global_length + literal_length
+        all_len_before_real_fn = self.stack_size + self.global_length + len(literal)
         entry_lf = tl.LineFile("tpa compiler ", 0)
         for name in function_list:
             pos = function_body_positions[name]
@@ -284,21 +405,27 @@ class TpcCompiler:
                 i += 1
         return bytearray(body)
 
-    def compile_pseudo_inst(self, inst: str, instruction: iter, cur_fn_body: iter, lf: tl.LineFile):
-        tup = PSEUDO_INSTRUCTIONS[inst]
-        num_inst = inst_to_num(instruction, tup, lf)
-        if inst == "load_lit":
-            lit_start = self.stack_size + self.global_length
-            self.compile_inst("load",
-                              ["load", instruction[1], "$" + str(num_inst[2] + lit_start)],
-                              cur_fn_body,
-                              lf)
-        elif inst == "loadc_lit":
-            lit_start = self.stack_size + self.global_length
-            self.compile_inst("loadc",
-                              ["loadc", instruction[1], "$" + str(num_inst[2] + lit_start)],
-                              cur_fn_body,
-                              lf)
+    # def compile_pseudo_inst(self, inst: str, instruction: iter, cur_fn_body: iter, lf: tl.LineFile):
+    #     tup = PSEUDO_INSTRUCTIONS[inst]
+    #     num_inst = inst_to_num(instruction, tup, lf)
+    #     if inst == "load_lit":
+    #         lit_start = self.stack_size + self.global_length
+    #         self.compile_inst("load",
+    #                           ["load", instruction[1], "$" + str(num_inst[2] + lit_start)],
+    #                           cur_fn_body,
+    #                           lf)
+    #     elif inst == "loadc_lit":
+    #         lit_start = self.stack_size + self.global_length
+    #         self.compile_inst("loadc",
+    #                           ["loadc", instruction[1], "$" + str(num_inst[2] + lit_start)],
+    #                           cur_fn_body,
+    #                           lf)
+    #     elif inst == "lit_abs":
+    #         lit_start = self.stack_size + self.global_length
+    #         self.compile_inst("aload",
+    #                           ["aload", instruction[1], "$" + str(num_inst[2] + lit_start)],
+    #                           cur_fn_body,
+    #                           lf)
 
     def compile_inst(self, inst: str, instruction: list, cur_fn_body: iter, lf: tl.LineFile):
         tup = INSTRUCTIONS[inst]
@@ -349,5 +476,5 @@ def num_single(inst: str, symbol: str, expected_len: int, lf) -> int:
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         file = sys.argv[1]
-        cmp = TpcCompiler(file)
+        cmp = TpeCompiler(file)
         cmp.compile()

@@ -7,6 +7,7 @@
 #include <string.h>
 #include <locale.h>
 #include "os_spec.h"
+#include "mem.h"
 #include "tvm.h"
 
 // The error code, set by virtual machine. Used to tell the main loop that the process is interrupted
@@ -29,7 +30,7 @@ char *ERR_MSG = "";
 #define push_fp call_stack[++call_p] = fp; fp = sp;
 #define pull_fp sp = fp; fp = call_stack[call_p--];
 
-#define MEMORY_SIZE 8192
+#define MEMORY_SIZE 16384
 #define RECURSION_LIMIT 1000
 
 tp_int stack_end;
@@ -52,6 +53,11 @@ int pc_p = -1;
 
 tp_int ret_stack[RECURSION_LIMIT];  // stores true addr of return addresses
 int ret_p = -1;
+
+int argc;
+char **argv;
+
+tp_int tvm_set_args();
 
 int vm_check(const unsigned char *src_code) {
     for (int i = 0; i < 4; i++) {
@@ -81,10 +87,18 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
     tp_int copy_len = code_length - 16 - INT_LEN * 4;  // stack, global, literal, entry
     entry_end = global_end + copy_len;
 
+    if (global_end + copy_len > MEMORY_SIZE) {
+        fprintf(stderr, "Not enough memory to start vm. \n");
+        ERROR_CODE = ERR_MEMORY_OUT;
+        return 1;
+    }
+
     memcpy(MEMORY + global_end, src_code + 16 + INT_LEN * 3, copy_len);
 
     functions_end = entry_end - entry_len;
     pc = functions_end;
+
+    available = build_ava_link(entry_end, MEMORY_SIZE);
 
     return 0;
 }
@@ -92,6 +106,23 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
 void nat_return_int(tp_int value) {
     int_to_bytes(MEMORY + ret_stack[ret_p--], value);
 }
+
+void nat_return() {
+    ret_p--;
+}
+
+tp_int get_nat_return_addr() {
+    return ret_stack[ret_p];
+}
+
+/*
+ * Rule of nat_ function:
+ *
+ * 1. First code line must be push_fp
+ * 2. Second code line must be push(stack length of this function)
+ * 3. Last code line must be pull_fp
+ * 4. If this function has a declared non-void return type, call some 'nat_return' function before pull_fp
+ */
 
 void nat_print_int() {
     push_fp
@@ -153,11 +184,197 @@ void nat_println_float() {
     pull_fp
 }
 
+void nat_print_str() {
+    push_fp
+    push(PTR_LEN)
+
+    tp_int arr_ptr = bytes_to_int(MEMORY + true_addr(0));
+    tp_int arr_len = bytes_to_int(MEMORY + true_addr(arr_ptr));
+    for (int i = 0; i < arr_len; i++) {
+        tp_char arg = bytes_to_char(MEMORY + true_addr(arr_ptr + INT_LEN + i * CHAR_LEN));
+        wprintf(L"%c", arg);
+    }
+
+    pull_fp
+}
+
+void nat_println_str() {
+    push_fp
+    push(FLOAT_LEN)
+
+    tp_int arr_ptr = bytes_to_int(MEMORY + true_addr(0));
+    tp_int arr_len = bytes_to_int(MEMORY + true_addr(arr_ptr));
+    for (int i = 0; i < arr_len; i++) {
+        tp_char arg = bytes_to_char(MEMORY + true_addr(arr_ptr + INT_LEN + i * CHAR_LEN));
+        wprintf(L"%c", arg);
+    }
+    printf("\n");
+
+    pull_fp
+}
+
 void nat_clock() {
     push_fp
 
     tp_int t = get_time();
     nat_return_int(t);
+
+    pull_fp
+}
+
+tp_int _malloc_essential(tp_int asked_len) {
+    tp_int real_len = asked_len + INT_LEN;
+    tp_int allocate_len =
+            real_len % MEM_BLOCK == 0 ? real_len / MEM_BLOCK : real_len / MEM_BLOCK + 1;
+    tp_int location = malloc_link(allocate_len);
+
+    if (location <= 0) {
+        int ava_size = link_len(available) * MEM_BLOCK - INT_LEN;
+        fprintf(stderr, "Cannot allocate length %lld, available memory %d\n", asked_len, ava_size);
+        ERROR_CODE = ERR_MEMORY_OUT;
+        return 0;
+    }
+
+    int_to_bytes(MEMORY + location, allocate_len);  // stores the allocated length
+    return location + INT_LEN;
+}
+
+void nat_malloc() {
+    push_fp
+    push(INT_LEN)
+
+    tp_int asked_len = bytes_to_int(MEMORY + true_addr(0));
+    tp_int malloc_res = _malloc_essential(asked_len);
+
+    nat_return_int(malloc_res);
+
+    pull_fp
+}
+
+void _free_link(int_fast64_t real_ptr, int_fast64_t alloc_len) {
+    LinkedNode *head = available;
+    LinkedNode *after = available;
+    while (after->addr < real_ptr) {
+        head = after;
+        after = after->next;
+    }
+//    printf("%lld, %lld\n", head->addr, after->addr);
+    int_fast64_t index_in_pool = (real_ptr - entry_end) / MEM_BLOCK + 1;
+//    printf("%lld\n", index_in_pool);
+    for (int_fast64_t i = 0; i < alloc_len; ++i) {
+        LinkedNode *node = &ava_pool[index_in_pool++];
+        node->addr = real_ptr + i * MEM_BLOCK;
+        head->next = node;
+        head = node;
+    }
+    if (head->addr >= after->addr) {
+        fprintf(stderr, "Heap memory collision");
+        ERROR_CODE = ERR_HEAP_COLLISION;
+        head->next = NULL;  // avoid cyclic reference
+        return;
+    }
+    head->next = after;
+}
+
+void nat_free() {
+    push_fp
+    push(PTR_LEN)
+
+    tp_int free_ptr = bytes_to_int(MEMORY + true_addr(0));
+    int_fast64_t real_addr = free_ptr - INT_LEN;
+    int_fast64_t alloc_len = bytes_to_int(MEMORY + real_addr);
+
+    if (real_addr < entry_end || real_addr > MEMORY_SIZE) {
+        printf("Cannot free pointer: %lld outside heap\n", real_addr);
+        ERROR_CODE = ERR_HEAP_COLLISION;
+        return;
+    }
+    _free_link(real_addr, alloc_len);
+
+    pull_fp
+}
+
+tp_int _array_total_len(tp_int atom_len, const tp_int *dimensions, int dim_arr_len, int index_in_dim) {
+    tp_int dim = dimensions[index_in_dim];
+    if (dim == -1) return PTR_LEN;
+
+    if (index_in_dim == dim_arr_len - 1) return dimensions[index_in_dim] * atom_len + INT_LEN;
+    else {
+        tp_int res = dim * PTR_LEN + INT_LEN;
+        for (int i = 0; i < dim; i++) {
+            res += _array_total_len(atom_len, dimensions, dim_arr_len, index_in_dim + 1);
+        }
+        return res;
+    }
+}
+
+void _create_arr_rec(tp_int to_write, tp_int atom_len,
+                     const tp_int *dimensions, int dim_arr_len, int index_in_dim, tp_int *cur_heap) {
+    tp_int dim = dimensions[index_in_dim];
+//    printf("%lld\n", dim);
+    if (dim == -1) {
+        *cur_heap += PTR_LEN;
+        return;
+    }
+
+    int_to_bytes(MEMORY + to_write, *cur_heap);
+
+    tp_int ele_len;
+    if (index_in_dim == dim_arr_len - 1) ele_len = atom_len;
+    else ele_len = PTR_LEN;
+
+    tp_int cur_arr_addr = *cur_heap;
+    *cur_heap += (dim * ele_len) + INT_LEN;
+
+    int_to_bytes(MEMORY + cur_arr_addr, dim);  // write array size
+
+    tp_int first_ele_addr = cur_arr_addr + INT_LEN;
+
+    if (index_in_dim < dim_arr_len - 1) {
+        for (int i = 0; i < dim; i++) {
+            _create_arr_rec(first_ele_addr + i * PTR_LEN,
+                            atom_len,
+                            dimensions,
+                            dim_arr_len,
+                            index_in_dim + 1,
+                            cur_heap);
+        }
+    }
+
+}
+
+void nat_heap_array() {
+    push_fp
+    push(INT_LEN * 2)
+
+    tp_int atom_size = bytes_to_int(MEMORY + true_addr(0));
+    tp_int dim_arr_addr = bytes_to_int(MEMORY + true_addr(INT_LEN));
+
+    tp_int dim_arr_len = bytes_to_int(MEMORY + dim_arr_addr);
+    tp_int *dimension = malloc(sizeof(tp_int) * dim_arr_len);
+
+    for (int i = 0; i < dim_arr_len; i++) {
+        dimension[i] = bytes_to_int(MEMORY + dim_arr_addr + (i + 1) * INT_LEN);
+//        printf("%lld, ", dimension[i]);
+    }
+    if (dimension[0] < 0) {
+        fprintf(stderr, "Cannot create heap array of unspecified size. ");
+        ERROR_CODE = ERR_NATIVE_INVOKE;
+        return;
+    }
+//    print_array(dimension, dim_arr_len);
+
+    tp_int total_heap_len = _array_total_len(atom_size, dimension, dim_arr_len, 0);
+//    printf("%lld %lld %lld\n", atom_size, dim_arr_addr, total_heap_len);
+
+    tp_int heap_loc = _malloc_essential(total_heap_len);
+//    printf("%lld\n", heap_loc);
+
+    tp_int cur_heap_loc = heap_loc;
+    _create_arr_rec(get_nat_return_addr(), atom_size, dimension, dim_arr_len, 0, &cur_heap_loc);
+
+    free(dimension);
+    nat_return();
 
     pull_fp
 }
@@ -185,6 +402,21 @@ void invoke(tp_int func_ptr) {
             break;
         case 7:  // println_float
             nat_println_float();
+            break;
+        case 8:  // print_str
+            nat_print_str();
+            break;
+        case 9:  // println_str
+            nat_println_str();
+            break;
+        case 10:  // malloc
+            nat_malloc();
+            break;
+        case 11:  // free
+            nat_free();
+            break;
+        case 12:  // heap_array
+            nat_heap_array();
             break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;
@@ -243,6 +475,11 @@ void tvm_mainloop() {
                 memcpy(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].bytes, INT_LEN);
                 break;
             case 7:  // astore
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                int_to_bytes(MEMORY + true_addr(regs[reg1].int_value), true_addr(regs[reg2].int_value));
+//                memcpy(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].bytes, INT_LEN);
+                break;
             case 8:  // astore_sp
             case 9:  // store_abs
                 reg1 = MEMORY[pc++];
@@ -386,6 +623,9 @@ void tvm_mainloop() {
                 reg2 = MEMORY[pc++];
                 char_to_bytes(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].char_value);
                 break;
+            case 72:  // main args
+                int_to_bytes(MEMORY + true_addr_sp(0), tvm_set_args());
+                break;
             default:
                 ERROR_CODE = ERR_INSTRUCTION;
                 break;
@@ -394,11 +634,37 @@ void tvm_mainloop() {
 }
 
 void tvm_shutdown() {
-
+    free_link_pool(ava_pool);
 }
 
-void tvm_set_args(int argc, char **argv) {
+tp_int tvm_set_args() {
+    tp_int total_malloc_len = INT_LEN;
+    tp_int *lengths = malloc(sizeof(tp_int) * argc);
+    for (int i = 0; i < argc; i++) {
+        tp_int len = (tp_int) strlen(argv[i]);
+        lengths[i] = len;
+        total_malloc_len += INT_LEN + len * CHAR_LEN;
+    }
 
+    tp_int arr_ptr = _malloc_essential(total_malloc_len);
+    int_to_bytes(MEMORY + arr_ptr, (tp_int) argc);
+
+    tp_int cur_ptr = arr_ptr + INT_LEN + argc * PTR_LEN;
+    for (int i = 0; i < argc; i++) {
+        char *str = argv[i];
+        tp_int len = lengths[i];
+        tp_int str_ptr = cur_ptr;
+        cur_ptr += INT_LEN + len * CHAR_LEN;
+        int_to_bytes(MEMORY + str_ptr, len);  // write string length
+        for (int j = 0; j < len; j++) {
+            char_to_bytes(MEMORY + str_ptr + INT_LEN + j * CHAR_LEN, str[j]);  // write char to string
+        }
+        int_to_bytes(MEMORY + arr_ptr + INT_LEN + i * INT_LEN, str_ptr);  // write string ptr to string[]
+    }
+
+    free(lengths);
+
+    return arr_ptr;
 }
 
 void print_memory() {
@@ -463,6 +729,9 @@ void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_a
 
     setlocale(LC_ALL, "chs");
 
+    argc = vm_argc;
+    argv = vm_argv;
+
     unsigned char *codes = read_file(file_name, &read);
     if (codes == NULL) {
         fprintf(stderr, "Cannot read file. ");
@@ -470,7 +739,7 @@ void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_a
     }
 
     if (tvm_load(codes, read)) exit(ERR_VM_OPT);
-    tvm_set_args(vm_argc, vm_argv);
+//    tvm_set_args(vm_argc, vm_argv);
 
     tvm_mainloop();
 

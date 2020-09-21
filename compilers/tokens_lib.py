@@ -9,8 +9,8 @@ LOGICAL_UNARY = {"not"}
 SYMBOLS = {"{", "}", "[", "]", "(", ")", ".", "$", ",", ";", ":"}
 OTHERS = {"=", "->", ":=", "++", "--"}
 
-RESERVED = {"as", "break", "const", "continue", "else", "export", "fn", "for",
-            "if", "import", "require", "return", "struct", "then", "var", "while"}
+RESERVED = {"as", "break", "const", "continue", "del", "else", "export", "exportmacro", "fn", "for",
+            "if", "import", "macro", "new", "require", "return", "struct", "then", "var", "while"}
 
 ALL_BINARY = set.union(
     ARITH_BINARY,
@@ -151,6 +151,10 @@ class CollectiveElement(Element):
     def append(self, value):
         self.children.append(value)
 
+    def extend(self, other):
+        for e in other:
+            self.append(e)
+
     def name(self):
         if self.ce_type == CE_BRACE:
             return "Brace"
@@ -175,3 +179,11 @@ class CollectiveElement(Element):
 
 def is_brace(ele: Element):
     return isinstance(ele, CollectiveElement) and ele.is_brace()
+
+
+def is_bracket(ele: Element):
+    return isinstance(ele, CollectiveElement) and ele.is_bracket()
+
+
+def identifier_of(ele: Element, target: str) -> bool:
+    return isinstance(ele, AtomicElement) and isinstance(ele.atom, IdToken) and ele.atom.identifier == target

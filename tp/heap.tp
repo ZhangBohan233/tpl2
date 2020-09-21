@@ -1,0 +1,22 @@
+﻿require {
+    malloc, free
+}
+
+struct S {
+    x: int;
+    y: int;
+}
+
+fn main() int {
+    two: int = 2;
+    three: int = 3;
+    b: int[][] = new int[two][three];
+    b[0][0] = 33;
+    b[0][1] = 44;
+    b[0][2] = 55;
+    b[1][0] = 66;
+    b[1][1] = 77;
+    b[1][2] = 88;
+    c: int[] = b[1];
+    return c[2];
+}

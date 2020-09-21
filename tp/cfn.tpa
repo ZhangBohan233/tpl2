@@ -1,0 +1,59 @@
+bits
+64
+stack_size
+1024
+global_length
+16
+literal_length
+46
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 33 48 0 0 0 0 0 0 68 1 0 0 0 0 0 0 3 0 0 0 0 0 0 0 17 98 3 84 78 92
+
+fn tp/cfn.tp$tt2 $1024
+    push_fp
+    push          16
+    require       println_int $0      %0      %1
+    load_lit      %0      $16
+    iload         %1      $8
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    invoke        $0
+    pull_fp
+    ret
+    stop
+
+fn tp/cfn.tp$main $1032
+    push_fp
+    push          40
+    require       println_int $0      %0      %1
+    load_lit      %0      $24
+    iload         %1      $8
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    invoke        $0
+    require       println_str $16     %0      %1
+    lit_abs       %0      $32
+    iload         %1      $24
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $24
+    store_abs     %0      %1
+    invoke        $16
+    load_lit      %0      $8
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    aload         %0      $1
+    set_ret       %0
+    call_fn       tp/cfn.tp$main
+    exit

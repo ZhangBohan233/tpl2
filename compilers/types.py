@@ -1,4 +1,5 @@
 import compilers.util as util
+import compilers.errors as errs
 
 
 class Type:
@@ -46,6 +47,10 @@ class Type:
         else:
             return False
 
+    def check_convertibility(self, left_tar_type, lf) -> None:
+        if not self.convertible_to(left_tar_type, lf):
+            raise errs.TplCompileError(f"Cannot convert '{self}' to '{left_tar_type}'. ", lf)
+
     def is_void(self):
         return self.length == 0
 
@@ -65,6 +70,9 @@ class BasicType(Type):
     def __eq__(self, other):
         return isinstance(other, BasicType) and other.type_name == self.type_name
 
+    def __hash__(self):
+        return hash(self.type_name)
+
     def __str__(self):
         return self.type_name
 
@@ -77,6 +85,14 @@ class PointerType(Type):
         super().__init__(util.PTR_LEN)
 
         self.base = base
+
+    def strong_convertible(self, left_tar_type):
+        if self == TYPE_VOID_PTR:
+            return isinstance(left_tar_type, PointerType) or isinstance(left_tar_type, ArrayType)
+        elif left_tar_type == TYPE_VOID_PTR:
+            return True
+        else:
+            return super().strong_convertible(left_tar_type)
 
     def weak_convertible(self, left_tar_type):
         if isinstance(left_tar_type, BasicType) and left_tar_type.type_name == "int":
@@ -92,6 +108,26 @@ class PointerType(Type):
 
     def __repr__(self):
         return self.__str__()
+
+
+class CompileTimeFunctionType(Type):
+    def __init__(self, name, rtype: Type):
+        super().__init__(0)
+
+        self.name = name
+        self.rtype = rtype
+
+    def memory_length(self):
+        raise errs.TplCompileError(f"Compile time function '{self.name}' does not occupy memory. ")
+
+    def __str__(self):
+        return self.name
+
+    def __hash__(self):
+        return hash(self.name)
+
+    def __eq__(self, other):
+        return isinstance(other, CompileTimeFunctionType) and self.name == other.name
 
 
 class CallableType(Type):
@@ -136,20 +172,25 @@ class StructType(Type):
 
 
 class ArrayType(Type):
-    def __init__(self, base: Type, num_ele):
+    def __init__(self, ele_type: Type):
         super().__init__(util.PTR_LEN)
 
-        self.base = base
-        self.num_ele = num_ele
+        self.ele_type = ele_type
 
-    def memory_length(self):
-        return self.base.memory_length() * self.num_ele
+    def strong_convertible(self, left_tar_type):
+        if left_tar_type == TYPE_VOID_PTR:
+            return True
+        else:
+            return super().strong_convertible(left_tar_type)
 
     def __str__(self):
-        return f"{self.base}[{self.num_ele}]"
+        return f"{self.ele_type}[]"
+
+    def __hash__(self):
+        return hash(self.ele_type) + 1
 
     def __eq__(self, other):
-        return isinstance(other, ArrayType) and self.base == other.base and self.num_ele == other.num_ele
+        return isinstance(other, ArrayType) and self.ele_type == other.ele_type
 
 
 TYPE_INT = BasicType("int", util.INT_LEN)
@@ -157,6 +198,12 @@ TYPE_FLOAT = BasicType("float", util.FLOAT_LEN)
 TYPE_CHAR = BasicType("char", util.CHAR_LEN)
 TYPE_BYTE = BasicType("byte", 1)
 TYPE_VOID = BasicType("void", 0)
+
+TYPE_CHAR_ARR = ArrayType(TYPE_CHAR)
+TYPE_STRING_ARR = ArrayType(TYPE_CHAR_ARR)
+TYPE_VOID_PTR = PointerType(TYPE_VOID)
+
+PRIMITIVE_TYPES = {"int": TYPE_INT, "float": TYPE_FLOAT, "char": TYPE_CHAR, "byte": TYPE_BYTE, "void": TYPE_VOID}
 
 NATIVE_FUNCTIONS = {
     "print_int": (1, NativeFuncType([TYPE_INT], TYPE_VOID)),
@@ -166,4 +213,9 @@ NATIVE_FUNCTIONS = {
     "println_char": (5, NativeFuncType([TYPE_CHAR], TYPE_VOID)),
     "print_float": (6, NativeFuncType([TYPE_FLOAT], TYPE_VOID)),
     "println_float": (7, NativeFuncType([TYPE_FLOAT], TYPE_VOID)),
+    "print_str": (8, NativeFuncType([TYPE_CHAR_ARR], TYPE_VOID)),
+    "println_str": (9, NativeFuncType([TYPE_CHAR_ARR], TYPE_VOID)),
+    "malloc": (10, NativeFuncType([TYPE_INT], TYPE_VOID_PTR)),
+    "free": (11, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID)),
+    "heap_array": (12, NativeFuncType([TYPE_INT, ArrayType(TYPE_INT)], TYPE_VOID_PTR))
 }

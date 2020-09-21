@@ -9,8 +9,9 @@ FLOAT_LEN = 8
 CHAR_LEN = 2
 PTR_LEN = INT_LEN
 
-FALSE_POS = 0
-TRUE_POS = INT_LEN
+ZERO_POS = 0
+ONE_POS = INT_LEN
+NEG_ONE_POS = INT_LEN + INT_LEN
 
 float_pack = "d" if FLOAT_LEN == 8 else "f"
 
@@ -44,16 +45,23 @@ def bytes_to_float(b: bytes) -> float:
     return struct.unpack(float_pack, b)[0]
 
 
+def string_to_bytes(s: str) -> bytes:
+    res = bytearray(int_to_bytes(len(s)))
+    for c in s:
+        res.extend(char_to_bytes(c))
+    return res
+
+
 def empty_bytes(length: int) -> bytes:
     return bytes([0 for _ in range(length)])
 
 
 def initial_literal() -> bytearray:
-    return bytearray(int_to_bytes(0) + int_to_bytes(1))  # false and true, related to FALSE_POS and TRUE_POS
+    return bytearray(int_to_bytes(0) + int_to_bytes(1) + int_to_bytes(-1))
 
 
 def initial_int_literal_dict() -> dict:
-    return {0: 0, 1: INT_LEN}
+    return {0: 0, 1: INT_LEN, -1: INT_LEN + INT_LEN}
 
 
 def name_with_path(name: str, file: str):

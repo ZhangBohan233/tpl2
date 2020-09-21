@@ -156,6 +156,15 @@ char *format_bits(const char *format) {
     return dst;
 }
 
+void print_array(tp_int *array, int len) {
+    printf("[");
+    for (int i = 0 ; i < len; i ++) {
+        tp_printf("%d, ", array[i])
+    }
+    printf("]\n");
+}
+
 void test(int arr[][4]) {
     int a[2][3] = {{1, 2, 3}, {4, 5, 6}};
+    int b = 2;
 }
