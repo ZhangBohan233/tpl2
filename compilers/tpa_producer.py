@@ -30,6 +30,9 @@ class LabelManager:
         self._loop_title_count = 0
         self._end_loop_count = 0
         self._general_count = 0
+        self._case_count = 0
+        self._case_body_count = 0
+        self._end_case_count = 0
 
     def endif_label(self):
         n = self._endif_count
@@ -55,6 +58,21 @@ class LabelManager:
         n = self._general_count
         self._general_count += 1
         return "LABEL_" + str(n)
+
+    def case_label(self):
+        n = self._case_count
+        self._case_count += 1
+        return "CASE_" + str(n)
+
+    def case_body_label(self):
+        n = self._case_body_count
+        self._case_body_count += 1
+        return "CASE_BODY_" + str(n)
+
+    def end_case_label(self):
+        n = self._end_case_count
+        self._end_case_count += 1
+        return "END_CASE_" + str(n)
 
 
 class Manager:

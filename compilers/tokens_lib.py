@@ -9,8 +9,9 @@ LOGICAL_UNARY = {"not"}
 SYMBOLS = {"{", "}", "[", "]", "(", ")", ".", "$", ",", ";", ":"}
 OTHERS = {"=", "->", ":=", "++", "--"}
 
-RESERVED = {"as", "break", "const", "continue", "del", "else", "export", "exportmacro", "fn", "for",
-            "if", "import", "macro", "new", "require", "return", "struct", "then", "var", "while"}
+RESERVED = {"as", "break", "case", "cond", "const", "continue", "del", "do", "else",
+            "export", "exportmacro", "fallthrough", "fn", "for",
+            "if", "import", "macro", "new", "require", "return", "struct", "switch", "then", "var", "while", "yield"}
 
 ALL_BINARY = set.union(
     ARITH_BINARY,

@@ -1,0 +1,30 @@
+﻿fn main() int {
+    i: int = 2;
+    b: int = 3;
+
+    switch i {
+        case 1 {
+            cprintln(10);
+        } case 2 {
+            cprintln(20);
+            fallthrough;
+        } case 3 {
+            cprintln(30);
+        } default {
+            cprintln(777);
+        }
+    }
+
+    //c: int = switch b {
+    //    case 1 -> 10;
+    //    case 2 -> 20;
+    //    case 3 -> {
+    //        yield 30;
+    //    } default -> {
+    //        cprint(888);
+    //        yield 821;
+    //    };
+    //}
+
+    return i;
+}

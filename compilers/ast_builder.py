@@ -1,5 +1,7 @@
 import compilers.tokens_lib as tl
+import compilers.errors as errs
 import compilers.ast as ast
+
 
 PRECEDENCES = {
     "*": 100, "/": 100, "%": 100, "+": 50, "-": 50,
@@ -12,7 +14,7 @@ PRECEDENCES = {
     "neg": 200, "not": 200,
     "++": 300, "--": 300,
     "star": 200, "addr": 200, "as": 150, "new": 550, "del": 1,
-    "return": 0
+    "return": 0, "yield": 0
 }
 
 
@@ -89,3 +91,42 @@ class AstBuilder:
             elif isinstance(expr, ast.BinaryBuildable):
                 expr.right = self.stack.pop(index + 1)
                 expr.left = self.stack.pop(index - 1)
+
+
+def parse_switch(cond: ast.Expression, body: ast.BlockStmt, lf):
+    expr_level = 0  # 0 for not initialized, 1 for expr, 2 for stmt
+    default_case = None
+    cases = []
+    if len(body) == 1 or (len(body) == 2 and len(body[1]) == 0):
+        for part in body[0]:
+            if isinstance(part, ast.CaseExpr):
+                if expr_level == 2:
+                    raise errs.TplParseError("Cases must all be expressions or statements. ", lf)
+                else:
+                    expr_level = 1
+            elif isinstance(part, ast.CaseStmt):
+                if expr_level == 1:
+                    raise errs.TplParseError("Cases must all be expressions or statements. ", lf)
+                else:
+                    expr_level = 2
+            else:
+                raise errs.TplParseError("Only 'case' or 'default'. ")
+
+            if part.cond is None:  # is default
+                if default_case is None:
+                    default_case = part
+                else:
+                    raise errs.TplParseError("Switch/cond can have at most 1 default case. ")
+            else:
+                cases.append(part)
+
+        if expr_level == 1:
+            return ast.SwitchExpr(cond, cases, default_case, lf)
+        elif expr_level == 2:
+            return ast.SwitchStmt(cond, cases, default_case, lf)
+        else:
+            assert len(cases) == 0 and default_case is None
+            return ast.SwitchStmt(cond, cases, default_case, lf)
+
+    elif len(body) != 0:
+        raise errs.TplParseError("Switch parse error. ", lf)

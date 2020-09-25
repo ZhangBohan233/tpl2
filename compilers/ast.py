@@ -645,6 +645,14 @@ class DelStmt(UnaryStmt):
         fc.compile(env, tpa)
 
 
+class YieldStmt(UnaryStmt):
+    def __init__(self, lf):
+        super().__init__("yield", lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        pass
+
+
 class AsExpr(BinaryExpr):
     """
     Note that this expression may be used in multiple ways: cast / name changing
@@ -1309,6 +1317,18 @@ class ContinueStmt(Statement):
         return "continue"
 
 
+class FallthroughStmt(Statement):
+    def __init__(self, lf):
+        super().__init__(lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        label = env.fallthrough()
+        tpa.write_format("goto", label)
+
+    def __str__(self):
+        return "fallthrough"
+
+
 class ExportStmt(Statement):
     def __init__(self, block: BlockStmt, lf):
         super().__init__(lf)
@@ -1565,6 +1585,126 @@ class PostIncDecOperator(UnaryExpr):
 
     def __str__(self):
         return f"{self.value}{self.op}"
+
+
+class DoWhileStmt(Statement):
+    def __init__(self, lf):
+        super().__init__(lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        pass
+
+
+class CaseStmt(FakeNode):
+    def __init__(self, body: BlockStmt, lf, cond: Node = None):
+        super().__init__(lf)
+
+        self.cond = cond  # if cond is None, this is a 'default' case
+        self.body = body
+
+    def __str__(self):
+        if self.cond is None:
+            return f"default {self.body}"
+        else:
+            return f"case {self.cond} {self.body}"
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class CaseExpr(FakeNode):
+    def __init__(self, body: Node, lf, cond: Node = None):
+        super().__init__(lf)
+
+        self.cond = cond
+        self.body = body
+
+    def __str__(self):
+        if self.cond is None:
+            return f"default -> {self.body}"
+        else:
+            return f"case {self.cond} -> {self.body}"
+
+    def __repr__(self):
+        return self.__str__()
+
+
+class SwitchStmt(Statement):
+    def __init__(self, cond: Expression, cases: list, default_case: CaseStmt, lf):
+        super().__init__(lf)
+
+        self.cond = cond
+        self.cases: [CaseExpr] = cases
+        self.default_case = default_case
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        eq_inst = "eqi"  # todo: type
+
+        cond_addr = self.cond.compile(env, tpa)
+        arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
+        end_case = tpa.manager.label_manager.end_case_label()
+        next_case_label = tpa.manager.label_manager.case_label()
+        cur_body_label = tpa.manager.label_manager.case_body_label()
+        next_body_label = tpa.manager.label_manager.case_body_label()
+
+        for case in self.cases:
+            case_cond = case.cond.compile(env, tpa)
+            case_env = en.CaseEnvironment(env, next_body_label)
+            tpa.binary_arith(eq_inst, cond_addr, case_cond, arith_addr)
+            tpa.if_zero_goto(arith_addr, next_case_label)
+
+            tpa.write_format("label", cur_body_label)
+            cur_body_label = next_body_label
+            next_body_label = tpa.manager.label_manager.case_body_label()
+            case.body.compile(case_env, tpa)
+
+            tpa.write_format("goto", end_case)
+
+            tpa.write_format("label", next_case_label)
+            next_case_label = tpa.manager.label_manager.case_label()
+        tpa.write_format("label", end_case)
+
+    def __str__(self):
+        return f"switch {self.cond} {self.cases} {self.default_case}"
+
+
+class SwitchExpr(Expression):
+    def __init__(self, cond: Expression, cases: list, default_case: CaseExpr, lf):
+        super().__init__(lf)
+
+        self.cond = cond
+        self.cases: [CaseExpr] = cases
+        self.default_case = default_case
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        pass
+
+    def use_compile_to(self) -> bool:
+        pass
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        pass
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        t = None
+        for case in self.cases:
+            case: CaseExpr
+            nt = case.body.evaluated_type(env, manager)
+            if t is not None:
+                nt.check_convertibility(t, case.lf)
+            t = nt
+        if self.default_case is not None:
+            nt = self.default_case.body.evaluated_type(env, manager)
+            if t is not None:
+                nt.check_convertibility(t, self.default_case.lf)
+            t = nt
+        
+        if t is None:
+            raise errs.TplCompileError("Unexpected error. ", self.lf)
+        return t
+
+    def __str__(self):
+        return f"switch {self.cond} {self.cases} {self.default_case}"
 
 
 INT_ARITH_TABLE = {

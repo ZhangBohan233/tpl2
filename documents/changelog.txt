@@ -1,4 +1,9 @@
-﻿===== VERSION 2010 =====
+﻿===== VERSION 2011 =====
+2020/09/25
+
+* Implemented switch stmt and fallthrough
+
+===== VERSION 2010 =====
 2020/09/21
 
 * Implemented null-array initialization

@@ -144,6 +144,9 @@ class Environment:
     def continue_label(self) -> str:
         raise NotImplementedError()
 
+    def fallthrough(self):
+        raise errs.TplEnvironmentError("Fallthrough outside switch-case")
+
 
 class SubAbstractEnvironment(Environment):
     def __init__(self, outer):
@@ -157,6 +160,9 @@ class SubAbstractEnvironment(Environment):
 
     def continue_label(self) -> str:
         return self.outer.continue_label()
+
+    def fallthrough(self):
+        return self.outer.fallthrough()
 
 
 class MainAbstractEnvironment(Environment):
@@ -208,6 +214,16 @@ class ModuleEnvironment(MainAbstractEnvironment):
 class BlockEnvironment(SubAbstractEnvironment):
     def __init__(self, outer):
         super().__init__(outer)
+
+
+class CaseEnvironment(SubAbstractEnvironment):
+    def __init__(self, outer, fallthrough_label: str):
+        super().__init__(outer)
+
+        self.fallthrough_label = fallthrough_label
+
+    def fallthrough(self) -> str:
+        return self.fallthrough_label
 
 
 class LoopEnvironment(SubAbstractEnvironment):

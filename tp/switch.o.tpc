@@ -1,0 +1,95 @@
+bits
+64
+stack_size
+1024
+global_length
+8
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 2 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 10 0 0 0 0 0 0 0 20 0 0 0 0 0 0 0 30 0 0 0 0 0 0 0 9 3 0 0 0 0 0 0
+
+fn E:\GitHub\tpl2\tp\switch.tp$main $1024
+    push_fp
+    push          96
+    load          %0      $1056
+    iload         %1      $0
+    store         %1      %0
+    load          %0      $1064
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $1040
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $0
+    load          %1      $24
+    eqi           %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    if_zero_goto  %0      CASE_0
+    label         CASE_BODY_0
+    require       println_int $32     %0      %1
+    load          %0      $1072
+    iload         %1      $40
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $40
+    store_abs     %0      %1
+    invoke        $32
+    goto          END_CASE_0
+    label         CASE_0
+    load          %0      $1056
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $0
+    load          %1      $48
+    eqi           %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    if_zero_goto  %0      CASE_1
+    label         CASE_BODY_1
+    require       println_int $56     %0      %1
+    load          %0      $1080
+    iload         %1      $64
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $64
+    store_abs     %0      %1
+    invoke        $56
+    goto          CASE_BODY_2
+    goto          END_CASE_0
+    label         CASE_1
+    load          %0      $1064
+    iload         %1      $72
+    store         %1      %0
+    load          %0      $0
+    load          %1      $72
+    eqi           %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    if_zero_goto  %0      CASE_2
+    label         CASE_BODY_2
+    require       println_int $80     %0      %1
+    load          %0      $1088
+    iload         %1      $88
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $88
+    store_abs     %0      %1
+    invoke        $80
+    goto          END_CASE_0
+    label         CASE_2
+    label         END_CASE_0
+    load          %0      $0
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    entry
+    aload         %0      $1
+    set_ret       %0
+    call          $1024
+    exit

@@ -12,13 +12,7 @@ def process_empty(p, i, b, lf):
 class Parser:
     def __init__(self, tokens: tl.CollectiveElement):
         self.tokens = tokens
-        # self.literal_bytes = util.initial_literal()
         self.var_level = ast.VAR_VAR
-
-        # self.int_literals = util.initial_int_literal_dict()  # int_lit : position in literal_bytes
-        # self.float_literals = {}
-        # self.char_literals = {}
-        # self.str_literals = {}
 
         self.special_binary = {
             "=": ast.Assignment,
@@ -32,7 +26,8 @@ class Parser:
         self.special_unary = {
             "return": ast.ReturnStmt,
             "new": ast.NewExpr,
-            "del": ast.DelStmt
+            "del": ast.DelStmt,
+            "yield": ast.YieldStmt
         }
 
         self.symbol_lib = {
@@ -48,11 +43,15 @@ class Parser:
             "require": self.process_require,
             "break": self.process_break,
             "continue": self.process_continue,
+            "fallthrough": self.process_fallthrough,
             "import": self.process_import,
             "export": self.process_export,
             "struct": self.process_struct,
             "++": self.process_inc_operator,
-            "--": self.process_dec_operator
+            "--": self.process_dec_operator,
+            "switch": self.process_switch,
+            "case": self.process_case,
+            "default": self.process_default
         }
 
     def parse(self):
@@ -191,6 +190,9 @@ class Parser:
     def process_continue(self, p, i, builder: ab.AstBuilder, lf):
         builder.add_node(ast.ContinueStmt(lf))
 
+    def process_fallthrough(self, p, i, builder: ab.AstBuilder, lf):
+        builder.add_node(ast.FallthroughStmt(lf))
+
     def process_require(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
         index += 1
         item = parent[index]
@@ -274,6 +276,75 @@ class Parser:
     def process_dec_operator(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
                              lf: tl.LineFile):
         return self._process_inc_dec_operator("--", parent, index, builder, lf)
+
+    def process_switch(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
+                       lf: tl.LineFile):
+        index += 1
+        cond_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        ele = parent[index]
+        while not tl.is_brace(ele):
+            cond_list.append(ele)
+            index += 1
+            ele = parent[index]
+        cond = self.parse_as_part(cond_list)
+        body_block = self.parse_as_block(ele)
+
+        res = ab.parse_switch(cond, body_block, lf)
+        builder.add_node(res)
+
+        return index
+
+    def process_case(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
+                     lf: tl.LineFile):
+        index += 1
+        cond_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        ele = parent[index]
+        while not (tl.is_brace(ele) or tl.identifier_of(ele, "->")):
+            cond_list.append(ele)
+            index += 1
+            ele = parent[index]
+        cond = self.parse_as_part(cond_list)
+        if tl.identifier_of(ele, "->"):  # case expr
+            index += 1
+            ele = parent[index]
+            if tl.is_brace(ele):
+                body_block = self.parse_as_block(ele)
+                builder.add_node(ast.CaseExpr(cond, body_block, lf))
+            else:
+                body_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+                while not tl.identifier_of(ele, ";"):
+                    body_list.append(ele)
+                    index += 1
+                    ele = parent[index]
+                builder.add_node(ast.CaseExpr(self.parse_as_part(body_list), lf, cond))
+        else:  # case stmt
+            body_block = self.parse_as_block(ele)
+            builder.add_node(ast.CaseStmt(body_block, lf, cond))
+
+        return index
+
+    def process_default(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
+                        lf: tl.LineFile):
+        index += 1
+        ele = parent[index]
+        if tl.is_brace(ele):
+            builder.add_node(ast.CaseStmt(self.parse_as_block(ele), lf))
+        elif tl.identifier_of(ele, "->"):
+            index += 1
+            ele = parent[index]
+            if tl.is_brace(ele):
+                builder.add_node(ast.CaseExpr(self.parse_as_block(ele), lf))
+            else:
+                body_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+                while not tl.identifier_of(ele, ";"):
+                    body_list.append(ele)
+                    index += 1
+                    ele = parent[index]
+                builder.add_node(ast.CaseExpr(self.parse_as_part(body_list), lf))
+        else:
+            raise errs.TplParseError("Invalid syntax of 'default'. ", lf)
+
+        return index
 
     # parser of collective elements
 
