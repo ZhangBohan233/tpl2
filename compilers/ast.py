@@ -1613,7 +1613,7 @@ class CaseStmt(FakeNode):
 
 
 class CaseExpr(FakeNode):
-    def __init__(self, body: Node, lf, cond: Node = None):
+    def __init__(self, body: Expression, lf, cond: Node = None):
         super().__init__(lf)
 
         self.cond = cond
@@ -1638,7 +1638,8 @@ class SwitchStmt(Statement):
         self.default_case = default_case
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        eq_inst = "eqi"  # todo: type
+        # cond_t = self.cond.evaluated_type(env, tpa.manager)
+        eq_inst = "eqi"  # todo
 
         cond_addr = self.cond.compile(env, tpa)
         arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
@@ -1662,6 +1663,13 @@ class SwitchStmt(Statement):
 
             tpa.write_format("label", next_case_label)
             next_case_label = tpa.manager.label_manager.case_label()
+
+        if self.default_case is not None:
+            tpa.write_format("label", cur_body_label)
+
+            case_env = en.CaseEnvironment(env)
+            self.default_case.body.compile(case_env, tpa)
+
         tpa.write_format("label", end_case)
 
     def __str__(self):
@@ -1677,30 +1685,50 @@ class SwitchExpr(Expression):
         self.default_case = default_case
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
+        res_t = self.evaluated_type(env, tpa.manager)
+        res_addr = tpa.manager.allocate_stack(res_t.length)
+        self.compile_to(env, tpa, res_addr)
+        return res_addr
 
     def use_compile_to(self) -> bool:
-        pass
+        return use_compile_to
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
-        pass
+        eq_inst = "eqi"  # todo
+
+        cond_addr = self.cond.compile(env, tpa)
+        arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
+        end_case = tpa.manager.label_manager.end_case_label()
+        next_case_label = tpa.manager.label_manager.case_label()
+
+        for case in self.cases:
+            case_cond = case.cond.compile(env, tpa)
+            case_env = en.CaseEnvironment(env)
+            tpa.binary_arith(eq_inst, cond_addr, case_cond, arith_addr)
+            tpa.if_zero_goto(arith_addr, next_case_label)
+
+            case_body: Expression = case.body
+            case_body.compile_to(case_env, tpa, dst_addr)
+
+            tpa.write_format("goto", end_case)
+
+            tpa.write_format("label", next_case_label)
+            next_case_label = tpa.manager.label_manager.case_label()
+
+        # default case
+        case_env = en.CaseEnvironment(env)
+        self.default_case.body.compile_to(case_env, tpa, dst_addr)
+
+        tpa.write_format("label", end_case)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        t = None
+        t = self.default_case.body.evaluated_type(env, manager)
         for case in self.cases:
             case: CaseExpr
             nt = case.body.evaluated_type(env, manager)
-            if t is not None:
-                nt.check_convertibility(t, case.lf)
+            nt.check_convertibility(t, case.lf)
             t = nt
-        if self.default_case is not None:
-            nt = self.default_case.body.evaluated_type(env, manager)
-            if t is not None:
-                nt.check_convertibility(t, self.default_case.lf)
-            t = nt
-        
-        if t is None:
-            raise errs.TplCompileError("Unexpected error. ", self.lf)
+
         return t
 
     def __str__(self):

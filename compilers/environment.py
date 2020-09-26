@@ -217,12 +217,14 @@ class BlockEnvironment(SubAbstractEnvironment):
 
 
 class CaseEnvironment(SubAbstractEnvironment):
-    def __init__(self, outer, fallthrough_label: str):
+    def __init__(self, outer, fallthrough_label: str = None):
         super().__init__(outer)
 
         self.fallthrough_label = fallthrough_label
 
     def fallthrough(self) -> str:
+        if self.fallthrough_label is None:
+            raise errs.TplEnvironmentError("Default case or case expression cannot have 'fallthrough'. ")
         return self.fallthrough_label
 
 

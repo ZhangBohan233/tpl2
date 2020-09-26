@@ -110,17 +110,19 @@ def parse_switch(cond: ast.Expression, body: ast.BlockStmt, lf):
                 else:
                     expr_level = 2
             else:
-                raise errs.TplParseError("Only 'case' or 'default'. ")
+                raise errs.TplParseError("Only 'case' or 'default'. ", lf)
 
             if part.cond is None:  # is default
                 if default_case is None:
                     default_case = part
                 else:
-                    raise errs.TplParseError("Switch/cond can have at most 1 default case. ")
+                    raise errs.TplParseError("Switch/cond can have at most 1 default case. ", lf)
             else:
                 cases.append(part)
 
         if expr_level == 1:
+            if default_case is None:
+                raise errs.TplParseError("Switch-case expression must cover all possibilities. ", lf)
             return ast.SwitchExpr(cond, cases, default_case, lf)
         elif expr_level == 2:
             return ast.SwitchStmt(cond, cases, default_case, lf)
