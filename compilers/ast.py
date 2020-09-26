@@ -19,13 +19,14 @@ UNA_LOGICAL = 2
 VAR_VAR = 1
 VAR_CONST = 2
 
-use_compile_to = False
+# use_compile_to = False
 
 
 def set_optimize_level(opt_level: int):
-    if opt_level >= 1:
-        global use_compile_to
-        use_compile_to = True
+    pass
+    # if opt_level >= 1:
+        # global use_compile_to
+        # use_compile_to = True
 
 
 class SpaceCounter:
@@ -98,18 +99,17 @@ class Expression(Node, ABC):
     def __init__(self, lf):
         super().__init__(lf)
 
-    def use_compile_to(self) -> bool:
-        return False
+    # def use_compile_to(self) -> bool:
+    #     return False
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
+        et = self.evaluated_type(env, tpa.manager)
+        res = tpa.manager.allocate_stack(et.memory_length())
+        self.compile_to(env, tpa, res)
+        return res
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
-        et = self.evaluated_type(env, tpa.manager)
-        res = self.compile(env, tpa)
-        if et.memory_length() == util.INT_LEN:
-            tpa.assign(dst_addr, res)
-        elif et.memory_length() == util.CHAR_LEN:
-            tpa.assign_char(dst_addr, res)
-        else:
-            pass
+        raise NotImplementedError
 
 
 class FakeNode(Node):
@@ -161,7 +161,7 @@ class Statement(Node, ABC):
         raise errs.TplTypeError("Statements do not evaluate a type. ", self.lf)
 
 
-class Line(Expression):
+class Line(Statement):
     def __init__(self, lf, *nodes):
         super().__init__(lf)
 
@@ -236,6 +236,9 @@ class NameNode(Expression):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         return env.get(self.name, self.lf)
 
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        return self.compile(env, tpa)
+
     def definition_type(self, env: en.Environment, manager: tp.Manager):
         if env.is_type(self.name, self.lf):
             return env.get_type(self.name, self.lf)
@@ -263,14 +266,6 @@ class IntLiteral(LiteralNode):
     def __init__(self, lit_pos, lf):
         super().__init__(lit_pos, lf)
 
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        stack_addr = tpa.manager.allocate_stack(util.INT_LEN)
-        tpa.load_literal(stack_addr, self.lit_pos)
-        return stack_addr
-
-    def use_compile_to(self) -> bool:
-        return use_compile_to
-
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
         tpa.load_literal(dst_addr, self.lit_pos)
 
@@ -285,7 +280,7 @@ class FloatLiteral(LiteralNode):
     def __init__(self, lit_pos, lf):
         super().__init__(lit_pos, lf)
 
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
         pass
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -298,14 +293,6 @@ class FloatLiteral(LiteralNode):
 class CharLiteral(LiteralNode):
     def __init__(self, lit_pos, lf):
         super().__init__(lit_pos, lf)
-
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        stack_addr = tpa.manager.allocate_stack(util.CHAR_LEN)
-        tpa.load_char_literal(stack_addr, self.lit_pos)
-        return stack_addr
-
-    def use_compile_to(self) -> bool:
-        return use_compile_to
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
         tpa.load_char_literal(dst_addr, self.lit_pos)
@@ -326,6 +313,9 @@ class StringLiteral(LiteralNode):
         tpa.load_literal_ptr(res_ptr, self.lit_pos)
 
         return res_ptr
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        tpa.load_literal_ptr(dst_addr, self.lit_pos)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return typ.TYPE_CHAR_ARR
@@ -407,28 +397,24 @@ class UnaryOperator(UnaryExpr):
 
         self.op_type = op_type
 
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
         vt: typ.Type = self.value.evaluated_type(env, tpa.manager)
         value = self.value.compile(env, tpa)
         if self.op_type == UNA_ARITH:
             if isinstance(vt, typ.BasicType):
                 if vt.type_name == "int":
-                    res_addr = tpa.manager.allocate_stack(vt.length)
                     if self.op == "neg":
-                        tpa.unary_arith("negi", value, res_addr)
+                        tpa.unary_arith("negi", value, dst_addr)
                     else:
                         raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lf)
-                    return res_addr
         elif self.op_type == UNA_LOGICAL:
             if isinstance(vt, typ.BasicType):
-                res_addr = tpa.manager.allocate_stack(vt.length)
                 if self.op == "not":
                     if vt.type_name != "int":
                         raise errs.TplCompileError("Operator 'not' must take an int as value. ", self.lf)
-                    tpa.unary_arith("not", value, res_addr)
+                    tpa.unary_arith("not", value, dst_addr)
                 else:
                     raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lf)
-                return res_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if self.op_type == UNA_ARITH:
@@ -445,43 +431,6 @@ class BinaryOperator(BinaryExpr):
         super().__init__(op, lf)
 
         self.op_type = op_type
-
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        if self.op_type == BIN_ARITH or self.op_type == BIN_LOGICAL:
-            lt = self.left.evaluated_type(env, tpa.manager)
-            rt = self.right.evaluated_type(env, tpa.manager)
-            left_addr = self.left.compile(env, tpa)
-            right_addr = self.right.compile(env, tpa)
-            if isinstance(lt, typ.BasicType):
-                if isinstance(rt, typ.BasicType):
-                    if lt.type_name == "int":
-                        if rt.type_name == "int":
-                            res_addr = tpa.manager.allocate_stack(util.INT_LEN)
-                            int_int_to_int(self.op, left_addr, right_addr, res_addr, tpa)
-                            return res_addr
-        elif self.op_type == BIN_BITWISE:
-            pass
-        elif self.op_type == BIN_LAZY:
-            # x and y: if x then y else 0
-            # x or y: if x then 1 else y
-            if self.op == "and":
-                ife = IfExpr(self.left, self.right, IntLiteral(util.ZERO_POS, self.lf), self.lf)
-                if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
-                    raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
-                if ife.use_compile_to():
-                    pass
-                else:
-                    return ife.compile(env, tpa)
-            elif self.op == "or":
-                ife = IfExpr(self.left, IntLiteral(util.ONE_POS, self.lf), self.right, self.lf)
-                if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
-                    raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
-                return ife.compile(env, tpa)
-            else:
-                raise errs.TplCompileError("Unexpected lazy operator. ", self.lf)
-
-    def use_compile_to(self) -> bool:
-        return use_compile_to
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
         if self.op_type == BIN_ARITH or self.op_type == BIN_LOGICAL:
@@ -565,12 +514,10 @@ class StarExpr(UnaryExpr):
     def __init__(self, lf):
         super().__init__("star", lf)
 
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
         val = self.value.compile(env, tpa)
         self_t = self.evaluated_type(env, tpa.manager)
-        res_addr = tpa.manager.allocate_stack(self_t.length)
-        tpa.value_in_addr_op(val, res_addr)
-        return res_addr
+        tpa.value_in_addr_op(val, dst_addr)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         vt = self.value.evaluated_type(env, manager)
@@ -588,11 +535,9 @@ class AddrExpr(UnaryExpr):
     def __init__(self, lf):
         super().__init__("addr", lf)
 
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
         val = self.value.compile(env, tpa)
-        res_addr = tpa.manager.allocate_stack(util.PTR_LEN)
-        tpa.take_addr(val, res_addr)
-        return res_addr
+        tpa.take_addr(val, dst_addr)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         vt = self.value.evaluated_type(env, manager)
@@ -618,9 +563,6 @@ class NewExpr(UnaryExpr):
         malloc_size = tpa.manager.allocate_stack(util.INT_LEN)
         tpa.assign_i(malloc_size, t.memory_length())
         FunctionCall.call(malloc, [(malloc_size, util.INT_LEN)], env, tpa, dst_addr, self.lf)
-
-    def use_compile_to(self) -> bool:
-        return use_compile_to
 
     def compile_heap_arr_init(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
         self.value: IndexingExpr
@@ -663,26 +605,22 @@ class AsExpr(BinaryExpr):
     def __init__(self, lf):
         super().__init__("as", lf)
 
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
         right_t = self.right.definition_type(env, tpa.manager)
         left_t = self.left.evaluated_type(env, tpa.manager)
         left = self.left.compile(env, tpa)
         if left_t == right_t:
-            return left
+            return
         if right_t == typ.TYPE_INT:
-            res_addr = tpa.manager.allocate_stack(util.INT_LEN)
             if left_t == typ.TYPE_CHAR:
-                tpa.convert_char_to_int(res_addr, left)
+                tpa.convert_char_to_int(dst_addr, left)
             else:
                 raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
-            return res_addr
         elif right_t == typ.TYPE_CHAR:
-            res_addr = tpa.manager.allocate_stack(util.CHAR_LEN)
             if left_t == typ.TYPE_INT:
-                tpa.convert_int_to_char(res_addr, left)
+                tpa.convert_int_to_char(dst_addr, left)
             else:
                 raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
-            return res_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return self.right.definition_type(env, manager)
@@ -692,12 +630,10 @@ class Dot(BinaryExpr):
     def __init__(self, lf):
         super().__init__(".", lf)
 
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
         attr_ptr, attr_t = self.get_attr_ptr_and_type(env, tpa)
 
-        res_ptr = tpa.manager.allocate_stack(attr_t.length)
-        tpa.value_in_addr_op(attr_ptr, res_ptr)
-        return res_ptr
+        tpa.value_in_addr_op(attr_ptr, dst_addr)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         struct_t = self.left.evaluated_type(env, manager)
@@ -737,16 +673,14 @@ class DollarExpr(BinaryExpr):
     def __init__(self, lf):
         super().__init__("$", lf)
 
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
         left_t = self.left.evaluated_type(env, tpa.manager)
         if isinstance(left_t, typ.PointerType) and isinstance(left_t.base, typ.StructType):
             attr_ptr, attr_t = self.get_attr_ptr_and_type(env, tpa)
 
-            res_ptr = tpa.manager.allocate_stack(attr_t.length)
-            tpa.value_in_addr_op(attr_ptr, res_ptr)
-            return res_ptr
+            tpa.value_in_addr_op(attr_ptr, dst_addr)
         elif isinstance(left_t, typ.ArrayType) and isinstance(self.right, NameNode):
-            return self.array_attributes(env, tpa)
+            return self.array_attributes(env, tpa, dst_addr)
 
         raise errs.TplCompileError("Left side of dollar must be a pointer to struct or an array. ", self.lf)
 
@@ -780,18 +714,16 @@ class DollarExpr(BinaryExpr):
 
         raise errs.TplCompileError("Left side of dollar must be a pointer to struct. ", self.lf)
 
-    def array_attributes(self, env: en.Environment, tpa: tp.TpaOutput):
-        res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+    def array_attributes(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
         arr_ptr = self.left.compile(env, tpa)
-        tpa.value_in_addr_op(arr_ptr, res_addr)  # since first value in array is the length
-        return res_addr
+        tpa.value_in_addr_op(arr_ptr, dst_addr)  # since first value in array is the length
 
 
 class Assignment(BinaryExpr):
     def __init__(self, lf):
         super().__init__("=", lf)
 
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
         right_t = self.right.evaluated_type(env, tpa.manager)
         if isinstance(self.left, NameNode):
             if env.is_const(self.left.name, self.lf):
@@ -815,12 +747,9 @@ class Assignment(BinaryExpr):
         else:
             raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.left.__class__.__name__), self.lf)
 
-        if self.right.use_compile_to():
-            self.right.compile_to(env, tpa, left_addr)
-        else:
-            right_addr = self.right.compile(env, tpa)
-            tpa.assign(left_addr, right_addr)
-        return left_addr
+        self.right.compile_to(env, tpa, left_addr)
+
+        tpa.assign(dst_addr, left_addr)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return self.right.evaluated_type(env, manager)
