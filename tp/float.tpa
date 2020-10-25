@@ -1,0 +1,42 @@
+bits
+64
+stack_size
+1024
+global_length
+8
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 0 0 0 0 0 0 8 64 51 51 51 51 51 51 247 63
+
+fn E:\GitHub\tpl2\tp\float.tp$main $1024
+    push_fp
+    push          40
+    load_lit      %0      $24
+    iload         %1      $0
+    store         %1      %0
+    load_lit      %0      $32
+    iload         %1      $8
+    store         %1      %0
+    require       println_float $16     %0      %1
+    load          %0      $0
+    load          %1      $8
+    addf          %0      %1
+    iload         %1      24
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $24
+    store_abs     %0      %1
+    invoke        $16
+    load_lit      %0      $0
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    aload         %0      $1
+    set_ret       %0
+    call_fn       E:\GitHub\tpl2\tp\float.tp$main
+    exit

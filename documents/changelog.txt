@@ -1,4 +1,9 @@
-﻿===== VERSION 2013 =====
+﻿===== VERSION 2014 =====
+2020/10/26
+
+* Implemented float basics
+
+===== VERSION 2013 =====
 2020/10/25
 
 * Added more supports for char type

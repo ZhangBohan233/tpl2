@@ -258,6 +258,9 @@ class LiteralNode(Expression, ABC):
 
         self.lit_pos = lit_pos
 
+    def use_compile_to(self) -> bool:
+        return use_compile_to
+
 
 class IntLiteral(LiteralNode):
     def __init__(self, lit_pos, lf):
@@ -267,9 +270,6 @@ class IntLiteral(LiteralNode):
         stack_addr = tpa.manager.allocate_stack(util.INT_LEN)
         tpa.load_literal(stack_addr, self.lit_pos)
         return stack_addr
-
-    def use_compile_to(self) -> bool:
-        return use_compile_to
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         tpa.load_literal(dst_addr, self.lit_pos)
@@ -286,7 +286,12 @@ class FloatLiteral(LiteralNode):
         super().__init__(lit_pos, lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
+        stack_addr = tpa.manager.allocate_stack(util.FLOAT_LEN)
+        tpa.load_literal(stack_addr, self.lit_pos)
+        return stack_addr
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
+        tpa.load_literal(dst_addr, self.lit_pos)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return typ.TYPE_FLOAT
@@ -303,9 +308,6 @@ class CharLiteral(LiteralNode):
         stack_addr = tpa.manager.allocate_stack(util.CHAR_LEN)
         tpa.load_char_literal(stack_addr, self.lit_pos)
         return stack_addr
-
-    def use_compile_to(self) -> bool:
-        return use_compile_to
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         tpa.load_char_literal(dst_addr, self.lit_pos)
@@ -326,6 +328,9 @@ class StringLiteral(LiteralNode):
         tpa.load_literal_ptr(res_ptr, self.lit_pos)
 
         return res_ptr
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
+        tpa.load_literal_ptr(dst_addr, self.lit_pos)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return typ.TYPE_CHAR_ARR
@@ -447,38 +452,44 @@ class BinaryOperator(BinaryExpr):
         self.op_type = op_type
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        if self.op_type == BIN_ARITH or self.op_type == BIN_LOGICAL:
-            lt = self.left.evaluated_type(env, tpa.manager)
-            rt = self.right.evaluated_type(env, tpa.manager)
-            left_addr = self.left.compile(env, tpa)
-            right_addr = self.right.compile(env, tpa)
-            if isinstance(lt, typ.BasicType):
-                if isinstance(rt, typ.BasicType):
-                    if lt.type_name == "int":
-                        if rt.type_name == "int":
-                            res_addr = tpa.manager.allocate_stack(util.INT_LEN)
-                            int_int_to_int(self.op, left_addr, right_addr, res_addr, tpa)
-                            return res_addr
-        elif self.op_type == BIN_BITWISE:
-            pass
-        elif self.op_type == BIN_LAZY:
-            # x and y: if x then y else 0
-            # x or y: if x then 1 else y
-            if self.op == "and":
-                ife = IfExpr(self.left, self.right, IntLiteral(util.ZERO_POS, self.lf), self.lf)
-                if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
-                    raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
-                if ife.use_compile_to():
-                    pass
-                else:
-                    return ife.compile(env, tpa)
-            elif self.op == "or":
-                ife = IfExpr(self.left, IntLiteral(util.ONE_POS, self.lf), self.right, self.lf)
-                if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
-                    raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
-                return ife.compile(env, tpa)
-            else:
-                raise errs.TplCompileError("Unexpected lazy operator. ", self.lf)
+        res_t = self.evaluated_type(env, tpa.manager)
+        res_addr = tpa.manager.allocate_stack(res_t.memory_length())
+        self.compile_to(env, tpa, res_addr, res_t.memory_length())
+        return res_addr
+        # if self.op_type == BIN_ARITH or self.op_type == BIN_LOGICAL:
+        #     lt = self.left.evaluated_type(env, tpa.manager)
+        #     rt = self.right.evaluated_type(env, tpa.manager)
+        #     left_addr = self.left.compile(env, tpa)
+        #     right_addr = self.right.compile(env, tpa)
+        #     if isinstance(lt, typ.BasicType):
+        #         if isinstance(rt, typ.BasicType):
+        #             if lt == typ.TYPE_INT:
+        #                 if rt == typ.TYPE_INT:
+        #                     res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+        #                     int_int_to_int(self.op, left_addr, right_addr, res_addr, tpa)
+        #                     return res_addr
+        #                 elif rt == typ.TYPE_FLOAT:
+        #                     pass
+        # elif self.op_type == BIN_BITWISE:
+        #     pass
+        # elif self.op_type == BIN_LAZY:
+        #     # x and y: if x then y else 0
+        #     # x or y: if x then 1 else y
+        #     if self.op == "and":
+        #         ife = IfExpr(self.left, self.right, IntLiteral(util.ZERO_POS, self.lf), self.lf)
+        #         if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
+        #             raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
+        #         if ife.use_compile_to():
+        #             pass
+        #         else:
+        #             return ife.compile(env, tpa)
+        #     elif self.op == "or":
+        #         ife = IfExpr(self.left, IntLiteral(util.ONE_POS, self.lf), self.right, self.lf)
+        #         if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
+        #             raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
+        #         return ife.compile(env, tpa)
+        #     else:
+        #         raise errs.TplCompileError("Unexpected lazy operator. ", self.lf)
 
     def use_compile_to(self) -> bool:
         return use_compile_to
@@ -491,11 +502,29 @@ class BinaryOperator(BinaryExpr):
             right_addr = self.right.compile(env, tpa)
             if isinstance(lt, typ.BasicType):
                 if isinstance(rt, typ.BasicType):
-                    if lt.type_name == "int":
-                        if rt.type_name == "int":
+                    if lt == typ.TYPE_INT:
+                        if rt == typ.TYPE_INT:
                             # res_addr = tpa.manager.allocate_stack(util.INT_LEN)
                             int_int_to_int(self.op, left_addr, right_addr, dst_addr, tpa)
-                            return dst_addr
+                        elif rt == typ.TYPE_CHAR:
+                            pass
+                        elif rt == typ.TYPE_BYTE:
+                            pass
+                        elif rt == typ.TYPE_FLOAT:
+                            left_f_addr = tpa.manager.allocate_stack(util.FLOAT_LEN)
+                            tpa.convert_int_to_float(left_f_addr, left_addr)
+                            float_float_to_float(self.op, left_f_addr, right_addr, dst_addr, tpa)
+                    elif lt == typ.TYPE_FLOAT:
+                        if rt == typ.TYPE_FLOAT:
+                            float_float_to_float(self.op, left_addr, right_addr, dst_addr, tpa)
+                        elif rt == typ.TYPE_INT:
+                            right_f_addr = tpa.manager.allocate_stack(util.FLOAT_LEN)
+                            tpa.convert_int_to_float(right_f_addr, right_addr)
+                            float_float_to_float(self.op, left_addr, right_f_addr, dst_addr, tpa)
+                        elif rt == typ.TYPE_CHAR:
+                            pass
+                        elif rt == typ.TYPE_BYTE:
+                            pass
         elif self.op_type == BIN_BITWISE:
             pass
         elif self.op_type == BIN_LAZY:
@@ -512,7 +541,6 @@ class BinaryOperator(BinaryExpr):
                 raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
 
             ife.compile_to(env, tpa, dst_addr, dst_len)
-            return dst_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if self.op_type == BIN_ARITH:
@@ -520,9 +548,13 @@ class BinaryOperator(BinaryExpr):
             rt = self.right.evaluated_type(env, manager)
             if isinstance(lt, typ.BasicType):
                 if isinstance(rt, typ.BasicType):
-                    if lt.type_name == "int":
-                        if rt.type_name == "int":
+                    if lt == typ.TYPE_INT or rt == typ.TYPE_CHAR or rt == typ.TYPE_BYTE:
+                        if rt == typ.TYPE_INT or rt == typ.TYPE_CHAR or rt == typ.TYPE_BYTE:
                             return typ.TYPE_INT
+                        elif rt == typ.TYPE_FLOAT:
+                            return typ.TYPE_FLOAT
+                    elif lt == typ.TYPE_FLOAT:
+                        return typ.TYPE_FLOAT
         elif self.op_type == BIN_LOGICAL or self.op_type == BIN_BITWISE or self.op_type == BIN_LAZY:
             return typ.TYPE_INT
         raise errs.TplCompileError("Value type is not supported by binary operator. ", self.lf)
@@ -663,26 +695,61 @@ class AsExpr(BinaryExpr):
     def __init__(self, lf):
         super().__init__("as", lf)
 
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+    def use_compile_to(self) -> bool:
+        return use_compile_to
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         right_t = self.right.definition_type(env, tpa.manager)
         left_t = self.left.evaluated_type(env, tpa.manager)
         left = self.left.compile(env, tpa)
         if left_t == right_t:
-            return left
+            tpa.assign(dst_addr, left)
         if right_t == typ.TYPE_INT:
-            res_addr = tpa.manager.allocate_stack(util.INT_LEN)
             if left_t == typ.TYPE_CHAR:
-                tpa.convert_char_to_int(res_addr, left)
+                tpa.convert_char_to_int(dst_addr, left)
+            elif left_t == typ.TYPE_FLOAT:
+                tpa.convert_float_to_int(dst_addr, left)
             else:
                 raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
-            return res_addr
         elif right_t == typ.TYPE_CHAR:
-            res_addr = tpa.manager.allocate_stack(util.CHAR_LEN)
             if left_t == typ.TYPE_INT:
-                tpa.convert_int_to_char(res_addr, left)
+                tpa.convert_int_to_char(dst_addr, left)
             else:
                 raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
-            return res_addr
+        elif right_t == typ.TYPE_FLOAT:
+            if left_t == typ.TYPE_INT:
+                tpa.convert_int_to_float(dst_addr, left)
+            else:
+                raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        dst_t = self.evaluated_type(env, tpa.manager)
+        dst_addr = tpa.manager.allocate_stack(dst_t.memory_length())
+        self.compile_to(env, tpa, dst_addr, dst_t.memory_length())
+        return dst_addr
+        # right_t = self.right.definition_type(env, tpa.manager)
+        # left_t = self.left.evaluated_type(env, tpa.manager)
+        # left = self.left.compile(env, tpa)
+        # if left_t == right_t:
+        #     return left
+        # if right_t == typ.TYPE_INT:
+        #     res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+        #     if left_t == typ.TYPE_CHAR:
+        #         tpa.convert_char_to_int(res_addr, left)
+        #     elif left_t == typ.TYPE_FLOAT:
+        #         tpa.convert_float_to_int(res_addr, left)
+        #     else:
+        #         raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
+        #     return res_addr
+        # elif right_t == typ.TYPE_CHAR:
+        #     res_addr = tpa.manager.allocate_stack(util.CHAR_LEN)
+        #     if left_t == typ.TYPE_INT:
+        #         tpa.convert_int_to_char(res_addr, left)
+        #     else:
+        #         raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
+        #     return res_addr
+        # elif right_t == typ.TYPE_FLOAT:
+        #     pass
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return self.right.definition_type(env, manager)
@@ -773,7 +840,7 @@ class DollarExpr(BinaryExpr):
                     real_attr_ptr = tpa.manager.allocate_stack(t.length)
                     if t.length == util.INT_LEN:
                         tpa.assign(real_attr_ptr, struct_addr)
-                        tpa.binary_arith_i("addi", real_attr_ptr, pos, real_attr_ptr)
+                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
                     else:
                         raise errs.TplCompileError("Unsupported length.", self.lf)
                     return real_attr_ptr, t
@@ -1454,8 +1521,8 @@ class IndexingExpr(Expression):
 
         arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
         tpa.assign(arith_addr, index_addr)
-        tpa.binary_arith_i("muli", arith_addr, ele_t.memory_length(), arith_addr)
-        tpa.binary_arith_i("addi", arith_addr, util.INT_LEN, arith_addr)  # this step skips the space storing array size
+        tpa.i_binary_arith("muli", arith_addr, ele_t.memory_length(), arith_addr)
+        tpa.i_binary_arith("addi", arith_addr, util.INT_LEN, arith_addr)  # this step skips the space storing array size
 
         tpa.binary_arith("addi", array_ptr_addr, arith_addr, util.INT_LEN, util.INT_LEN, arith_addr, util.INT_LEN)
         # tpa.to_abs(arith_addr, res_addr)
@@ -1518,7 +1585,7 @@ class PreIncDecOperator(UnaryExpr):
         if vt == typ.TYPE_INT:
             op = "addi" if self.op == "++" else "subi"
             v_addr = self.value.compile(env, tpa)
-            tpa.binary_arith_i(op, v_addr, 1, v_addr)
+            tpa.i_binary_arith(op, v_addr, 1, v_addr)
             return v_addr
         elif vt == typ.TYPE_FLOAT:
             pass
@@ -1561,7 +1628,7 @@ class PostIncDecOperator(UnaryExpr):
             res_addr = tpa.manager.allocate_stack(util.INT_LEN)
             v_addr = self.value.compile(env, tpa)
             tpa.assign(res_addr, v_addr)
-            tpa.binary_arith_i(op, v_addr, 1, v_addr)
+            tpa.i_binary_arith(op, v_addr, 1, v_addr)
             return res_addr
         elif vt == typ.TYPE_FLOAT:
             pass
@@ -1761,6 +1828,23 @@ INT_LOGIC_TABLE = {
     "<=": "lei"
 }
 
+FLOAT_ARITH_TABLE = {
+    "+": "addf",
+    "-": "subf",
+    "*": "mulf",
+    "/": "divf",
+    "%": "modf"
+}
+
+FLOAT_LOGIC_TABLE = {
+    "==": "eqf",
+    "!=": "nef",
+    ">": "gtf",
+    "<": "ltf",
+    ">=": "gef",
+    "<=": "lef"
+}
+
 
 def int_int_to_int(op: str, left_addr: int, right_addr: int, res_addr: int, tpa: tp.TpaOutput):
     if op in INT_ARITH_TABLE:
@@ -1770,6 +1854,16 @@ def int_int_to_int(op: str, left_addr: int, right_addr: int, res_addr: int, tpa:
     else:
         raise errs.TplCompileError("No such binary operator '" + op + "'. ")
     tpa.binary_arith(op_inst, left_addr, right_addr, util.INT_LEN, util.INT_LEN, res_addr, util.INT_LEN)
+
+
+def float_float_to_float(op: str, left_addr: int, right_addr: int, res_addr: int, tpa: tp.TpaOutput):
+    if op in FLOAT_ARITH_TABLE:
+        op_inst = FLOAT_ARITH_TABLE[op]
+    elif op in FLOAT_LOGIC_TABLE:
+        op_inst = FLOAT_LOGIC_TABLE[op]
+    else:
+        raise errs.TplCompileError("No such binary operator '" + op + "'. ")
+    tpa.binary_arith(op_inst, left_addr, right_addr, util.FLOAT_LEN, util.FLOAT_LEN, res_addr, util.FLOAT_LEN)
 
 
 def array_creation(node, env: en.Environment, tpa: tp.TpaOutput) -> int:
@@ -1884,7 +1978,7 @@ def ctf_array(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
         arg_t = arg.evaluated_type(env, tpa.manager)
         if arg_t != typ.TYPE_INT:
             raise errs.TplCompileError(f"Expected argument type 'int', got '{arg_t}'. ", arg.lf)
-        tpa.binary_arith_i("addi", arr_ptr, i * util.INT_LEN, arith_addr)  # (i - 1) * INT_LEN + INT_LEN
+        tpa.i_binary_arith("addi", arr_ptr, i * util.INT_LEN, arith_addr)  # (i - 1) * INT_LEN + INT_LEN
         arg_addr = arg.compile(env, tpa)
         tpa.ptr_assign(arg_addr, arg_t.memory_length(), arith_addr)
 

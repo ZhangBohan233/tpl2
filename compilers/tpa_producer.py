@@ -246,6 +246,26 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def convert_float_to_int(self, dst_addr, src_addr):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("load", register(reg1), address(src_addr))
+        self.write_format("f_to_i", register(reg1))
+        self.write_format("iload", register(reg2), address(dst_addr))
+        self.write_format("store", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
+    def convert_int_to_float(self, dst_addr, src_addr):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("load", register(reg1), address(src_addr))
+        self.write_format("i_to_f", register(reg1))
+        self.write_format("iload", register(reg2), address(dst_addr))
+        self.write_format("store", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg2, reg1)
+
     def return_value(self, src_addr):
         reg1 = self.manager.require_reg()
 
@@ -274,7 +294,7 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
-    def binary_arith_i(self, op_inst: str, left: int, right_value: int, res: int):
+    def i_binary_arith(self, op_inst: str, left: int, right_value: int, res: int):
         reg1, reg2 = self.manager.require_regs(2)
 
         self.write_format("load", register(reg1), address(left))

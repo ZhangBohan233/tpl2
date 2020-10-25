@@ -178,7 +178,7 @@ void nat_println_float() {
     push_fp
     push(FLOAT_LEN)
 
-    tp_float arg = bytes_to_float32(MEMORY + true_addr(0));
+    tp_float arg = bytes_to_float(MEMORY + true_addr(0));
     tp_printf("%f\n", arg);
 
     pull_fp
@@ -622,6 +622,19 @@ void tvm_mainloop() {
             case 42:  // not
                 reg1 = MEMORY[pc++];
                 regs[reg1].int_value = !regs[reg1].int_value;
+                break;
+            case 50:  // addf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].double_value = regs[reg1].double_value + regs[reg2].double_value;
+                break;
+            case 65:  // i_to_f
+                reg1 = MEMORY[pc++];
+                regs[reg1].double_value = regs[reg1].int_value;
+                break;
+            case 66:  // f_to_i
+                reg1 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value;
                 break;
             case 70:  // loadc
                 reg1 = MEMORY[pc++];
