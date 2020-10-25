@@ -43,6 +43,8 @@ INSTRUCTIONS = {
     "invoke": (24, util.INT_LEN),
     "rload_abs": (25, 1, 1),  # rload_abs   %reg1   %reg2   | load value with abs addr stored in %reg2 to %reg1
     #                         # 使用存储在%reg2内的绝对地址，将该地址的内存读入%reg1
+    "rloadc_abs": (26, 1, 1),
+    "rloadb_abs": (27, 1, 1),
     "addi": (30, 1, 1),
     "subi": (31, 1, 1),
     "muli": (32, 1, 1),
@@ -56,11 +58,16 @@ INSTRUCTIONS = {
     "lei": (40, 1, 1),
     "negi": (41, 1),
     "not": (42, 1),
+    "addf": (50, 1, 1),
     "i_to_f": (60, 1),  # convert int in %reg to float, store in %reg
     "f_to_i": (61, 1),
     "loadc": (70, 1, util.INT_LEN),
     "storec": (71, 1, 1),
-    "main_arg": (72,)
+    "storec_abs": (72, 1, 1),
+    "main_arg": (79,),
+    "loadb": (80, 1, util.INT_LEN),
+    "storeb": (81, 1, 1),
+    "storeb_abs": (82, 1, 1)
 }
 
 MNEMONIC = {

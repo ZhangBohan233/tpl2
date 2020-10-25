@@ -23,6 +23,33 @@ def number(num: int) -> str:
         raise errs.TplCompileError("Cannot compile '{}' to number. ".format(num))
 
 
+def load_of_len(length: int) -> str:
+    if length == util.INT_LEN:
+        return "load"
+    elif length == util.CHAR_LEN:
+        return "loadc"
+    else:
+        return "loadb"
+
+
+def store_of_len(length: int) -> str:
+    if length == util.INT_LEN:
+        return "store"
+    elif length == util.CHAR_LEN:
+        return "storec"
+    else:
+        return "storeb"
+
+
+def store_abs_of_len(length: int) -> str:
+    if length == util.INT_LEN:
+        return "store_abs"
+    elif length == util.CHAR_LEN:
+        return "storec_abs"
+    else:
+        return "storeb_abs"
+
+
 class LabelManager:
     def __init__(self):
         self._else_count = 0
@@ -235,14 +262,15 @@ class TpaOutput:
 
         self.manager.append_regs(reg1)
 
-    def binary_arith(self, op_inst: str, left: int, right: int, res: int):
+    def binary_arith(self, op_inst: str, left: int, right: int, left_len: int, right_len: int, res: int, res_len: int):
         reg1, reg2 = self.manager.require_regs(2)
 
-        self.write_format("load", register(reg1), address(left))
-        self.write_format("load", register(reg2), address(right))
+        # result length will always be INT_LEN
+        self.write_format(load_of_len(left_len), register(reg1), address(left))
+        self.write_format(load_of_len(right_len), register(reg2), address(right))
         self.write_format(op_inst, register(reg1), register(reg2))
         self.write_format("iload", register(reg2), number(res))
-        self.write_format("store", register(reg2), register(reg1))
+        self.write_format(store_of_len(res_len), register(reg2), register(reg1))
 
         self.manager.append_regs(reg2, reg1)
 
@@ -292,22 +320,27 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
-    def value_in_addr_op(self, ptr_addr: int, res_addr: int):
+    def value_in_addr_op(self, ptr_addr: int, length: int, res_addr: int, res_len: int):
         reg1, reg2 = self.manager.require_regs(2)
 
         self.write_format("load", register(reg1), address(ptr_addr))
-        self.write_format("rload_abs", register(reg2), register(reg1))
+        if length == util.INT_LEN:
+            self.write_format("rload_abs", register(reg2), register(reg1))
+        elif length == util.CHAR_LEN:
+            self.write_format("rloadc_abs", register(reg2), register(reg1))
+        else:
+            self.write_format("rloadb_abs", register(reg2), register(reg1))
         self.write_format("iload", register(reg1), number(res_addr))
-        self.write_format("store", register(reg1), register(reg2))
+        self.write_format(store_of_len(res_len), register(reg1), register(reg2))
 
         self.manager.append_regs(reg2, reg1)
 
-    def ptr_assign(self, value_addr: int, ptr_addr: int):
+    def ptr_assign(self, value_addr: int, value_len: int, ptr_addr: int):
         reg1, reg2 = self.manager.require_regs(2)
 
         self.write_format("load", register(reg1), address(ptr_addr))
         self.write_format("load", register(reg2), address(value_addr))
-        self.write_format("store_abs", register(reg1), register(reg2))
+        self.write_format(store_abs_of_len(value_len), register(reg1), register(reg2))
 
         self.manager.append_regs(reg2, reg1)
 

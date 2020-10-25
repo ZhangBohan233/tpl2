@@ -101,7 +101,7 @@ class Expression(Node, ABC):
     def use_compile_to(self) -> bool:
         return False
 
-    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         et = self.evaluated_type(env, tpa.manager)
         res = self.compile(env, tpa)
         if et.memory_length() == util.INT_LEN:
@@ -271,7 +271,7 @@ class IntLiteral(LiteralNode):
     def use_compile_to(self) -> bool:
         return use_compile_to
 
-    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         tpa.load_literal(dst_addr, self.lit_pos)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -307,7 +307,7 @@ class CharLiteral(LiteralNode):
     def use_compile_to(self) -> bool:
         return use_compile_to
 
-    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         tpa.load_char_literal(dst_addr, self.lit_pos)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -483,7 +483,7 @@ class BinaryOperator(BinaryExpr):
     def use_compile_to(self) -> bool:
         return use_compile_to
 
-    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         if self.op_type == BIN_ARITH or self.op_type == BIN_LOGICAL:
             lt = self.left.evaluated_type(env, tpa.manager)
             rt = self.right.evaluated_type(env, tpa.manager)
@@ -511,7 +511,7 @@ class BinaryOperator(BinaryExpr):
             if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
                 raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
 
-            ife.compile_to(env, tpa, dst_addr)
+            ife.compile_to(env, tpa, dst_addr, dst_len)
             return dst_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -568,8 +568,8 @@ class StarExpr(UnaryExpr):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         val = self.value.compile(env, tpa)
         self_t = self.evaluated_type(env, tpa.manager)
-        res_addr = tpa.manager.allocate_stack(self_t.length)
-        tpa.value_in_addr_op(val, res_addr)
+        res_addr = tpa.manager.allocate_stack(self_t.memory_length())
+        tpa.value_in_addr_op(val, self_t.memory_length(), res_addr, self_t.memory_length())
         return res_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -605,12 +605,12 @@ class NewExpr(UnaryExpr):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         call_res = tpa.manager.allocate_stack(util.PTR_LEN)
-        self.compile_to(env, tpa, call_res)
+        self.compile_to(env, tpa, call_res, util.PTR_LEN)
         return call_res
 
-    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         if isinstance(self.value, IndexingExpr):
-            return self.compile_heap_arr_init(env, tpa, dst_addr)
+            return self.compile_heap_arr_init(env, tpa, dst_addr, dst_len)
         t = self.evaluated_type(env, tpa.manager)
         malloc = NameNode("malloc", self.lf)
         req = RequireStmt(malloc, self.lf)
@@ -622,10 +622,10 @@ class NewExpr(UnaryExpr):
     def use_compile_to(self) -> bool:
         return use_compile_to
 
-    def compile_heap_arr_init(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
+    def compile_heap_arr_init(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr, dst_len: int):
         self.value: IndexingExpr
         args = [self.value.get_atomic_node()] + self.value.flatten_args(env, tpa.manager, True)
-        FunctionCall(NameNode("array", self.lf), Line(self.lf, *args), self.lf).compile_to(env, tpa, dst_addr)
+        FunctionCall(NameNode("array", self.lf), Line(self.lf, *args), self.lf).compile_to(env, tpa, dst_addr, dst_len)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if isinstance(self.value, IndexingExpr):
@@ -695,8 +695,8 @@ class Dot(BinaryExpr):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         attr_ptr, attr_t = self.get_attr_ptr_and_type(env, tpa)
 
-        res_ptr = tpa.manager.allocate_stack(attr_t.length)
-        tpa.value_in_addr_op(attr_ptr, res_ptr)
+        res_ptr = tpa.manager.allocate_stack(attr_t.memory_length())
+        tpa.value_in_addr_op(attr_ptr, attr_t.memory_length(), res_ptr, attr_t.memory_length())
         return res_ptr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -742,11 +742,11 @@ class DollarExpr(BinaryExpr):
         if isinstance(left_t, typ.PointerType) and isinstance(left_t.base, typ.StructType):
             attr_ptr, attr_t = self.get_attr_ptr_and_type(env, tpa)
 
-            res_ptr = tpa.manager.allocate_stack(attr_t.length)
-            tpa.value_in_addr_op(attr_ptr, res_ptr)
+            res_ptr = tpa.manager.allocate_stack(attr_t.memory_length())
+            tpa.value_in_addr_op(attr_ptr, attr_t.memory_length(), res_ptr, attr_t.memory_length())
             return res_ptr
         elif isinstance(left_t, typ.ArrayType) and isinstance(self.right, NameNode):
-            return self.array_attributes(env, tpa)
+            return self.array_attributes(env, tpa, self.right.name)
 
         raise errs.TplCompileError("Left side of dollar must be a pointer to struct or an array. ", self.lf)
 
@@ -780,11 +780,13 @@ class DollarExpr(BinaryExpr):
 
         raise errs.TplCompileError("Left side of dollar must be a pointer to struct. ", self.lf)
 
-    def array_attributes(self, env: en.Environment, tpa: tp.TpaOutput):
+    def array_attributes(self, env: en.Environment, tpa: tp.TpaOutput, name: str):
         res_addr = tpa.manager.allocate_stack(util.INT_LEN)
         arr_ptr = self.left.compile(env, tpa)
-        tpa.value_in_addr_op(arr_ptr, res_addr)  # since first value in array is the length
-        return res_addr
+        if name == "length":
+            tpa.value_in_addr_op(arr_ptr, util.INT_LEN, res_addr, util.INT_LEN)
+            # since first value in array is the length
+            return res_addr
 
 
 class Assignment(BinaryExpr):
@@ -816,7 +818,7 @@ class Assignment(BinaryExpr):
             raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.left.__class__.__name__), self.lf)
 
         if self.right.use_compile_to():
-            self.right.compile_to(env, tpa, left_addr)
+            self.right.compile_to(env, tpa, left_addr, left_t.memory_length())
         else:
             right_addr = self.right.compile(env, tpa)
             tpa.assign(left_addr, right_addr)
@@ -828,7 +830,7 @@ class Assignment(BinaryExpr):
     def struct_attr_assign(self, dot, env: en.Environment, tpa: tp.TpaOutput):
         attr_ptr, attr_t = dot.get_attr_ptr_and_type(env, tpa)
         res_addr = self.right.compile(env, tpa)
-        tpa.ptr_assign(res_addr, attr_ptr)
+        tpa.ptr_assign(res_addr, attr_t.memory_length(), attr_ptr)
         return res_addr
 
     @staticmethod
@@ -840,13 +842,13 @@ class Assignment(BinaryExpr):
 
         indexed_ptr = indexing.get_indexed_addr(env, tpa)
         res_addr = right.compile(env, tpa)
-        tpa.ptr_assign(res_addr, indexed_ptr)
+        tpa.ptr_assign(res_addr, indexed_t.memory_length(), indexed_ptr)
         return res_addr
 
     def ptr_assign(self, left: StarExpr, env: en.Environment, tpa: tp.TpaOutput) -> int:
         right_addr = self.right.compile(env, tpa)
         inner_addr = left.value.compile(env, tpa)
-        tpa.ptr_assign(right_addr, inner_addr)
+        tpa.ptr_assign(right_addr, left.value.evaluated_type(env, tpa.manager).memory_length(), inner_addr)
         return right_addr
 
 
@@ -895,7 +897,7 @@ class QuickAssignment(BinaryStmt):
         env.define_var_set(self.left.name, t, res_addr, self.lf)
 
         if self.right.use_compile_to():
-            self.right.compile_to(env, tpa, res_addr)
+            self.right.compile_to(env, tpa, res_addr, t.memory_length())
         else:
             right_addr = self.right.compile(env, tpa)
             tpa.assign(res_addr, right_addr)
@@ -1022,8 +1024,8 @@ class FunctionCall(Expression):
         if not isinstance(func_type, typ.CallableType):
             raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
 
-        rtn_addr = tpa.manager.allocate_stack(func_type.rtype.length)
-        self.compile_to(env, tpa, rtn_addr)
+        rtn_addr = tpa.manager.allocate_stack(func_type.rtype.memory_length())
+        self.compile_to(env, tpa, rtn_addr, func_type.rtype.memory_length())
         return rtn_addr
 
     @staticmethod
@@ -1044,7 +1046,7 @@ class FunctionCall(Expression):
     def use_compile_to(self) -> bool:
         return use_compile_to
 
-    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         func_type = self.call_obj.evaluated_type(env, tpa.manager)
         if isinstance(func_type, typ.CompileTimeFunctionType):
             call_compile_time_function(func_type, self.args, env, tpa, dst_addr)
@@ -1185,14 +1187,14 @@ class IfExpr(Expression):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         res_t = self.evaluated_type(env, tpa.manager)
-        res_addr = tpa.manager.allocate_stack(res_t.length)
-        self.compile_to(env, tpa, res_addr)
+        res_addr = tpa.manager.allocate_stack(res_t.memory_length())
+        self.compile_to(env, tpa, res_addr, res_t.memory_length())
         return res_addr
 
     def use_compile_to(self) -> bool:
         return use_compile_to
 
-    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         cond_addr = self.condition.compile(env, tpa)
 
         else_label = tpa.manager.label_manager.else_label()
@@ -1438,10 +1440,11 @@ class IndexingExpr(Expression):
             return False
 
     def indexing(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
-        res_addr = tpa.manager.allocate_stack(self.evaluated_type(env, tpa.manager).memory_length())
+        mem_len = self.evaluated_type(env, tpa.manager).memory_length()
+        res_addr = tpa.manager.allocate_stack(mem_len)
         indexed_addr = self.get_indexed_addr(env, tpa)
 
-        tpa.value_in_addr_op(indexed_addr, res_addr)
+        tpa.value_in_addr_op(indexed_addr, mem_len, res_addr, mem_len)
         return res_addr
 
     def get_indexed_addr(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
@@ -1454,7 +1457,7 @@ class IndexingExpr(Expression):
         tpa.binary_arith_i("muli", arith_addr, ele_t.memory_length(), arith_addr)
         tpa.binary_arith_i("addi", arith_addr, util.INT_LEN, arith_addr)  # this step skips the space storing array size
 
-        tpa.binary_arith("addi", array_ptr_addr, arith_addr, arith_addr)
+        tpa.binary_arith("addi", array_ptr_addr, arith_addr, util.INT_LEN, util.INT_LEN, arith_addr, util.INT_LEN)
         # tpa.to_abs(arith_addr, res_addr)
         return arith_addr
 
@@ -1642,6 +1645,7 @@ class SwitchStmt(Statement):
         eq_inst = "eqi"  # todo
 
         cond_addr = self.cond.compile(env, tpa)
+        cond_t = self.cond.evaluated_type(env, tpa.manager)
         arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
         end_case = tpa.manager.label_manager.end_case_label()
         next_case_label = tpa.manager.label_manager.case_label()
@@ -1650,8 +1654,10 @@ class SwitchStmt(Statement):
 
         for case in self.cases:
             case_cond = case.cond.compile(env, tpa)
-            case_env = en.CaseEnvironment(env, next_body_label)
-            tpa.binary_arith(eq_inst, cond_addr, case_cond, arith_addr)
+            case_cond_t = case.cond.evaluated_type(env, tpa.manager)
+            case_env = en.CaseEnvironment(env)
+            tpa.binary_arith(eq_inst, cond_addr, case_cond, cond_t.memory_length(), case_cond_t.memory_length(),
+                             arith_addr, util.INT_LEN)
             tpa.if_zero_goto(arith_addr, next_case_label)
 
             tpa.write_format("label", cur_body_label)
@@ -1686,29 +1692,32 @@ class SwitchExpr(Expression):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         res_t = self.evaluated_type(env, tpa.manager)
-        res_addr = tpa.manager.allocate_stack(res_t.length)
-        self.compile_to(env, tpa, res_addr)
+        res_addr = tpa.manager.allocate_stack(res_t.memory_length())
+        self.compile_to(env, tpa, res_addr, res_t.memory_length())
         return res_addr
 
     def use_compile_to(self) -> bool:
         return use_compile_to
 
-    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         eq_inst = "eqi"  # todo
 
         cond_addr = self.cond.compile(env, tpa)
+        cond_t = self.cond.evaluated_type(env, tpa.manager)
         arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
         end_case = tpa.manager.label_manager.end_case_label()
         next_case_label = tpa.manager.label_manager.case_label()
 
         for case in self.cases:
             case_cond = case.cond.compile(env, tpa)
+            case_cond_t = case.cond.evaluated_type(env, tpa.manager)
             case_env = en.CaseEnvironment(env)
-            tpa.binary_arith(eq_inst, cond_addr, case_cond, arith_addr)
+            tpa.binary_arith(eq_inst, cond_addr, case_cond, cond_t.memory_length(), case_cond_t.memory_length(),
+                             arith_addr, util.INT_LEN)
             tpa.if_zero_goto(arith_addr, next_case_label)
 
             case_body: Expression = case.body
-            case_body.compile_to(case_env, tpa, dst_addr)
+            case_body.compile_to(case_env, tpa, dst_addr, dst_len)
 
             tpa.write_format("goto", end_case)
 
@@ -1717,7 +1726,7 @@ class SwitchExpr(Expression):
 
         # default case
         case_env = en.CaseEnvironment(env)
-        self.default_case.body.compile_to(case_env, tpa, dst_addr)
+        self.default_case.body.compile_to(case_env, tpa, dst_addr, dst_len)
 
         tpa.write_format("label", end_case)
 
@@ -1760,7 +1769,7 @@ def int_int_to_int(op: str, left_addr: int, right_addr: int, res_addr: int, tpa:
         op_inst = INT_LOGIC_TABLE[op]
     else:
         raise errs.TplCompileError("No such binary operator '" + op + "'. ")
-    tpa.binary_arith(op_inst, left_addr, right_addr, res_addr)
+    tpa.binary_arith(op_inst, left_addr, right_addr, util.INT_LEN, util.INT_LEN, res_addr, util.INT_LEN)
 
 
 def array_creation(node, env: en.Environment, tpa: tp.TpaOutput) -> int:
@@ -1877,7 +1886,7 @@ def ctf_array(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
             raise errs.TplCompileError(f"Expected argument type 'int', got '{arg_t}'. ", arg.lf)
         tpa.binary_arith_i("addi", arr_ptr, i * util.INT_LEN, arith_addr)  # (i - 1) * INT_LEN + INT_LEN
         arg_addr = arg.compile(env, tpa)
-        tpa.ptr_assign(arg_addr, arith_addr)
+        tpa.ptr_assign(arg_addr, arg_t.memory_length(), arith_addr)
 
     sizeof_name = NameNode("sizeof", args.lf)
     sizeof_call = FunctionCall(sizeof_name, Line(args.lf, args[0]), args.lf)

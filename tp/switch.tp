@@ -1,11 +1,12 @@
 ﻿fn main() int {
     i: int = 0;
-    b: int = 1;
+    b: char = 'b';
+    d: int = 3;
 
     c: int = switch b {
-        case 1 -> 10;
-        case 2 -> 20;
-        case 3 -> 30;
+        case 'a' -> 10;
+        case 'b' -> 20;
+        case 'c' -> 30;
         default -> 821;
     }
 

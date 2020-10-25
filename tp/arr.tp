@@ -8,14 +8,20 @@ fn test(arr: int[]) void {
 
 
 fn main() int {
-    a: int[][] = new int[3][];  // {{0, 0, 0}, {0, 0, 0}}
-    a[1] = new int[3];
-    a[1][0] = 128;
-    a[1][1] = 129;
-    a[1][2] = 134;
+    //a: char[][] = char[2][];  // {{0, 0, 0}, {0, 0, 0}}
+    //a[1] = char[3];
+    arr: char[] = char[3];
+    b: int = 8;
+    arr[2] = 'c';
+    //a[1][0] = 99 as char;
+    //a[1][1] = 101 as char;
+    //a[1][2] = 104 as char;
+
+
+    cprintln(arr[2]);
 
     //test(a[0]);
 
-    //return a[1][2];
-    return 1;
+    //return a[1][2] as int;
+    return b;
 }

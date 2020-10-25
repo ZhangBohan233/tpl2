@@ -549,6 +549,17 @@ void tvm_mainloop() {
                 reg2 = MEMORY[pc++];
                 memcpy(regs[reg1].bytes, MEMORY + regs[reg2].int_value, INT_LEN);
                 break;
+            case 26:  // rloadc_abs
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                memcpy(regs[reg1].bytes, MEMORY + regs[reg2].int_value, CHAR_LEN);
+                break;
+            case 27:  // rloadb_abs
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].byte_value = MEMORY[regs[reg2].int_value];
+//                memcpy(regs[reg1].bytes, MEMORY + regs[reg2].byte_value, 1);
+                break;
             case 30:  // addi
                 reg1 = MEMORY[pc++];
                 reg2 = MEMORY[pc++];
@@ -623,7 +634,13 @@ void tvm_mainloop() {
                 reg2 = MEMORY[pc++];
                 char_to_bytes(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].char_value);
                 break;
-            case 72:  // main args
+            case 72:  // storec_abs
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                char_to_bytes(MEMORY + regs[reg1].int_value, regs[reg2].char_value);
+//                memcpy(MEMORY + regs[reg1].char_value, regs[reg2].bytes, CHAR_LEN);
+                break;
+            case 79:  // main args
                 int_to_bytes(MEMORY + true_addr_sp(0), tvm_set_args());
                 break;
             default:
