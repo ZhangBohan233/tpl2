@@ -79,6 +79,16 @@ class IntToken(Token):
         return "Int{" + str(self.value) + "}"
 
 
+class ByteToken(Token):
+    def __init__(self, v: str, lf):
+        super().__init__(lf)
+
+        self.value = int(v)
+
+    def __str__(self):
+        return "Byte{" + str(self.value) + "}"
+
+
 class FloatToken(Token):
     def __init__(self, v: str, lf):
         super().__init__(lf)

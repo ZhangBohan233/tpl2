@@ -26,8 +26,10 @@ fn E:\GitHub\tpl2\tp\float.tp$main $1024
     load          %1      $24
     store_abs     %0      %1
     invoke        $16
-    load          %0      $1032
-    iload         %1      $32
+    load          %0      $0
+    load          %1      $8
+    nef           %0      %1
+    iload         %1      32
     store         %1      %0
     load          %0      $32
     put_ret       %0

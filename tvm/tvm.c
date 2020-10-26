@@ -343,6 +343,13 @@ void _create_arr_rec(tp_int to_write, tp_int atom_len,
 
 }
 
+tp_float float_mod(tp_float d1, tp_float d2) {
+    while (d1 >= d2) {
+        d1 -= d2;
+    }
+    return d1;
+}
+
 void nat_heap_array() {
     push_fp
     push(INT_LEN * 2)
@@ -628,6 +635,60 @@ void tvm_mainloop() {
                 reg2 = MEMORY[pc++];
                 regs[reg1].double_value = regs[reg1].double_value + regs[reg2].double_value;
                 break;
+            case 51:  // subf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].double_value = regs[reg1].double_value - regs[reg2].double_value;
+                break;
+            case 52:  // mulf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].double_value = regs[reg1].double_value * regs[reg2].double_value;
+                break;
+            case 53:  // divf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].double_value = regs[reg1].double_value / regs[reg2].double_value;
+                break;
+            case 54:  // modf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].double_value = float_mod(regs[reg1].double_value, regs[reg2].double_value);
+                break;
+            case 55:  // eqf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value == regs[reg2].double_value;
+                break;
+            case 56:  // nef
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value != regs[reg2].double_value;
+                break;
+            case 57:  // gtf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value > regs[reg2].double_value;
+                break;
+            case 58:  // ltf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value < regs[reg2].double_value;
+                break;
+            case 59:  // gef
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value >= regs[reg2].double_value;
+                break;
+            case 60:  // lef
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value <= regs[reg2].double_value;
+                break;
+            case 61:  // negf
+                reg1 = MEMORY[pc++];
+                regs[reg1].double_value = -regs[reg1].double_value;
+                break;
             case 65:  // i_to_f
                 reg1 = MEMORY[pc++];
                 regs[reg1].double_value = regs[reg1].int_value;
@@ -655,6 +716,26 @@ void tvm_mainloop() {
                 break;
             case 79:  // main args
                 int_to_bytes(MEMORY + true_addr_sp(0), tvm_set_args());
+                break;
+            case 80:  // loadb
+                reg1 = MEMORY[pc++];
+                memcpy(regs[reg1].bytes, MEMORY + pc, INT_LEN);
+                pc += INT_LEN;
+//                regs[reg1].char_value = bytes_to_char(MEMORY + true_addr(regs[reg1].int_value));
+                regs[reg1].byte_value = MEMORY[true_addr(regs[reg1].int_value)];
+                break;
+            case 81:  // storeb
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                MEMORY[true_addr(regs[reg1].int_value)] = regs[reg2].byte_value;
+//                char_to_bytes(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].char_value);
+                break;
+            case 82:  // storeb_abs
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                MEMORY[regs[reg1].int_value] = regs[reg2].byte_value;
+//                char_to_bytes(MEMORY + regs[reg1].int_value, regs[reg2].char_value);
+//                memcpy(MEMORY + regs[reg1].char_value, regs[reg2].bytes, CHAR_LEN);
                 break;
             default:
                 ERROR_CODE = ERR_INSTRUCTION;

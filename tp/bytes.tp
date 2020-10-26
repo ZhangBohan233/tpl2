@@ -1,0 +1,9 @@
+﻿fn main() int {
+    a: byte = 2223b;
+    b : byte[] = byte[8];
+    b[1] = 33b;
+    b[2] = 1b;
+    b[3] = 4b;
+
+    return a as int;
+}

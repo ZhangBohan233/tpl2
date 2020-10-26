@@ -387,6 +387,8 @@ class Parser:
                 builder.add_node(ast.FakeFloatLit(token.value, lf))
             elif isinstance(token, tl.CharToken):
                 builder.add_node(ast.FakeCharLit(token.char, lf))
+            elif isinstance(token, tl.ByteToken):
+                builder.add_node(ast.FakeByteLit(token.value, lf))
             elif isinstance(token, tl.StrToken):
                 builder.add_node(ast.FakeStrLit(token.value, lf))
             elif isinstance(token, tl.IdToken):

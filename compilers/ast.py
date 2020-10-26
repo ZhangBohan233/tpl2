@@ -148,6 +148,11 @@ class FakeCharLit(FakeLiteral):
         super().__init__(value, lf)
 
 
+class FakeByteLit(FakeLiteral):
+    def __init__(self, value, lf):
+        super().__init__(value, lf)
+
+
 class FakeStrLit(FakeLiteral):
     def __init__(self, value, lf):
         super().__init__(value, lf)
@@ -314,6 +319,25 @@ class CharLiteral(LiteralNode):
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return typ.TYPE_CHAR
+
+    def __str__(self):
+        return "Char@" + str(self.lit_pos)
+
+
+class ByteLiteral(LiteralNode):
+    def __init__(self, lit_pos, lf):
+        super().__init__(lit_pos, lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        stack_addr = tpa.manager.allocate_stack(1)
+        tpa.load_byte_literal(stack_addr, self.lit_pos)
+        return stack_addr
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
+        tpa.load_byte_literal(dst_addr, self.lit_pos)
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        return typ.TYPE_BYTE
 
     def __str__(self):
         return "Char@" + str(self.lit_pos)
@@ -704,9 +728,12 @@ class AsExpr(BinaryExpr):
         left = self.left.compile(env, tpa)
         if left_t == right_t:
             tpa.assign(dst_addr, left)
+            return
         if right_t == typ.TYPE_INT:
             if left_t == typ.TYPE_CHAR:
                 tpa.convert_char_to_int(dst_addr, left)
+            elif left_t == typ.TYPE_BYTE:
+                tpa.convert_byte_to_int(dst_addr, left)
             elif left_t == typ.TYPE_FLOAT:
                 tpa.convert_float_to_int(dst_addr, left)
             else:
@@ -714,6 +741,11 @@ class AsExpr(BinaryExpr):
         elif right_t == typ.TYPE_CHAR:
             if left_t == typ.TYPE_INT:
                 tpa.convert_int_to_char(dst_addr, left)
+            else:
+                raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
+        elif right_t == typ.TYPE_BYTE:
+            if left_t == typ.TYPE_INT:
+                tpa.convert_int_to_byte(dst_addr, left)
             else:
                 raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
         elif right_t == typ.TYPE_FLOAT:

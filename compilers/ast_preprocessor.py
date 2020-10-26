@@ -11,6 +11,7 @@ class AstPreprocessor:
         self.int_literals = util.initial_int_literal_dict()  # int_lit : position in literal_bytes
         self.float_literals = {}
         self.char_literals = {}
+        self.byte_literals = {}
         self.str_literals = {}
 
     def preprocess(self):
@@ -41,6 +42,14 @@ class AstPreprocessor:
                 self.literal_bytes.extend(util.char_to_bytes(node.value))
                 self.char_literals[node.value] = pos
             return ast.CharLiteral(pos, node.lf)
+        elif isinstance(node, ast.FakeByteLit):
+            if node.value in self.byte_literals:
+                pos = self.byte_literals[node.value]
+            else:
+                pos = len(self.literal_bytes)
+                self.literal_bytes.append(node.value & 0xff)
+                self.byte_literals[node.value] = pos
+            return ast.ByteLiteral(pos, node.lf)
         elif isinstance(node, ast.FakeStrLit):
             if node.value in self.str_literals:
                 pos = self.str_literals[node.value]

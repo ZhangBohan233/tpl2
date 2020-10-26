@@ -1,4 +1,10 @@
-﻿===== VERSION 2014 =====
+﻿===== VERSION 2015 =====
+2020/10/26
+
+* Implemented byte basics
+* Implemented more float computations
+
+===== VERSION 2014 =====
 2020/10/26
 
 * Implemented float basics

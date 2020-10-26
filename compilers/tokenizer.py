@@ -156,6 +156,12 @@ class FileTokenizer:
                 if i < length - 2 and lst[i + 1] == "." and is_int(lst[i + 2]):
                     self.tokens.append(tl.FloatToken(s + "." + lst[i + 2], lf))
                     i += 2
+                elif i < length - 1 and lst[i + 1] == "b":
+                    self.tokens.append(tl.ByteToken(s, lf))  # 1b
+                    i += 1
+                elif i < length - 1 and lst[i + 1] == "f":
+                    self.tokens.append(tl.FloatToken(s, lf))  # situation like 1f (== 1.0)
+                    i += 1
                 else:
                     self.tokens.append(tl.IntToken(s, lf))
             # elif s == "\n":
@@ -165,6 +171,12 @@ class FileTokenizer:
             elif s in tl.ALL:
                 self.tokens.append(tl.IdToken(s, lf))
             i += 1
+
+
+NOT_INT = 0
+INT = 1
+BYTE = 2
+FLOAT = 3
 
 
 def is_int(s: str) -> bool:
