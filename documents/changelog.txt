@@ -1,4 +1,9 @@
-﻿===== VERSION 2015 =====
+﻿===== VERSION 2016 =====
+2021/02/12
+
+* Implemented templates <T>
+
+===== VERSION 2015 =====
 2020/10/26
 
 * Implemented byte basics

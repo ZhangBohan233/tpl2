@@ -1,0 +1,22 @@
+﻿require {
+    malloc
+}
+
+struct A<T, V> {
+    a: int;
+    b: T;
+    c: V;
+}
+
+struct X {
+    x: int;
+}
+
+fn main() int {
+    b: *A<int[], *X> = malloc(sizeof(A<int[], *X>));
+    b$a = 2;
+    b$b = new int[4];
+    (b$b)[0] = 1;
+    (b$b)[1] = 2;
+    return (b$b)[1];
+}

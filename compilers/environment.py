@@ -211,6 +211,16 @@ class ModuleEnvironment(MainAbstractEnvironment):
             raise errs.TplEnvironmentError("Multiple exports in one module. ", lf)
 
 
+class StructEnvironment(MainAbstractEnvironment):
+    def __init__(self, outer):
+        super().__init__(outer)
+
+        self.templates = set()
+
+    def add_template(self, name: str):
+        self.templates.add(name)
+
+
 class BlockEnvironment(SubAbstractEnvironment):
     def __init__(self, outer):
         super().__init__(outer)

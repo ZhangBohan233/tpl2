@@ -157,18 +157,35 @@ class NativeFuncType(CallableType):
 
 
 class StructType(Type):
-    def __init__(self, name: str, file_path: str, members: dict, length):
+    def __init__(self, name: str, file_path: str, members: dict, length, templates: list):
         super().__init__(length)
 
         self.name = name
         self.file_path = file_path  # where this struct is defined, avoiding conflict struct def'ns in non-export part
         self.members = members  # {name: (position, type)}
+        self.templates = templates
 
     def __eq__(self, other):
         return isinstance(other, StructType) and self.name == other.name and self.file_path == other.file_path
 
     def __str__(self):
         return "StructType(" + util.name_with_path(self.name, self.file_path) + ")"
+
+
+class GenericStructType(Type):
+    def __init__(self, struct_t: StructType, generics: dict):
+        super().__init__(struct_t.length)
+
+        self.struct_t = struct_t
+        self.generics = generics
+
+    def __eq__(self, other):
+        return (isinstance(other, GenericStructType) and
+                self.struct_t == other.struct_t and
+                self.generics == other.generics)
+
+    def __str__(self):
+        return f"{self.struct_t}<{self.generics}>"
 
 
 class ArrayType(Type):

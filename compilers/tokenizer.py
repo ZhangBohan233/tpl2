@@ -76,6 +76,13 @@ class FileTokenizer:
                     return cur_active.parent
                 else:
                     raise errs.TplSyntaxError("Parenthesis does not close. ", tk.lf)
+            if symbol == "<":
+                if has_closing_arrow(self.tokens, index):
+                    return tl.CollectiveElement(tl.CE_ARROW_BRACKET, tk.lf, cur_active)
+            if symbol == ">":
+                if tl.is_arrow_bracket(cur_active):
+                    cur_active.parent.append(cur_active)
+                    return cur_active.parent
 
         cur_active.append(tl.AtomicElement(tk, cur_active))
         return cur_active
@@ -301,3 +308,20 @@ def concatenate_able(ch1: str, ch2: str) -> bool:
     rt = char_type(ch2)
     return (lt == rt and lt in SELF_CONCATENATE) or \
            (lt, rt) in CROSS_CONCATENATE
+
+
+def has_closing_arrow(tokens: list, left_arr_index: int) -> bool:
+    for i in range(left_arr_index + 1, len(tokens)):
+        tk = tokens[i]
+        if isinstance(tk, tl.IdToken):
+            if tk.identifier == ">":
+                return True
+            elif tk.identifier == ";":
+                return False
+        elif (isinstance(tk, tl.StrToken) or
+              isinstance(tk, tl.IntToken) or
+              isinstance(tk, tl.ByteToken) or
+              isinstance(tk, tl.CharToken) or
+              isinstance(tk, tl.FloatToken)):
+            return False
+    return False

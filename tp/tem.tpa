@@ -1,0 +1,206 @@
+bits
+64
+stack_size
+1024
+global_length
+16
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 2 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0
+
+fn E:\GitHub\tpl2\tp\tem.tp$main $1032
+    push_fp
+    push          232
+    iload         %0      $24
+    iload         %1      $16
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    invoke        $1024
+    load          %0      $8
+    iload         %1      $0
+    store         %1      %0
+    load          %0      $0
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      0
+    addi          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load_lit      %0      $24
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $24
+    load          %1      $32
+    store_abs     %0      %1
+    load          %0      $0
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      40
+    store         %1      %0
+    iload         %0      $1
+    iload         %1      $64
+    store         %1      %0
+    aload         %0      $64
+    iload         %1      56
+    store         %1      %0
+    load          %0      $56
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      80
+    store         %1      %0
+    load_lit      %0      $32
+    iload         %1      $88
+    store         %1      %0
+    load          %0      $80
+    load          %1      $88
+    store_abs     %0      %1
+    iload         %0      $8
+    iload         %1      $96
+    store         %1      %0
+    require       heap_array $104    %0      %1
+    aload_sp      %0      $0
+    load          %1      $96
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $56
+    store_abs     %0      %1
+    iload         %0      48
+    set_ret       %0
+    invoke        $104
+    load          %0      $40
+    load          %1      $48
+    store_abs     %0      %1
+    load          %0      $0
+    iload         %1      $112
+    store         %1      %0
+    load          %0      $112
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      112
+    store         %1      %0
+    load          %0      $112
+    rload_abs     %1      %0
+    iload         %0      120
+    store         %0      %1
+    load_lit      %0      $0
+    iload         %1      $128
+    store         %1      %0
+    load          %0      $128
+    iload         %1      $136
+    store         %1      %0
+    load          %0      $136
+    iload         %1      8
+    muli          %0      %1
+    iload         %1      136
+    store         %1      %0
+    load          %0      $136
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      136
+    store         %1      %0
+    load          %0      $120
+    load          %1      $136
+    addi          %0      %1
+    iload         %1      136
+    store         %1      %0
+    load_lit      %0      $8
+    iload         %1      $144
+    store         %1      %0
+    load          %0      $136
+    load          %1      $144
+    store_abs     %0      %1
+    load          %0      $0
+    iload         %1      $152
+    store         %1      %0
+    load          %0      $152
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      152
+    store         %1      %0
+    load          %0      $152
+    rload_abs     %1      %0
+    iload         %0      160
+    store         %0      %1
+    load_lit      %0      $8
+    iload         %1      $168
+    store         %1      %0
+    load          %0      $168
+    iload         %1      $176
+    store         %1      %0
+    load          %0      $176
+    iload         %1      8
+    muli          %0      %1
+    iload         %1      176
+    store         %1      %0
+    load          %0      $176
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      176
+    store         %1      %0
+    load          %0      $160
+    load          %1      $176
+    addi          %0      %1
+    iload         %1      176
+    store         %1      %0
+    load_lit      %0      $24
+    iload         %1      $184
+    store         %1      %0
+    load          %0      $176
+    load          %1      $184
+    store_abs     %0      %1
+    load          %0      $0
+    iload         %1      $200
+    store         %1      %0
+    load          %0      $200
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      200
+    store         %1      %0
+    load          %0      $200
+    rload_abs     %1      %0
+    iload         %0      208
+    store         %0      %1
+    load_lit      %0      $8
+    iload         %1      $216
+    store         %1      %0
+    load          %0      $216
+    iload         %1      $224
+    store         %1      %0
+    load          %0      $224
+    iload         %1      8
+    muli          %0      %1
+    iload         %1      224
+    store         %1      %0
+    load          %0      $224
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      224
+    store         %1      %0
+    load          %0      $208
+    load          %1      $224
+    addi          %0      %1
+    iload         %1      224
+    store         %1      %0
+    load          %0      $224
+    rload_abs     %1      %0
+    iload         %0      192
+    store         %0      %1
+    load          %0      $192
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    require       malloc  $1024   %0      %1
+    aload         %0      $1
+    set_ret       %0
+    call_fn       E:\GitHub\tpl2\tp\tem.tp$main
+    exit

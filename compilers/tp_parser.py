@@ -238,7 +238,14 @@ class Parser:
 
     def process_struct(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
         name_ele = parent[index + 1]
-        body_ele = parent[index + 2]
+        templates_ele = parent[index + 2]
+        if tl.is_arrow_bracket(templates_ele):
+            body_ele = parent[index + 3]
+            push = 3
+        else:
+            body_ele = templates_ele
+            templates_ele = None
+            push = 2
 
         if not (isinstance(name_ele, tl.AtomicElement) and
                 isinstance(name_ele.atom, tl.IdToken) and
@@ -247,9 +254,10 @@ class Parser:
 
         name = name_ele.atom.identifier
         body = self.parse_as_block(body_ele)
-        builder.add_node(ast.StructStmt(name, body, lf))
+        templates = None if templates_ele is None else self.parse_as_line(templates_ele)
+        builder.add_node(ast.StructStmt(name, templates, body, lf))
 
-        return index + 2
+        return index + push
 
     def _process_inc_dec_operator(self, op, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
                                   lf: tl.LineFile):
@@ -461,6 +469,16 @@ class Parser:
                         args = self.parse_as_line(ele)
                         call_obj = builder.remove_last()
                         call = ast.IndexingExpr(call_obj, args, lf)
+                        builder.add_node(call)
+                        return index + 1
+            elif ele.is_arrow_bracket():
+                lf = ele.lf
+                if index > 0:
+                    prob_call_obj = parent[index - 1]
+                    if is_call_obj(prob_call_obj):
+                        args = self.parse_as_line(ele)
+                        call_obj = builder.remove_last()
+                        call = ast.GenericNode(call_obj, args, lf)
                         builder.add_node(call)
                         return index + 1
         else:

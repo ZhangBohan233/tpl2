@@ -122,6 +122,7 @@ class StrToken(Token):
 CE_BRACKET = 1
 CE_BRACE = 2
 CE_SQR_BRACKET = 3
+CE_ARROW_BRACKET = 4
 
 
 class Element:
@@ -173,6 +174,8 @@ class CollectiveElement(Element):
             return "SqrBracket"
         if self.ce_type == CE_BRACKET:
             return "Bracket"
+        if self.ce_type == CE_ARROW_BRACKET:
+            return "ArrowBracket"
         return "???"
 
     def is_bracket(self):
@@ -184,6 +187,9 @@ class CollectiveElement(Element):
     def is_sqr_bracket(self):
         return self.ce_type == CE_SQR_BRACKET
 
+    def is_arrow_bracket(self):
+        return self.ce_type == CE_ARROW_BRACKET
+
     def __str__(self):
         return self.name() + str(self.children)
 
@@ -194,6 +200,10 @@ def is_brace(ele: Element):
 
 def is_bracket(ele: Element):
     return isinstance(ele, CollectiveElement) and ele.is_bracket()
+
+
+def is_arrow_bracket(ele: Element):
+    return isinstance(ele, CollectiveElement) and ele.is_arrow_bracket()
 
 
 def identifier_of(ele: Element, target: str) -> bool:
