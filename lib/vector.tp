@@ -1,0 +1,7 @@
+﻿struct Vector<T> {
+
+}
+
+fn Vector_add(vec: *Vector<T>, ele: T) void {
+
+}

@@ -20,6 +20,7 @@ class Parser:
             "->": ast.RightArrowExpr,
             "as": ast.AsExpr,
             "$": ast.DollarExpr,
+            "::": ast.MethodExpr,
             ":=": ast.QuickAssignment
         }
 
@@ -70,13 +71,18 @@ class Parser:
 
     def process_fn(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
         index += 1
+        name_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
         next_ele = parent[index]
-        if isinstance(next_ele, tl.AtomicElement):
-            fn_name = next_ele.atom.identifier
+        while not tl.is_bracket(next_ele):
+            name_list.append(next_ele)
             index += 1
-        else:
+            next_ele = parent[index]
+        if len(name_list) == 0:
             fn_name = None
-        param_list = parent[index]
+        else:
+            fn_name = self.parse_as_part(name_list)
+
+        param_list = next_ele
         params = self.parse_as_line(param_list)
         prob_arrow = parent[index + 1]
         if tl.identifier_of(prob_arrow, "->"):

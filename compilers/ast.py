@@ -480,40 +480,6 @@ class BinaryOperator(BinaryExpr):
         res_addr = tpa.manager.allocate_stack(res_t.memory_length())
         self.compile_to(env, tpa, res_addr, res_t.memory_length())
         return res_addr
-        # if self.op_type == BIN_ARITH or self.op_type == BIN_LOGICAL:
-        #     lt = self.left.evaluated_type(env, tpa.manager)
-        #     rt = self.right.evaluated_type(env, tpa.manager)
-        #     left_addr = self.left.compile(env, tpa)
-        #     right_addr = self.right.compile(env, tpa)
-        #     if isinstance(lt, typ.BasicType):
-        #         if isinstance(rt, typ.BasicType):
-        #             if lt == typ.TYPE_INT:
-        #                 if rt == typ.TYPE_INT:
-        #                     res_addr = tpa.manager.allocate_stack(util.INT_LEN)
-        #                     int_int_to_int(self.op, left_addr, right_addr, res_addr, tpa)
-        #                     return res_addr
-        #                 elif rt == typ.TYPE_FLOAT:
-        #                     pass
-        # elif self.op_type == BIN_BITWISE:
-        #     pass
-        # elif self.op_type == BIN_LAZY:
-        #     # x and y: if x then y else 0
-        #     # x or y: if x then 1 else y
-        #     if self.op == "and":
-        #         ife = IfExpr(self.left, self.right, IntLiteral(util.ZERO_POS, self.lf), self.lf)
-        #         if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
-        #             raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
-        #         if ife.use_compile_to():
-        #             pass
-        #         else:
-        #             return ife.compile(env, tpa)
-        #     elif self.op == "or":
-        #         ife = IfExpr(self.left, IntLiteral(util.ONE_POS, self.lf), self.right, self.lf)
-        #         if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
-        #             raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
-        #         return ife.compile(env, tpa)
-        #     else:
-        #         raise errs.TplCompileError("Unexpected lazy operator. ", self.lf)
 
     def use_compile_to(self) -> bool:
         return use_compile_to
@@ -926,6 +892,17 @@ class DollarExpr(BinaryExpr):
             return res_addr
 
 
+class MethodExpr(BinaryExpr):
+    def __init__(self, lf):
+        super().__init__("::", lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        pass
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        pass
+
+
 class Assignment(BinaryExpr):
     def __init__(self, lf):
         super().__init__("=", lf)
@@ -1061,7 +1038,7 @@ class RightArrowExpr(BinaryExpr):
 
 
 class FunctionDef(Expression):
-    def __init__(self, name: str, params: Line, rtype: Expression, body: BlockStmt, lf):
+    def __init__(self, name: Expression, params: Line, rtype: Expression, body: BlockStmt, lf):
         super().__init__(lf)
 
         self.name = name
@@ -1070,10 +1047,19 @@ class FunctionDef(Expression):
         self.body = body
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        if isinstance(self.name, NameNode):
+            self.compile_as(self.name.name, env, tpa)
+        elif isinstance(self.name, MethodExpr):
+            struct_t = self.name.left.evaluated_type(env, tpa.manager)
+            print(struct_t)
+        else:
+            raise errs.TplCompileError("Unexpected function name. ")
+
+    def compile_as(self, str_name: str, env: en.Environment, tpa: tp.TpaOutput):
         rtype = self.rtype.definition_type(env, tpa.manager)
         fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
 
-        scope = en.FunctionEnvironment(env, self.name, rtype)
+        scope = en.FunctionEnvironment(env, str_name, rtype)
         tpa.manager.push_stack()
 
         body_out = tp.TpaOutput(tpa.manager)
@@ -1087,17 +1073,17 @@ class FunctionDef(Expression):
                 param.compile(scope, body_out)
 
         func_type = typ.FuncType(param_types, rtype)
-        env.define_function(self.name, func_type, fn_ptr, self.lf)
+        env.define_function(str_name, func_type, fn_ptr, self.lf)
 
         if self.body is not None:
             # check return
             complete_return = self.body.return_check()
             if not complete_return:
                 if not rtype.is_void():
-                    raise errs.TplCompileError(f"Function '{self.name}' missing a return statement. ", self.lf)
+                    raise errs.TplCompileError(f"Function '{str_name}' missing a return statement. ", self.lf)
 
             # compiling
-            body_out.add_function(self.name, self.lf.file_name, fn_ptr)
+            body_out.add_function(str_name, self.lf.file_name, fn_ptr)
             push_index = body_out.add_indefinite_push()
             self.body.compile(scope, body_out)
 
@@ -1111,7 +1097,7 @@ class FunctionDef(Expression):
 
         tpa.manager.restore_stack()
         body_out.local_generate()
-        tpa.manager.map_function(self.name, self.lf.file_name, body_out.result())
+        tpa.manager.map_function(str_name, self.lf.file_name, body_out.result())
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         rtype = self.rtype.definition_type(env, manager)

@@ -30,3 +30,7 @@
 * More native call (print)
 * ~~Separate pseudo-inst compiler~~ Done
 * ~~Tpa optimizer: load literal~~ Changed to compile_to
+
+#### Phase 3
+* Class and inheritance
+* Templates and generics

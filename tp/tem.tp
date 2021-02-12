@@ -2,10 +2,14 @@
     malloc
 }
 
-struct A<T, V> {
+struct A<T> {
     a: int;
     b: T;
-    c: V;
+    add: fn(T) -> int;
+}
+
+fn A::add(x: T) int {
+
 }
 
 struct X {
@@ -13,7 +17,7 @@ struct X {
 }
 
 fn main() int {
-    b: *A<int[], *X> = malloc(sizeof(A<int[], *X>));
+    b: *A<int[]> = new A<int[]>;
     b$a = 2;
     b$b = new int[4];
     (b$b)[0] = 1;

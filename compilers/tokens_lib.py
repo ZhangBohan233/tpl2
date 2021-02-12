@@ -6,7 +6,7 @@ LOGICAL_BINARY = {"<", ">", "==", "!=", "<=", ">="}
 LAZY_BINARY = {"and", "or"}
 ARITH_UNARY = {"-", "*", "&"}
 LOGICAL_UNARY = {"not"}
-SYMBOLS = {"{", "}", "[", "]", "(", ")", ".", "$", ",", ";", ":"}
+SYMBOLS = {"{", "}", "[", "]", "(", ")", ".", "$", ",", ";", ":", "::"}
 OTHERS = {"=", "->", ":=", "++", "--"}
 
 RESERVED = {"as", "break", "case", "cond", "const", "continue", "del", "do", "else",
