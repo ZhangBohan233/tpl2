@@ -19,7 +19,7 @@ fn make() int {
 
 class Object {
     fn __init__(this: *Object) {
-        
+
     }
 }
 
