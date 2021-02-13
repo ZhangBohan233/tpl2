@@ -1,3 +1,5 @@
+import collections
+
 import compilers.util as util
 import compilers.errors as errs
 
@@ -91,12 +93,16 @@ class PointerType(Type):
             return isinstance(left_tar_type, PointerType) or isinstance(left_tar_type, ArrayType)
         elif left_tar_type == TYPE_VOID_PTR:
             return True
+        elif isinstance(left_tar_type, PointerType):
+            return self.base.strong_convertible(left_tar_type.base)
         else:
             return super().strong_convertible(left_tar_type)
 
     def weak_convertible(self, left_tar_type):
         if isinstance(left_tar_type, BasicType) and left_tar_type.type_name == "int":
             return True
+        elif isinstance(left_tar_type, PointerType):
+            return self.base.weak_convertible(left_tar_type.base)
         else:
             return super().weak_convertible(left_tar_type)
 
@@ -151,9 +157,57 @@ class FuncType(CallableType):
         super().__init__(param_types, rtype)
 
 
+class MethodType(FuncType):
+    def __init__(self, param_types, rtype):
+        super().__init__(param_types, rtype)
+
+
 class NativeFuncType(CallableType):
     def __init__(self, param_types, rtype):
         super().__init__(param_types, rtype)
+
+
+class ClassType(Type):
+    def __init__(self, name: str, file_path: str, members: dict, direct_sc: list, templates: list):
+        super().__init__(0)
+
+        self.name = name
+        self.file_path = file_path  # where this class is defined, avoiding conflict struct def'ns in non-export part
+        self.members = members  # {name: (position, type)}
+        self.direct_superclasses = direct_sc
+        self.mro: list = None  # Method resolution order, ranked from closest to farthest
+        self.templates = templates
+        self.methods = collections.OrderedDict()  # OrderedDict, name: (position, func_ptr, func_type)
+        self.fields = collections.OrderedDict()  # OrderedDict, name: (position, type)
+
+    def find_field(self, name: str, lf) -> (int, Type):
+        for mro_t in self.mro:
+            if name in mro_t.fields:
+                return mro_t.fields[name]
+        raise errs.TplCompileError(f"Class {self.name} does not have field '{name}'. ", lf)
+
+    def find_method(self, name: str, lf) -> (int, int, FuncType):
+        for mro_t in self.mro:
+            if name in mro_t.methods:
+                return mro_t.methods[name]
+        raise errs.TplCompileError(f"Class {self.name} does not have method '{name}'. ", lf)
+
+    def strong_convertible(self, left_tar_type):
+        if isinstance(left_tar_type, ClassType):
+            for t in self.mro:
+                if t == left_tar_type:
+                    return True
+        else:
+            return super().strong_convertible(left_tar_type)
+
+    def __eq__(self, other):
+        return isinstance(other, ClassType) and self.name == other.name and self.file_path == other.file_path
+
+    def __str__(self):
+        return "ClassType(" + util.name_with_path(self.name, self.file_path, self.mro[0]) + ")"
+
+    def __repr__(self):
+        return self.__str__()
 
 
 class StructType(Type):
@@ -169,7 +223,7 @@ class StructType(Type):
         return isinstance(other, StructType) and self.name == other.name and self.file_path == other.file_path
 
     def __str__(self):
-        return "StructType(" + util.name_with_path(self.name, self.file_path) + ")"
+        return "StructType(" + util.name_with_path(self.name, self.file_path, None) + ")"
 
 
 class GenericStructType(Type):

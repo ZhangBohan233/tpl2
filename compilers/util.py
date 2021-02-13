@@ -64,5 +64,8 @@ def initial_int_literal_dict() -> dict:
     return {0: 0, 1: INT_LEN, -1: INT_LEN + INT_LEN}
 
 
-def name_with_path(name: str, file: str):
-    return file + "$" + name
+def name_with_path(name: str, file: str, clazz):
+    if clazz is None:
+        return file + "$" + name
+    else:
+        return file + "$" + clazz.name + "." + name

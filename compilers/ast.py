@@ -1,5 +1,5 @@
 from abc import ABC
-
+import collections
 import compilers.tokens_lib as tl
 import compilers.environment as en
 import compilers.tpa_producer as tp
@@ -641,6 +641,13 @@ class NewExpr(UnaryExpr):
         tpa.assign_i(malloc_size, t.memory_length())
         FunctionCall.call(malloc, [(malloc_size, util.INT_LEN)], env, tpa, dst_addr, self.lf)
 
+        if isinstance(self.value, FunctionCall):
+            self.compile_class_init(env, tpa, dst_addr)
+
+    def compile_class_init(self, env: en.Environment, tpa: tp.TpaOutput, inst_ptr_addr):
+        self.value: FunctionCall
+        # FunctionCall.call()
+
     def use_compile_to(self) -> bool:
         return use_compile_to
 
@@ -652,6 +659,8 @@ class NewExpr(UnaryExpr):
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if isinstance(self.value, IndexingExpr):
             return self.value.definition_type(env, manager)
+        if isinstance(self.value, FunctionCall):
+            return typ.PointerType(self.value.call_obj.definition_type(env, manager))
         return typ.PointerType(self.value.definition_type(env, manager))
 
 
@@ -753,9 +762,9 @@ class AsExpr(BinaryExpr):
         return self.right.definition_type(env, manager)
 
 
-class Dot(BinaryExpr):
+class DollarExpr(BinaryExpr):
     def __init__(self, lf):
-        super().__init__(".", lf)
+        super().__init__("$", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         attr_ptr, attr_t = self.get_attr_ptr_and_type(env, tpa)
@@ -775,7 +784,7 @@ class Dot(BinaryExpr):
                 attr_t = struct_t.generics[attr_t]
             return attr_t
         else:
-            raise errs.TplCompileError("Left side of dot must be a struct, got " + type(struct_t).__name__ + ". ",
+            raise errs.TplCompileError("Left side of dollar must be a struct, got " + type(struct_t).__name__ + ". ",
                                        self.lf)
 
     def get_attr_ptr_and_type(self, env: en.Environment, tpa: tp.TpaOutput) -> (int, typ.Type):
@@ -783,7 +792,7 @@ class Dot(BinaryExpr):
         if isinstance(self.right, NameNode):
             if isinstance(left_t, typ.StructType):
                 if isinstance(self.left, StarExpr):
-                    dollar = DollarExpr(self.lf)
+                    dollar = DotExpr(self.lf)
                     dollar.left = self.left.value
                     dollar.right = self.right
                     return dollar.get_attr_ptr_and_type(env, tpa)
@@ -795,7 +804,7 @@ class Dot(BinaryExpr):
                     return res_ptr, t
             elif isinstance(left_t, typ.GenericStructType):
                 if isinstance(self.left, StarExpr):
-                    dollar = DollarExpr(self.lf)
+                    dollar = DotExpr(self.lf)
                     dollar.left = self.left.value
                     dollar.right = self.right
                     return dollar.get_attr_ptr_and_type(env, tpa)
@@ -808,24 +817,26 @@ class Dot(BinaryExpr):
                     tpa.take_addr(struct_addr + pos, res_ptr)
                     return res_ptr, t
 
-        raise errs.TplCompileError("Left side of dot must be a struct, got " + type(left_t).__name__ + ". ",
+        raise errs.TplCompileError("Left side of dollar must be a struct, got " + type(left_t).__name__ + ". ",
                                    self.lf)
 
 
-class DollarExpr(BinaryExpr):
+class DotExpr(BinaryExpr):
     """
     This operator is logically equivalent to (Unpack and get attribute).
 
-    For example, s$x is logically equivalent to (*s).x, but due to the implementation, (*s).x would evaluate to
+    For example, s.x is logically equivalent to (*s)$x, but due to the implementation, (*s)$x would evaluate to
     incorrect result.
     """
 
     def __init__(self, lf):
-        super().__init__("$", lf)
+        super().__init__(".", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         left_t = self.left.evaluated_type(env, tpa.manager)
         if isinstance(left_t, typ.PointerType):
+            if isinstance(self.right, FunctionCall):
+                return self.compile_method_call(left_t, env, tpa)
             attr_ptr, attr_t = self.get_attr_ptr_and_type(env, tpa)
 
             res_ptr = tpa.manager.allocate_stack(attr_t.memory_length())
@@ -834,24 +845,50 @@ class DollarExpr(BinaryExpr):
         elif isinstance(left_t, typ.ArrayType) and isinstance(self.right, NameNode):
             return self.array_attributes(env, tpa, self.right.name)
 
-        raise errs.TplCompileError("Left side of dollar must be a pointer to struct or an array. ", self.lf)
+        raise errs.TplCompileError("Left side of dot must be a pointer to struct or an array. ", self.lf)
+
+    def compile_method_call(self, left_t, env: en.Environment, tpa: tp.TpaOutput):
+        self.right: FunctionCall
+        if isinstance(left_t, typ.PointerType):
+            class_t = left_t.base
+            if isinstance(class_t, typ.ClassType):
+                name = self.right.get_name()
+                ins_ptr = self.left.compile(env, tpa)
+                pos, method_p, t = class_t.find_method(name, self.lf)
+                full_name = util.name_with_path(name, class_t.file_path, class_t)
+                res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
+                ea = self.right.evaluate_args(t, env, tpa, is_method=True)
+                ea.insert(0, (ins_ptr, util.PTR_LEN))
+                FunctionCall.call_name(full_name, ea, tpa, res_ptr, self.lf, t)
+                return res_ptr
+        raise errs.TplCompileError("Cannot make method call. ", self.lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         left_t = self.left.evaluated_type(env, manager)
         if isinstance(left_t, typ.PointerType):
             struct_t = left_t.base
-            if isinstance(struct_t, typ.StructType) and isinstance(self.right, NameNode):
-                pos, attr_t = struct_t.members[self.right.name]
-                return attr_t
-            elif isinstance(struct_t, typ.GenericStructType) and isinstance(self.right, NameNode):
-                pos, attr_t = struct_t.struct_t.members[self.right.name]
-                if isinstance(attr_t, str):
-                    attr_t = struct_t.generics[attr_t]
-                return attr_t
+            if isinstance(self.right, NameNode):
+                if isinstance(struct_t, typ.StructType):
+                    pos, attr_t = struct_t.members[self.right.name]
+                    return attr_t
+                elif isinstance(struct_t, typ.GenericStructType):
+                    pos, attr_t = struct_t.struct_t.members[self.right.name]
+                    if isinstance(attr_t, str):
+                        attr_t = struct_t.generics[attr_t]
+                    return attr_t
+                elif isinstance(struct_t, typ.ClassType):
+                    pos, attr_t = struct_t.find_field(self.right.name, self.lf)
+                    return attr_t
+            elif isinstance(self.right, FunctionCall):
+                if isinstance(struct_t, typ.ClassType):
+                    name = self.right.get_name()
+                    pos, ptr, t = struct_t.find_method(name, self.lf)
+                    return t.rtype
         elif isinstance(left_t, typ.ArrayType) and isinstance(self.right, NameNode):
             return array_attribute_types(self.right.name, self.lf)
 
-        raise errs.TplCompileError("Left side of dollar must be a pointer to struct or an array. ", self.lf)
+        raise errs.TplCompileError(
+            f"Left side of dot {self} must be a pointer to struct or an array, got {left_t}. ", self.lf)
 
     def get_attr_ptr_and_type(self, env: en.Environment, tpa: tp.TpaOutput) -> (int, typ.Type):
         left_t = self.left.evaluated_type(env, tpa.manager)
@@ -880,8 +917,18 @@ class DollarExpr(BinaryExpr):
                     else:
                         raise errs.TplCompileError("Unsupported length.", self.lf)
                     return real_attr_ptr, t
+                elif isinstance(struct_t, typ.ClassType):
+                    struct_addr = self.left.compile(env, tpa)
+                    pos, t = struct_t.find_field(self.right.name, self.lf)
+                    real_attr_ptr = tpa.manager.allocate_stack(t.length)
+                    if t.length == util.INT_LEN:
+                        tpa.assign(real_attr_ptr, struct_addr)
+                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
+                    else:
+                        raise errs.TplCompileError("Unsupported length.", self.lf)
+                    return real_attr_ptr, t
 
-        raise errs.TplCompileError("Left side of dollar must be a pointer to struct. ", self.lf)
+        raise errs.TplCompileError("Left side of dot must be a pointer to struct. ", self.lf)
 
     def array_attributes(self, env: en.Environment, tpa: tp.TpaOutput, name: str):
         res_addr = tpa.manager.allocate_stack(util.INT_LEN)
@@ -922,7 +969,7 @@ class Assignment(BinaryExpr):
         elif isinstance(self.left, StarExpr):
             right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lf)
             return self.ptr_assign(self.left, env, tpa)
-        elif isinstance(self.left, Dot) or isinstance(self.left, DollarExpr):
+        elif isinstance(self.left, DollarExpr) or isinstance(self.left, DotExpr):
             right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lf)
             return self.struct_attr_assign(self.left, env, tpa)
         elif isinstance(self.left, IndexingExpr):
@@ -972,6 +1019,12 @@ class Declaration(BinaryStmt):
 
         self.level = level
 
+    def get_name(self):
+        if isinstance(self.left, NameNode):
+            return self.left.name
+        else:
+            raise errs.TplCompileError("Left side of declaration must be a name. ", self.lf)
+
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         right_t = self.right.definition_type(env, tpa.manager)
         if isinstance(self.left, NameNode):
@@ -985,7 +1038,7 @@ class Declaration(BinaryStmt):
                 raise errs.TplCompileError("Unexpected var level. ", self.lf)
             return rel_addr
         else:
-            raise errs.TplCompileError("Right side of declaration must be a name. ", self.lf)
+            raise errs.TplCompileError("Left side of declaration must be a name. ", self.lf)
 
     def __str__(self):
         if self.level == VAR_VAR:
@@ -1045,13 +1098,17 @@ class FunctionDef(Expression):
         self.params = params
         self.rtype = rtype
         self.body = body
+        self.parent_class = None
+
+    def get_name(self) -> str:
+        if isinstance(self.name, NameNode):
+            return self.name.name
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.name, NameNode):
             self.compile_as(self.name.name, env, tpa)
         elif isinstance(self.name, MethodExpr):
             struct_t = self.name.left.evaluated_type(env, tpa.manager)
-            print(struct_t)
         else:
             raise errs.TplCompileError("Unexpected function name. ")
 
@@ -1083,7 +1140,7 @@ class FunctionDef(Expression):
                     raise errs.TplCompileError(f"Function '{str_name}' missing a return statement. ", self.lf)
 
             # compiling
-            body_out.add_function(str_name, self.lf.file_name, fn_ptr)
+            body_out.add_function(str_name, self.lf.file_name, fn_ptr, self.parent_class)
             push_index = body_out.add_indefinite_push()
             self.body.compile(scope, body_out)
 
@@ -1097,7 +1154,7 @@ class FunctionDef(Expression):
 
         tpa.manager.restore_stack()
         body_out.local_generate()
-        tpa.manager.map_function(str_name, self.lf.file_name, body_out.result())
+        tpa.manager.map_function(str_name, self.lf.file_name, body_out.result(), self.parent_class)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         rtype = self.rtype.definition_type(env, manager)
@@ -1108,10 +1165,122 @@ class FunctionDef(Expression):
                 pt = param.right.definition_type(env, manager)
                 param_types.append(pt)
 
-        return typ.FuncType(param_types, rtype)
+        if self.parent_class is None:
+            return typ.FuncType(param_types, rtype)
+        else:
+            return typ.MethodType(param_types, rtype)
 
     def __str__(self):
         return "fn {}({}) {} {}".format(self.name, self.params, self.rtype, self.body)
+
+
+class ClassStmt(Statement):
+    def __init__(self, name: str, extensions: Line, templates: Line, body: BlockStmt, lf):
+        super().__init__(lf)
+
+        self.name = name
+        self.extensions = None
+        if extensions is not None:
+            self.extensions = extensions
+        elif name != "Object":
+            self.extensions = Line(lf, NameNode("Object", lf))
+        self.templates = []
+        if templates is not None:
+            for part in templates:
+                if isinstance(part, NameNode):
+                    self.templates.append(part.name)
+                else:
+                    raise errs.TplSyntaxError("Template must be name. ", self.lf)
+        self.body = body
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        direct_sc = []
+        if self.extensions is not None:
+            for ext in self.extensions:
+                t = ext.definition_type(env, tpa.manager)
+                if not isinstance(t, typ.ClassType):
+                    raise errs.TplCompileError("Class can only extend classes", self.lf)
+                direct_sc.append(t)
+
+        class_type = typ.ClassType(self.name, self.lf.file_name, {}, direct_sc, self.templates)
+        mro = self.make_mro(class_type)
+        class_type.mro = mro
+        env.define_const(self.name, class_type, self.lf)
+
+        class_env = en.ClassEnvironment(env)
+
+        method_defs = []
+        if len(mro) == 1:  # Object itself
+            pos = 0
+        else:
+            pos = mro[1].memory_length()
+
+        for line in self.body:
+            for part in line:
+                if isinstance(part, Declaration):
+                    t = part.right.definition_type(class_env, tpa.manager)
+                    name = part.get_name()
+                    class_type.fields[name] = pos, t
+                    pos += t.memory_length()
+                elif isinstance(part, FunctionDef):
+                    part.parent_class = self
+                    method_defs.append(part)
+                    pos += util.PTR_LEN
+                else:
+                    raise errs.TplCompileError("Class body should only contain attributes and methods. ", self.lf)
+
+        class_type.length = pos
+
+        for method_def in method_defs:
+            # print(method_def.parent_class)
+            method_def.compile(class_env, tpa)
+            name = method_def.get_name()
+            method_ptr = class_env.get(name, self.lf)
+            class_type.methods[name] = pos, method_ptr, class_env.get_type(name, self.lf)
+
+    def __str__(self):
+        return f"Class {self.name} ({self.extensions}) {self.body}"
+
+    def make_mro(self, class_type: typ.ClassType):
+        def lin(ct: typ.ClassType):
+            if len(ct.direct_superclasses) == 0:  # Object
+                return [ct]
+            to_merge = [lin(sc) for sc in ct.direct_superclasses] + [ct.direct_superclasses]
+            return [ct] + merge(to_merge)
+
+        def merge(lst: list):
+            out = []
+            head_index = 0
+            while len(lst) > 0:
+                if head_index == len(lst):
+                    raise errs.TplCompileError("Inconsistent mro. ", self.lf)
+                found = False
+                head = lst[head_index][0]
+                for i in range(len(lst)):
+                    if i != head_index:
+                        sub_lst = lst[i]
+                        for j in range(1, len(sub_lst)):
+                            if sub_lst[j] == head:
+                                found = True
+                                break
+                    if found:
+                        break
+                if found:
+                    head_index += 1
+                else:
+                    rm_count = 0
+                    for i in range(len(lst)):
+                        sub_lst = lst[i]
+                        new_sub = list(filter(lambda item: item != head, sub_lst))
+                        rm_count += (len(sub_lst) - len(new_sub))
+                        lst[i] = new_sub
+                    lst = list(filter(lambda sl: len(sl) > 0, lst))
+                    out.append(head)
+                    head_index = 0
+
+            return out
+
+        return lin(class_type)
 
 
 class FunctionTypeExpr(Expression):
@@ -1171,6 +1340,12 @@ class FunctionCall(Expression):
         self.call_obj = call_obj
         self.args = args
 
+    def get_name(self):
+        if isinstance(self.call_obj, NameNode):
+            return self.call_obj.name
+        else:
+            raise errs.TplCompileError("Not a named function call. ", self.lf)
+
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         func_type = self.call_obj.evaluated_type(env, tpa.manager)
         if isinstance(func_type, typ.CompileTimeFunctionType):
@@ -1200,6 +1375,48 @@ class FunctionCall(Expression):
             else:
                 raise errs.TplError("Unexpected error. ", lf)
 
+    @staticmethod
+    def call_name(fn_name: str, evaluated_args: list, tpa: tp.TpaOutput, dst_addr: int,
+                  lf, func_type):
+        if isinstance(func_type, typ.FuncType):
+            tpa.call_named_function(fn_name, evaluated_args, dst_addr, func_type.rtype.length)
+        else:
+            raise errs.TplError("Unexpected error. ", lf)
+
+    @staticmethod
+    def call_ptr(fn_ptr: int, evaluated_args: list, tpa: tp.TpaOutput, dst_addr: int,
+                 lf, func_type):
+        if isinstance(func_type, typ.FuncType):
+            tpa.call_ptr_function(fn_ptr, evaluated_args, dst_addr, func_type.rtype.length)
+        elif isinstance(func_type, typ.NativeFuncType):
+            tpa.invoke_ptr(fn_ptr, evaluated_args, dst_addr, func_type.rtype.length)
+        else:
+            raise errs.TplError("Unexpected error. ", lf)
+
+    def evaluate_args(self, func_type: typ.CallableType, env, tpa, is_method=False) -> list:
+        """
+        Returns the evaluated arguments, in (addr, length)
+
+        :param func_type:
+        :param env:
+        :param tpa:
+        :param is_method:
+        :return:
+        """
+        diff = 1 if is_method else 0
+        evaluated_args = []
+        for i in range(len(func_type.param_types)):
+            if i == 0 and is_method:
+                continue
+            param_t = func_type.param_types[i]
+            arg_t: typ.Type = self.args[i - diff].evaluated_type(env, tpa.manager)
+            if not arg_t.convertible_to(param_t, self.lf):
+                raise errs.TplCompileError("Argument type does not match param type. "
+                                           "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lf)
+            arg_addr = self.args[i - diff].compile(env, tpa)
+            evaluated_args.append((arg_addr, arg_t.length))
+        return evaluated_args
+
     def use_compile_to(self) -> bool:
         return use_compile_to
 
@@ -1214,15 +1431,7 @@ class FunctionCall(Expression):
 
         if len(func_type.param_types) != len(self.args):
             raise errs.TplCompileError("Parameter length does not match argument length. ", self.lf)
-        evaluated_args = []
-        for i in range(len(func_type.param_types)):
-            param_t = func_type.param_types[i]
-            arg_t: typ.Type = self.args[i].evaluated_type(env, tpa.manager)
-            if not arg_t.convertible_to(param_t, self.lf):
-                raise errs.TplCompileError("Argument type does not match param type. "
-                                           "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lf)
-            arg_addr = self.args[i].compile(env, tpa)
-            evaluated_args.append((arg_addr, arg_t.length))
+        evaluated_args = self.evaluate_args(func_type, env, tpa)
         self.call(self.call_obj, evaluated_args, env, tpa, dst_addr, self.lf, func_type)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -1683,7 +1892,7 @@ class PreIncDecOperator(UnaryExpr):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.value, PreIncDecOperator) or isinstance(self.value, PostIncDecOperator):
             raise errs.TplCompileError("Expression not assignable. ", self.lf)
-        if isinstance(self.value, Dot) or isinstance(self.value, DollarExpr) or isinstance(self.value, IndexingExpr):
+        if isinstance(self.value, DollarExpr) or isinstance(self.value, DotExpr) or isinstance(self.value, IndexingExpr):
             return self.compile_non_suitable(env, tpa)
 
         vt = self.value.evaluated_type(env, tpa.manager)
@@ -1724,7 +1933,7 @@ class PostIncDecOperator(UnaryExpr):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.value, PreIncDecOperator) or isinstance(self.value, PostIncDecOperator):
             raise errs.TplCompileError("Expression not assignable. ", self.lf)
-        if isinstance(self.value, Dot) or isinstance(self.value, DollarExpr) or isinstance(self.value, IndexingExpr):
+        if isinstance(self.value, DollarExpr) or isinstance(self.value, DotExpr) or isinstance(self.value, IndexingExpr):
             return self.compile_attr_op(env, tpa)
 
         vt = self.value.evaluated_type(env, tpa.manager)

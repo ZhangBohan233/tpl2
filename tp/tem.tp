@@ -1,26 +1,24 @@
-﻿require {
+﻿import lang
+
+require {
     malloc
 }
 
-struct A<T> {
-    a: int;
-    b: T;
-    add: fn(T) -> int;
-}
+class A {
+    xx: int;
 
-fn A::add(x: T) int {
+    fn __init__(this: *A) void {
+        //super.__init__(this);
+        this.xx = 1;
+    }
 
-}
-
-struct X {
-    x: int;
+    fn foo(this: *A, x: int) int {
+        return this.xx + x;
+    }
 }
 
 fn main() int {
-    b: *A<int[]> = new A<int[]>;
-    b$a = 2;
-    b$b = new int[4];
-    (b$b)[0] = 1;
-    (b$b)[1] = 2;
-    return (b$b)[1];
+    aa: *A = new A();
+    aa.__init__();
+    return aa.foo(2);
 }

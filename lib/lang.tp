@@ -18,13 +18,13 @@ fn make() int {
 }
 
 class Object {
-    fn __init__(this: *Object) {
+    fn __init__(this: *Object) void {
 
     }
 }
 
 export {
-    FALSE, TRUE, make
+    FALSE, TRUE, make, Object
 }
 
 exportmacro {

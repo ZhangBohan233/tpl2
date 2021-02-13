@@ -16,10 +16,10 @@ class Parser:
 
         self.special_binary = {
             "=": ast.Assignment,
-            ".": ast.Dot,
+            "$": ast.DollarExpr,
             "->": ast.RightArrowExpr,
             "as": ast.AsExpr,
-            "$": ast.DollarExpr,
+            ".": ast.DotExpr,
             "::": ast.MethodExpr,
             ":=": ast.QuickAssignment
         }
@@ -36,6 +36,7 @@ class Parser:
             ",": self.process_comma,
             ";": self.process_eol,
             "fn": self.process_fn,
+            "class": self.process_class,
             "var": self.process_var,
             "const": self.process_const,
             "if": self.process_if_stmt,
@@ -102,6 +103,26 @@ class Parser:
             body = self.parse_as_block(body_list)
 
         builder.add_node(ast.FunctionDef(fn_name, params, rtype, body, lf))
+        return index
+
+    def process_class(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf):
+        index += 1
+        name = parent[index].atom.identifier
+        index += 1
+        templates = None
+        extensions = None
+        next_ele = parent[index]
+        if tl.is_arrow_bracket(next_ele):
+            templates = self.parse_as_line(next_ele)
+            index += 1
+            next_ele = parent[index]
+        if tl.is_bracket(next_ele):
+            extensions = self.parse_as_line(next_ele)
+            index += 1
+            next_ele = parent[index]
+        body = self.parse_as_block(next_ele)
+        class_stmt = ast.ClassStmt(name, extensions, templates, body, lf)
+        builder.add_node(class_stmt)
         return index
 
     def process_eol(self, p, i, builder: ab.AstBuilder, lf):

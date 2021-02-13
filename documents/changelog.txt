@@ -1,4 +1,10 @@
-﻿===== VERSION 2016 =====
+﻿===== VERSION 2017 =====
+2021/02/14
+
+* Implemented basic class and inheritance
+* Swapped the functionality of '.' and '$'
+
+===== VERSION 2016 =====
 2021/02/12
 
 * Implemented templates <T>

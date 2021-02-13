@@ -141,8 +141,8 @@ class Manager:
         for reg in regs:
             self.available_regs.append(reg)
 
-    def map_function(self, name: str, file_path, body: list):
-        self.functions_map[util.name_with_path(name, file_path)] = body
+    def map_function(self, name: str, file_path, body: list, clazz):
+        self.functions_map[util.name_with_path(name, file_path, clazz)] = body
 
     def global_length(self):
         return self.gp - util.STACK_SIZE
@@ -154,8 +154,8 @@ class TpaOutput:
         self.is_global = is_global
         self.output = ["entry"] if is_global else []
 
-    def add_function(self, name, file_path, fn_ptr):
-        self.output.append("fn " + util.name_with_path(name, file_path) + " " + address(fn_ptr))
+    def add_function(self, name, file_path, fn_ptr, clazz):
+        self.output.append("fn " + util.name_with_path(name, file_path, clazz) + " " + address(fn_ptr))
         self.write_format("push_fp")
 
     def add_indefinite_push(self) -> int:
@@ -514,7 +514,7 @@ class TpaOutput:
             self.write_format("main_arg")
         self.write_format("aload", "%0", "$1")
         self.write_format("set_ret", "%0")
-        self.write_format("call_fn", util.name_with_path("main", main_file_path))
+        self.write_format("call_fn", util.name_with_path("main", main_file_path, None))
         self.write_format("exit")
 
     def local_generate(self):

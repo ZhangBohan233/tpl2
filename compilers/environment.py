@@ -86,7 +86,7 @@ class Environment:
         entry = self._inner_get(name)
         if entry is None:
             raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
-        return isinstance(entry.type, typ.StructType)
+        return isinstance(entry.type, typ.StructType) or isinstance(entry.type, typ.ClassType)
 
     def is_named_function(self, name: str, lf) -> bool:
         entry = self._inner_get(name)
@@ -211,14 +211,9 @@ class ModuleEnvironment(MainAbstractEnvironment):
             raise errs.TplEnvironmentError("Multiple exports in one module. ", lf)
 
 
-class StructEnvironment(MainAbstractEnvironment):
+class ClassEnvironment(MainAbstractEnvironment):
     def __init__(self, outer):
         super().__init__(outer)
-
-        self.templates = set()
-
-    def add_template(self, name: str):
-        self.templates.add(name)
 
 
 class BlockEnvironment(SubAbstractEnvironment):
