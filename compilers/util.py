@@ -68,4 +68,8 @@ def name_with_path(name: str, file: str, clazz):
     if clazz is None:
         return file + "$" + name
     else:
-        return file + "$" + clazz.name + "." + name
+        return class_name_with_path(clazz.name, file) + "." + name
+
+
+def class_name_with_path(class_name: str, file: str):
+    return file + "$" + class_name

@@ -1,5 +1,4 @@
 from abc import ABC
-import collections
 import compilers.tokens_lib as tl
 import compilers.environment as en
 import compilers.tpa_producer as tp
@@ -28,21 +27,40 @@ def set_optimize_level(opt_level: int):
         use_compile_to = True
 
 
-class SpaceCounter:
-    def __init__(self):
-        self.count = 0
+class IntWrapper:
+    def __init__(self, init_value=0):
+        self.num = init_value
 
-    def add_space(self):
-        self.count += 2
-
-    def remove_space(self):
-        self.count -= 2
+    def set(self, num):
+        self.num = num
 
     def get(self):
-        return self.count
+        return self.num
+
+
+class Counter(IntWrapper):
+    def __init__(self, init_value=0):
+        super().__init__(init_value)
+
+    def increment(self):
+        cur = self.get()
+        self.set(cur + 1)
+        return cur
+
+
+class SpaceCounter(Counter):
+    def __init__(self):
+        super().__init__()
+
+    def add_space(self):
+        self.set(self.get() + 2)
+
+    def remove_space(self):
+        self.set(self.get() - 2)
 
 
 SPACES = SpaceCounter()
+CLASS_ID = Counter()
 
 
 class Node:
@@ -1203,6 +1221,7 @@ class ClassStmt(Statement):
         super().__init__(lf)
 
         self.name = name
+        self.class_id = CLASS_ID.increment()
         self.extensions = None
         if extensions is not None:
             self.extensions = extensions
@@ -1218,6 +1237,7 @@ class ClassStmt(Statement):
         self.body = body
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        class_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
         direct_sc = []
         if self.extensions is not None:
             for ext in self.extensions:
@@ -1226,10 +1246,13 @@ class ClassStmt(Statement):
                     raise errs.TplCompileError("Class can only extend classes", self.lf)
                 direct_sc.append(t)
 
-        class_type = typ.ClassType(self.name, self.lf.file_name, {}, direct_sc, self.templates)
+        class_type = typ.ClassType(self.name, self.class_id, self.lf.file_name, {}, direct_sc, self.templates)
         mro = self.make_mro(class_type)
         class_type.mro = mro
-        env.define_const(self.name, class_type, self.lf)
+        env.define_const_set(self.name, class_type, class_ptr, self.lf)
+
+        mro_ids = [ct.class_id for ct in mro]
+        tpa.manager.add_class(self.name, self.lf.file_name, mro_ids, class_ptr)
 
         class_env = en.ClassEnvironment(env)
 
@@ -1307,15 +1330,12 @@ class ClassStmt(Statement):
         return lin(class_type)
 
 
-class SuperExpr(Expression):
+class SuperExpr(Statement):
     def __init__(self, lf):
         super().__init__(lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
-
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        pass
+        raise errs.TplCompileError("'super' itself is not a statement. ", self.lf)
 
     def __str__(self):
         return "super"
@@ -1351,12 +1371,12 @@ class GenericNode(Expression):
         return self.definition_type(env, manager)
 
     def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        struct_t = self.obj.definition_type(env, manager)
-        if not isinstance(struct_t, typ.StructType):
-            raise errs.TplCompileError("Not a struct type.", self.lf)
+        class_t = self.obj.definition_type(env, manager)
+        if not isinstance(class_t, typ.ClassType):
+            raise errs.TplCompileError("Not a class type.", self.lf)
 
-        if len(struct_t.templates) != len(self.generics):
-            raise errs.TplCompileError(f"Generic struct {struct_t.name} requires {len(struct_t.templates)} generics, "
+        if len(class_t.templates) != len(self.generics):
+            raise errs.TplCompileError(f"Generic class {class_t.name} requires {len(class_t.templates)} generics, "
                                        f"{len(self.generics)} given")
 
         gen_dict = {}
@@ -1364,8 +1384,9 @@ class GenericNode(Expression):
             gen_t = self.generics[i].definition_type(env, manager)
             if not isinstance(gen_t, typ.PointerType) and not isinstance(gen_t, typ.ArrayType):
                 raise errs.TplCompileError("Generics must be pointer type.")
-            gen_dict[struct_t.templates[i]] = gen_t
-        return typ.GenericStructType(struct_t, gen_dict)
+            gen_dict[class_t.templates[i]] = gen_t
+        print(gen_dict)
+        return typ.GenericStructType(class_t, gen_dict)
 
     def __str__(self):
         return f"{self.obj}<{self.generics}>"

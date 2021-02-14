@@ -261,9 +261,13 @@ class TpeCompiler:
         stack_size: 16 ~ @24
         global_length: @24 ~ @32
         literal_length: @32 ~ @40
-        literal: @40 ~ (@40 + literal_length)
-        functions: (@40 + literal_length) ~ end of functions
-        function_assignments: end of functions ~ end of functions + (function count * length of assignment)
+        class_header_length: @40 ~ @48
+        literal: @48 ~ (@48 + literal_length)
+        class_headers: (@48 + literal_length) ~ (@48 + literal_length + class_header_length)
+        functions: (@48 + literal_length + class_header_length) ~ end of functions
+        class_assignments: end of functions ~ (end of functions + class count * length of assignment)
+        function_assignments: end of class_assignments ~
+            end of class_assignments + (function count * length of assignment)
         entry: end of function_assignments ~ end - @8
         entry_len: (end - @8) ~ end
 
@@ -276,6 +280,10 @@ class TpeCompiler:
         function_body_positions = {}
         function_pointers = {}
         function_list = []
+        class_headers = {}
+        class_pointers = {}
+        class_list = []
+        class_bodies = bytearray()
         body = bytearray()  # body begins with index 'literal_length + global_length'
         cur_fn_body = []
         entry_part = None
@@ -304,6 +312,26 @@ class TpeCompiler:
                     for lit in literal_str:
                         literal.append(int(lit))
                     i += 1
+                elif line == "classes":
+                    pass
+                elif line.startswith("class"):
+                    content = [part for part in [part.strip() for part in line.split(" ")] if len(part) > 0]
+                    class_name = content[1]
+                    class_list.append(class_name)  # name
+                    class_ptr = int(content[2][1:])
+                    class_pointers[class_name] = class_ptr
+                    mro = []
+                    for m in content[3:]:
+                        sc_name = class_list[int(m)]
+                        mro.append(class_pointers[sc_name])
+
+                    class_header = bytearray()
+                    class_header.extend(util.string_to_bytes(class_name))
+                    class_header.extend(util.int_to_bytes(len(mro)))
+                    for m in mro:
+                        class_header.extend(util.int_to_bytes(m))
+                    class_headers[class_name] = class_header
+                    class_bodies.extend(class_header)
                 else:
                     instructions = \
                         [part for part in [part.strip() for part in line.split(" ")] if len(part) > 0]
@@ -380,11 +408,23 @@ class TpeCompiler:
 
         header = SIGNATURE + bytes((vm_bits,)) + util.empty_bytes(11) + \
                  util.int_to_bytes(self.stack_size) + util.int_to_bytes(self.global_length) + \
-                 util.int_to_bytes(len(literal)) + literal
+                 util.int_to_bytes(len(literal)) + util.int_to_bytes(len(class_bodies)) + \
+                 literal + class_bodies
+
+        entry_lf = tl.LineFile("tpa compiler ", 0)
+        all_len_before_classes = self.stack_size + self.global_length + len(literal)
+        class_assignments = bytearray()
+        class_pos = all_len_before_classes
+        for class_name in class_list:
+            class_ptr = class_pointers[class_name]
+            class_header = class_headers[class_name]
+            self.compile_inst("iload", ["iload", "%0", "$" + str(class_pos)], class_assignments, entry_lf)
+            self.compile_inst("iload", ["iload", "%1", "$" + str(class_ptr)], class_assignments, entry_lf)
+            self.compile_inst("store", ["store", "%1", "%0"], class_assignments, entry_lf)
+            class_pos += len(class_header)
 
         fn_assignments = bytearray()
-        all_len_before_real_fn = self.stack_size + self.global_length + len(literal)
-        entry_lf = tl.LineFile("tpa compiler ", 0)
+        all_len_before_real_fn = all_len_before_classes + len(class_bodies)
         for name in function_list:
             pos = function_body_positions[name]
             fn_ptr = function_pointers[name]
@@ -393,8 +433,8 @@ class TpeCompiler:
             self.compile_inst("iload", ["iload", "%1", "$" + str(fn_ptr)], fn_assignments, entry_lf)
             self.compile_inst("store", ["store", "%1", "%0"], fn_assignments, entry_lf)
 
-        entry_len = len(entry_part) + len(fn_assignments)
-        return header + body + fn_assignments + entry_part + util.int_to_bytes(entry_len)
+        entry_len = len(entry_part) + len(class_assignments) + len(fn_assignments)
+        return header + body + class_assignments + fn_assignments + entry_part + util.int_to_bytes(entry_len)
 
     def compile_function(self, body: iter, labels: dict, jumps: dict) -> bytearray:
         goto = STR_PSEUDO_INSTRUCTIONS["goto"]

@@ -38,6 +38,7 @@ tp_int literal_end;
 tp_int global_end;
 tp_int functions_end;
 tp_int entry_end;
+tp_int class_header_end;
 
 unsigned char MEMORY[MEMORY_SIZE];
 
@@ -83,8 +84,9 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
     stack_end = bytes_to_int(src_code + 16);  // 16 is fixed header length
     global_end = stack_end + bytes_to_int(src_code + 16 + INT_LEN);
     literal_end = global_end + bytes_to_int(src_code + 16 + INT_LEN * 2);
+    class_header_end = literal_end + bytes_to_int(src_code + 16 + INT_LEN * 3);
 
-    tp_int copy_len = code_length - 16 - INT_LEN * 4;  // stack, global, literal, entry
+    tp_int copy_len = code_length - 16 - INT_LEN * 5;  // stack, global, literal, class_headers, entry
     entry_end = global_end + copy_len;
 
     if (global_end + copy_len > MEMORY_SIZE) {
@@ -93,7 +95,7 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
         return 1;
     }
 
-    memcpy(MEMORY + global_end, src_code + 16 + INT_LEN * 3, copy_len);
+    memcpy(MEMORY + global_end, src_code + 16 + INT_LEN * 4, copy_len);
 
     functions_end = entry_end - entry_len;
     pc = functions_end;
@@ -788,6 +790,7 @@ void print_memory() {
 
     tp_printf("\nGlobal %d: ", stack_end)
     for (; i < global_end; ++i) {
+        if (i % INT_LEN == 0) printf("| ");
         printf("%d ", MEMORY[i]);
     }
 
@@ -796,7 +799,12 @@ void print_memory() {
         printf("%d ", MEMORY[i]);
     }
 
-    tp_printf("\nFunctions %d: ", literal_end)
+    tp_printf("\nClass header %d: ", literal_end);
+    for (; i < class_header_end; ++i) {
+        printf("%d ", MEMORY[i]);
+    }
+
+    tp_printf("\nFunctions %d: ", class_header_end)
     for (; i < functions_end; i++) {
         printf("%d ", MEMORY[i]);
     }

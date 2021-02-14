@@ -170,10 +170,11 @@ class NativeFuncType(CallableType):
 
 
 class ClassType(Type):
-    def __init__(self, name: str, file_path: str, members: dict, direct_sc: list, templates: list):
+    def __init__(self, name: str, class_id: int, file_path: str, members: dict, direct_sc: list, templates: list):
         super().__init__(0)
 
         self.name = name
+        self.class_id = class_id
         self.file_path = file_path  # where this class is defined, avoiding conflict struct def'ns in non-export part
         self.members = members  # {name: (position, type)}
         self.direct_superclasses = direct_sc

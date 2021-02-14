@@ -1,3 +1,5 @@
+import collections
+
 import compilers.errors as errs
 import compilers.util as util
 
@@ -110,6 +112,7 @@ class Manager:
         self.gp = util.STACK_SIZE
         self.sp = util.INT_LEN + 1
         self.functions_map = {}
+        self.class_headers = []  # (class_full_name, class_ptr, [mro id]), ranked strictly by class id
         self.label_manager = LabelManager()
 
     def allocate_stack(self, length):
@@ -144,6 +147,10 @@ class Manager:
     def map_function(self, name: str, file_path, body: list, clazz):
         self.functions_map[util.name_with_path(name, file_path, clazz)] = body
 
+    def add_class(self, class_name, file_path, mro_ids, class_ptr):
+        full_name = util.class_name_with_path(class_name, file_path)
+        self.class_headers.append((full_name, class_ptr, mro_ids))
+
     def global_length(self):
         return self.gp - util.STACK_SIZE
 
@@ -153,6 +160,9 @@ class TpaOutput:
         self.manager: Manager = manager
         self.is_global = is_global
         self.output = ["entry"] if is_global else []
+
+    def add_class(self):
+        pass
 
     def add_function(self, name, file_path, fn_ptr, clazz):
         self.output.append("fn " + util.name_with_path(name, file_path, clazz) + " " + address(fn_ptr))
@@ -502,7 +512,14 @@ class TpaOutput:
                   "stack_size", str(util.STACK_SIZE),
                   "global_length", str(self.manager.global_length()),
                   "literal", literal_str,
-                  ""]
+                  "classes"]
+
+        for ch in self.manager.class_headers:
+            line = "class " + ch[0] + " $" + str(ch[1])
+            for mro_id in ch[2]:
+                line += " " + str(mro_id)
+            merged.append(line)
+        merged.append("")
 
         for fn_name in self.manager.functions_map:
             content = self.manager.functions_map[fn_name]

@@ -1,0 +1,16 @@
+﻿import lang
+
+class A {
+    fn __init__(this: *A) void {
+
+    }
+
+    fn foo(this: *A) int {
+        return 2;
+    }
+}
+
+fn main() int {
+    aa: *A = new A();
+    return aa.foo();
+}

@@ -17,7 +17,7 @@ class A {
     }
 }
 
-class B(A) {
+class B<T>(A) {
     fn __init__(this: *B) void {
         super.__init__(this);
 
@@ -25,8 +25,14 @@ class B(A) {
     }
 }
 
+class X {
+    fn __init__(this: *X) void {
+
+    }
+}
+
 fn main() int {
-    aa: *B = new B();
+    aa: *B<*X> = new B();
     aa.__init__();
     return aa.foo(2);
 }

@@ -1,4 +1,10 @@
-﻿===== VERSION 2018 =====
+﻿===== VERSION 2019 =====
+2021/02/15
+
+* Improved class and inheritance:
+    * Passes class header info to tvm
+
+===== VERSION 2018 =====
 2021/02/14
 
 * Improved class and inheritance
