@@ -34,3 +34,5 @@
 #### Phase 3
 * Class and inheritance
 * Templates and generics
+* super
+* Auto add parameter 'this'

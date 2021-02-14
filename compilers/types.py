@@ -158,8 +158,10 @@ class FuncType(CallableType):
 
 
 class MethodType(FuncType):
-    def __init__(self, param_types, rtype):
+    def __init__(self, param_types, rtype, def_class):
         super().__init__(param_types, rtype)
+
+        self.defined_class = def_class
 
 
 class NativeFuncType(CallableType):
@@ -186,7 +188,7 @@ class ClassType(Type):
                 return mro_t.fields[name]
         raise errs.TplCompileError(f"Class {self.name} does not have field '{name}'. ", lf)
 
-    def find_method(self, name: str, lf) -> (int, int, FuncType):
+    def find_method(self, name: str, lf) -> (int, int, MethodType):
         for mro_t in self.mro:
             if name in mro_t.methods:
                 return mro_t.methods[name]

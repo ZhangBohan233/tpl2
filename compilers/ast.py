@@ -833,10 +833,12 @@ class DotExpr(BinaryExpr):
         super().__init__(".", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        if isinstance(self.left, SuperExpr):
+            return self.compile_super(env, tpa)
         left_t = self.left.evaluated_type(env, tpa.manager)
         if isinstance(left_t, typ.PointerType):
             if isinstance(self.right, FunctionCall):
-                return self.compile_method_call(left_t, env, tpa)
+                return self.compile_method_call(left_t, self.left.compile(env, tpa), env, tpa)
             attr_ptr, attr_t = self.get_attr_ptr_and_type(env, tpa)
 
             res_ptr = tpa.manager.allocate_stack(attr_t.memory_length())
@@ -847,15 +849,35 @@ class DotExpr(BinaryExpr):
 
         raise errs.TplCompileError("Left side of dot must be a pointer to struct or an array. ", self.lf)
 
-    def compile_method_call(self, left_t, env: en.Environment, tpa: tp.TpaOutput):
+    def compile_super(self, env: en.Environment, tpa: tp.TpaOutput):
+        self.left: SuperExpr
+        method_env = env
+        while not isinstance(method_env, en.MethodEnvironment):
+            if method_env is None:
+                raise errs.TplCompileError("'super' outside method. ", self.lf)
+            method_env = method_env.outer
+        # method_env: en.MethodEnvironment
+        this_t: typ.ClassType = method_env.defined_class
+        if len(this_t.mro) == 1:
+            raise errs.TplCompileError("Class 'Object' has no superclass. ", self.lf)
+
+        this_ptr = env.get("this", self.lf)
+
+        if isinstance(self.right, NameNode):
+            pass
+        elif isinstance(self.right, FunctionCall):
+            return self.compile_method_call(typ.PointerType(this_t.mro[1]), this_ptr, env, tpa)
+
+        raise errs.TplCompileError("Super must follow a name or a call. ", self.lf)
+
+    def compile_method_call(self, class_ptr_t, ins_ptr, env: en.Environment, tpa: tp.TpaOutput):
         self.right: FunctionCall
-        if isinstance(left_t, typ.PointerType):
-            class_t = left_t.base
+        if isinstance(class_ptr_t, typ.PointerType):
+            class_t = class_ptr_t.base
             if isinstance(class_t, typ.ClassType):
                 name = self.right.get_name()
-                ins_ptr = self.left.compile(env, tpa)
                 pos, method_p, t = class_t.find_method(name, self.lf)
-                full_name = util.name_with_path(name, class_t.file_path, class_t)
+                full_name = util.name_with_path(name, t.defined_class.file_path, t.defined_class)
                 res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
                 ea = self.right.evaluate_args(t, env, tpa, is_method=True)
                 ea.insert(0, (ins_ptr, util.PTR_LEN))
@@ -1098,7 +1120,7 @@ class FunctionDef(Expression):
         self.params = params
         self.rtype = rtype
         self.body = body
-        self.parent_class = None
+        self.parent_class: typ.ClassType = None
 
     def get_name(self) -> str:
         if isinstance(self.name, NameNode):
@@ -1107,8 +1129,6 @@ class FunctionDef(Expression):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.name, NameNode):
             self.compile_as(self.name.name, env, tpa)
-        elif isinstance(self.name, MethodExpr):
-            struct_t = self.name.left.evaluated_type(env, tpa.manager)
         else:
             raise errs.TplCompileError("Unexpected function name. ")
 
@@ -1116,7 +1136,10 @@ class FunctionDef(Expression):
         rtype = self.rtype.definition_type(env, tpa.manager)
         fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
 
-        scope = en.FunctionEnvironment(env, str_name, rtype)
+        if self.parent_class is None:
+            scope = en.FunctionEnvironment(env, str_name, rtype)
+        else:
+            scope = en.MethodEnvironment(env, str_name, rtype, self.parent_class)
         tpa.manager.push_stack()
 
         body_out = tp.TpaOutput(tpa.manager)
@@ -1129,7 +1152,8 @@ class FunctionDef(Expression):
                 param_types.append(pt)
                 param.compile(scope, body_out)
 
-        func_type = typ.FuncType(param_types, rtype)
+        # func_type = typ.FuncType(param_types, rtype)
+        func_type = self.evaluated_type(env, tpa.manager)
         env.define_function(str_name, func_type, fn_ptr, self.lf)
 
         if self.body is not None:
@@ -1156,7 +1180,7 @@ class FunctionDef(Expression):
         body_out.local_generate()
         tpa.manager.map_function(str_name, self.lf.file_name, body_out.result(), self.parent_class)
 
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.FuncType:
         rtype = self.rtype.definition_type(env, manager)
         param_types = []
         for i in range(len(self.params.parts)):
@@ -1168,7 +1192,7 @@ class FunctionDef(Expression):
         if self.parent_class is None:
             return typ.FuncType(param_types, rtype)
         else:
-            return typ.MethodType(param_types, rtype)
+            return typ.MethodType(param_types, rtype, self.parent_class)
 
     def __str__(self):
         return "fn {}({}) {} {}".format(self.name, self.params, self.rtype, self.body)
@@ -1223,7 +1247,7 @@ class ClassStmt(Statement):
                     class_type.fields[name] = pos, t
                     pos += t.memory_length()
                 elif isinstance(part, FunctionDef):
-                    part.parent_class = self
+                    part.parent_class = class_type
                     method_defs.append(part)
                     pos += util.PTR_LEN
                 else:
@@ -1281,6 +1305,20 @@ class ClassStmt(Statement):
             return out
 
         return lin(class_type)
+
+
+class SuperExpr(Expression):
+    def __init__(self, lf):
+        super().__init__(lf)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        pass
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        pass
+
+    def __str__(self):
+        return "super"
 
 
 class FunctionTypeExpr(Expression):

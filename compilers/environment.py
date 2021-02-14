@@ -198,6 +198,13 @@ class FunctionEnvironment(MainAbstractEnvironment):
                                        .format(self.name, self.rtype, actual_rtype), lf)
 
 
+class MethodEnvironment(FunctionEnvironment):
+    def __init__(self, outer, name: str, rtype: typ.Type, defined_class: typ.ClassType):
+        super().__init__(outer, name, rtype)
+
+        self.defined_class = defined_class  # class where this method is defined
+
+
 class ModuleEnvironment(MainAbstractEnvironment):
     def __init__(self):
         super().__init__(None)

@@ -1,4 +1,10 @@
-﻿===== VERSION 2017 =====
+﻿===== VERSION 2018 =====
+2021/02/14
+
+* Improved class and inheritance
+* keyword 'super'
+
+===== VERSION 2017 =====
 2021/02/14
 
 * Implemented basic class and inheritance

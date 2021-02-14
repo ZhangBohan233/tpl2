@@ -8,7 +8,7 @@ class A {
     xx: int;
 
     fn __init__(this: *A) void {
-        //super.__init__(this);
+        super.__init__(this);
         this.xx = 1;
     }
 
@@ -17,8 +17,16 @@ class A {
     }
 }
 
+class B(A) {
+    fn __init__(this: *B) void {
+        super.__init__(this);
+
+        this.xx = 6;
+    }
+}
+
 fn main() int {
-    aa: *A = new A();
+    aa: *B = new B();
     aa.__init__();
     return aa.foo(2);
 }

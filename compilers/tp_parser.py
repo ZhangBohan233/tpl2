@@ -49,6 +49,7 @@ class Parser:
             "import": self.process_import,
             "export": self.process_export,
             "struct": self.process_struct,
+            "super": self.process_super,
             "++": self.process_inc_operator,
             "--": self.process_dec_operator,
             "switch": self.process_switch,
@@ -262,6 +263,9 @@ class Parser:
             raise errs.TplCompileError("Invalid export. ", lf)
 
         return index
+
+    def process_super(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+        builder.add_node(ast.SuperExpr(lf))
 
     def process_struct(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
         name_ele = parent[index + 1]

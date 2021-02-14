@@ -3,9 +3,9 @@ bits
 stack_size
 1024
 global_length
-88
+96
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 13 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 13 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0
 
 fn E:\GitHub\tpl2\lib\lang.tp$add $1056
     push_fp
@@ -55,6 +55,10 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.__init__ $1072
 fn E:\GitHub\tpl2\tp\tem.tp$A.__init__ $1088
     push_fp
     push          24
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__init__
     load          %0      $0
     iload         %1      $8
     store         %1      %0
@@ -99,7 +103,32 @@ fn E:\GitHub\tpl2\tp\tem.tp$A.foo $1096
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\tem.tp$main $1104
+fn E:\GitHub\tpl2\tp\tem.tp$B.__init__ $1104
+    push_fp
+    push          24
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\tp\tem.tp$A.__init__
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load_lit      %0      $40
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $8
+    load          %1      $16
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\tem.tp$main $1112
     push_fp
     push          40
     iload         %0      $8
@@ -117,8 +146,8 @@ fn E:\GitHub\tpl2\tp\tem.tp$main $1104
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call_fn       E:\GitHub\tpl2\tp\tem.tp$A.__init__
-    load_lit      %0      $40
+    call_fn       E:\GitHub\tpl2\tp\tem.tp$B.__init__
+    load_lit      %0      $48
     iload         %1      $32
     store         %1      %0
     aload_sp      %0      $0
