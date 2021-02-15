@@ -18,8 +18,16 @@ fn make() int {
 }
 
 class Object {
-    fn __init__(this: *Object) void {
+    fn __new__(this: *Object) void {
 
+    }
+
+    fn hash(this: *Object) int {
+        return this.__class__;
+    }
+
+    fn equals(this: *Object, other: *Object) int {
+        return this == other;
     }
 }
 

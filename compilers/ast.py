@@ -514,6 +514,7 @@ class BinaryOperator(BinaryExpr):
                         if rt == typ.TYPE_INT:
                             # res_addr = tpa.manager.allocate_stack(util.INT_LEN)
                             int_int_to_int(self.op, left_addr, right_addr, dst_addr, tpa)
+                            return
                         elif rt == typ.TYPE_CHAR:
                             pass
                         elif rt == typ.TYPE_BYTE:
@@ -522,17 +523,24 @@ class BinaryOperator(BinaryExpr):
                             left_f_addr = tpa.manager.allocate_stack(util.FLOAT_LEN)
                             tpa.convert_int_to_float(left_f_addr, left_addr)
                             float_float_to_float(self.op, left_f_addr, right_addr, dst_addr, tpa)
+                            return
                     elif lt == typ.TYPE_FLOAT:
                         if rt == typ.TYPE_FLOAT:
                             float_float_to_float(self.op, left_addr, right_addr, dst_addr, tpa)
+                            return
                         elif rt == typ.TYPE_INT:
                             right_f_addr = tpa.manager.allocate_stack(util.FLOAT_LEN)
                             tpa.convert_int_to_float(right_f_addr, right_addr)
                             float_float_to_float(self.op, left_addr, right_f_addr, dst_addr, tpa)
+                            return
                         elif rt == typ.TYPE_CHAR:
                             pass
                         elif rt == typ.TYPE_BYTE:
                             pass
+            elif isinstance(lt, typ.PointerType) and isinstance(rt, typ.PointerType):
+                if self.op == "==" or self.op == "!=":
+                    int_int_to_int(self.op, left_addr, right_addr, dst_addr, tpa)
+                    return
         elif self.op_type == BIN_BITWISE:
             pass
         elif self.op_type == BIN_LAZY:
@@ -549,6 +557,9 @@ class BinaryOperator(BinaryExpr):
                 raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
 
             ife.compile_to(env, tpa, dst_addr, dst_len)
+            return
+
+        raise errs.TplCompileError("Unsupported binary operation. ", self.lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if self.op_type == BIN_ARITH:
@@ -683,7 +694,15 @@ class NewExpr(UnaryExpr):
                 tpa.i_binary_arith("addi", arith_addr, pos, arith_addr)
                 tpa.i_ptr_assign(ptr, util.PTR_LEN, arith_addr)  # store method pointer
 
-        pass
+        constructor_pos, constructor_ptr, constructor_t = class_t.methods["__new__"]
+        ea = self.value.evaluate_args(constructor_t, env, tpa, True)
+        ea.insert(0, (inst_ptr_addr, util.PTR_LEN))
+        FunctionCall.call_name(util.name_with_path("__new__", class_t.file_path, class_t),
+                               ea,
+                               tpa,
+                               0,
+                               self.lf,
+                               constructor_t)
 
     def use_compile_to(self) -> bool:
         return use_compile_to
@@ -894,8 +913,8 @@ class DotExpr(BinaryExpr):
                 raise errs.TplCompileError("'super' outside method. ", self.lf)
             method_env = method_env.outer
         # method_env: en.MethodEnvironment
-        this_t: typ.ClassType = method_env.defined_class
-        if len(this_t.mro) == 1:
+        cur_method_cls_t: typ.ClassType = method_env.defined_class
+        if len(cur_method_cls_t.mro) == 1:
             raise errs.TplCompileError("Class 'Object' has no superclass. ", self.lf)
 
         this_ptr = env.get("this", self.lf)
@@ -903,7 +922,7 @@ class DotExpr(BinaryExpr):
         if isinstance(self.right, NameNode):
             pass
         elif isinstance(self.right, FunctionCall):
-            return self.compile_method_call(typ.PointerType(this_t.mro[1]), this_ptr, env, tpa)
+            return self.compile_method_call(typ.PointerType(cur_method_cls_t.mro[1]), this_ptr, env, tpa)
 
         raise errs.TplCompileError("Super must follow a name or a call. ", self.lf)
 
@@ -1486,6 +1505,10 @@ class FunctionCall(Expression):
         """
         diff = 1 if is_method else 0
         evaluated_args = []
+        if len(func_type.param_types) != len(self.args) + diff:
+            raise errs.TplCompileError(
+                f"Function expects {len(func_type.param_types)} params, got {len(self.args) + diff} arguments. ",
+                self.lf)
         for i in range(len(func_type.param_types)):
             if i == 0 and is_method:
                 continue
@@ -1510,8 +1533,6 @@ class FunctionCall(Expression):
         if not isinstance(func_type, typ.CallableType):
             raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
 
-        if len(func_type.param_types) != len(self.args):
-            raise errs.TplCompileError("Parameter length does not match argument length. ", self.lf)
         evaluated_args = self.evaluate_args(func_type, env, tpa)
         self.call(self.call_obj, evaluated_args, env, tpa, dst_addr, self.lf, func_type)
 
@@ -1973,7 +1994,8 @@ class PreIncDecOperator(UnaryExpr):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.value, PreIncDecOperator) or isinstance(self.value, PostIncDecOperator):
             raise errs.TplCompileError("Expression not assignable. ", self.lf)
-        if isinstance(self.value, DollarExpr) or isinstance(self.value, DotExpr) or isinstance(self.value, IndexingExpr):
+        if isinstance(self.value, DollarExpr) or isinstance(self.value, DotExpr) or isinstance(self.value,
+                                                                                               IndexingExpr):
             return self.compile_non_suitable(env, tpa)
 
         vt = self.value.evaluated_type(env, tpa.manager)
@@ -2014,7 +2036,8 @@ class PostIncDecOperator(UnaryExpr):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.value, PreIncDecOperator) or isinstance(self.value, PostIncDecOperator):
             raise errs.TplCompileError("Expression not assignable. ", self.lf)
-        if isinstance(self.value, DollarExpr) or isinstance(self.value, DotExpr) or isinstance(self.value, IndexingExpr):
+        if isinstance(self.value, DollarExpr) or isinstance(self.value, DotExpr) or isinstance(self.value,
+                                                                                               IndexingExpr):
             return self.compile_attr_op(env, tpa)
 
         vt = self.value.evaluated_type(env, tpa.manager)

@@ -4,13 +4,14 @@ require {
     println_int
 }
 
-fn foo() int {
-    return 77;
+fn foo(g: int) int {
+    return g + 77;
 }
 
 class A {
     x: int;
-    fn __init__(this: *A) void {
+    fn __new__(this: *A) void {
+        super.__new__();
         this.x = 78;
     }
 
@@ -23,10 +24,22 @@ class A {
     }
 }
 
+class B(A) {
+    fn __new__(this: *B) void {
+        super.__new__();
+    }
+
+    fn bar(this: *B) void {
+        cprintln(12321);
+    }
+}
+
 fn main() int {
-    aa: *A = new A();
-    aa.__init__();
-    cprintln(aa.__class__);
-    println_int(aa);
-    return aa.foo() + aa.x;
+    bb: *B = new B();
+    cprintln(bb.__class__);
+    cprintln(foo(5));
+    c: *A = new B();
+    cprintln(bb.equals(bb));
+    c.bar();
+    return bb.foo() + bb.x;
 }

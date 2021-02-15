@@ -1,4 +1,11 @@
-﻿===== VERSION 2020 =====
+﻿===== VERSION 2021 =====
+2021/02/16
+
+* Added auto call to constructor
+* Improved arguments type check
+* Added support of '==' and '!=' to pointers
+
+===== VERSION 2020 =====
 2021/02/16
 
 * Added basic instance info header and '__class__' field
