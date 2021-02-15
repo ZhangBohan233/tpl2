@@ -317,6 +317,7 @@ class TpeCompiler:
                 elif line.startswith("class"):
                     content = [part for part in [part.strip() for part in line.split(" ")] if len(part) > 0]
                     class_name = content[1]
+                    this_id = len(class_list)
                     class_list.append(class_name)  # name
                     class_ptr = int(content[2][1:])
                     class_pointers[class_name] = class_ptr
@@ -326,10 +327,11 @@ class TpeCompiler:
                         mro.append(class_pointers[sc_name])
 
                     class_header = bytearray()
-                    class_header.extend(util.string_to_bytes(class_name))
-                    class_header.extend(util.int_to_bytes(len(mro)))
+                    class_header.extend(util.int_to_bytes(this_id))  # class id
+                    class_header.extend(util.string_to_bytes(class_name))  # class name
+                    class_header.extend(util.int_to_bytes(len(mro)))  # len of mro
                     for m in mro:
-                        class_header.extend(util.int_to_bytes(m))
+                        class_header.extend(util.int_to_bytes(m))  # mro pointer
                     class_headers[class_name] = class_header
                     class_bodies.extend(class_header)
                 else:
@@ -466,28 +468,6 @@ class TpeCompiler:
             else:
                 i += 1
         return bytearray(body)
-
-    # def compile_pseudo_inst(self, inst: str, instruction: iter, cur_fn_body: iter, lf: tl.LineFile):
-    #     tup = PSEUDO_INSTRUCTIONS[inst]
-    #     num_inst = inst_to_num(instruction, tup, lf)
-    #     if inst == "load_lit":
-    #         lit_start = self.stack_size + self.global_length
-    #         self.compile_inst("load",
-    #                           ["load", instruction[1], "$" + str(num_inst[2] + lit_start)],
-    #                           cur_fn_body,
-    #                           lf)
-    #     elif inst == "loadc_lit":
-    #         lit_start = self.stack_size + self.global_length
-    #         self.compile_inst("loadc",
-    #                           ["loadc", instruction[1], "$" + str(num_inst[2] + lit_start)],
-    #                           cur_fn_body,
-    #                           lf)
-    #     elif inst == "lit_abs":
-    #         lit_start = self.stack_size + self.global_length
-    #         self.compile_inst("aload",
-    #                           ["aload", instruction[1], "$" + str(num_inst[2] + lit_start)],
-    #                           cur_fn_body,
-    #                           lf)
 
     def compile_inst(self, inst: str, instruction: list, cur_fn_body: iter, lf: tl.LineFile):
         tup = INSTRUCTIONS[inst]

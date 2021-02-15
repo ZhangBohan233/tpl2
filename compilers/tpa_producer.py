@@ -401,6 +401,18 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def i_ptr_assign(self, value: int, value_len: int, ptr_addr: int):
+        """
+        Assigns a real value to an address that is stored in a ptr
+        """
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("load", register(reg1), address(ptr_addr))
+        self.write_format("iload", register(reg2), value)
+        self.write_format(store_abs_of_len(value_len), register(reg1), register(reg2))
+
+        self.manager.append_regs(reg2, reg1)
+
     def struct_attr(self, struct_addr, attr_pos, res_addr):
         reg1, reg2 = self.manager.require_regs(2)
 

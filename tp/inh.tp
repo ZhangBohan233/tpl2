@@ -1,16 +1,32 @@
 ﻿import lang
 
-class A {
-    fn __init__(this: *A) void {
+require {
+    println_int
+}
 
+fn foo() int {
+    return 77;
+}
+
+class A {
+    x: int;
+    fn __init__(this: *A) void {
+        this.x = 78;
     }
 
     fn foo(this: *A) int {
         return 2;
     }
+
+    fn bar(this: *A) void {
+        cprintln(this.x);
+    }
 }
 
 fn main() int {
     aa: *A = new A();
-    return aa.foo();
+    aa.__init__();
+    cprintln(aa.__class__);
+    println_int(aa);
+    return aa.foo() + aa.x;
 }

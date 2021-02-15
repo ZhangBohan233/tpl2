@@ -170,13 +170,12 @@ class NativeFuncType(CallableType):
 
 
 class ClassType(Type):
-    def __init__(self, name: str, class_id: int, file_path: str, members: dict, direct_sc: list, templates: list):
+    def __init__(self, name: str, class_id: int, file_path: str, direct_sc: list, templates: list):
         super().__init__(0)
 
         self.name = name
         self.class_id = class_id
         self.file_path = file_path  # where this class is defined, avoiding conflict struct def'ns in non-export part
-        self.members = members  # {name: (position, type)}
         self.direct_superclasses = direct_sc
         self.mro: list = None  # Method resolution order, ranked from closest to farthest
         self.templates = templates
@@ -207,7 +206,7 @@ class ClassType(Type):
         return isinstance(other, ClassType) and self.name == other.name and self.file_path == other.file_path
 
     def __str__(self):
-        return "ClassType(" + util.name_with_path(self.name, self.file_path, self.mro[0]) + ")"
+        return "ClassType(" + util.class_name_with_path(self.name, self.file_path) + ")"
 
     def __repr__(self):
         return self.__str__()

@@ -222,6 +222,12 @@ class ClassEnvironment(MainAbstractEnvironment):
     def __init__(self, outer):
         super().__init__(outer)
 
+    def define_function(self, name: str, func_type: typ.CallableType, fn_ptr: int, lf: tl.LineFile):
+        if name in self.vars:
+            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
+        entry = FunctionEntry(func_type, fn_ptr, const=True, named=True)
+        self.vars[name] = entry
+
 
 class BlockEnvironment(SubAbstractEnvironment):
     def __init__(self, outer):

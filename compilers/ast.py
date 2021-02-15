@@ -659,12 +659,31 @@ class NewExpr(UnaryExpr):
         tpa.assign_i(malloc_size, t.memory_length())
         FunctionCall.call(malloc, [(malloc_size, util.INT_LEN)], env, tpa, dst_addr, self.lf)
 
-        if isinstance(self.value, FunctionCall):
-            self.compile_class_init(env, tpa, dst_addr)
+        if (isinstance(self.value, FunctionCall) and
+                isinstance(t, typ.PointerType) and
+                isinstance(t.base, typ.ClassType)):
+            self.compile_class_init(t.base, env, tpa, dst_addr)
+        else:
+            raise errs.TplCompileError("Cannot initial class without call. ", self.lf)
 
-    def compile_class_init(self, env: en.Environment, tpa: tp.TpaOutput, inst_ptr_addr):
+    def compile_class_init(self, class_t: typ.ClassType, env: en.Environment, tpa: tp.TpaOutput, inst_ptr_addr):
         self.value: FunctionCall
-        # FunctionCall.call()
+
+        # fill instance native fields
+        arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
+        for ct in class_t.mro:
+            ct: typ.ClassType
+            tpa.assign(arith_addr, inst_ptr_addr)
+            tpa.i_binary_arith("addi", arith_addr, ct.fields["__class__"][0], arith_addr)
+            c_ptr = env.get(ct.name, self.lf)
+            # stores class pointer to the first position of each class
+            tpa.i_ptr_assign(c_ptr, util.PTR_LEN, arith_addr)
+            for pos, ptr, t in ct.methods.values():
+                tpa.assign(arith_addr, inst_ptr_addr)
+                tpa.i_binary_arith("addi", arith_addr, pos, arith_addr)
+                tpa.i_ptr_assign(ptr, util.PTR_LEN, arith_addr)  # store method pointer
+
+        pass
 
     def use_compile_to(self) -> bool:
         return use_compile_to
@@ -1246,7 +1265,7 @@ class ClassStmt(Statement):
                     raise errs.TplCompileError("Class can only extend classes", self.lf)
                 direct_sc.append(t)
 
-        class_type = typ.ClassType(self.name, self.class_id, self.lf.file_name, {}, direct_sc, self.templates)
+        class_type = typ.ClassType(self.name, self.class_id, self.lf.file_name, direct_sc, self.templates)
         mro = self.make_mro(class_type)
         class_type.mro = mro
         env.define_const_set(self.name, class_type, class_ptr, self.lf)
@@ -1262,6 +1281,10 @@ class ClassStmt(Statement):
         else:
             pos = mro[1].memory_length()
 
+        # the class pointer
+        class_type.fields["__class__"] = pos, typ.TYPE_INT
+        pos += util.INT_LEN
+
         for line in self.body:
             for part in line:
                 if isinstance(part, Declaration):
@@ -1271,7 +1294,7 @@ class ClassStmt(Statement):
                     pos += t.memory_length()
                 elif isinstance(part, FunctionDef):
                     part.parent_class = class_type
-                    method_defs.append(part)
+                    method_defs.append((pos, part))
                     pos += util.PTR_LEN
                 else:
                     raise errs.TplCompileError("Class body should only contain attributes and methods. ", self.lf)
@@ -1279,11 +1302,10 @@ class ClassStmt(Statement):
         class_type.length = pos
 
         for method_def in method_defs:
-            # print(method_def.parent_class)
-            method_def.compile(class_env, tpa)
-            name = method_def.get_name()
+            method_def[1].compile(class_env, tpa)
+            name = method_def[1].get_name()
             method_ptr = class_env.get(name, self.lf)
-            class_type.methods[name] = pos, method_ptr, class_env.get_type(name, self.lf)
+            class_type.methods[name] = method_def[0], method_ptr, class_env.get_type(name, self.lf)
 
     def __str__(self):
         return f"Class {self.name} ({self.extensions}) {self.body}"
