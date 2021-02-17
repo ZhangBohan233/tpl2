@@ -10,7 +10,7 @@ fn test(arr: int[]) void {
 fn main() int {
     //a: char[][] = char[2][];  // {{0, 0, 0}, {0, 0, 0}}
     //a[1] = char[3];
-    arr: char[] = char[3];
+    arr: char[] = new char[3];
     b: int = 8;
     arr[2] = 'c';
     //a[1][0] = 99 as char;

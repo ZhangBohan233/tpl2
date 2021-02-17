@@ -664,10 +664,8 @@ class NewExpr(UnaryExpr):
         if isinstance(self.value, IndexingExpr):
             return self.compile_heap_arr_init(env, tpa, dst_addr, dst_len)
         t = self.evaluated_type(env, tpa.manager)
-        if isinstance(self.value, FunctionCall):  # instance creation
-            malloc_t = self.value.call_obj.evaluated_type(env, tpa.manager)
-        else:
-            malloc_t = t
+        malloc_t = self._malloc_type(env, tpa.manager)
+
         malloc = NameNode("malloc", self.lf)
         req = RequireStmt(malloc, self.lf)
         req.compile(env, tpa)
@@ -711,6 +709,13 @@ class NewExpr(UnaryExpr):
         if isinstance(self.value, FunctionCall):
             return typ.PointerType(self.value.call_obj.definition_type(env, manager))
         return typ.PointerType(self.value.definition_type(env, manager))
+
+    def _malloc_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        if isinstance(self.value, IndexingExpr):
+            return self.value.definition_type(env, manager)
+        if isinstance(self.value, FunctionCall):
+            return self.value.call_obj.definition_type(env, manager)
+        return self.value.definition_type(env, manager)
 
 
 class DelStmt(UnaryStmt):

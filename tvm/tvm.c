@@ -94,6 +94,7 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
         ERROR_CODE = ERR_MEMORY_OUT;
         return 1;
     }
+    printf("code len %d, copy len %d\n", code_length, copy_len);
 
     memcpy(MEMORY + global_end, src_code + 16 + INT_LEN * 4, copy_len);
 
@@ -232,7 +233,7 @@ tp_int _malloc_essential(tp_int asked_len) {
 
     if (location <= 0) {
         int ava_size = link_len(available) * MEM_BLOCK - INT_LEN;
-        fprintf(stderr, "Cannot allocate length %lld, available memory %d\n", asked_len, ava_size);
+        tp_fprintf(stderr, "Cannot allocate length %lld, available memory %d\n", asked_len, ava_size);
         ERROR_CODE = ERR_MEMORY_OUT;
         return 0;
     }
@@ -824,7 +825,7 @@ void print_memory() {
         printf("%d ", MEMORY[i]);
     }
 
-    tp_printf("\nClass header %d: ", literal_end);
+    tp_printf("\nClass header %d: ", literal_end)
     for (; i < class_header_end; ++i) {
         printf("%d ", MEMORY[i]);
     }
@@ -834,7 +835,7 @@ void print_memory() {
         printf("%d ", MEMORY[i]);
     }
 
-    tp_printf("\nEntry %d: ", functions_end);
+    tp_printf("\nEntry %d: ", functions_end)
     for (; i < entry_end; i++) {
         printf("%d ", MEMORY[i]);
     }

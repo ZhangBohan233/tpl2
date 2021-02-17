@@ -6,6 +6,7 @@ global_length
 24
 literal
 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 2 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 99 0
+classes
 
 fn E:\GitHub\tpl2\tp\arr.tp$test $1032
     push_fp
@@ -45,77 +46,104 @@ fn E:\GitHub\tpl2\tp\arr.tp$test $1032
 
 fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     push_fp
-    push          82
-    iload         %0      $3
-    iload         %1      $16
+    push          132
+    iload         %0      $1
+    iload         %1      $24
     store         %1      %0
-    aload         %0      $16
+    aload         %0      $24
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
     iload         %1      8
+    addi          %0      %1
+    iload         %1      40
     store         %1      %0
+    load          %0      $1080
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $40
+    load          %1      $48
+    store_abs     %0      %1
+    iload         %0      $2
+    iload         %1      $56
+    store         %1      %0
+    require       heap_array $64     %0      %1
+    aload_sp      %0      $0
+    load          %1      $56
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $16
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    invoke        $64
     load          %0      $8
     iload         %1      $0
     store         %1      %0
     load          %0      $1088
-    iload         %1      $30
+    iload         %1      $80
+    store         %1      %0
+    load          %0      $80
+    iload         %1      $72
     store         %1      %0
     load          %0      $1072
-    iload         %1      $38
+    iload         %1      $88
     store         %1      %0
-    load          %0      $38
-    iload         %1      $46
+    load          %0      $88
+    iload         %1      $96
     store         %1      %0
-    load          %0      $46
+    load          %0      $96
     iload         %1      2
     muli          %0      %1
-    iload         %1      46
+    iload         %1      96
     store         %1      %0
-    load          %0      $46
+    load          %0      $96
     iload         %1      8
     addi          %0      %1
-    iload         %1      46
+    iload         %1      96
     store         %1      %0
     load          %0      $0
-    load          %1      $46
+    load          %1      $96
     addi          %0      %1
-    iload         %1      46
+    iload         %1      96
     store         %1      %0
     loadc         %0      $1096
-    iload         %1      $54
+    iload         %1      $104
     storec        %1      %0
-    load          %0      $46
-    load          %1      $54
+    load          %0      $96
+    load          %1      $104
     storec_abs    %0      %1
-    require       println_char $56     %0      %1
+    require       println_char $106    %0      %1
     load          %0      $1072
-    iload         %1      $66
+    iload         %1      $116
     store         %1      %0
-    load          %0      $66
-    iload         %1      $74
+    load          %0      $116
+    iload         %1      $124
     store         %1      %0
-    load          %0      $74
+    load          %0      $124
     iload         %1      2
     muli          %0      %1
-    iload         %1      74
+    iload         %1      124
     store         %1      %0
-    load          %0      $74
+    load          %0      $124
     iload         %1      8
     addi          %0      %1
-    iload         %1      74
+    iload         %1      124
     store         %1      %0
     load          %0      $0
-    load          %1      $74
+    load          %1      $124
     addi          %0      %1
-    iload         %1      74
+    iload         %1      124
     store         %1      %0
-    load          %0      $74
+    load          %0      $124
     rloadc_abs    %1      %0
-    iload         %0      64
+    iload         %0      114
     storec        %0      %1
     aload_sp      %0      $0
-    loadc         %1      $64
+    loadc         %1      $114
     store_abs     %0      %1
-    invoke        $56
-    load          %0      $30
+    invoke        $106
+    load          %0      $72
     put_ret       %0
     pull_fp
     ret

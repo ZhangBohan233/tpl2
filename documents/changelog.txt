@@ -1,4 +1,10 @@
-﻿===== VERSION 2022 =====
+﻿===== VERSION 2023 =====
+2021/02/18
+
+* Updated macros for tvm bits control
+* Current bug: cannot run in 32 bits mode
+
+===== VERSION 2022 =====
 2021/02/18
 
 * Redesigned inheritance system:

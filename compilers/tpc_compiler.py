@@ -415,8 +415,6 @@ class TpeCompiler:
                             if inst == "exit":  # end of program
                                 entry_part = self.compile_function(cur_fn_body, labels, jumps)
 
-                        # elif inst in PSEUDO_INSTRUCTIONS:
-                        #     self.compile_pseudo_inst(inst, instructions, cur_fn_body, lf)
                         else:
                             raise errs.TpaError("Unknown instruction {}. ".format(inst), lf)
                 i += 1

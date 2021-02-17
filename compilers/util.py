@@ -4,8 +4,8 @@ import struct
 
 VM_BITS = 64
 STACK_SIZE = 1024
-INT_LEN = 8
-FLOAT_LEN = 8
+INT_LEN = VM_BITS >> 3
+FLOAT_LEN = VM_BITS >> 3
 CHAR_LEN = 2
 PTR_LEN = INT_LEN
 
