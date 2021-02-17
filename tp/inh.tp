@@ -37,7 +37,7 @@ class B(A) {
 fn main() int {
     bb: *B = new B();
     cprintln(bb.__class__);
-    cprintln(foo(5));
+    cprintln(bb.foo());
     c: *A = new B();
     cprintln(bb.equals(bb));
     c.bar();

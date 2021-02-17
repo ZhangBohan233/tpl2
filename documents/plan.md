@@ -36,3 +36,4 @@
 * Templates and generics
 * super
 * Auto add parameter 'this'
+* instanceof

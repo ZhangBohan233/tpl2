@@ -1,7 +1,6 @@
-import collections
-
 import compilers.errors as errs
 import compilers.util as util
+import compilers.types as typ
 
 
 def register(num) -> str:
@@ -112,7 +111,7 @@ class Manager:
         self.gp = util.STACK_SIZE
         self.sp = util.INT_LEN + 1
         self.functions_map = {}
-        self.class_headers = []  # (class_full_name, class_ptr, [mro id]), ranked strictly by class id
+        self.class_headers = []  # class type
         self.label_manager = LabelManager()
 
     def allocate_stack(self, length):
@@ -147,9 +146,8 @@ class Manager:
     def map_function(self, name: str, file_path, body: list, clazz):
         self.functions_map[util.name_with_path(name, file_path, clazz)] = body
 
-    def add_class(self, class_name, file_path, mro_ids, class_ptr):
-        full_name = util.class_name_with_path(class_name, file_path)
-        self.class_headers.append((full_name, class_ptr, mro_ids))
+    def add_class(self, class_type: typ.ClassType):
+        self.class_headers.append(class_type)
 
     def global_length(self):
         return self.gp - util.STACK_SIZE
@@ -442,6 +440,27 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def call_method(self, inst_ptr_addr, method_id, args: list, rtn_addr, rtn_len, offset):
+        """
+        :param inst_ptr_addr: the relative address that stores the pointer to instance
+        :param method_id:
+        :param args:
+        :param rtn_addr:
+        :param rtn_len:
+        :param offset: the offset of class pointer in instance. Typically: __class__ = 0, super = INT_LEN
+        :return:
+        """
+        reg1, reg2, reg3 = self.manager.require_regs(3)
+
+        self.write_format("load", register(reg1), address(inst_ptr_addr))
+        self.write_format("iload", register(reg2), number(method_id))
+        self.write_format("iload", register(reg3), number(offset))
+        self.write_format("get_method", register(reg1), register(reg2), register(reg3))
+        self.set_call(args, reg2, reg3, rtn_len, rtn_addr)
+        self.write_format("call_reg", register(reg1))
+
+        self.manager.append_regs(reg3, reg2, reg1)
+
     def set_call(self, args: list, reg1, reg2, ret_len, rtn_addr):
         count = 0
         for arg in args:
@@ -526,10 +545,16 @@ class TpaOutput:
                   "literal", literal_str,
                   "classes"]
 
-        for ch in self.manager.class_headers:
-            line = "class " + ch[0] + " $" + str(ch[1])
-            for mro_id in ch[2]:
-                line += " " + str(mro_id)
+        for ct in self.manager.class_headers:
+            ct: typ.ClassType
+            full_name = util.class_name_with_path(ct.name, ct.file_path)
+            line = "class " + full_name + " mro"
+            for mro_t in ct.mro:
+                line += " $" + str(mro_t.class_ptr)
+            line += " methods"
+            # print(ct.method_rank)
+            for method_name in ct.method_rank:
+                line += " $" + str(ct.methods[method_name][1])
             merged.append(line)
         merged.append("")
 

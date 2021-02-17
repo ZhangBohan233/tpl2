@@ -33,7 +33,7 @@ INSTRUCTIONS = {
     "push_fp": (14,),
     "pull_fp": (15,),
     "set_ret": (16, 1),  # set_ret    %reg   | set the return abs addr in %reg to ret_stack
-    "call": (17, util.INT_LEN),
+    "call": (17, util.INT_LEN),  # | call function at addr
     "exit": (18,),
     "true_addr": (19, 1),  # true_addr   %reg    | relative addr to absolute addr
     "stop": (20,),
@@ -45,6 +45,7 @@ INSTRUCTIONS = {
     #                         # 使用存储在%reg2内的绝对地址，将该地址的内存读入%reg1
     "rloadc_abs": (26, 1, 1),
     "rloadb_abs": (27, 1, 1),
+    "call_reg": (28, 1),  # %reg fn_addr
     "addi": (30, 1, 1),
     "subi": (31, 1, 1),
     "muli": (32, 1, 1),
@@ -78,7 +79,9 @@ INSTRUCTIONS = {
     "main_arg": (79,),
     "loadb": (80, 1, util.INT_LEN),
     "storeb": (81, 1, 1),
-    "storeb_abs": (82, 1, 1)
+    "storeb_abs": (82, 1, 1),
+    "get_method": (83, 1, 1, 1),  # %reg1 inst_ptr_addr  %reg2 method_id  %reg3 backup   |
+    #                             # get method ptr of a class, store to %reg1
 }
 
 MNEMONIC = {
@@ -280,7 +283,7 @@ class TpeCompiler:
         function_body_positions = {}
         function_pointers = {}
         function_list = []
-        class_headers = {}
+        class_header_lengths = {}
         class_pointers = {}
         class_list = []
         class_bodies = bytearray()
@@ -315,24 +318,34 @@ class TpeCompiler:
                 elif line == "classes":
                     pass
                 elif line.startswith("class"):
+                    # format of class header:
+                    # Example in 64 bits
+                    # 0 ~ 8: len(mro)
+                    # 8 ~ 16: len(methods)
+                    # 16 ~ 16 + 8 * len(mro): pointers of mro
+                    # 16 + 8 * len(mro) ~ 16 + 8 * len(mro) + 8 * len(methods): method pointers
+                    # len(class_name)
+                    # class_name
                     content = [part for part in [part.strip() for part in line.split(" ")] if len(part) > 0]
+                    method_start = content.index("methods")
+                    mro_str = content[3:method_start]
+                    methods_str = content[method_start + 1:]
                     class_name = content[1]
-                    this_id = len(class_list)
                     class_list.append(class_name)  # name
-                    class_ptr = int(content[2][1:])
+                    class_ptr = int(mro_str[0][1:])
                     class_pointers[class_name] = class_ptr
-                    mro = []
-                    for m in content[3:]:
-                        sc_name = class_list[int(m)]
-                        mro.append(class_pointers[sc_name])
 
                     class_header = bytearray()
-                    class_header.extend(util.int_to_bytes(this_id))  # class id
+                    class_header.extend(util.int_to_bytes(len(mro_str)))  # len of mro
+                    class_header.extend(util.int_to_bytes(len(methods_str)))  # methods count
+
+                    for m in mro_str:
+                        class_header.extend(util.int_to_bytes(int(m[1:])))  # mro pointers
+                    for m in methods_str:
+                        class_header.extend(util.int_to_bytes(int(m[1:])))  # method pointers
+
                     class_header.extend(util.string_to_bytes(class_name))  # class name
-                    class_header.extend(util.int_to_bytes(len(mro)))  # len of mro
-                    for m in mro:
-                        class_header.extend(util.int_to_bytes(m))  # mro pointer
-                    class_headers[class_name] = class_header
+                    class_header_lengths[class_name] = len(class_header)
                     class_bodies.extend(class_header)
                 else:
                     instructions = \
@@ -414,16 +427,16 @@ class TpeCompiler:
                  literal + class_bodies
 
         entry_lf = tl.LineFile("tpa compiler ", 0)
+        # assigns value to all class pointers
         all_len_before_classes = self.stack_size + self.global_length + len(literal)
         class_assignments = bytearray()
         class_pos = all_len_before_classes
         for class_name in class_list:
             class_ptr = class_pointers[class_name]
-            class_header = class_headers[class_name]
             self.compile_inst("iload", ["iload", "%0", "$" + str(class_pos)], class_assignments, entry_lf)
             self.compile_inst("iload", ["iload", "%1", "$" + str(class_ptr)], class_assignments, entry_lf)
             self.compile_inst("store", ["store", "%1", "%0"], class_assignments, entry_lf)
-            class_pos += len(class_header)
+            class_pos += class_header_lengths[class_name]
 
         fn_assignments = bytearray()
         all_len_before_real_fn = all_len_before_classes + len(class_bodies)

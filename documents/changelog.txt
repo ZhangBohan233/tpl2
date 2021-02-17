@@ -1,4 +1,12 @@
-﻿===== VERSION 2021 =====
+﻿===== VERSION 2022 =====
+2021/02/18
+
+* Redesigned inheritance system:
+    * Method that actually be called is now determined at runtime
+* Bug fixes:
+    * length error of 'new Object()'
+
+===== VERSION 2021 =====
 2021/02/16
 
 * Added auto call to constructor

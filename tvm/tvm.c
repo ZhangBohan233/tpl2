@@ -519,9 +519,10 @@ void tvm_mainloop() {
 //                printf("ret %lld\n", ret_stack[ret_p]);
                 break;
             case 17:  // call fn
-//                printf("call\n");
+//                printf("call %lld\n", bytes_to_int(MEMORY + pc));
                 pc_stack[++pc_p] = pc + INT_LEN;
                 pc = true_addr(bytes_to_int(MEMORY + true_addr(bytes_to_int(MEMORY + pc))));
+//                printf("called pc %lld\n", pc);
                 break;
             case 18:  // exit
                 return;
@@ -567,7 +568,13 @@ void tvm_mainloop() {
                 reg1 = MEMORY[pc++];
                 reg2 = MEMORY[pc++];
                 regs[reg1].byte_value = MEMORY[regs[reg2].int_value];
-//                memcpy(regs[reg1].bytes, MEMORY + regs[reg2].byte_value, 1);
+                break;
+            case 28:  // call_reg
+                reg1 = MEMORY[pc++];
+//                printf("method ptr %lld\n", regs[reg1].int_value);
+                pc_stack[++pc_p] = pc;
+                pc = true_addr(bytes_to_int(MEMORY + true_addr(regs[reg1].int_value)));
+//                printf("method called pc %lld\n", pc);
                 break;
             case 30:  // addi
                 reg1 = MEMORY[pc++];
@@ -739,6 +746,23 @@ void tvm_mainloop() {
 //                char_to_bytes(MEMORY + regs[reg1].int_value, regs[reg2].char_value);
 //                memcpy(MEMORY + regs[reg1].char_value, regs[reg2].bytes, CHAR_LEN);
                 break;
+            case 83:  // get_method  %inst_ptr_addr  method id  %offset of class in instance
+                reg1 = MEMORY[pc++];  // inst_ptr_addr
+                reg2 = MEMORY[pc++];  // method id
+                reg3 = MEMORY[pc++];  // backup
+                regs[reg1].int_value = bytes_to_int(MEMORY + true_addr(regs[reg1].int_value + regs[reg3].int_value));  // class pointer
+//                printf("class pointer %lld\n", regs[reg1].int_value);
+                regs[reg1].int_value = bytes_to_int(MEMORY + regs[reg1].int_value);  // class header address
+                regs[reg3].int_value = bytes_to_int(MEMORY + regs[reg1].int_value);  // mro count
+//                printf("mro count %lld\n", regs[reg1].int_value);
+
+                // skips mro, "mro count", and "method count"
+                regs[reg1].int_value += regs[reg3].int_value * PTR_LEN + INT_LEN * 2;
+//                printf("addr %lld\n", regs[reg1].int_value);
+                regs[reg1].int_value += regs[reg2].int_value * PTR_LEN;  // true addr of method ptr
+                regs[reg1].int_value = bytes_to_int(MEMORY + regs[reg1].int_value);
+//                printf("method ptr %lld\n", regs[reg1].int_value);
+                break;
             default:
                 ERROR_CODE = ERR_INSTRUCTION;
                 break;
@@ -781,6 +805,7 @@ tp_int tvm_set_args() {
 }
 
 void print_memory() {
+    //printf("mmm %lld\n", bytes_to_int(MEMORY + 1510));
     int i = 0;
     printf("Stack ");
     for (; i < stack_end; i++) {

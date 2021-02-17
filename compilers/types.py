@@ -151,10 +151,23 @@ class CallableType(Type):
     def __str__(self):
         return "{}({} -> {})".format(self.__class__.__name__, self.param_types, self.rtype)
 
+    def __repr__(self):
+        return self.__str__()
+
 
 class FuncType(CallableType):
     def __init__(self, param_types, rtype):
         super().__init__(param_types, rtype)
+
+    def strong_convertible(self, left_tar_type):
+        if isinstance(left_tar_type, FuncType):
+            if len(self.param_types) == len(left_tar_type.param_types):
+                if self.rtype.strong_convertible(left_tar_type.rtype):
+                    for i in range(len(self.param_types)):
+                        if not self.param_types[i].strong_convertible(left_tar_type.param_types[i]):
+                            return False
+                    return True
+        return False
 
 
 class MethodType(FuncType):
@@ -163,6 +176,9 @@ class MethodType(FuncType):
 
         self.defined_class = def_class
 
+    def __str__(self):
+        return "method " + super().__str__()
+
 
 class NativeFuncType(CallableType):
     def __init__(self, param_types, rtype):
@@ -170,16 +186,19 @@ class NativeFuncType(CallableType):
 
 
 class ClassType(Type):
-    def __init__(self, name: str, class_id: int, file_path: str, direct_sc: list, templates: list):
+    def __init__(self, name: str, class_ptr: int, file_path: str, direct_sc: list, templates: list):
         super().__init__(0)
 
         self.name = name
-        self.class_id = class_id
+        self.class_ptr = class_ptr
         self.file_path = file_path  # where this class is defined, avoiding conflict struct def'ns in non-export part
         self.direct_superclasses = direct_sc
         self.mro: list = None  # Method resolution order, ranked from closest to farthest
         self.templates = templates
-        self.methods = collections.OrderedDict()  # OrderedDict, name: (position, func_ptr, func_type)
+        self.method_rank = []  # keep track of all method names in order
+        # this dict records all callable methods in this class, including methods in its superclass
+        # methods with same name must have the same id, i.e. overriding methods have the same id
+        self.methods = {}  # name: (method_id, func_ptr, func_type)
         self.fields = collections.OrderedDict()  # OrderedDict, name: (position, type)
 
     def find_field(self, name: str, lf) -> (int, Type):
@@ -189,10 +208,10 @@ class ClassType(Type):
         raise errs.TplCompileError(f"Class {self.name} does not have field '{name}'. ", lf)
 
     def find_method(self, name: str, lf) -> (int, int, MethodType):
-        for mro_t in self.mro:
-            if name in mro_t.methods:
-                return mro_t.methods[name]
-        raise errs.TplCompileError(f"Class {self.name} does not have method '{name}'. ", lf)
+        if name in self.methods:
+            return self.methods[name]
+        else:
+            raise errs.TplCompileError(f"Class {self.name} does not have method '{name}'. ", lf)
 
     def strong_convertible(self, left_tar_type):
         if isinstance(left_tar_type, ClassType):

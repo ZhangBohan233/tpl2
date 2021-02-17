@@ -1,4 +1,5 @@
 from abc import ABC
+import collections
 import compilers.tokens_lib as tl
 import compilers.environment as en
 import compilers.tpa_producer as tp
@@ -663,11 +664,15 @@ class NewExpr(UnaryExpr):
         if isinstance(self.value, IndexingExpr):
             return self.compile_heap_arr_init(env, tpa, dst_addr, dst_len)
         t = self.evaluated_type(env, tpa.manager)
+        if isinstance(self.value, FunctionCall):  # instance creation
+            malloc_t = self.value.call_obj.evaluated_type(env, tpa.manager)
+        else:
+            malloc_t = t
         malloc = NameNode("malloc", self.lf)
         req = RequireStmt(malloc, self.lf)
         req.compile(env, tpa)
         malloc_size = tpa.manager.allocate_stack(util.INT_LEN)
-        tpa.assign_i(malloc_size, t.memory_length())
+        tpa.assign_i(malloc_size, malloc_t.memory_length())
         FunctionCall.call(malloc, [(malloc_size, util.INT_LEN)], env, tpa, dst_addr, self.lf)
 
         if (isinstance(self.value, FunctionCall) and
@@ -680,19 +685,7 @@ class NewExpr(UnaryExpr):
     def compile_class_init(self, class_t: typ.ClassType, env: en.Environment, tpa: tp.TpaOutput, inst_ptr_addr):
         self.value: FunctionCall
 
-        # fill instance native fields
-        arith_addr = tpa.manager.allocate_stack(util.INT_LEN)
-        for ct in class_t.mro:
-            ct: typ.ClassType
-            tpa.assign(arith_addr, inst_ptr_addr)
-            tpa.i_binary_arith("addi", arith_addr, ct.fields["__class__"][0], arith_addr)
-            c_ptr = env.get(ct.name, self.lf)
-            # stores class pointer to the first position of each class
-            tpa.i_ptr_assign(c_ptr, util.PTR_LEN, arith_addr)
-            for pos, ptr, t in ct.methods.values():
-                tpa.assign(arith_addr, inst_ptr_addr)
-                tpa.i_binary_arith("addi", arith_addr, pos, arith_addr)
-                tpa.i_ptr_assign(ptr, util.PTR_LEN, arith_addr)  # store method pointer
+        tpa.i_ptr_assign(class_t.class_ptr, util.PTR_LEN, inst_ptr_addr)  # assign __class__
 
         constructor_pos, constructor_ptr, constructor_t = class_t.methods["__new__"]
         ea = self.value.evaluate_args(constructor_t, env, tpa, True)
@@ -922,21 +915,43 @@ class DotExpr(BinaryExpr):
         if isinstance(self.right, NameNode):
             pass
         elif isinstance(self.right, FunctionCall):
-            return self.compile_method_call(typ.PointerType(cur_method_cls_t.mro[1]), this_ptr, env, tpa)
+            return self.compile_fixed_method_call(
+                typ.PointerType(cur_method_cls_t.mro[1]), this_ptr, env, tpa)
 
         raise errs.TplCompileError("Super must follow a name or a call. ", self.lf)
 
-    def compile_method_call(self, class_ptr_t, ins_ptr, env: en.Environment, tpa: tp.TpaOutput):
+    def compile_method_call(self, class_ptr_t, ins_ptr_addr, env: en.Environment, tpa: tp.TpaOutput, class_offset=0):
+        """
+        Compiles a method call, with mro resolved at runtime.
+        """
+        # print(class_offset)
         self.right: FunctionCall
         if isinstance(class_ptr_t, typ.PointerType):
             class_t = class_ptr_t.base
             if isinstance(class_t, typ.ClassType):
                 name = self.right.get_name()
-                pos, method_p, t = class_t.find_method(name, self.lf)
+                method_id, method_p, t = class_t.find_method(name, self.lf)
+                res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
+                ea = self.right.evaluate_args(t, env, tpa, is_method=True)
+                ea.insert(0, (ins_ptr_addr, util.PTR_LEN))
+                tpa.call_method(ins_ptr_addr, method_id, ea, res_ptr, t.rtype.memory_length(), class_offset)
+                return res_ptr
+        raise errs.TplCompileError("Cannot make method call. ", self.lf)
+
+    def compile_fixed_method_call(self, class_ptr_t, ins_ptr_addr, env: en.Environment, tpa: tp.TpaOutput):
+        """
+        Compiles a method call, with mro resolved at compile time.
+        """
+        self.right: FunctionCall
+        if isinstance(class_ptr_t, typ.PointerType):
+            class_t = class_ptr_t.base
+            if isinstance(class_t, typ.ClassType):
+                name = self.right.get_name()
+                method_id, method_p, t = class_t.find_method(name, self.lf)
                 full_name = util.name_with_path(name, t.defined_class.file_path, t.defined_class)
                 res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
                 ea = self.right.evaluate_args(t, env, tpa, is_method=True)
-                ea.insert(0, (ins_ptr, util.PTR_LEN))
+                ea.insert(0, (ins_ptr_addr, util.PTR_LEN))
                 FunctionCall.call_name(full_name, ea, tpa, res_ptr, self.lf, t)
                 return res_ptr
         raise errs.TplCompileError("Cannot make method call. ", self.lf)
@@ -1259,7 +1274,7 @@ class ClassStmt(Statement):
         super().__init__(lf)
 
         self.name = name
-        self.class_id = CLASS_ID.increment()
+        # self.class_id = CLASS_ID.increment()
         self.extensions = None
         if extensions is not None:
             self.extensions = extensions
@@ -1284,25 +1299,25 @@ class ClassStmt(Statement):
                     raise errs.TplCompileError("Class can only extend classes", self.lf)
                 direct_sc.append(t)
 
-        class_type = typ.ClassType(self.name, self.class_id, self.lf.file_name, direct_sc, self.templates)
+        class_type = typ.ClassType(self.name, class_ptr, self.lf.file_name, direct_sc, self.templates)
         mro = self.make_mro(class_type)
         class_type.mro = mro
         env.define_const_set(self.name, class_type, class_ptr, self.lf)
 
-        mro_ids = [ct.class_id for ct in mro]
-        tpa.manager.add_class(self.name, self.lf.file_name, mro_ids, class_ptr)
+        tpa.manager.add_class(class_type)
 
         class_env = en.ClassEnvironment(env)
 
         method_defs = []
         if len(mro) == 1:  # Object itself
-            pos = 0
+            pos = util.INT_LEN
         else:
             pos = mro[1].memory_length()
+            class_type.methods.update(mro[1].methods)
+            class_type.method_rank.extend(mro[1].method_rank)
 
         # the class pointer
-        class_type.fields["__class__"] = pos, typ.TYPE_INT
-        pos += util.INT_LEN
+        class_type.fields["__class__"] = 0, typ.TYPE_INT
 
         for line in self.body:
             for part in line:
@@ -1313,18 +1328,29 @@ class ClassStmt(Statement):
                     pos += t.memory_length()
                 elif isinstance(part, FunctionDef):
                     part.parent_class = class_type
-                    method_defs.append((pos, part))
-                    pos += util.PTR_LEN
+                    method_defs.append(part)
                 else:
                     raise errs.TplCompileError("Class body should only contain attributes and methods. ", self.lf)
 
         class_type.length = pos
 
+        method_id = len(class_type.methods)  # id of method in this class
         for method_def in method_defs:
-            method_def[1].compile(class_env, tpa)
-            name = method_def[1].get_name()
+            method_def.compile(class_env, tpa)
+            name = method_def.get_name()
             method_ptr = class_env.get(name, self.lf)
-            class_type.methods[name] = method_def[0], method_ptr, class_env.get_type(name, self.lf)
+            method_t = class_env.get_type(name, self.lf)
+            if name in class_type.methods:  # overriding
+                m_pos, m_ptr, m_t = class_type.methods[name]
+                if name != "__new__" and not method_t.strong_convertible(m_t):
+                    raise errs.TplCompileError(
+                        f"Method '{name}' in class '{self.name}' overrides its super method in class '{mro[1].name}', "
+                        f"but has incompatible parameter or return type. ", self.lf)
+                class_type.methods[name] = m_pos, method_ptr, method_t
+            else:
+                class_type.method_rank.append(name)
+                class_type.methods[name] = method_id, method_ptr, method_t
+                method_id += 1
 
     def __str__(self):
         return f"Class {self.name} ({self.extensions}) {self.body}"
