@@ -938,10 +938,15 @@ class DotExpr(BinaryExpr):
         """
         Compiles a method call, with mro resolved at runtime.
         """
-        def inner_call(ct: typ.ClassType, right):
+        def inner_call(ct: typ.ClassType, right, generics):
             right: FunctionCall
             name = right.get_name()
             method_id, method_p, t = ct.find_method(name, self.lf)
+            t = t.copy()
+            for i in range(len(t.param_types)):
+                pt = t.param_types[i]
+                if typ.is_generic(pt):
+                    t.param_types[i] = typ.replace_generic_with_real(pt, generics)
             res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
             ea = right.evaluate_args(t, env, tpa, is_method=True)
             ea.insert(0, (ins_ptr_addr, util.PTR_LEN))
@@ -952,9 +957,9 @@ class DotExpr(BinaryExpr):
         if isinstance(class_ptr_t, typ.PointerType):
             class_t = class_ptr_t.base
             if isinstance(class_t, typ.ClassType):
-                return inner_call(class_t, self.right)
+                return inner_call(class_t, self.right, None)
             elif isinstance(class_t, typ.GenericClassType):
-                return inner_call(class_t.base, self.right)
+                return inner_call(class_t.base, self.right, class_t.generics)
         raise errs.TplCompileError("Cannot make method call. ", self.lf)
 
     def compile_fixed_method_call(self, class_ptr_t, ins_ptr_addr, env: en.Environment, tpa: tp.TpaOutput):
@@ -1004,6 +1009,7 @@ class DotExpr(BinaryExpr):
                 elif isinstance(struct_t, typ.GenericClassType):
                     name = self.right.get_name()
                     pos, ptr, t = struct_t.base.find_method(name, self.lf)
+                    t: typ.MethodType
                     if typ.is_generic(t.rtype):
                         return typ.replace_generic_with_real(t.rtype, struct_t.generics)
                     return t.rtype
@@ -1377,8 +1383,10 @@ class ClassStmt(Statement):
         for line in self.body:
             for part in line:
                 if isinstance(part, Declaration):
-                    t = part.right.definition_type(class_env, tpa.manager)
                     name = part.get_name()
+                    if class_type.has_field(name):
+                        raise errs.TplCompileError(f"Name '{name}' already defined in class '{self.name}'. ", self.lf)
+                    t = part.right.definition_type(class_env, tpa.manager)
                     class_type.fields[name] = pos, t
                     pos += t.memory_length()
                 elif isinstance(part, FunctionDef):

@@ -1,4 +1,10 @@
-﻿===== VERSION 2024 =====
+﻿===== VERSION 2025 =====
+2021/02/20
+
+* Improved generic check
+* Added duplicated class field check
+
+===== VERSION 2024 =====
 2021/02/20
 
 * Basic generic classes

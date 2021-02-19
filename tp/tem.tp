@@ -4,6 +4,24 @@ require {
     malloc
 }
 
+class X {
+    value: int;
+
+    fn __new__(this: *X, val: int) void {
+        super.__new__();
+
+        this.value = val;
+    }
+}
+
+class Y(X) {
+    fn __new__(this: *Y, val: int) void {
+        super.__new__(val + 2);
+
+        //this.value = val;
+    }
+}
+
 class A {
     xx: int;
 
@@ -17,8 +35,8 @@ class A {
     }
 }
 
-class B<T(Object)>(A) {
-    t: *T;
+class B<K, V>(A) {
+    t: *V;
 
     fn __new__(this: *B) void {
         super.__new__();
@@ -26,29 +44,20 @@ class B<T(Object)>(A) {
         this.xx = 6;
     }
 
-    fn get(this: *B) *T {
+    fn get(this: *B) *V {
         return this.t;
     }
 
-    fn set(this: *B, t: *T) void {
+    fn set(this: *B, t: *V) void {
         this.t = t;
     }
 }
 
-class X {
-    value: int;
-
-    fn __new__(this: *X, val: int) void {
-        super.__new__();
-
-        this.value = val;
-    }
-}
+//class
 
 fn main() int {
-    aa: *B<X> = new B<X>();
-    aa.set(new X(34));
-    cprintln(aa.t.value);
+    aa: *B<X, Y> = new B<X, Y>();
+    aa.set(new Y(34));
     return aa.get()
             .value;
 }

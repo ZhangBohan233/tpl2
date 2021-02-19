@@ -179,6 +179,9 @@ class MethodType(FuncType):
     def __str__(self):
         return "method " + super().__str__()
 
+    def copy(self):
+        return MethodType(self.param_types.copy(), self.rtype, self.defined_class)
+
 
 class NativeFuncType(CallableType):
     def __init__(self, param_types, rtype):
@@ -203,6 +206,12 @@ class ClassType(Type):
 
     def full_name(self):
         return util.class_name_with_path(self.name, self.file_path)
+
+    def has_field(self, name: str) -> bool:
+        for mro_t in self.mro:
+            if name in mro_t.fields:
+                return True
+        return False
 
     def find_field(self, name: str, lf) -> (int, Type):
         for mro_t in self.mro:
