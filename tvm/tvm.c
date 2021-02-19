@@ -94,7 +94,7 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
         ERROR_CODE = ERR_MEMORY_OUT;
         return 1;
     }
-    printf("code len %d, copy len %d\n", code_length, copy_len);
+//    printf("code len %d, copy len %d\n", code_length, copy_len);
 
     memcpy(MEMORY + global_end, src_code + 16 + INT_LEN * 4, copy_len);
 

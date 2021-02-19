@@ -674,11 +674,20 @@ class NewExpr(UnaryExpr):
         FunctionCall.call(malloc, [(malloc_size, util.INT_LEN)], env, tpa, dst_addr, self.lf)
 
         if (isinstance(self.value, FunctionCall) and
-                isinstance(t, typ.PointerType) and
-                isinstance(t.base, typ.ClassType)):
-            self.compile_class_init(t.base, env, tpa, dst_addr)
-        else:
-            raise errs.TplCompileError("Cannot initial class without call. ", self.lf)
+                isinstance(t, typ.PointerType)):
+            if isinstance(t.base, typ.ClassType):
+                self.compile_class_init(t.base, env, tpa, dst_addr)
+                return
+            elif isinstance(t.base, typ.GenericClassType):
+                self.compile_generic_class_init(t.base, env, tpa, dst_addr)
+                return
+
+        raise errs.TplCompileError("Cannot initial class without call. ", self.lf)
+
+    def compile_generic_class_init(self, gen_t: typ.GenericClassType, env: en.Environment,
+                                   tpa: tp.TpaOutput, inst_ptr_addr):
+
+        self.compile_class_init(gen_t.base, env, tpa, inst_ptr_addr)
 
     def compile_class_init(self, class_t: typ.ClassType, env: en.Environment, tpa: tp.TpaOutput, inst_ptr_addr):
         self.value: FunctionCall
@@ -929,18 +938,23 @@ class DotExpr(BinaryExpr):
         """
         Compiles a method call, with mro resolved at runtime.
         """
+        def inner_call(ct: typ.ClassType, right):
+            right: FunctionCall
+            name = right.get_name()
+            method_id, method_p, t = ct.find_method(name, self.lf)
+            res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
+            ea = right.evaluate_args(t, env, tpa, is_method=True)
+            ea.insert(0, (ins_ptr_addr, util.PTR_LEN))
+            tpa.call_method(ins_ptr_addr, method_id, ea, res_ptr, t.rtype.memory_length(), class_offset)
+            return res_ptr
+
         # print(class_offset)
-        self.right: FunctionCall
         if isinstance(class_ptr_t, typ.PointerType):
             class_t = class_ptr_t.base
             if isinstance(class_t, typ.ClassType):
-                name = self.right.get_name()
-                method_id, method_p, t = class_t.find_method(name, self.lf)
-                res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
-                ea = self.right.evaluate_args(t, env, tpa, is_method=True)
-                ea.insert(0, (ins_ptr_addr, util.PTR_LEN))
-                tpa.call_method(ins_ptr_addr, method_id, ea, res_ptr, t.rtype.memory_length(), class_offset)
-                return res_ptr
+                return inner_call(class_t, self.right)
+            elif isinstance(class_t, typ.GenericClassType):
+                return inner_call(class_t.base, self.right)
         raise errs.TplCompileError("Cannot make method call. ", self.lf)
 
     def compile_fixed_method_call(self, class_ptr_t, ins_ptr_addr, env: en.Environment, tpa: tp.TpaOutput):
@@ -977,10 +991,21 @@ class DotExpr(BinaryExpr):
                 elif isinstance(struct_t, typ.ClassType):
                     pos, attr_t = struct_t.find_field(self.right.name, self.lf)
                     return attr_t
+                elif isinstance(struct_t, typ.GenericClassType):
+                    pos, attr_t = struct_t.base.find_field(self.right.name, self.lf)
+                    if typ.is_generic(attr_t):
+                        return typ.replace_generic_with_real(attr_t, struct_t.generics)
+                    return attr_t
             elif isinstance(self.right, FunctionCall):
                 if isinstance(struct_t, typ.ClassType):
                     name = self.right.get_name()
                     pos, ptr, t = struct_t.find_method(name, self.lf)
+                    return t.rtype
+                elif isinstance(struct_t, typ.GenericClassType):
+                    name = self.right.get_name()
+                    pos, ptr, t = struct_t.base.find_method(name, self.lf)
+                    if typ.is_generic(t.rtype):
+                        return typ.replace_generic_with_real(t.rtype, struct_t.generics)
                     return t.rtype
         elif isinstance(left_t, typ.ArrayType) and isinstance(self.right, NameNode):
             return array_attribute_types(self.right.name, self.lf)
@@ -1018,6 +1043,18 @@ class DotExpr(BinaryExpr):
                 elif isinstance(struct_t, typ.ClassType):
                     struct_addr = self.left.compile(env, tpa)
                     pos, t = struct_t.find_field(self.right.name, self.lf)
+                    real_attr_ptr = tpa.manager.allocate_stack(t.length)
+                    if t.length == util.INT_LEN:
+                        tpa.assign(real_attr_ptr, struct_addr)
+                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
+                    else:
+                        raise errs.TplCompileError("Unsupported length.", self.lf)
+                    return real_attr_ptr, t
+                elif isinstance(struct_t, typ.GenericClassType):
+                    struct_addr = self.left.compile(env, tpa)
+                    pos, t = struct_t.base.find_field(self.right.name, self.lf)
+                    if isinstance(t, str):
+                        t = struct_t.generics[t]
                     real_attr_ptr = tpa.manager.allocate_stack(t.length)
                     if t.length == util.INT_LEN:
                         tpa.assign(real_attr_ptr, struct_addr)
@@ -1285,13 +1322,7 @@ class ClassStmt(Statement):
             self.extensions = extensions
         elif name != "Object":
             self.extensions = Line(lf, NameNode("Object", lf))
-        self.templates = []
-        if templates is not None:
-            for part in templates:
-                if isinstance(part, NameNode):
-                    self.templates.append(part.name)
-                else:
-                    raise errs.TplSyntaxError("Template must be name. ", self.lf)
+        self.template_nodes = templates
         self.body = body
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
@@ -1304,14 +1335,33 @@ class ClassStmt(Statement):
                     raise errs.TplCompileError("Class can only extend classes", self.lf)
                 direct_sc.append(t)
 
-        class_type = typ.ClassType(self.name, class_ptr, self.lf.file_name, direct_sc, self.templates)
+        class_env = en.ClassEnvironment(env)
+
+        templates = []  # list of (name, max_class_t)
+        if self.template_nodes is not None:
+            object_t = env.get_type("Object", self.lf)
+            assert isinstance(object_t, typ.ClassType)
+            for part in self.template_nodes:
+                if isinstance(part, NameNode):
+                    templates.append(typ.Generic(part.name, object_t))
+                elif isinstance(part, FunctionCall):
+                    if len(part.args) != 1:
+                        raise errs.TplSyntaxError("Invalid syntax. ", self.lf)
+                    max_t = part.args[0].evaluated_type(env, tpa.manager)
+                    if not isinstance(max_t, typ.ClassType):
+                        raise errs.TplCompileError(f"Template {part.args[0]} must extends a class. ", self.lf)
+                    templates.append(typ.Generic(part.get_name(), max_t))
+                else:
+                    raise errs.TplSyntaxError("Template must be name or class extension. ", self.lf)
+        for gen in templates:
+            class_env.define_template(gen, self.lf)
+
+        class_type = typ.ClassType(self.name, class_ptr, self.lf.file_name, direct_sc, templates)
         mro = self.make_mro(class_type)
         class_type.mro = mro
         env.define_const_set(self.name, class_type, class_ptr, self.lf)
 
         tpa.manager.add_class(class_type)
-
-        class_env = en.ClassEnvironment(env)
 
         method_defs = []
         if len(mro) == 1:  # Object itself
@@ -1358,7 +1408,10 @@ class ClassStmt(Statement):
                 method_id += 1
 
     def __str__(self):
-        return f"Class {self.name} ({self.extensions}) {self.body}"
+        if self.template_nodes is None:
+            return f"Class {self.name} ({self.extensions}) {self.body}"
+        else:
+            return f"Class {self.name}<{self.template_nodes}> ({self.extensions}) {self.body}"
 
     def make_mro(self, class_type: typ.ClassType):
         def lin(ct: typ.ClassType):
@@ -1454,11 +1507,15 @@ class GenericNode(Expression):
         gen_dict = {}
         for i in range(len(self.generics)):
             gen_t = self.generics[i].definition_type(env, manager)
-            if not isinstance(gen_t, typ.PointerType) and not isinstance(gen_t, typ.ArrayType):
+            if not isinstance(gen_t, typ.ClassType) and not isinstance(gen_t, typ.ArrayType):
                 raise errs.TplCompileError("Generics must be pointer type.")
-            gen_dict[class_t.templates[i]] = gen_t
-        print(gen_dict)
-        return typ.GenericStructType(class_t, gen_dict)
+            gen = class_t.templates[i]
+            if not gen.max_t.superclass_of(gen_t):
+                raise errs.TplCompileError(f"Template '{gen.name}' requires subclass of '{gen.max_t}', got '{gen_t}'. ",
+                                           self.lf)
+            gen_dict[gen.name] = gen_t
+        # print(gen_dict)
+        return typ.GenericClassType(class_t, gen_dict)
 
     def __str__(self):
         return f"{self.obj}<{self.generics}>"

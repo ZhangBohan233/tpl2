@@ -484,6 +484,9 @@ class Parser:
                 lf = ele.lf
                 if index > 0:
                     prob_call_obj = parent[index - 1]
+                    if tl.is_arrow_bracket(prob_call_obj):
+                        prob_call_obj = parent[index - 2]
+
                     if is_call_obj(prob_call_obj):
                         args = self.parse_as_line(ele)
                         call_obj = builder.remove_last()

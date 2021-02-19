@@ -1,4 +1,9 @@
-﻿===== VERSION 2023 =====
+﻿===== VERSION 2024 =====
+2021/02/20
+
+* Basic generic classes
+
+===== VERSION 2023 =====
 2021/02/18
 
 * Updated macros for tvm bits control

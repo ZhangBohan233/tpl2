@@ -7,8 +7,8 @@ require {
 class A {
     xx: int;
 
-    fn __init__(this: *A) void {
-        super.__init__(this);
+    fn __new__(this: *A) void {
+        super.__new__();
         this.xx = 1;
     }
 
@@ -17,22 +17,38 @@ class A {
     }
 }
 
-class B<T>(A) {
-    fn __init__(this: *B) void {
-        super.__init__(this);
+class B<T(Object)>(A) {
+    t: *T;
+
+    fn __new__(this: *B) void {
+        super.__new__();
 
         this.xx = 6;
+    }
+
+    fn get(this: *B) *T {
+        return this.t;
+    }
+
+    fn set(this: *B, t: *T) void {
+        this.t = t;
     }
 }
 
 class X {
-    fn __init__(this: *X) void {
+    value: int;
 
+    fn __new__(this: *X, val: int) void {
+        super.__new__();
+
+        this.value = val;
     }
 }
 
 fn main() int {
-    aa: *B<*X> = new B();
-    aa.__init__();
-    return aa.foo(2);
+    aa: *B<X> = new B<X>();
+    aa.set(new X(34));
+    cprintln(aa.t.value);
+    return aa.get()
+            .value;
 }

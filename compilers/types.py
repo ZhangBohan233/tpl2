@@ -194,12 +194,15 @@ class ClassType(Type):
         self.file_path = file_path  # where this class is defined, avoiding conflict struct def'ns in non-export part
         self.direct_superclasses = direct_sc
         self.mro: list = None  # Method resolution order, ranked from closest to farthest
-        self.templates = templates
+        self.templates = templates  # list of (name, max_class_t)
         self.method_rank = []  # keep track of all method names in order
         # this dict records all callable methods in this class, including methods in its superclass
         # methods with same name must have the same id, i.e. overriding methods have the same id
         self.methods = {}  # name: (method_id, func_ptr, func_type)
         self.fields = collections.OrderedDict()  # OrderedDict, name: (position, type)
+
+    def full_name(self):
+        return util.class_name_with_path(self.name, self.file_path)
 
     def find_field(self, name: str, lf) -> (int, Type):
         for mro_t in self.mro:
@@ -214,12 +217,21 @@ class ClassType(Type):
             raise errs.TplCompileError(f"Class {self.name} does not have method '{name}'. ", lf)
 
     def strong_convertible(self, left_tar_type):
+        if isinstance(left_tar_type, Generic):
+            return self.strong_convertible(left_tar_type.max_t)
         if isinstance(left_tar_type, ClassType):
             for t in self.mro:
                 if t == left_tar_type:
                     return True
         else:
             return super().strong_convertible(left_tar_type)
+
+    def superclass_of(self, child_t: Type):
+        if isinstance(child_t, ClassType):
+            for t in child_t.mro:
+                if self == t:
+                    return True
+        return False
 
     def __eq__(self, other):
         return isinstance(other, ClassType) and self.name == other.name and self.file_path == other.file_path
@@ -229,6 +241,48 @@ class ClassType(Type):
 
     def __repr__(self):
         return self.__str__()
+
+
+class GenericType(Type):
+    def __init__(self, base, generics: dict):
+        super().__init__(base.length)
+
+        self.base = base
+        self.generics = generics
+
+    def __str__(self):
+        return f"{self.base}<{self.generics}>"
+
+    def strong_convertible(self, left_tar_type):
+        if isinstance(left_tar_type, GenericType):
+            if self.base.strong_convertible(left_tar_type.base):
+                if len(self.generics) == len(left_tar_type.generics):
+                    for key in self.generics:
+                        if key in left_tar_type.generics:
+                            if self.generics[key].strong_convertible(left_tar_type.generics[key]):
+                                continue
+                        break
+                    return True
+        return False
+
+
+class GenericClassType(GenericType):
+    def __init__(self, base: ClassType, generic: dict):
+        super().__init__(base, generic)
+
+
+class Generic(Type):
+    def __init__(self, name: str, max_t: ClassType):
+        super().__init__(max_t.length)
+
+        self.name = name
+        self.max_t = max_t
+
+    def strong_convertible(self, left_tar_type):
+        return self.max_t.strong_convertible(left_tar_type)
+
+    def __str__(self):
+        return f"{self.name}: {self.max_t}"
 
 
 class StructType(Type):
@@ -283,6 +337,21 @@ class ArrayType(Type):
 
     def __eq__(self, other):
         return isinstance(other, ArrayType) and self.ele_type == other.ele_type
+
+
+def is_generic(t: Type) -> bool:
+    if isinstance(t, PointerType):
+        return is_generic(t.base)
+    return isinstance(t, Generic)
+
+
+def replace_generic_with_real(t: Type, real_generics: dict) -> Type:
+    if isinstance(t, PointerType):
+        return PointerType(replace_generic_with_real(t.base, real_generics))
+    elif isinstance(t, Generic):
+        return real_generics[t.name]
+    else:
+        raise errs.TplCompileError("Unexpected error.")
 
 
 TYPE_INT = BasicType("int", util.INT_LEN)

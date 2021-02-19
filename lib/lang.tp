@@ -8,6 +8,7 @@ macro TWO {
 
 const FALSE: int = 0;
 const TRUE: int = 1;
+const NULL: *void = 0 as *void;
 
 fn add(x: int, y: int) int {
     return x + y;
@@ -32,7 +33,7 @@ class Object {
 }
 
 export {
-    FALSE, TRUE, make, Object
+    FALSE, TRUE, NULL, make, Object
 }
 
 exportmacro {

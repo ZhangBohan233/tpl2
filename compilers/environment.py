@@ -86,7 +86,9 @@ class Environment:
         entry = self._inner_get(name)
         if entry is None:
             raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
-        return isinstance(entry.type, typ.StructType) or isinstance(entry.type, typ.ClassType)
+        return (isinstance(entry.type, typ.StructType) or
+                isinstance(entry.type, typ.ClassType) or
+                isinstance(entry.type, typ.Generic))
 
     def is_named_function(self, name: str, lf) -> bool:
         entry = self._inner_get(name)
@@ -222,11 +224,23 @@ class ClassEnvironment(MainAbstractEnvironment):
     def __init__(self, outer):
         super().__init__(outer)
 
+        self.templates = {}  # name: generic, ConstEntry (-1, Object if not specified)
+
     def define_function(self, name: str, func_type: typ.CallableType, fn_ptr: int, lf: tl.LineFile):
         if name in self.vars:
             raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
         entry = FunctionEntry(func_type, fn_ptr, const=True, named=True)
         self.vars[name] = entry
+
+    def _inner_get(self, name) -> VarEntry:
+        if name in self.templates:
+            return self.templates[name]
+        return super()._inner_get(name)
+
+    def define_template(self, gen: typ.Generic, lf: tl.LineFile):
+        if gen.name in self.templates:
+            raise errs.TplEnvironmentError(f"Template '{gen.name}' already defined. ", lf)
+        self.templates[gen.name] = VarEntry(gen, -1, True)
 
 
 class BlockEnvironment(SubAbstractEnvironment):
