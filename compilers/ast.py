@@ -1,5 +1,4 @@
 from abc import ABC
-import collections
 import compilers.tokens_lib as tl
 import compilers.environment as en
 import compilers.tpa_producer as tp
@@ -838,47 +837,14 @@ class DollarExpr(BinaryExpr):
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         struct_t = self.left.evaluated_type(env, manager)
-        if isinstance(struct_t, typ.StructType) and isinstance(self.right, NameNode):
-            pos, attr_t = struct_t.members[self.right.name]
-            return attr_t
-        elif isinstance(struct_t, typ.GenericStructType) and isinstance(self.right, NameNode):
-            pos, attr_t = struct_t.struct_t.members[self.right.name]
-            if isinstance(attr_t, str):
-                attr_t = struct_t.generics[attr_t]
-            return attr_t
-        else:
-            raise errs.TplCompileError("Left side of dollar must be a struct, got " + type(struct_t).__name__ + ". ",
-                                       self.lf)
+
+        raise errs.TplCompileError("Left side of dollar must be a struct, got " + type(struct_t).__name__ + ". ",
+                                   self.lf)
 
     def get_attr_ptr_and_type(self, env: en.Environment, tpa: tp.TpaOutput) -> (int, typ.Type):
         left_t = self.left.evaluated_type(env, tpa.manager)
         if isinstance(self.right, NameNode):
-            if isinstance(left_t, typ.StructType):
-                if isinstance(self.left, StarExpr):
-                    dollar = DotExpr(self.lf)
-                    dollar.left = self.left.value
-                    dollar.right = self.right
-                    return dollar.get_attr_ptr_and_type(env, tpa)
-                else:
-                    struct_addr = self.left.compile(env, tpa)
-                    pos, t = left_t.members[self.right.name]
-                    res_ptr = tpa.manager.allocate_stack(t.length)
-                    tpa.take_addr(struct_addr + pos, res_ptr)
-                    return res_ptr, t
-            elif isinstance(left_t, typ.GenericStructType):
-                if isinstance(self.left, StarExpr):
-                    dollar = DotExpr(self.lf)
-                    dollar.left = self.left.value
-                    dollar.right = self.right
-                    return dollar.get_attr_ptr_and_type(env, tpa)
-                else:
-                    struct_addr = self.left.compile(env, tpa)
-                    pos, t = left_t.struct_t.members[self.right.name]
-                    if isinstance(t, str):
-                        t = left_t.generics[t]
-                    res_ptr = tpa.manager.allocate_stack(t.length)
-                    tpa.take_addr(struct_addr + pos, res_ptr)
-                    return res_ptr, t
+            pass
 
         raise errs.TplCompileError("Left side of dollar must be a struct, got " + type(left_t).__name__ + ". ",
                                    self.lf)
@@ -985,15 +951,7 @@ class DotExpr(BinaryExpr):
         if isinstance(left_t, typ.PointerType):
             struct_t = left_t.base
             if isinstance(self.right, NameNode):
-                if isinstance(struct_t, typ.StructType):
-                    pos, attr_t = struct_t.members[self.right.name]
-                    return attr_t
-                elif isinstance(struct_t, typ.GenericStructType):
-                    pos, attr_t = struct_t.struct_t.members[self.right.name]
-                    if isinstance(attr_t, str):
-                        attr_t = struct_t.generics[attr_t]
-                    return attr_t
-                elif isinstance(struct_t, typ.ClassType):
+                if isinstance(struct_t, typ.ClassType):
                     pos, attr_t = struct_t.find_field(self.right.name, self.lf)
                     return attr_t
                 elif isinstance(struct_t, typ.GenericClassType):
@@ -1024,29 +982,7 @@ class DotExpr(BinaryExpr):
         if isinstance(self.right, NameNode):
             if isinstance(left_t, typ.PointerType):
                 struct_t = left_t.base
-                if isinstance(struct_t, typ.StructType):
-                    struct_addr = self.left.compile(env, tpa)
-                    pos, t = struct_t.members[self.right.name]
-                    real_attr_ptr = tpa.manager.allocate_stack(t.length)
-                    if t.length == util.INT_LEN:
-                        tpa.assign(real_attr_ptr, struct_addr)
-                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
-                    else:
-                        raise errs.TplCompileError("Unsupported length.", self.lf)
-                    return real_attr_ptr, t
-                elif isinstance(struct_t, typ.GenericStructType):
-                    struct_addr = self.left.compile(env, tpa)
-                    pos, t = struct_t.struct_t.members[self.right.name]
-                    if isinstance(t, str):
-                        t = struct_t.generics[t]
-                    real_attr_ptr = tpa.manager.allocate_stack(t.length)
-                    if t.length == util.INT_LEN:
-                        tpa.assign(real_attr_ptr, struct_addr)
-                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
-                    else:
-                        raise errs.TplCompileError("Unsupported length.", self.lf)
-                    return real_attr_ptr, t
-                elif isinstance(struct_t, typ.ClassType):
+                if isinstance(struct_t, typ.ClassType):
                     struct_addr = self.left.compile(env, tpa)
                     pos, t = struct_t.find_field(self.right.name, self.lf)
                     real_attr_ptr = tpa.manager.allocate_stack(t.length)
@@ -1939,49 +1875,6 @@ class ImportStmt(Statement):
 
     def __str__(self):
         return "import {}: {}".format(self.file, self.tree)
-
-
-class StructStmt(Statement):
-    def __init__(self, name: str, templates: Line, body: BlockStmt, lf):
-        super().__init__(lf)
-
-        self.name = name
-        self.templates = []
-        if templates is not None:
-            for part in templates:
-                if isinstance(part, NameNode):
-                    self.templates.append(part.name)
-                else:
-                    raise errs.TplSyntaxError("Template must be name.", self.lf)
-        self.body = body
-
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        struct_t = self.definition_type(env, tpa.manager)
-        env.define_const(self.name, struct_t, self.lf)
-
-    def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.StructType:
-        pos = 0
-        members = {}
-
-        for line in self.body:
-            for part in line:
-                if isinstance(part, Declaration) and isinstance(part.left, NameNode):
-                    if isinstance(part.right, NameNode) and part.right.name in self.templates:
-                        members[part.left.name] = (pos, part.right.name)
-                        pos += util.PTR_LEN
-                    else:
-                        right_t = part.right.definition_type(env, manager)
-                        members[part.left.name] = (pos, right_t)
-                        pos += right_t.length
-                else:
-                    raise errs.TplSyntaxError("Invalid struct member. ", self.lf)
-        return typ.StructType(self.name, self.lf.file_name, members, pos, self.templates)
-
-    def __str__(self):
-        if self.templates is None:
-            return f"struct {self.name} {self.body}"
-        else:
-            return f"struct {self.name}<{self.templates}> {self.body}"
 
 
 class IndexingExpr(Expression):

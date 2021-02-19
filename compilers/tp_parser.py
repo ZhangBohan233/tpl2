@@ -48,7 +48,6 @@ class Parser:
             "fallthrough": self.process_fallthrough,
             "import": self.process_import,
             "export": self.process_export,
-            "struct": self.process_struct,
             "super": self.process_super,
             "++": self.process_inc_operator,
             "--": self.process_dec_operator,
@@ -266,29 +265,6 @@ class Parser:
 
     def process_super(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
         builder.add_node(ast.SuperExpr(lf))
-
-    def process_struct(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
-        name_ele = parent[index + 1]
-        templates_ele = parent[index + 2]
-        if tl.is_arrow_bracket(templates_ele):
-            body_ele = parent[index + 3]
-            push = 3
-        else:
-            body_ele = templates_ele
-            templates_ele = None
-            push = 2
-
-        if not (isinstance(name_ele, tl.AtomicElement) and
-                isinstance(name_ele.atom, tl.IdToken) and
-                tl.is_brace(body_ele)):
-            raise errs.TplSyntaxError("Invalid struct syntax. ", lf)
-
-        name = name_ele.atom.identifier
-        body = self.parse_as_block(body_ele)
-        templates = None if templates_ele is None else self.parse_as_line(templates_ele)
-        builder.add_node(ast.StructStmt(name, templates, body, lf))
-
-        return index + push
 
     def _process_inc_dec_operator(self, op, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
                                   lf: tl.LineFile):

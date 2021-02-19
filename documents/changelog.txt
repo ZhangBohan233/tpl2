@@ -1,4 +1,9 @@
-﻿===== VERSION 2025 =====
+﻿===== VERSION 2026 =====
+2021/02/20
+
+* Removed struct
+
+===== VERSION 2025 =====
 2021/02/20
 
 * Improved generic check
