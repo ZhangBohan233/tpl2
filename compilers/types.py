@@ -295,15 +295,24 @@ class Generic(Type):
     def __init__(self, name: str, max_t: ClassType, defined_place: str):
         super().__init__(max_t.length)
 
-        self.name = name
+        self._name = name
         self.max_t = max_t
         self.defined_place = defined_place
 
     def strong_convertible(self, left_tar_type):
         return self.max_t.strong_convertible(left_tar_type)
 
+    def full_name(self):
+        return util.template_full_name(self._name, self.defined_place)
+
+    def simple_name(self):
+        return self._name
+
+    def __eq__(self, other):
+        return isinstance(other, Generic) and self._name == other._name
+
     def __str__(self):
-        return f"{self.name}: {self.max_t}"
+        return f"{self._name}: {self.max_t}"
 
 
 class ArrayType(Type):
@@ -338,14 +347,14 @@ def replace_generic_with_real(t: Type, real_generics: dict) -> Type:
     if isinstance(t, PointerType):
         return PointerType(replace_generic_with_real(t.base, real_generics))
     elif isinstance(t, Generic):
-        return real_generics[t.name]
+        return real_generics[t.simple_name()]
     else:
         raise errs.TplCompileError("Unexpected error.")
 
 
 def index_in_generic_list(name: str, generics: list) -> int:
     for i in range(len(generics)):
-        if name == generics[i].name:
+        if name == generics[i].simple_name():
             return i
     return -1
 

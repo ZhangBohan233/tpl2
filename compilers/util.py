@@ -75,5 +75,5 @@ def class_name_with_path(class_name: str, file: str):
     return file + "$" + class_name
 
 
-def template_full_name(template_name, class_name: str, file: str):
-    return class_name_with_path(class_name, file) + "." + template_name
+def template_full_name(template_name, defined_place: str):
+    return defined_place + "." + template_name

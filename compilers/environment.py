@@ -238,9 +238,9 @@ class ClassEnvironment(MainAbstractEnvironment):
         return super()._inner_get(name)
 
     def define_template(self, gen: typ.Generic, lf: tl.LineFile):
-        if gen.name in self.templates:
-            raise errs.TplEnvironmentError(f"Template '{gen.name}' already defined. ", lf)
-        self.templates[gen.name] = VarEntry(gen, -1, True)
+        if gen.simple_name() in self.templates:
+            raise errs.TplEnvironmentError(f"Template '{gen.simple_name()}' already defined. ", lf)
+        self.templates[gen.simple_name()] = VarEntry(gen, -1, True)
 
 
 class BlockEnvironment(SubAbstractEnvironment):

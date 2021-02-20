@@ -1298,12 +1298,10 @@ class ClassStmt(Statement):
                         typ.Generic(part.get_name(), max_t, util.class_name_with_path(self.name, self.lf.file_name)))
                 else:
                     raise errs.TplSyntaxError("Template must be name or class extension. ", self.lf)
-        for gen in templates:
-            class_env.define_template(gen, self.lf)
 
         # superclasses
         direct_sc = []
-        super_generics_list = {}
+        super_generics_list = {}  # dict of lists
         if self.extensions is not None:
             for ext in self.extensions:
                 if isinstance(ext, GenericNode):
@@ -1317,9 +1315,6 @@ class ClassStmt(Statement):
                                 sup_gens.append(node.name)
                         else:
                             raise errs.TplCompileError("Generics in superclass must be names. ", self.lf)
-                            # index = typ.index_in_generic_list(node.name, templates)
-                            # if index >= 0:
-                            #     print(index, templates[index])
                     super_generics_list[ext.get_name()] = sup_gens
                 else:
                     t = ext.evaluated_type(env, tpa.manager)
@@ -1327,6 +1322,13 @@ class ClassStmt(Statement):
                     raise errs.TplCompileError("Class can only extend classes. ", self.lf)
                 direct_sc.append(t)
 
+        # check for duplicate templates
+        for tem in templates:
+            for sc in direct_sc:
+                if tem in sc.templates:
+                    raise errs.TplCompileError(f"Duplicate template name '{tem.simple_name()}' already defined in "
+                                               f"superclass '{sc.name}'. ", self.lf)
+        # find generics inheritance
         super_generics_map = {}
         for sc in direct_sc:
             sub_map = {}
@@ -1336,10 +1338,23 @@ class ClassStmt(Statement):
                 for i in range(len(sup_templates)):
                     sup_tem: typ.Generic = sup_templates[i]
                     actual_tem = actual_templates[i]
-                    sub_map[sup_tem.name] = actual_tem
+                    sub_map[sup_tem.simple_name()] = actual_tem
                 super_generics_map[sc] = sub_map
+
+        for gen in templates:
+            class_env.define_template(gen, self.lf)
         # print(super_generics_map)
-        class_type = typ.ClassType(self.name, class_ptr, self.lf.file_name, direct_sc, templates, super_generics_map)
+        for sc_tem_map in super_generics_map.values():
+            for tem_name in sc_tem_map:
+                actual_tem = sc_tem_map[tem_name]
+                if isinstance(actual_tem, str):
+                    index = typ.index_in_generic_list(actual_tem, templates)
+                    class_env.define_template(typ.Generic(tem_name, templates[index].max_t, ""), self.lf)
+                else:
+                    class_env.define_template(typ.Generic(tem_name, actual_tem, ""), self.lf)
+        # print(super_generics_map)
+        class_type = typ.ClassType(
+            self.name, class_ptr, self.lf.file_name, direct_sc, templates, super_generics_map)
         mro = self.make_mro(class_type)
         class_type.mro = mro
 
@@ -1505,7 +1520,15 @@ class GenericNode(Expression):
             if not gen.max_t.superclass_of(gen_t):
                 raise errs.TplCompileError(f"Template '{gen.name}' requires subclass of '{gen.max_t}', got '{gen_t}'. ",
                                            self.lf)
-            gen_dict[gen.name] = gen_t
+            gen_dict[gen.simple_name()] = gen_t
+
+        for sc_tem_map in class_t.super_generics_map.values():
+            for tem_name in sc_tem_map:
+                actual_tem = sc_tem_map[tem_name]
+                if isinstance(actual_tem, str):
+                    gen_dict[tem_name] = gen_dict[actual_tem]
+                else:
+                    gen_dict[tem_name] = actual_tem
         # print(gen_dict)
         return typ.GenericClassType(class_t, gen_dict)
 

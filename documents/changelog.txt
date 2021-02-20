@@ -1,4 +1,9 @@
-﻿===== VERSION 2026 =====
+﻿===== VERSION 2027 =====
+2021/02/21
+
+* Generic class extension
+
+===== VERSION 2026 =====
 2021/02/20
 
 * Removed struct
