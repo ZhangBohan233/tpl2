@@ -73,3 +73,7 @@ def name_with_path(name: str, file: str, clazz):
 
 def class_name_with_path(class_name: str, file: str):
     return file + "$" + class_name
+
+
+def template_full_name(template_name, class_name: str, file: str):
+    return class_name_with_path(class_name, file) + "." + template_name

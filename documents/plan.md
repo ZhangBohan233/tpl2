@@ -32,8 +32,9 @@
 * ~~Tpa optimizer: load literal~~ Changed to compile_to
 
 #### Phase 3
-* Class and inheritance
+* ~~Class and inheritance~~ Done
 * Templates and generics
-* super
+* Templates extension
+* ~~super~~ Done
 * Auto add parameter 'this'
 * instanceof

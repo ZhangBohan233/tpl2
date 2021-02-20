@@ -63,7 +63,7 @@ class Environment:
     def is_const(self, name: str, lf) -> bool:
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
         return entry.const
 
     def get_type(self, name, lf) -> typ.Type:
@@ -71,13 +71,13 @@ class Environment:
             return typ.PRIMITIVE_TYPES[name]
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
         return entry.type
 
     def get(self, name, lf) -> int:
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
         return entry.addr
 
     def is_type(self, name, lf) -> bool:
@@ -85,14 +85,14 @@ class Environment:
             return True
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
         return (isinstance(entry.type, typ.ClassType) or
                 isinstance(entry.type, typ.Generic))
 
     def is_named_function(self, name: str, lf) -> bool:
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
         if isinstance(entry, FunctionEntry):
             return entry.named
         return False
@@ -220,9 +220,10 @@ class ModuleEnvironment(MainAbstractEnvironment):
 
 
 class ClassEnvironment(MainAbstractEnvironment):
-    def __init__(self, outer):
+    def __init__(self, outer, class_full_name: str):
         super().__init__(outer)
 
+        self.full_name = class_full_name
         self.templates = {}  # name: generic, ConstEntry (-1, Object if not specified)
 
     def define_function(self, name: str, func_type: typ.CallableType, fn_ptr: int, lf: tl.LineFile):

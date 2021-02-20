@@ -56,6 +56,9 @@ class Type:
     def is_void(self):
         return self.length == 0
 
+    def __repr__(self):
+        return self.__str__()
+
 
 class BasicType(Type):
     def __init__(self, type_name: str, length: int):
@@ -189,23 +192,28 @@ class NativeFuncType(CallableType):
 
 
 class ClassType(Type):
-    def __init__(self, name: str, class_ptr: int, file_path: str, direct_sc: list, templates: list):
+    def __init__(self, name: str, class_ptr: int, file_path: str, direct_sc: list, templates: list,
+                 super_generics_map: dict):
         super().__init__(0)
 
         self.name = name
         self.class_ptr = class_ptr
         self.file_path = file_path  # where this class is defined, avoiding conflict struct def'ns in non-export part
+        self.name_with_path = util.class_name_with_path(self.name, self.file_path)
         self.direct_superclasses = direct_sc
         self.mro: list = None  # Method resolution order, ranked from closest to farthest
-        self.templates = templates  # list of (name, max_class_t)
+        self.templates = templates  # list of Generic
         self.method_rank = []  # keep track of all method names in order
         # this dict records all callable methods in this class, including methods in its superclass
         # methods with same name must have the same id, i.e. overriding methods have the same id
         self.methods = {}  # name: (method_id, func_ptr, func_type)
         self.fields = collections.OrderedDict()  # OrderedDict, name: (position, type)
+        # records mapping for superclass
+        # e.g. class A<K, V>, class B<X>(A<X, Object>) => {A: {"K": "X", "V": Object}}
+        self.super_generics_map = super_generics_map
 
     def full_name(self):
-        return util.class_name_with_path(self.name, self.file_path)
+        return self.name_with_path
 
     def has_field(self, name: str) -> bool:
         for mro_t in self.mro:
@@ -248,6 +256,9 @@ class ClassType(Type):
     def __str__(self):
         return "ClassType(" + util.class_name_with_path(self.name, self.file_path) + ")"
 
+    def __hash__(self):
+        return self.name_with_path.__hash__()
+
     def __repr__(self):
         return self.__str__()
 
@@ -281,11 +292,12 @@ class GenericClassType(GenericType):
 
 
 class Generic(Type):
-    def __init__(self, name: str, max_t: ClassType):
+    def __init__(self, name: str, max_t: ClassType, defined_place: str):
         super().__init__(max_t.length)
 
         self.name = name
         self.max_t = max_t
+        self.defined_place = defined_place
 
     def strong_convertible(self, left_tar_type):
         return self.max_t.strong_convertible(left_tar_type)
@@ -329,6 +341,13 @@ def replace_generic_with_real(t: Type, real_generics: dict) -> Type:
         return real_generics[t.name]
     else:
         raise errs.TplCompileError("Unexpected error.")
+
+
+def index_in_generic_list(name: str, generics: list) -> int:
+    for i in range(len(generics)):
+        if name == generics[i].name:
+            return i
+    return -1
 
 
 TYPE_INT = BasicType("int", util.INT_LEN)

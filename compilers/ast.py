@@ -685,7 +685,7 @@ class NewExpr(UnaryExpr):
 
     def compile_generic_class_init(self, gen_t: typ.GenericClassType, env: en.Environment,
                                    tpa: tp.TpaOutput, inst_ptr_addr):
-
+        # print(gen_t)
         self.compile_class_init(gen_t.base, env, tpa, inst_ptr_addr)
 
     def compile_class_init(self, class_t: typ.ClassType, env: en.Environment, tpa: tp.TpaOutput, inst_ptr_addr):
@@ -1268,39 +1268,81 @@ class ClassStmt(Statement):
         self.body = body
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        """
+        Compiles a class statement.
+
+        :param env:
+        :param tpa:
+        :return:
+        """
         class_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
-        direct_sc = []
-        if self.extensions is not None:
-            for ext in self.extensions:
-                t = ext.definition_type(env, tpa.manager)
-                if not isinstance(t, typ.ClassType):
-                    raise errs.TplCompileError("Class can only extend classes", self.lf)
-                direct_sc.append(t)
 
-        class_env = en.ClassEnvironment(env)
+        class_env = en.ClassEnvironment(env, util.class_name_with_path(self.name, self.lf.file_name))
 
-        templates = []  # list of (name, max_class_t)
+        # templates
+        templates = []  # list of templates
         if self.template_nodes is not None:
             object_t = env.get_type("Object", self.lf)
             assert isinstance(object_t, typ.ClassType)
             for part in self.template_nodes:
                 if isinstance(part, NameNode):
-                    templates.append(typ.Generic(part.name, object_t))
+                    templates.append(
+                        typ.Generic(part.name, object_t, util.class_name_with_path(self.name, self.lf.file_name)))
                 elif isinstance(part, FunctionCall):
                     if len(part.args) != 1:
                         raise errs.TplSyntaxError("Invalid syntax. ", self.lf)
                     max_t = part.args[0].evaluated_type(env, tpa.manager)
                     if not isinstance(max_t, typ.ClassType):
                         raise errs.TplCompileError(f"Template {part.args[0]} must extends a class. ", self.lf)
-                    templates.append(typ.Generic(part.get_name(), max_t))
+                    templates.append(
+                        typ.Generic(part.get_name(), max_t, util.class_name_with_path(self.name, self.lf.file_name)))
                 else:
                     raise errs.TplSyntaxError("Template must be name or class extension. ", self.lf)
         for gen in templates:
             class_env.define_template(gen, self.lf)
 
-        class_type = typ.ClassType(self.name, class_ptr, self.lf.file_name, direct_sc, templates)
+        # superclasses
+        direct_sc = []
+        super_generics_list = {}
+        if self.extensions is not None:
+            for ext in self.extensions:
+                if isinstance(ext, GenericNode):
+                    t = ext.obj.evaluated_type(env, tpa.manager)
+                    sup_gens = []
+                    for node in ext.generics:
+                        if isinstance(node, NameNode):
+                            if env.has_name(node.name):
+                                sup_gens.append(node.evaluated_type(env, tpa.manager))
+                            else:
+                                sup_gens.append(node.name)
+                        else:
+                            raise errs.TplCompileError("Generics in superclass must be names. ", self.lf)
+                            # index = typ.index_in_generic_list(node.name, templates)
+                            # if index >= 0:
+                            #     print(index, templates[index])
+                    super_generics_list[ext.get_name()] = sup_gens
+                else:
+                    t = ext.evaluated_type(env, tpa.manager)
+                if not isinstance(t, typ.ClassType):
+                    raise errs.TplCompileError("Class can only extend classes. ", self.lf)
+                direct_sc.append(t)
+
+        super_generics_map = {}
+        for sc in direct_sc:
+            sub_map = {}
+            sup_templates = sc.templates
+            if sc.name in super_generics_list:
+                actual_templates: list = super_generics_list[sc.name]
+                for i in range(len(sup_templates)):
+                    sup_tem: typ.Generic = sup_templates[i]
+                    actual_tem = actual_templates[i]
+                    sub_map[sup_tem.name] = actual_tem
+                super_generics_map[sc] = sub_map
+        # print(super_generics_map)
+        class_type = typ.ClassType(self.name, class_ptr, self.lf.file_name, direct_sc, templates, super_generics_map)
         mro = self.make_mro(class_type)
         class_type.mro = mro
+
         env.define_const_set(self.name, class_type, class_ptr, self.lf)
 
         tpa.manager.add_class(class_type)
@@ -1433,6 +1475,12 @@ class GenericNode(Expression):
         self.obj = obj
         self.generics = generics
 
+    def get_name(self):
+        if isinstance(self.obj, NameNode):
+            return self.obj.name
+        else:
+            raise errs.TplCompileError("Not a named generics. ", self.lf)
+
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         return self.obj.compile(env, tpa)
 
@@ -1450,7 +1498,7 @@ class GenericNode(Expression):
 
         gen_dict = {}
         for i in range(len(self.generics)):
-            gen_t = self.generics[i].definition_type(env, manager)
+            gen_t = self.generics[i].evaluated_type(env, manager)
             if not isinstance(gen_t, typ.ClassType) and not isinstance(gen_t, typ.ArrayType):
                 raise errs.TplCompileError("Generics must be pointer type.")
             gen = class_t.templates[i]

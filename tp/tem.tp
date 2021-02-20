@@ -36,6 +36,7 @@ class A {
 }
 
 class B<K, V>(A) {
+    k: *K;
     t: *V;
 
     fn __new__(this: *B) void {
@@ -53,11 +54,15 @@ class B<K, V>(A) {
     }
 }
 
-//class
+class C<T>(B<X, T>) {
+    fn __new__(this: *C) void {
+        super.__new__();
+    }
+}
 
 fn main() int {
-    aa: *B<X, Y> = new B<X, Y>();
-    aa.set(new Y(34));
-    return aa.get()
-            .value;
+    cc: *C<Y> = new C<Y>();
+    cc.get().value;
+
+    return 0;
 }
