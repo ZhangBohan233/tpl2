@@ -5,7 +5,7 @@ stack_size
 global_length
 224
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 13 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 13 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 23 0 0 0 0 0 0 0
 classes
 class E:\GitHub\tpl2\lib\lang.tp$Object mro $1096 methods $1104 $1112 $1120
 class E:\GitHub\tpl2\tp\tem.tp$X mro $1136 $1096 methods $1144 $1112 $1120
@@ -266,7 +266,7 @@ fn E:\GitHub\tpl2\tp\tem.tp$C.__new__ $1232
 
 fn E:\GitHub\tpl2\tp\tem.tp$main $1240
     push_fp
-    push          56
+    push          96
     iload         %0      $32
     iload         %1      $16
     store         %1      %0
@@ -286,6 +286,39 @@ fn E:\GitHub\tpl2\tp\tem.tp$main $1240
     load          %0      $8
     iload         %1      $0
     store         %1      %0
+    iload         %0      $16
+    iload         %1      $32
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $32
+    store_abs     %0      %1
+    iload         %0      24
+    set_ret       %0
+    invoke        $1128
+    load          %0      $24
+    iload         %1      1152
+    store_abs     %0      %1
+    load_lit      %0      $56
+    iload         %1      $40
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $24
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $40
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\tp\tem.tp$Y.__new__
+    load          %0      $0
+    iload         %1      5
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $0
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $24
+    store_abs     %1      %2
+    call_reg      %0
     load          %0      $0
     iload         %1      4
     iload         %2      0
@@ -293,25 +326,44 @@ fn E:\GitHub\tpl2\tp\tem.tp$main $1240
     aload_sp      %1      $0
     load          %2      $0
     store_abs     %1      %2
-    iload         %1      24
+    iload         %1      48
     set_ret       %1
     call_reg      %0
-    load          %0      $24
-    iload         %1      $32
+    load          %0      $48
+    iload         %1      $56
     store         %1      %0
-    load          %0      $32
+    load          %0      $56
     iload         %1      8
     addi          %0      %1
-    iload         %1      32
+    iload         %1      56
     store         %1      %0
-    load          %0      $32
+    load          %0      $56
     rload_abs     %1      %0
-    iload         %0      40
+    iload         %0      64
     store         %0      %1
-    load_lit      %0      $0
-    iload         %1      $48
+    load          %0      $0
+    iload         %1      4
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $0
+    store_abs     %1      %2
+    iload         %1      72
+    set_ret       %1
+    call_reg      %0
+    load          %0      $72
+    iload         %1      $80
     store         %1      %0
-    load          %0      $48
+    load          %0      $80
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      80
+    store         %1      %0
+    load          %0      $80
+    rload_abs     %1      %0
+    iload         %0      88
+    store         %0      %1
+    load          %0      $88
     put_ret       %0
     pull_fp
     ret

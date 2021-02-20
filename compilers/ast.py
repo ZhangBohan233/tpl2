@@ -1287,7 +1287,7 @@ class ClassStmt(Statement):
             for part in self.template_nodes:
                 if isinstance(part, NameNode):
                     templates.append(
-                        typ.Generic(part.name, object_t, util.class_name_with_path(self.name, self.lf.file_name)))
+                        typ.Generic(part.name, object_t))
                 elif isinstance(part, FunctionCall):
                     if len(part.args) != 1:
                         raise errs.TplSyntaxError("Invalid syntax. ", self.lf)
@@ -1295,7 +1295,7 @@ class ClassStmt(Statement):
                     if not isinstance(max_t, typ.ClassType):
                         raise errs.TplCompileError(f"Template {part.args[0]} must extends a class. ", self.lf)
                     templates.append(
-                        typ.Generic(part.get_name(), max_t, util.class_name_with_path(self.name, self.lf.file_name)))
+                        typ.Generic(part.get_name(), max_t))
                 else:
                     raise errs.TplSyntaxError("Template must be name or class extension. ", self.lf)
 
@@ -1349,9 +1349,9 @@ class ClassStmt(Statement):
                 actual_tem = sc_tem_map[tem_name]
                 if isinstance(actual_tem, str):
                     index = typ.index_in_generic_list(actual_tem, templates)
-                    class_env.define_template(typ.Generic(tem_name, templates[index].max_t, ""), self.lf)
+                    class_env.define_template(typ.Generic(tem_name, templates[index].max_t), self.lf)
                 else:
-                    class_env.define_template(typ.Generic(tem_name, actual_tem, ""), self.lf)
+                    class_env.define_template(typ.Generic(tem_name, actual_tem), self.lf)
         # print(super_generics_map)
         class_type = typ.ClassType(
             self.name, class_ptr, self.lf.file_name, direct_sc, templates, super_generics_map)

@@ -1,0 +1,9 @@
+﻿import lang
+
+class Map<KMap, VMap> {
+
+}
+
+class HashMap<K, V>(Map<K, V>) {
+
+}

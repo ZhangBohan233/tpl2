@@ -54,7 +54,7 @@ class B<K, V>(A) {
     }
 }
 
-class C<T>(B<X, Y>) {
+class C<T>(B<X, T>) {
     fn __new__(this: *C) void {
         super.__new__();
     }
@@ -62,10 +62,11 @@ class C<T>(B<X, Y>) {
 
 fn main() int {
     cc: *C<Y> = new C<Y>();
+    cc.set(new Y(23));
     cc.get().value;
 
     //bb: *B<X, Y> = new B<X, Y>();
     //cprintln(bb.get().value);
 
-    return 0;
+    return cc.get().value;
 }

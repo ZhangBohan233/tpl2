@@ -33,8 +33,9 @@
 
 #### Phase 3
 * ~~Class and inheritance~~ Done
-* Templates and generics
-* Templates extension
+* ~~Templates and generics~~ Done
+* ~~Templates extension~~ Partially done
 * ~~super~~ Done
 * Auto add parameter 'this'
 * instanceof
+* abstract class and abstract function

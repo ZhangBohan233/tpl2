@@ -1,0 +1,128 @@
+bits
+64
+stack_size
+1024
+global_length
+128
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 13 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0
+classes
+class E:\GitHub\tpl2\lib\lang.tp$Object mro $1096 methods $1104 $1112 $1120
+class E:\GitHub\tpl2\lib\lib.tp$Map mro $1128 $1096 methods $1104 $1112 $1120
+class E:\GitHub\tpl2\lib\lib.tp$HashMap mro $1136 $1128 $1096 methods $1104 $1112 $1120
+
+fn E:\GitHub\tpl2\lib\lang.tp$add $1080
+    push_fp
+    push          24
+    load          %0      $0
+    load          %1      $8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$make $1088
+    push_fp
+    push          24
+    load_lit      %0      $24
+    iload         %1      $8
+    store         %1      %0
+    load_lit      %0      $32
+    iload         %1      $16
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $16
+    store_abs     %0      %1
+    iload         %0      0
+    set_ret       %0
+    call          $1080
+    load          %0      $0
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__ $1104
+    push_fp
+    push          8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.hash $1112
+    push_fp
+    push          24
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      0
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.equals $1120
+    push_fp
+    push          24
+    load          %0      $0
+    load          %1      $8
+    eqi           %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\lib_t.tp$main $1144
+    push_fp
+    push          8
+    load_lit      %0      $0
+    iload         %1      $0
+    store         %1      %0
+    load          %0      $0
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    load_lit      %0      $0
+    iload         %1      $1032
+    store         %1      %0
+    load          %0      $1032
+    iload         %1      $1024
+    store         %1      %0
+    load_lit      %0      $8
+    iload         %1      $1048
+    store         %1      %0
+    load          %0      $1048
+    iload         %1      $1040
+    store         %1      %0
+    load_lit      %0      $0
+    iload         %1      $1072
+    store         %1      %0
+    load          %0      $1064
+    iload         %1      $1056
+    store         %1      %0
+    aload         %0      $1
+    set_ret       %0
+    call_fn       E:\GitHub\tpl2\tp\lib_t.tp$main
+    exit

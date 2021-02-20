@@ -292,18 +292,14 @@ class GenericClassType(GenericType):
 
 
 class Generic(Type):
-    def __init__(self, name: str, max_t: ClassType, defined_place: str):
+    def __init__(self, name: str, max_t: ClassType):
         super().__init__(max_t.length)
 
         self._name = name
         self.max_t = max_t
-        self.defined_place = defined_place
 
     def strong_convertible(self, left_tar_type):
         return self.max_t.strong_convertible(left_tar_type)
-
-    def full_name(self):
-        return util.template_full_name(self._name, self.defined_place)
 
     def simple_name(self):
         return self._name
