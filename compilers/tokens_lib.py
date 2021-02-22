@@ -9,7 +9,7 @@ LOGICAL_UNARY = {"not"}
 SYMBOLS = {"{", "}", "[", "]", "(", ")", ".", "$", ",", ";", ":", "::"}
 OTHERS = {"=", "->", ":=", "++", "--"}
 
-RESERVED = {"as", "break", "case", "class", "cond", "const", "continue", "del", "do", "else",
+RESERVED = {"abstract", "as", "break", "case", "class", "cond", "const", "continue", "del", "do", "else",
             "export", "exportmacro", "fallthrough", "fn", "for",
             "if", "import", "macro", "new", "require", "return", "super", "switch", "then", "var", "while", "yield"}
 

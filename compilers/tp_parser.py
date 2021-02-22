@@ -13,6 +13,7 @@ class Parser:
     def __init__(self, tokens: tl.CollectiveElement):
         self.tokens = tokens
         self.var_level = ast.VAR_VAR
+        self.abstract = False
 
         self.special_binary = {
             "=": ast.Assignment,
@@ -35,6 +36,7 @@ class Parser:
             ":": self.process_declare,
             ",": self.process_comma,
             ";": self.process_eol,
+            "abstract": self.process_abstract,
             "fn": self.process_fn,
             "class": self.process_class,
             "var": self.process_var,
@@ -67,10 +69,17 @@ class Parser:
     #
     # Note: do not return the index of the next
 
+    def process_abstract(self, p, i, b, lf):
+        self.abstract = True
+
     def process_declare(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
         builder.add_node(ast.Declaration(self.var_level, lf))
 
     def process_fn(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+        abstract = self.abstract
+        self.abstract = False
+        const = self.var_level == ast.VAR_CONST
+        self.var_level = ast.VAR_VAR
         index += 1
         name_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
         next_ele = parent[index]
@@ -102,10 +111,17 @@ class Parser:
         else:
             body = self.parse_as_block(body_list)
 
-        builder.add_node(ast.FunctionDef(fn_name, params, rtype, body, lf))
+        if not abstract and body is None:
+            raise errs.TplSyntaxError("Non-abstract method must have body. ", lf)
+        if abstract and body is not None:
+            raise errs.TplSyntaxError("Abstract method must not have body. ", lf)
+
+        builder.add_node(ast.FunctionDef(fn_name, params, rtype, abstract, const, body, lf))
         return index
 
     def process_class(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf):
+        abstract = self.abstract
+        self.abstract = False
         index += 1
         name = parent[index].atom.identifier
         index += 1
@@ -121,7 +137,7 @@ class Parser:
             index += 1
             next_ele = parent[index]
         body = self.parse_as_block(next_ele)
-        class_stmt = ast.ClassStmt(name, extensions, templates, body, lf)
+        class_stmt = ast.ClassStmt(name, extensions, templates, abstract, body, lf)
         builder.add_node(class_stmt)
         return index
 

@@ -174,16 +174,18 @@ class FuncType(CallableType):
 
 
 class MethodType(FuncType):
-    def __init__(self, param_types, rtype, def_class):
+    def __init__(self, param_types, rtype, def_class, abstract: bool, const: bool):
         super().__init__(param_types, rtype)
 
         self.defined_class = def_class
+        self.abstract = abstract
+        self.const = const
 
     def __str__(self):
-        return "method " + super().__str__()
+        return ("abstract " if self.abstract else "") + "method " + super().__str__()
 
     def copy(self):
-        return MethodType(self.param_types.copy(), self.rtype, self.defined_class)
+        return MethodType(self.param_types.copy(), self.rtype, self.defined_class, self.abstract, self.const)
 
 
 class NativeFuncType(CallableType):
@@ -193,13 +195,14 @@ class NativeFuncType(CallableType):
 
 class ClassType(Type):
     def __init__(self, name: str, class_ptr: int, file_path: str, direct_sc: list, templates: list,
-                 super_generics_map: dict):
+                 super_generics_map: dict, abstract: bool):
         super().__init__(0)
 
         self.name = name
         self.class_ptr = class_ptr
         self.file_path = file_path  # where this class is defined, avoiding conflict struct def'ns in non-export part
         self.name_with_path = util.class_name_with_path(self.name, self.file_path)
+        self.abstract = abstract
         self.direct_superclasses = direct_sc
         self.mro: list = None  # Method resolution order, ranked from closest to farthest
         self.templates = templates  # list of Generic

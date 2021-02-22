@@ -38,4 +38,6 @@
 * ~~super~~ Done
 * Auto add parameter 'this'
 * instanceof
-* abstract class and abstract function
+* abstract class and abstract method
+* const method
+* Generic array

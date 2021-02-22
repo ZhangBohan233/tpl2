@@ -8,7 +8,7 @@ fn foo(g: int) int {
     return g + 77;
 }
 
-class A {
+abstract class A {
     x: int;
     fn __new__(this: *A) void {
         super.__new__();
@@ -22,6 +22,12 @@ class A {
     fn bar(this: *A) void {
         cprintln(this.x);
     }
+
+    abstract fn inner(this: *A) int;
+
+    fn invoke(this: *A) void {
+        cprintln(this.inner());
+    }
 }
 
 class B(A) {
@@ -32,14 +38,14 @@ class B(A) {
     fn bar(this: *B) void {
         cprintln(12321);
     }
+
+    fn inner(this: *B) int {
+        return 333;
+    }
 }
 
 fn main() int {
-    bb: *B = new B();
-    cprintln(bb.__class__);
-    cprintln(bb.foo());
-    c: *A = new B();
-    cprintln(bb.equals(bb));
-    c.bar();
-    return bb.foo() + bb.x;
+    bb := new B();
+    bb.invoke();
+    return 0;
 }

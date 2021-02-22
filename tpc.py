@@ -138,7 +138,6 @@ if __name__ == '__main__':
         print("========== End of AST ==========")
 
     compiler = cmp.Compiler(root, literal, src_abs_path, args["optimize"])
-    # compiler.configs(optimize=args["optimize"])
     tpa_content = compiler.compile()
 
     tpc_name = args["tpc_file"]
@@ -146,16 +145,6 @@ if __name__ == '__main__':
     tpe_name = args["tpe_file"]
 
     rem_file = [tpc_name, tpa_name]
-
-    # with open(tpa_name, "r") as tpa_f:
-    #     tpa_text = tpa_f.read()
-    #     tpa_cmp = optimizer.TpaParser(tpa_text)
-
-    # if args["optimize"] > 1:
-    #     # print("Optimization currently unavailable")
-    #     # exit(1)
-    #     opt = optimizer.Optimizer(tpa_cmp)
-    #     opt.optimize(args["optimize"])
 
     with open(tpa_name, "w") as tpa_file:
         tpa_file.write(tpa_content)

@@ -691,6 +691,8 @@ class NewExpr(UnaryExpr):
     def compile_class_init(self, class_t: typ.ClassType, env: en.Environment, tpa: tp.TpaOutput, inst_ptr_addr):
         self.value: FunctionCall
 
+        if class_t.abstract:
+            raise errs.TplCompileError(f"Abstract class '{class_t.name_with_path}' is not initialisable. ", self.lf)
         tpa.i_ptr_assign(class_t.class_ptr, util.PTR_LEN, inst_ptr_addr)  # assign __class__
 
         constructor_pos, constructor_ptr, constructor_t = class_t.methods["__new__"]
@@ -1168,7 +1170,8 @@ class RightArrowExpr(BinaryExpr):
 
 
 class FunctionDef(Expression):
-    def __init__(self, name: Expression, params: Line, rtype: Expression, body: BlockStmt, lf):
+    def __init__(self, name: Expression, params: Line, rtype: Expression, abstract: bool, const: bool,
+                 body: BlockStmt, lf):
         super().__init__(lf)
 
         self.name = name
@@ -1176,6 +1179,8 @@ class FunctionDef(Expression):
         self.rtype = rtype
         self.body = body
         self.parent_class: typ.ClassType = None
+        self.abstract = abstract
+        self.const = const
 
     def get_name(self) -> str:
         if isinstance(self.name, NameNode):
@@ -1245,16 +1250,18 @@ class FunctionDef(Expression):
                 param_types.append(pt)
 
         if self.parent_class is None:
+            if self.abstract:
+                raise errs.TplCompileError("Function cannot be abstract. ", self.lf)
             return typ.FuncType(param_types, rtype)
         else:
-            return typ.MethodType(param_types, rtype, self.parent_class)
+            return typ.MethodType(param_types, rtype, self.parent_class, self.abstract, self.const)
 
     def __str__(self):
         return "fn {}({}) {} {}".format(self.name, self.params, self.rtype, self.body)
 
 
 class ClassStmt(Statement):
-    def __init__(self, name: str, extensions: Line, templates: Line, body: BlockStmt, lf):
+    def __init__(self, name: str, extensions: Line, templates: Line, abstract: bool, body: BlockStmt, lf):
         super().__init__(lf)
 
         self.name = name
@@ -1266,6 +1273,7 @@ class ClassStmt(Statement):
             self.extensions = Line(lf, NameNode("Object", lf))
         self.template_nodes = templates
         self.body = body
+        self.abstract = abstract
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         """
@@ -1354,7 +1362,7 @@ class ClassStmt(Statement):
                     class_env.define_template(typ.Generic(tem_name, actual_tem), self.lf)
         # print(super_generics_map)
         class_type = typ.ClassType(
-            self.name, class_ptr, self.lf.file_name, direct_sc, templates, super_generics_map)
+            self.name, class_ptr, self.lf.file_name, direct_sc, templates, super_generics_map, self.abstract)
         mro = self.make_mro(class_type)
         class_type.mro = mro
 
@@ -1390,23 +1398,44 @@ class ClassStmt(Statement):
 
         class_type.length = pos
 
+        # update methods
         method_id = len(class_type.methods)  # id of method in this class
         for method_def in method_defs:
             method_def.compile(class_env, tpa)
             name = method_def.get_name()
             method_ptr = class_env.get(name, self.lf)
             method_t = class_env.get_type(name, self.lf)
+            if not isinstance(method_t, typ.MethodType):
+                raise errs.TplCompileError("Unexpected method. ", self.lf)
+
+            if not self.abstract and method_t.abstract:
+                raise errs.TplCompileError(
+                    f"Class '{self.name}' is not abstract, but has abstract method '{name}'. ", method_def.lf
+                )
+
             if name in class_type.methods:  # overriding
                 m_pos, m_ptr, m_t = class_type.methods[name]
                 if name != "__new__" and not method_t.strong_convertible(m_t):
                     raise errs.TplCompileError(
                         f"Method '{name}' in class '{self.name}' overrides its super method in class '{mro[1].name}', "
-                        f"but has incompatible parameter or return type. ", self.lf)
+                        f"but has incompatible parameter or return type. ", method_def.lf)
+                if m_t.const:
+                    raise errs.TplCompileError(
+                        f"Method '{name}' is const, which cannot be overridden. ", method_def.lf
+                    )
                 class_type.methods[name] = m_pos, method_ptr, method_t
             else:
                 class_type.method_rank.append(name)
                 class_type.methods[name] = method_id, method_ptr, method_t
                 method_id += 1
+
+        # check if all abstract methods are overridden
+        if not self.abstract:
+            for method_id, method_ptr, method_t in class_type.methods.values():
+                if method_t.abstract:
+                    raise errs.TplCompileError(
+                        f"Class '{self.name}' does not override all abstract methods of its superclasses. ", self.lf
+                    )
 
     def __str__(self):
         if self.template_nodes is None:

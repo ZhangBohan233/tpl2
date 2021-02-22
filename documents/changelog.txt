@@ -1,4 +1,10 @@
-﻿===== VERSION 2027 =====
+﻿===== VERSION 2028 =====
+2021/02/23
+
+* Implemented abstract class and abstract method
+* Implemented const method
+
+===== VERSION 2027 =====
 2021/02/21
 
 * Generic class extension
