@@ -695,7 +695,7 @@ class NewExpr(UnaryExpr):
             raise errs.TplCompileError(f"Abstract class '{class_t.name_with_path}' is not initialisable. ", self.lf)
         tpa.i_ptr_assign(class_t.class_ptr, util.PTR_LEN, inst_ptr_addr)  # assign __class__
 
-        constructor_pos, constructor_ptr, constructor_t = class_t.methods["__new__"]
+        constructor_id, constructor_ptr, constructor_t = class_t.methods["__new__"]
         ea = self.value.evaluate_args(constructor_t, env, tpa, True)
         ea.insert(0, (inst_ptr_addr, util.PTR_LEN))
         FunctionCall.call_name(util.name_with_path("__new__", class_t.file_path, class_t),
@@ -736,8 +736,26 @@ class DelStmt(UnaryStmt):
         free = NameNode("free", self.lf)
         req = RequireStmt(free, self.lf)
         req.compile(env, tpa)
+
+        val_t = self.value.evaluated_type(env, tpa.manager)
+        self.instance_del(val_t, env, tpa)
+
         fc = FunctionCall(free, Line(self.lf, self.value), self.value)
         fc.compile(env, tpa)
+
+    def instance_del(self, val_t, env, tpa):
+        if isinstance(val_t, typ.ClassType):
+            self.compile_class_del(val_t, env, tpa)
+        elif isinstance(val_t, typ.GenericClassType):
+            self.compile_class_del(val_t.base, env, tpa)
+        elif isinstance(val_t, typ.Generic):
+            self.instance_del(val_t.max_t, env, tpa)
+
+    def compile_class_del(self, class_t: typ.ClassType, env: en.Environment, tpa: tp.TpaOutput):
+        inst_ptr_addr = self.value.compile(env, tpa)
+        destructor_id, destructor_ptr, destructor_t = class_t.methods["__del__"]
+        ea = [(inst_ptr_addr, util.PTR_LEN)]
+        tpa.call_method(inst_ptr_addr, destructor_id, ea, 0, 0, 0)
 
 
 class YieldStmt(UnaryStmt):
@@ -912,6 +930,8 @@ class DotExpr(BinaryExpr):
             if isinstance(class_t, typ.ClassType):
                 name = right_node.get_name()
                 method_id, method_p, t = class_t.find_method(name, lf)
+                if t.abstract:
+                    raise errs.TplCompileError(f"Abstract method '{name}' cannot be called. ", lf)
                 full_name = util.name_with_path(name, t.defined_class.file_path, t.defined_class)
                 res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
                 ea = right_node.evaluate_args(t, env, tpa, is_method=True)

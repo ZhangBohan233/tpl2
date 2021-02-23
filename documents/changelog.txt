@@ -1,4 +1,9 @@
-﻿===== VERSION 2031 =====
+﻿===== VERSION 2032 =====
+2021/02/23
+
+* Implemented class destructor '__del__'
+
+===== VERSION 2031 =====
 2021/02/23
 
 * Implemented generic array

@@ -1,26 +1,12 @@
-macro ONE {
-    1
-}
-
-macro TWO {
-    2
-}
-
 const FALSE: int = 0;
 const TRUE: int = 1;
 const NULL: *void = 0 as *void;
 
-fn add(x: int, y: int) int {
-    return x + y;
-}
-
-fn make() int {
-    return add(13, 15)
-}
-
 class Object {
     fn __new__(this: *Object) void {
+    }
 
+    fn __del__(this: *Object) void {
     }
 
     fn hash(this: *Object) int {
@@ -33,9 +19,5 @@ class Object {
 }
 
 export {
-    FALSE, TRUE, NULL, make, Object
-}
-
-exportmacro {
-    ONE, TWO
+    FALSE, TRUE, NULL, Object
 }

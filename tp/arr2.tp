@@ -22,6 +22,12 @@ class B<T> {
         this.arr = new T[2];
     }
 
+    fn __del__(this: *B) void {
+        del this.arr;
+
+        super.__del__();
+    }
+
     fn get_arr(this: *B) T[] {
         return this.arr;
     }
@@ -35,5 +41,11 @@ fn main() int {
     bb := new B<Object>();
     bb.arr[0] = new A(34);
 
-    return (bb.get_first() as *A).get();
+    cprintln((bb.get_first() as *A).get());
+
+    arr2 := new Object[3];
+    del arr2;
+    del bb;
+
+    return 2;
 }

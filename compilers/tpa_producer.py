@@ -414,7 +414,7 @@ class TpaOutput:
     def struct_attr(self, struct_addr, attr_pos, res_addr):
         reg1, reg2 = self.manager.require_regs(2)
 
-        print(struct_addr, res_addr)
+        # print(struct_addr, res_addr)
 
         self.write_format("aload", register(reg1), number(struct_addr))
         self.write_format("iload", register(reg2), number(attr_pos))
