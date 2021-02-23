@@ -1,4 +1,9 @@
-﻿===== VERSION 2029 =====
+﻿===== VERSION 2030 =====
+2021/02/23
+
+* Updated ast preprocessor that process `obj.attr[index]` as `(obj.attr)[index]`
+
+===== VERSION 2029 =====
 2021/02/23
 
 * Object pointer array

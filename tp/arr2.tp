@@ -8,6 +8,10 @@ class A {
 
         this.value = val;
     }
+
+    fn get(this: *A) int {
+        return this.value;
+    }
 }
 
 class B<T> {
@@ -19,14 +23,17 @@ class B<T> {
     }
 
     fn get_arr(this: *B) A[] {
-        return NULL;
+        return this.arr;
+    }
+
+    fn get_first(this: *B) *A {
+        return this.arr[0];
     }
 }
 
 fn main() int {
     bb := new B<A>();
-    //bb.arr[0] = new A(34);
-    ar := bb.get_arr()[0];
+    bb.arr[0] = new A(34);
 
-    return 0;
+    return bb.get_first().get();
 }

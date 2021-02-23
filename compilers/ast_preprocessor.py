@@ -68,15 +68,32 @@ class AstPreprocessor:
             ass.left = left
             ass.right = bo
             return ass
-        else:
-            attrs = dir(node)
+        elif isinstance(node, ast.DotExpr):
+            left = self.process_node(node.left)
+            right = self.process_node(node.right)
+            if isinstance(right, ast.IndexingExpr):
+                new_dot = ast.DotExpr(node.lf)
+                new_dot.left = left
+                new_dot.right = right.indexing_obj
+                return ast.IndexingExpr(new_dot, right.args, node.lf)
+            # elif isinstance(right, ast.FunctionCall):
+            #     new_dot = ast.DotExpr(node.lf)
+            #     new_dot.left = left
+            #     new_dot.right = right.call_obj
+            #     return ast.FunctionCall(new_dot, right.args, node.lf)
 
-            for attr_name in attrs:
-                attr = getattr(node, attr_name)
-                if isinstance(attr, ast.Node):
-                    setattr(node, attr_name, self.process_node(attr))
-                elif isinstance(attr, list):
-                    for i in range(len(attr)):
-                        attr[i] = self.process_node(attr[i])
-
+            node.left = left
+            node.right = right
             return node
+
+        attrs = dir(node)
+
+        for attr_name in attrs:
+            attr = getattr(node, attr_name)
+            if isinstance(attr, ast.Node):
+                setattr(node, attr_name, self.process_node(attr))
+            elif isinstance(attr, list):
+                for i in range(len(attr)):
+                    attr[i] = self.process_node(attr[i])
+
+        return node

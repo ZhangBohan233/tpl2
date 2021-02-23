@@ -1,0 +1,18 @@
+﻿import lang
+
+class A {
+    fn __new__(this: *A) void {
+
+    }
+
+    fn test(this: *A) void {
+
+    }
+}
+
+fn main() int {
+    aa := new A();
+    aa.test();
+
+    return 0;
+}

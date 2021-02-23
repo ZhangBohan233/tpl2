@@ -181,7 +181,7 @@ class Statement(Node, ABC):
         super().__init__(lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        raise errs.TplTypeError("Statements do not evaluate a type. ", self.lf)
+        raise errs.TplTypeError(f"Statements {self} do not evaluate a type. ", self.lf)
 
 
 class Line(Expression):
@@ -864,52 +864,40 @@ class DotExpr(BinaryExpr):
         super().__init__(".", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        if isinstance(self.left, SuperExpr):
-            return self.compile_super(env, tpa)
-        left_t = self.left.evaluated_type(env, tpa.manager)
-        if isinstance(left_t, typ.PointerType):
-            if isinstance(self.right, FunctionCall):
-                return self.compile_method_call(left_t, self.left.compile(env, tpa), env, tpa)
-            attr_ptr, attr_t = self.get_attr_ptr_and_type(env, tpa)
+        return DotExpr.compile_dot(self.left, self.right, env, tpa, self.lf)
 
-            res_ptr = tpa.manager.allocate_stack(attr_t.memory_length())
-            tpa.value_in_addr_op(attr_ptr, attr_t.memory_length(), res_ptr, attr_t.memory_length())
-            return res_ptr
-        elif isinstance(left_t, typ.ArrayType) and isinstance(self.right, NameNode):
-            return self.array_attributes(env, tpa, self.right.name)
-
-        raise errs.TplCompileError("Left side of dot must be a pointer to struct or an array. ", self.lf)
-
-    def compile_super(self, env: en.Environment, tpa: tp.TpaOutput):
-        self.left: SuperExpr
+    @staticmethod
+    def compile_super(right_node, env: en.Environment, tpa: tp.TpaOutput, lf):
         method_env = env
         while not isinstance(method_env, en.MethodEnvironment):
             if method_env is None:
-                raise errs.TplCompileError("'super' outside method. ", self.lf)
+                raise errs.TplCompileError("'super' outside method. ", lf)
             method_env = method_env.outer
         # method_env: en.MethodEnvironment
         cur_method_cls_t: typ.ClassType = method_env.defined_class
         if len(cur_method_cls_t.mro) == 1:
-            raise errs.TplCompileError("Class 'Object' has no superclass. ", self.lf)
+            raise errs.TplCompileError("Class 'Object' has no superclass. ", lf)
 
-        this_ptr = env.get("this", self.lf)
+        this_ptr = env.get("this", lf)
 
-        if isinstance(self.right, NameNode):
+        if isinstance(right_node, NameNode):
             pass
-        elif isinstance(self.right, FunctionCall):
-            return self.compile_fixed_method_call(
-                typ.PointerType(cur_method_cls_t.mro[1]), this_ptr, env, tpa)
+        elif isinstance(right_node, FunctionCall):
+            return DotExpr.compile_fixed_method_call(
+                right_node, typ.PointerType(cur_method_cls_t.mro[1]), this_ptr, env, tpa, lf)
 
-        raise errs.TplCompileError("Super must follow a name or a call. ", self.lf)
+        raise errs.TplCompileError("Super must follow a name or a call. ", lf)
 
-    def compile_method_call(self, class_ptr_t, ins_ptr_addr, env: en.Environment, tpa: tp.TpaOutput, class_offset=0):
+    @staticmethod
+    def compile_method_call(right_node, class_ptr_t, ins_ptr_addr, env: en.Environment, tpa: tp.TpaOutput, lf,
+                            class_offset=0):
         """
         Compiles a method call, with mro resolved at runtime.
         """
         def inner_call(ct: typ.ClassType, right, generics):
             right: FunctionCall
             name = right.get_name()
-            method_id, method_p, t = ct.find_method(name, self.lf)
+            method_id, method_p, t = ct.find_method(name, lf)
             t = t.copy()
             for i in range(len(t.param_types)):
                 pt = t.param_types[i]
@@ -925,87 +913,82 @@ class DotExpr(BinaryExpr):
         if isinstance(class_ptr_t, typ.PointerType):
             class_t = class_ptr_t.base
             if isinstance(class_t, typ.ClassType):
-                return inner_call(class_t, self.right, None)
+                return inner_call(class_t, right_node, None)
             elif isinstance(class_t, typ.GenericClassType):
-                return inner_call(class_t.base, self.right, class_t.generics)
-        raise errs.TplCompileError("Cannot make method call. ", self.lf)
+                return inner_call(class_t.base, right_node, class_t.generics)
+        raise errs.TplCompileError("Cannot make method call. ", lf)
 
-    def compile_fixed_method_call(self, class_ptr_t, ins_ptr_addr, env: en.Environment, tpa: tp.TpaOutput):
+    @staticmethod
+    def compile_fixed_method_call(right_node, class_ptr_t, ins_ptr_addr, env: en.Environment, tpa: tp.TpaOutput, lf):
         """
         Compiles a method call, with mro resolved at compile time.
         """
-        self.right: FunctionCall
         if isinstance(class_ptr_t, typ.PointerType):
             class_t = class_ptr_t.base
             if isinstance(class_t, typ.ClassType):
-                name = self.right.get_name()
-                method_id, method_p, t = class_t.find_method(name, self.lf)
+                name = right_node.get_name()
+                method_id, method_p, t = class_t.find_method(name, lf)
                 full_name = util.name_with_path(name, t.defined_class.file_path, t.defined_class)
                 res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
-                ea = self.right.evaluate_args(t, env, tpa, is_method=True)
+                ea = right_node.evaluate_args(t, env, tpa, is_method=True)
                 ea.insert(0, (ins_ptr_addr, util.PTR_LEN))
-                FunctionCall.call_name(full_name, ea, tpa, res_ptr, self.lf, t)
+                FunctionCall.call_name(full_name, ea, tpa, res_ptr, lf, t)
                 return res_ptr
-        raise errs.TplCompileError("Cannot make method call. ", self.lf)
+        raise errs.TplCompileError("Cannot make method call. ", lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        return self.get_right_t(self.right, env, manager)
+        return DotExpr.dot_right_t(self.left, self.right, env, manager, self.lf)
 
-    def get_right_t(self, right_node, env, manager):
-        left_t = self.left.evaluated_type(env, manager)
+    @staticmethod
+    def array_attributes(left_node, env: en.Environment, tpa: tp.TpaOutput, name: str, lf):
+        res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+        arr_ptr = left_node.compile(env, tpa)
+        if name == "length":
+            tpa.value_in_addr_op(arr_ptr, util.INT_LEN, res_addr, util.INT_LEN)
+            # since first value in array is the length
+            return res_addr
+
+        raise errs.TplCompileError(f"Array type does not have attribute '{name}'. ", lf)
+
+    # helper functions for dot
+    @staticmethod
+    def compile_dot(left_node: Expression, right_node: Node, env: en.Environment, tpa: tp.TpaOutput, lf):
+        if isinstance(left_node, SuperExpr):
+            return DotExpr.compile_super(right_node, env, tpa, lf)
+        left_t = left_node.evaluated_type(env, tpa.manager)
         if isinstance(left_t, typ.PointerType):
-            struct_t = left_t.base
-            if isinstance(right_node, NameNode):
-                if isinstance(struct_t, typ.ClassType):
-                    pos, attr_t = struct_t.find_field(right_node.name, self.lf)
-                    return attr_t
-                elif isinstance(struct_t, typ.GenericClassType):
-                    pos, attr_t = struct_t.base.find_field(right_node.name, self.lf)
-                    if typ.is_generic(attr_t):
-                        return typ.replace_generic_with_real(attr_t, struct_t.generics)
-                    return attr_t
-            elif isinstance(right_node, FunctionCall):
-                if isinstance(struct_t, typ.ClassType):
-                    name = right_node.get_name()
-                    pos, ptr, t = struct_t.find_method(name, self.lf)
-                    return t.rtype
-                elif isinstance(struct_t, typ.GenericClassType):
-                    name = right_node.get_name()
-                    pos, ptr, t = struct_t.base.find_method(name, self.lf)
-                    t: typ.MethodType
-                    if typ.is_generic(t.rtype):
-                        return typ.replace_generic_with_real(t.rtype, struct_t.generics)
-                    return t.rtype
-            elif isinstance(right_node, IndexingExpr):
-                arr_t = self.get_right_t(right_node.indexing_obj, env, manager)
-                return right_node.get_eval_type(arr_t, env, manager)
-        elif isinstance(left_t, typ.ArrayType) and isinstance(self.right, NameNode):
-            return array_attribute_types(self.right.name, self.lf)
+            if isinstance(right_node, FunctionCall):
+                return DotExpr.compile_method_call(right_node, left_t, left_node.compile(env, tpa), env, tpa, lf)
+            attr_ptr, attr_t = DotExpr.get_dot_attr_and_type(left_node, right_node, env, tpa, lf)
 
-        raise errs.TplCompileError(
-            f"Left side of dot {self} must be a pointer to struct or an array, got {left_t}. ", self.lf)
+            res_ptr = tpa.manager.allocate_stack(attr_t.memory_length())
+            tpa.value_in_addr_op(attr_ptr, attr_t.memory_length(), res_ptr, attr_t.memory_length())
+            return res_ptr
+        elif isinstance(left_t, typ.ArrayType) and isinstance(right_node, NameNode):
+            return DotExpr.array_attributes(env, tpa, right_node.name, lf)
 
-    def get_attr_ptr_and_type(self, env: en.Environment, tpa: tp.TpaOutput) -> (int, typ.Type):
-        return self.get_attr_ptr_and_type_right(self.right, env, tpa)
+        raise errs.TplCompileError("Left side of dot must be a pointer to struct or an array. ", lf)
 
-    def get_attr_ptr_and_type_right(self, right_node, env, tpa):
-        left_t = self.left.evaluated_type(env, tpa.manager)
+    @staticmethod
+    def get_dot_attr_and_type(left_node: Expression, right_node: Node, env: en.Environment, tpa: tp.TpaOutput,
+                              lf) -> (int, typ.Type):
+        left_t = left_node.evaluated_type(env, tpa.manager)
         if isinstance(right_node, NameNode):
             if isinstance(left_t, typ.PointerType):
                 struct_t = left_t.base
                 if isinstance(struct_t, typ.ClassType):
-                    struct_addr = self.left.compile(env, tpa)
-                    pos, t = struct_t.find_field(right_node.name, self.lf)
+                    struct_addr = left_node.compile(env, tpa)
+                    pos, t = struct_t.find_field(right_node.name, lf)
                     real_attr_ptr = tpa.manager.allocate_stack(t.length)
                     if t.length == util.INT_LEN:
                         tpa.assign(real_attr_ptr, struct_addr)
                         tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
                     else:
-                        raise errs.TplCompileError("Unsupported length.", self.lf)
+                        raise errs.TplCompileError("Unsupported length.", lf)
                     return real_attr_ptr, t
                 elif isinstance(struct_t, typ.GenericClassType):
-                    struct_addr = self.left.compile(env, tpa)
-                    pos, t = struct_t.base.find_field(right_node.name, self.lf)
+                    struct_addr = left_node.compile(env, tpa)
+                    pos, t = struct_t.base.find_field(right_node.name, lf)
                     if isinstance(t, str):
                         t = struct_t.generics[t]
                     real_attr_ptr = tpa.manager.allocate_stack(t.length)
@@ -1013,20 +996,51 @@ class DotExpr(BinaryExpr):
                         tpa.assign(real_attr_ptr, struct_addr)
                         tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
                     else:
-                        raise errs.TplCompileError("Unsupported length.", self.lf)
+                        raise errs.TplCompileError("Unsupported length.", lf)
                     return real_attr_ptr, t
-        elif isinstance(right_node, IndexingExpr):
-            pass
+        # elif isinstance(right_node, IndexingExpr):
+        #     DotExpr.compile_dot(left_node, right_node.indexing_obj, env, tpa, lf)
 
-        raise errs.TplCompileError("Left side of dot must be a pointer to struct. ", self.lf)
+        raise errs.TplCompileError("Left side of dot must be a pointer to class. ", lf)
 
-    def array_attributes(self, env: en.Environment, tpa: tp.TpaOutput, name: str):
-        res_addr = tpa.manager.allocate_stack(util.INT_LEN)
-        arr_ptr = self.left.compile(env, tpa)
-        if name == "length":
-            tpa.value_in_addr_op(arr_ptr, util.INT_LEN, res_addr, util.INT_LEN)
-            # since first value in array is the length
-            return res_addr
+    @staticmethod
+    def dot_type(left_node: Expression, right_node: Node, env: en.Environment, manager: tp.Manager, lf):
+        return DotExpr.dot_right_t(left_node, right_node, env, manager, lf)
+
+    @staticmethod
+    def dot_right_t(left_node: Expression, right_node, env, manager, lf):
+        left_t = left_node.evaluated_type(env, manager)
+        if isinstance(left_t, typ.PointerType):
+            struct_t = left_t.base
+            if isinstance(right_node, NameNode):
+                if isinstance(struct_t, typ.ClassType):
+                    pos, attr_t = struct_t.find_field(right_node.name, lf)
+                    return attr_t
+                elif isinstance(struct_t, typ.GenericClassType):
+                    pos, attr_t = struct_t.base.find_field(right_node.name, lf)
+                    if typ.is_generic(attr_t):
+                        return typ.replace_generic_with_real(attr_t, struct_t.generics)
+                    return attr_t
+            elif isinstance(right_node, FunctionCall):
+                if isinstance(struct_t, typ.ClassType):
+                    name = right_node.get_name()
+                    pos, ptr, t = struct_t.find_method(name, lf)
+                    return t.rtype
+                elif isinstance(struct_t, typ.GenericClassType):
+                    name = right_node.get_name()
+                    pos, ptr, t = struct_t.base.find_method(name, lf)
+                    t: typ.MethodType
+                    if typ.is_generic(t.rtype):
+                        return typ.replace_generic_with_real(t.rtype, struct_t.generics)
+                    return t.rtype
+            # elif isinstance(right_node, IndexingExpr):
+            #     arr_t = DotExpr.dot_right_t(left_node, right_node.indexing_obj, env, manager, lf)
+            #     return right_node.get_eval_type(arr_t, env, manager)
+        elif isinstance(left_t, typ.ArrayType) and isinstance(right_node, NameNode):
+            return array_attribute_types(right_node.name, lf)
+
+        raise errs.TplCompileError(
+            f"Left side of dot must be a pointer to struct or an array, got {left_t}. ", lf)
 
 
 class MethodExpr(BinaryExpr):
@@ -1078,8 +1092,8 @@ class Assignment(BinaryExpr):
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return self.right.evaluated_type(env, manager)
 
-    def struct_attr_assign(self, dot, env: en.Environment, tpa: tp.TpaOutput):
-        attr_ptr, attr_t = dot.get_attr_ptr_and_type(env, tpa)
+    def struct_attr_assign(self, dot: DotExpr, env: en.Environment, tpa: tp.TpaOutput):
+        attr_ptr, attr_t = DotExpr.get_dot_attr_and_type(dot.left, dot.right, env, tpa, dot.lf)
         res_addr = self.right.compile(env, tpa)
         tpa.ptr_assign(res_addr, attr_t.memory_length(), attr_ptr)
         return res_addr
