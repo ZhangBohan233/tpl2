@@ -458,7 +458,7 @@ class UnaryOperator(UnaryExpr):
         vt: typ.Type = self.value.evaluated_type(env, tpa.manager)
         value = self.value.compile(env, tpa)
         if self.op_type == UNA_ARITH:
-            if isinstance(vt, typ.BasicType):
+            if isinstance(vt, typ.PrimitiveType):
                 if vt.type_name == "int":
                     res_addr = tpa.manager.allocate_stack(vt.length)
                     if self.op == "neg":
@@ -467,7 +467,7 @@ class UnaryOperator(UnaryExpr):
                         raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lf)
                     return res_addr
         elif self.op_type == UNA_LOGICAL:
-            if isinstance(vt, typ.BasicType):
+            if isinstance(vt, typ.PrimitiveType):
                 res_addr = tpa.manager.allocate_stack(vt.length)
                 if self.op == "not":
                     if vt.type_name != "int":
@@ -480,7 +480,7 @@ class UnaryOperator(UnaryExpr):
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if self.op_type == UNA_ARITH:
             vt = self.value.evaluated_type(env, manager)
-            if isinstance(vt, typ.BasicType):
+            if isinstance(vt, typ.PrimitiveType):
                 return vt
         elif self.op_type == UNA_LOGICAL:
             return typ.TYPE_INT
@@ -508,8 +508,8 @@ class BinaryOperator(BinaryExpr):
             rt = self.right.evaluated_type(env, tpa.manager)
             left_addr = self.left.compile(env, tpa)
             right_addr = self.right.compile(env, tpa)
-            if isinstance(lt, typ.BasicType):
-                if isinstance(rt, typ.BasicType):
+            if isinstance(lt, typ.PrimitiveType):
+                if isinstance(rt, typ.PrimitiveType):
                     if lt == typ.TYPE_INT:
                         if rt == typ.TYPE_INT:
                             # res_addr = tpa.manager.allocate_stack(util.INT_LEN)
@@ -565,8 +565,8 @@ class BinaryOperator(BinaryExpr):
         if self.op_type == BIN_ARITH:
             lt = self.left.evaluated_type(env, manager)
             rt = self.right.evaluated_type(env, manager)
-            if isinstance(lt, typ.BasicType):
-                if isinstance(rt, typ.BasicType):
+            if isinstance(lt, typ.PrimitiveType):
+                if isinstance(rt, typ.PrimitiveType):
                     if lt == typ.TYPE_INT or rt == typ.TYPE_CHAR or rt == typ.TYPE_BYTE:
                         if rt == typ.TYPE_INT or rt == typ.TYPE_CHAR or rt == typ.TYPE_BYTE:
                             return typ.TYPE_INT
@@ -949,30 +949,36 @@ class DotExpr(BinaryExpr):
         raise errs.TplCompileError("Cannot make method call. ", self.lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        return self.get_right_t(self.right, env, manager)
+
+    def get_right_t(self, right_node, env, manager):
         left_t = self.left.evaluated_type(env, manager)
         if isinstance(left_t, typ.PointerType):
             struct_t = left_t.base
-            if isinstance(self.right, NameNode):
+            if isinstance(right_node, NameNode):
                 if isinstance(struct_t, typ.ClassType):
-                    pos, attr_t = struct_t.find_field(self.right.name, self.lf)
+                    pos, attr_t = struct_t.find_field(right_node.name, self.lf)
                     return attr_t
                 elif isinstance(struct_t, typ.GenericClassType):
-                    pos, attr_t = struct_t.base.find_field(self.right.name, self.lf)
+                    pos, attr_t = struct_t.base.find_field(right_node.name, self.lf)
                     if typ.is_generic(attr_t):
                         return typ.replace_generic_with_real(attr_t, struct_t.generics)
                     return attr_t
-            elif isinstance(self.right, FunctionCall):
+            elif isinstance(right_node, FunctionCall):
                 if isinstance(struct_t, typ.ClassType):
-                    name = self.right.get_name()
+                    name = right_node.get_name()
                     pos, ptr, t = struct_t.find_method(name, self.lf)
                     return t.rtype
                 elif isinstance(struct_t, typ.GenericClassType):
-                    name = self.right.get_name()
+                    name = right_node.get_name()
                     pos, ptr, t = struct_t.base.find_method(name, self.lf)
                     t: typ.MethodType
                     if typ.is_generic(t.rtype):
                         return typ.replace_generic_with_real(t.rtype, struct_t.generics)
                     return t.rtype
+            elif isinstance(right_node, IndexingExpr):
+                arr_t = self.get_right_t(right_node.indexing_obj, env, manager)
+                return right_node.get_eval_type(arr_t, env, manager)
         elif isinstance(left_t, typ.ArrayType) and isinstance(self.right, NameNode):
             return array_attribute_types(self.right.name, self.lf)
 
@@ -980,13 +986,16 @@ class DotExpr(BinaryExpr):
             f"Left side of dot {self} must be a pointer to struct or an array, got {left_t}. ", self.lf)
 
     def get_attr_ptr_and_type(self, env: en.Environment, tpa: tp.TpaOutput) -> (int, typ.Type):
+        return self.get_attr_ptr_and_type_right(self.right, env, tpa)
+
+    def get_attr_ptr_and_type_right(self, right_node, env, tpa):
         left_t = self.left.evaluated_type(env, tpa.manager)
-        if isinstance(self.right, NameNode):
+        if isinstance(right_node, NameNode):
             if isinstance(left_t, typ.PointerType):
                 struct_t = left_t.base
                 if isinstance(struct_t, typ.ClassType):
                     struct_addr = self.left.compile(env, tpa)
-                    pos, t = struct_t.find_field(self.right.name, self.lf)
+                    pos, t = struct_t.find_field(right_node.name, self.lf)
                     real_attr_ptr = tpa.manager.allocate_stack(t.length)
                     if t.length == util.INT_LEN:
                         tpa.assign(real_attr_ptr, struct_addr)
@@ -996,7 +1005,7 @@ class DotExpr(BinaryExpr):
                     return real_attr_ptr, t
                 elif isinstance(struct_t, typ.GenericClassType):
                     struct_addr = self.left.compile(env, tpa)
-                    pos, t = struct_t.base.find_field(self.right.name, self.lf)
+                    pos, t = struct_t.base.find_field(right_node.name, self.lf)
                     if isinstance(t, str):
                         t = struct_t.generics[t]
                     real_attr_ptr = tpa.manager.allocate_stack(t.length)
@@ -1006,6 +1015,8 @@ class DotExpr(BinaryExpr):
                     else:
                         raise errs.TplCompileError("Unsupported length.", self.lf)
                     return real_attr_ptr, t
+        elif isinstance(right_node, IndexingExpr):
+            pass
 
         raise errs.TplCompileError("Left side of dot must be a pointer to struct. ", self.lf)
 
@@ -1994,6 +2005,9 @@ class IndexingExpr(Expression):
         if self.is_array_initialization(env):
             return self.definition_type(env, manager)
         obj_t = self.indexing_obj.evaluated_type(env, manager)
+        return self.get_eval_type(obj_t, env, manager)
+
+    def get_eval_type(self, obj_t, env, manager) -> typ.Type:
         if isinstance(obj_t, typ.ArrayType):
             return obj_t.ele_type
         else:
@@ -2001,6 +2015,8 @@ class IndexingExpr(Expression):
 
     def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         base = self.indexing_obj.definition_type(env, manager)
+        if isinstance(base, typ.ClassType):
+            base = typ.PointerType(base)
         return typ.ArrayType(base)
 
     def is_array_initialization(self, env: en.Environment):

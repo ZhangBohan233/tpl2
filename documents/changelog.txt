@@ -1,4 +1,9 @@
-﻿===== VERSION 2028 =====
+﻿===== VERSION 2029 =====
+2021/02/23
+
+* Object pointer array
+
+===== VERSION 2028 =====
 2021/02/23
 
 * Implemented abstract class and abstract method

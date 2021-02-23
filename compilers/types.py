@@ -60,7 +60,7 @@ class Type:
         return self.__str__()
 
 
-class BasicType(Type):
+class PrimitiveType(Type):
     def __init__(self, type_name: str, length: int):
         super().__init__(length)
 
@@ -73,7 +73,7 @@ class BasicType(Type):
             return super().weak_convertible(left_tar_type)
 
     def __eq__(self, other):
-        return isinstance(other, BasicType) and other.type_name == self.type_name
+        return isinstance(other, PrimitiveType) and other.type_name == self.type_name
 
     def __hash__(self):
         return hash(self.type_name)
@@ -102,7 +102,7 @@ class PointerType(Type):
             return super().strong_convertible(left_tar_type)
 
     def weak_convertible(self, left_tar_type):
-        if isinstance(left_tar_type, BasicType) and left_tar_type.type_name == "int":
+        if isinstance(left_tar_type, PrimitiveType) and left_tar_type.type_name == "int":
             return True
         elif isinstance(left_tar_type, PointerType):
             return self.base.weak_convertible(left_tar_type.base)
@@ -358,11 +358,11 @@ def index_in_generic_list(name: str, generics: list) -> int:
     return -1
 
 
-TYPE_INT = BasicType("int", util.INT_LEN)
-TYPE_FLOAT = BasicType("float", util.FLOAT_LEN)
-TYPE_CHAR = BasicType("char", util.CHAR_LEN)
-TYPE_BYTE = BasicType("byte", 1)
-TYPE_VOID = BasicType("void", 0)
+TYPE_INT = PrimitiveType("int", util.INT_LEN)
+TYPE_FLOAT = PrimitiveType("float", util.FLOAT_LEN)
+TYPE_CHAR = PrimitiveType("char", util.CHAR_LEN)
+TYPE_BYTE = PrimitiveType("byte", 1)
+TYPE_VOID = PrimitiveType("void", 0)
 
 TYPE_CHAR_ARR = ArrayType(TYPE_CHAR)
 TYPE_STRING_ARR = ArrayType(TYPE_CHAR_ARR)
