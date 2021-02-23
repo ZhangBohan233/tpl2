@@ -166,7 +166,7 @@ fn E:\GitHub\tpl2\tp\arr2.tp$B.__new__ $1160
     load          %0      $48
     load          %1      $56
     store_abs     %0      %1
-    iload         %0      $16
+    iload         %0      $8
     iload         %1      $64
     store         %1      %0
     require       heap_array $72     %0      %1
@@ -255,7 +255,7 @@ fn E:\GitHub\tpl2\tp\arr2.tp$B.get_first $1176
 
 fn E:\GitHub\tpl2\tp\arr2.tp$main $1184
     push_fp
-    push          104
+    push          112
     require       malloc  $16     %0      %1
     iload         %0      $16
     iload         %1      $24
@@ -341,9 +341,12 @@ fn E:\GitHub\tpl2\tp\arr2.tp$main $1184
     aload_sp      %1      $0
     load          %2      $0
     store_abs     %1      %2
-    iload         %1      88
+    iload         %1      96
     set_ret       %1
     call_reg      %0
+    load          %0      $96
+    iload         %1      $88
+    store         %1      %0
     load          %0      $88
     iload         %1      3
     iload         %2      0
@@ -351,10 +354,10 @@ fn E:\GitHub\tpl2\tp\arr2.tp$main $1184
     aload_sp      %1      $0
     load          %2      $88
     store_abs     %1      %2
-    iload         %1      96
+    iload         %1      104
     set_ret       %1
     call_reg      %0
-    load          %0      $96
+    load          %0      $104
     put_ret       %0
     pull_fp
     ret
@@ -375,6 +378,9 @@ entry
     store         %1      %0
     load_lit      %0      $0
     iload         %1      $1072
+    store         %1      %0
+    load          %0      $1072
+    iload         %1      $1064
     store         %1      %0
     load          %0      $1064
     iload         %1      $1056

@@ -38,7 +38,7 @@
 * ~~super~~ Done
 * Auto add parameter 'this'
 * instanceof
-* abstract class and abstract method
-* const method
-* Generic array
+* ~~abstract class and abstract method~~ Done
+* ~~const method~~ Done
+* ~~Generic array~~ Done
 * Destructor

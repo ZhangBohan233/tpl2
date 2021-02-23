@@ -15,25 +15,25 @@ class A {
 }
 
 class B<T> {
-    arr: A[]
+    arr: T[]
     fn __new__(this: *B) void {
         super.__new__();
 
-        this.arr = new A[2];
+        this.arr = new T[2];
     }
 
-    fn get_arr(this: *B) A[] {
+    fn get_arr(this: *B) T[] {
         return this.arr;
     }
 
-    fn get_first(this: *B) *A {
+    fn get_first(this: *B) *T {
         return this.arr[0];
     }
 }
 
 fn main() int {
-    bb := new B<A>();
+    bb := new B<Object>();
     bb.arr[0] = new A(34);
 
-    return bb.get_first().get();
+    return (bb.get_first() as *A).get();
 }

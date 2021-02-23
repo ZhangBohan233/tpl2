@@ -771,56 +771,40 @@ class AsExpr(BinaryExpr):
         if right_t == typ.TYPE_INT:
             if left_t == typ.TYPE_CHAR:
                 tpa.convert_char_to_int(dst_addr, left)
+                return
             elif left_t == typ.TYPE_BYTE:
                 tpa.convert_byte_to_int(dst_addr, left)
+                return
             elif left_t == typ.TYPE_FLOAT:
                 tpa.convert_float_to_int(dst_addr, left)
-            else:
-                raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
+                return
         elif right_t == typ.TYPE_CHAR:
             if left_t == typ.TYPE_INT:
                 tpa.convert_int_to_char(dst_addr, left)
-            else:
-                raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
+                return
         elif right_t == typ.TYPE_BYTE:
             if left_t == typ.TYPE_INT:
                 tpa.convert_int_to_byte(dst_addr, left)
-            else:
-                raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
+                return
         elif right_t == typ.TYPE_FLOAT:
             if left_t == typ.TYPE_INT:
                 tpa.convert_int_to_float(dst_addr, left)
-            else:
-                raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
+                return
+        elif typ.is_object_ptr(left_t) and typ.is_object_ptr(right_t):
+            tpa.assign(dst_addr, left)
+            return
+        elif right_t == typ.TYPE_VOID_PTR:
+            if left_t == typ.TYPE_INT:
+                tpa.assign(dst_addr, left)
+                return
+
+        raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         dst_t = self.evaluated_type(env, tpa.manager)
         dst_addr = tpa.manager.allocate_stack(dst_t.memory_length())
         self.compile_to(env, tpa, dst_addr, dst_t.memory_length())
         return dst_addr
-        # right_t = self.right.definition_type(env, tpa.manager)
-        # left_t = self.left.evaluated_type(env, tpa.manager)
-        # left = self.left.compile(env, tpa)
-        # if left_t == right_t:
-        #     return left
-        # if right_t == typ.TYPE_INT:
-        #     res_addr = tpa.manager.allocate_stack(util.INT_LEN)
-        #     if left_t == typ.TYPE_CHAR:
-        #         tpa.convert_char_to_int(res_addr, left)
-        #     elif left_t == typ.TYPE_FLOAT:
-        #         tpa.convert_float_to_int(res_addr, left)
-        #     else:
-        #         raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
-        #     return res_addr
-        # elif right_t == typ.TYPE_CHAR:
-        #     res_addr = tpa.manager.allocate_stack(util.CHAR_LEN)
-        #     if left_t == typ.TYPE_INT:
-        #         tpa.convert_int_to_char(res_addr, left)
-        #     else:
-        #         raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
-        #     return res_addr
-        # elif right_t == typ.TYPE_FLOAT:
-        #     pass
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return self.right.definition_type(env, manager)
@@ -2029,7 +2013,7 @@ class IndexingExpr(Expression):
 
     def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         base = self.indexing_obj.definition_type(env, manager)
-        if isinstance(base, typ.ClassType):
+        if isinstance(base, typ.ClassType) or isinstance(base, typ.Generic):
             base = typ.PointerType(base)
         return typ.ArrayType(base)
 

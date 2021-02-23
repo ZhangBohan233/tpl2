@@ -336,6 +336,10 @@ class ArrayType(Type):
         return isinstance(other, ArrayType) and self.ele_type == other.ele_type
 
 
+def is_object_ptr(t: Type) -> bool:
+    return isinstance(t, PointerType) and isinstance(t.base, (ClassType, GenericClassType))
+
+
 def is_generic(t: Type) -> bool:
     if isinstance(t, PointerType):
         return is_generic(t.base)
