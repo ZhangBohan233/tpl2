@@ -53,6 +53,9 @@ class Type:
         if not self.convertible_to(left_tar_type, lf):
             raise errs.TplCompileError(f"Cannot convert '{self}' to '{left_tar_type}'. ", lf)
 
+    def type_name(self):
+        raise errs.TplCompileError(f"Type '{self}' does not have name.")
+
     def is_void(self):
         return self.length == 0
 
@@ -64,22 +67,25 @@ class PrimitiveType(Type):
     def __init__(self, type_name: str, length: int):
         super().__init__(length)
 
-        self.type_name = type_name
+        self.t_name = type_name
 
     def weak_convertible(self, left_tar_type: Type):
-        if self.type_name == "int" and isinstance(left_tar_type, PointerType):
+        if self.t_name == "int" and isinstance(left_tar_type, PointerType):
             return True
         else:
             return super().weak_convertible(left_tar_type)
 
+    def type_name(self):
+        return self.t_name
+
     def __eq__(self, other):
-        return isinstance(other, PrimitiveType) and other.type_name == self.type_name
+        return isinstance(other, PrimitiveType) and other.t_name == self.t_name
 
     def __hash__(self):
-        return hash(self.type_name)
+        return hash(self.t_name)
 
     def __str__(self):
-        return self.type_name
+        return self.t_name
 
     def __repr__(self):
         return self.__str__()
@@ -102,12 +108,15 @@ class PointerType(Type):
             return super().strong_convertible(left_tar_type)
 
     def weak_convertible(self, left_tar_type):
-        if isinstance(left_tar_type, PrimitiveType) and left_tar_type.type_name == "int":
+        if isinstance(left_tar_type, PrimitiveType) and left_tar_type.t_name == "int":
             return True
         elif isinstance(left_tar_type, PointerType):
             return self.base.weak_convertible(left_tar_type.base)
         else:
             return super().weak_convertible(left_tar_type)
+
+    def type_name(self):
+        return "*" + self.base.type_name()
 
     def __eq__(self, other):
         return isinstance(other, PointerType) and self.base == other.base
@@ -245,6 +254,9 @@ class ClassType(Type):
         # e.g. class A<K, V>, class B<X>(A<X, Object>) => {A: {"K": "X", "V": Object}}
         self.super_generics_map = super_generics_map
 
+    def type_name(self):
+        return self.name
+
     def full_name(self):
         return self.name_with_path
 
@@ -263,9 +275,8 @@ class ClassType(Type):
     def find_method(self, name: str, arg_types: list, lf) -> (int, int, MethodType):
         if name in self.methods:
             poly: util.NaiveDict = self.methods[name]
-            res = poly.get_entry_by(arg_types, method_convertible_params)
-            if res is not None:
-                return res[1]
+            # res = poly.get_entry_by(arg_types, method_convertible_params)
+            return find_closet_method(poly, arg_types, name)
 
         raise errs.TplCompileError(f"Class {self.name} does not have method '{name}'. ", lf)
 
@@ -348,6 +359,9 @@ class GenericClassType(GenericType):
     def __init__(self, base: ClassType, generic: dict):
         super().__init__(base, generic)
 
+    def type_name(self):
+        return self.base.type_name()
+
 
 class Generic(Type):
     def __init__(self, name: str, max_t: ClassType):
@@ -361,6 +375,9 @@ class Generic(Type):
 
     def simple_name(self):
         return self._name
+
+    def type_name(self):
+        return self.max_t.type_name()
 
     def __eq__(self, other):
         return isinstance(other, Generic) and self._name == other._name
@@ -380,6 +397,9 @@ class ArrayType(Type):
             return True
         else:
             return super().strong_convertible(left_tar_type)
+
+    def type_name(self):
+        return self.ele_type.type_name() + "[]"
 
     def __str__(self):
         return f"{self.ele_type}[]"
@@ -424,11 +444,11 @@ def dict_find_key(d: dict, value):
     return None
 
 
-def function_poly_name(simple_name: str, params_t: list) -> str:
+def function_poly_name(simple_name: str, params_t: list, method: bool) -> str:
     res = []
-    for pt in params_t:
-        if isinstance(pt, PrimitiveType):
-            res.append(pt.type_name)
+    begin = 1 if method else 0
+    for i in range(begin, len(params_t)):
+        res.append(params_t[i].type_name())
     return simple_name + "(" + ",".join(res) + ")"
 
 
@@ -469,12 +489,85 @@ def func_convertible_params(ft: FuncType, param_types: list) -> bool:
 
 
 def method_convertible_params(ft: MethodType, param_types: list) -> bool:
+    # print(ft.param_types)
+    # print(param_types)
     if len(ft.param_types) == len(param_types):
         for i in range(1, len(param_types)):
             if not param_types[i].strong_convertible(ft.param_types[i]):
                 return False
         return True
     return False
+
+
+def get_class_type(t) -> ClassType:
+    if isinstance(t, ClassType):
+        return t
+    if isinstance(t, GenericClassType):
+        return t.base
+    if isinstance(t, Generic):
+        return t.max_t
+    raise errs.TplCompileError("Not a class type.")
+
+
+def type_distance(left_type, right_real_type):
+    """
+    Precondition: right_real_type.strong_convertible(left_type)
+
+    :param left_type:
+    :param right_real_type:
+    :return:
+    """
+    if isinstance(left_type, PointerType) and isinstance(right_real_type, PointerType):
+        left = get_class_type(left_type.base)
+        right = get_class_type(right_real_type.base)
+        for i in range(len(right.mro)):
+            if left == right.mro[i]:
+                # print(left, right.mro, i)
+                return i
+
+    return 0
+
+
+def find_closet_method(poly: util.NaiveDict, arg_types: [Type], name: str) -> (int, int, MethodType):
+    """
+    Returns the closet method.
+
+    The closet means the minimum sum of distance.
+
+    :param poly:
+    :param arg_types:
+    :param name: the simple name of function
+    :return: tuple of (method_id, method_ptr, method_type)
+    """
+    matched = {}
+    for i in range(len(poly)):
+        tup = poly.values[i]
+        method_t: MethodType = tup[2]
+        if len(arg_types) == len(method_t.param_types):
+            sum_dt = 0
+            match = True
+            for j in range(1, len(arg_types)):
+                arg = arg_types[j]
+                param = method_t.param_types[j]
+                if arg.strong_convertible(param):
+                    # print(arg, param, type_distance(arg, param))
+                    sum_dt += type_distance(param, arg)
+                else:
+                    match = False
+                    break
+            if match:
+                if sum_dt in matched:
+                    raise errs.TplCompileError(f"Ambiguous call: {function_poly_name(name, arg_types, True)}")
+                matched[sum_dt] = tup
+    min_dt = 65536
+    min_tup = None
+    for dt in matched:
+        if dt < min_dt:
+            min_dt = dt
+            min_tup = matched[dt]
+    if min_tup is None:
+        raise errs.TplCompileError(f"Cannot resolve call: {function_poly_name(name, arg_types, True)}")
+    return min_tup
 
 
 TYPE_INT = PrimitiveType("int", util.INT_LEN)

@@ -575,7 +575,7 @@ class TpaOutput:
         self.write_format("aload", "%0", "$1")
         self.write_format("set_ret", "%0")
         self.write_format("call_fn",
-                          util.name_with_path(typ.function_poly_name("main", param_types), main_file_path, None))
+                          util.name_with_path(typ.function_poly_name("main", param_types, False), main_file_path, None))
         self.write_format("exit")
 
     def local_generate(self):

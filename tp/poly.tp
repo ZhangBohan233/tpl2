@@ -1,7 +1,18 @@
 ﻿import lang;
 
+
+class B {
+    fn __new__(this: *B) void {
+
+    }
+}
+
 class A {
     fn __new__(this: *A) void {
+        this.__new__(1);
+    }
+
+    fn __new__(this: *A, b: int) void {
 
     }
 
@@ -16,9 +27,19 @@ class A {
     fn t(this: *A, a: int, b: int) void {
         cprintln(3);
     }
+
+    fn f(this: *A, num: int, obj: *Object, b: *B) void {
+        cprintln(4);
+    }
+
+    fn f(this: *A, num: int, obj: *B, b: *B) void {
+        cprintln(5);
+    }
 }
 
+
 fn main() void {
-    a := new A();
-    a.t(3);
+    a := new A(2);
+    //a.t(3);
+    a.f(1, new B(), new B());
 }

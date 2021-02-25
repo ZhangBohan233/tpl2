@@ -459,7 +459,7 @@ class UnaryOperator(UnaryExpr):
         value = self.value.compile(env, tpa)
         if self.op_type == UNA_ARITH:
             if isinstance(vt, typ.PrimitiveType):
-                if vt.type_name == "int":
+                if vt.t_name == "int":
                     res_addr = tpa.manager.allocate_stack(vt.length)
                     if self.op == "neg":
                         tpa.unary_arith("negi", value, res_addr)
@@ -470,7 +470,7 @@ class UnaryOperator(UnaryExpr):
             if isinstance(vt, typ.PrimitiveType):
                 res_addr = tpa.manager.allocate_stack(vt.length)
                 if self.op == "not":
-                    if vt.type_name != "int":
+                    if vt.t_name != "int":
                         raise errs.TplCompileError("Operator 'not' must take an int as value. ", self.lf)
                     tpa.unary_arith("not", value, res_addr)
                 else:
@@ -695,11 +695,14 @@ class NewExpr(UnaryExpr):
             raise errs.TplCompileError(f"Abstract class '{class_t.name_with_path}' is not initialisable. ", self.lf)
         tpa.i_ptr_assign(class_t.class_ptr, util.PTR_LEN, inst_ptr_addr)  # assign __class__
 
-        constructor_id, constructor_ptr, constructor_t = class_t.methods["__new__"].get_only()[1]
+        const_args = self.value.arg_types(env, tpa.manager)
+        const_args.insert(0, None)  # insert a positional arg of 'this'
+        constructor_id, constructor_ptr, constructor_t = \
+            class_t.methods["__new__"].get_entry_by(const_args, typ.method_convertible_params)[1]
         ea = self.value.evaluate_args(constructor_t, env, tpa, True)
         ea.insert(0, (inst_ptr_addr, util.PTR_LEN))
         FunctionCall.call_name(util.name_with_path(
-            typ.function_poly_name("__new__", constructor_t.param_types), class_t.file_path, class_t),
+            typ.function_poly_name("__new__", constructor_t.param_types, True), class_t.file_path, class_t),
                                ea,
                                tpa,
                                0,
@@ -901,7 +904,7 @@ class DotExpr(BinaryExpr):
             right: FunctionCall
             name = right.get_name()
             arg_types = right_node.arg_types(env, tpa.manager)
-            arg_types.insert(0, None)
+            arg_types.insert(0, None)  # insert a positional arg of 'this'
             method_id, method_p, t = ct.find_method(name, arg_types, lf)
             t = t.copy()
             for i in range(len(t.param_types)):
@@ -933,11 +936,11 @@ class DotExpr(BinaryExpr):
             if isinstance(class_t, typ.ClassType):
                 name = right_node.get_name()
                 arg_types = right_node.arg_types(env, tpa.manager)
-                arg_types.insert(0, None)
+                arg_types.insert(0, None)  # insert a positional arg of 'this'
                 method_id, method_p, t = class_t.find_method(name, arg_types, lf)
                 if t.abstract:
                     raise errs.TplCompileError(f"Abstract method '{name}' cannot be called. ", lf)
-                full_name = util.name_with_path(typ.function_poly_name(name, arg_types),
+                full_name = util.name_with_path(typ.function_poly_name(name, arg_types, True),
                                                 t.defined_class.file_path, t.defined_class)
                 res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
                 ea = right_node.evaluate_args(t, env, tpa, is_method=True)
@@ -1238,7 +1241,7 @@ class FunctionDef(Expression):
         fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
 
         func_type = self.evaluated_type(env, tpa.manager)
-        poly_name = typ.function_poly_name(simple_name, func_type.param_types)
+        poly_name = typ.function_poly_name(simple_name, func_type.param_types, self.is_method())
         fo = FunctionObject(env, tpa, fn_ptr, self.parent_class, poly_name, self.params, func_type, self.body, self.lf)
         env.define_function(simple_name, func_type, fn_ptr, self.lf)
 
@@ -1259,6 +1262,9 @@ class FunctionDef(Expression):
             return typ.FuncType(param_types, rtype)
         else:
             return typ.MethodType(param_types, rtype, self.parent_class, self.abstract, self.const)
+
+    def is_method(self):
+        return self.parent_class is not None
 
     def __str__(self):
         return "fn {}({}) {} {}".format(self.name, self.params, self.rtype, self.body)
@@ -1752,7 +1758,9 @@ class RequireStmt(Statement):
             name = node.name
             if name in typ.NATIVE_FUNCTIONS:
                 if env.has_name(name):
-                    if not isinstance(env.get_type(name, node.lf), typ.NativeFuncType):
+                    placer = env.get_type(name, node.lf)
+                    if not (isinstance(placer, typ.FunctionPlacer) and
+                            isinstance(placer.get_only()[0], typ.NativeFuncType)):
                         raise errs.TplCompileError(
                             f"Cannot require name '{name}': name already defined in this scope. ", node.lf)
                 else:

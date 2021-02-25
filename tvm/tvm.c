@@ -765,6 +765,7 @@ void tvm_mainloop() {
 //                printf("method ptr %lld\n", regs[reg1].int_value);
                 break;
             default:
+                fprintf(stderr, "%d: ", instruction);
                 ERROR_CODE = ERR_INSTRUCTION;
                 break;
         }
@@ -860,7 +861,7 @@ void print_error(int error_code) {
             fprintf(stderr, "\nHeap collision: ");
             break;
         case ERR_INSTRUCTION:
-            fprintf(stderr, "\nUnexpected instruction: ");
+            fprintf(stderr, "\nUnexpected instruction");
             break;
         default:
             fprintf(stderr, "\nSomething wrong: ");

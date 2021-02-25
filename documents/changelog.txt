@@ -1,4 +1,10 @@
-﻿===== VERSION 2034 =====
+﻿===== VERSION 2035 =====
+2021/02/26
+
+* Implemented method polymorphism for object types:
+    * Minimal sum inheritance distance algorithm
+
+===== VERSION 2034 =====
 2021/02/26
 
 * Function and method polymorphism for primitive type parameters
