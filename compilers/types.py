@@ -240,17 +240,32 @@ class ClassType(Type):
         if isinstance(left_tar_type, Generic):
             return self.strong_convertible(left_tar_type.max_t)
         if isinstance(left_tar_type, ClassType):
-            for t in self.mro:
-                if t == left_tar_type:
-                    return True
+            real_t = left_tar_type
+        elif isinstance(left_tar_type, Generic):
+            real_t = left_tar_type.max_t
+        elif isinstance(left_tar_type, GenericClassType):
+            real_t = left_tar_type.base
+        else:
+            return super().strong_convertible(left_tar_type)
+
+        for t in self.mro:
+            if t == real_t:
+                return True
         else:
             return super().strong_convertible(left_tar_type)
 
     def superclass_of(self, child_t: Type):
         if isinstance(child_t, ClassType):
-            for t in child_t.mro:
-                if self == t:
-                    return True
+            real_t = child_t
+        elif isinstance(child_t, Generic):
+            real_t = child_t.max_t
+        elif isinstance(child_t, GenericClassType):
+            real_t = child_t.base
+        else:
+            return False
+        for t in real_t.mro:
+            if self == t:
+                return True
         return False
 
     def __eq__(self, other):
@@ -274,18 +289,25 @@ class GenericType(Type):
         self.generics = generics
 
     def __str__(self):
-        return f"{self.base}<{self.generics}>"
+        return f"Gen{self.base}<{self.generics}>"
 
     def strong_convertible(self, left_tar_type):
+        # print("000", self)
+        # print("112", left_tar_type)
+        # print(self.base.super_generics_map)
         if isinstance(left_tar_type, GenericType):
             if self.base.strong_convertible(left_tar_type.base):
-                if len(self.generics) == len(left_tar_type.generics):
-                    for key in self.generics:
-                        if key in left_tar_type.generics:
-                            if self.generics[key].strong_convertible(left_tar_type.generics[key]):
-                                continue
-                        break
-                    return True
+                # if len(self.generics) == len(left_tar_type.generics):
+                for key in self.generics:
+                    if key in left_tar_type.generics:  # same T
+                        if self.generics[key].strong_convertible(left_tar_type.generics[key]):
+                            continue
+                    super_gen = dict_find_key(self.base.super_generics_map[left_tar_type.base], key)
+                    if super_gen is not None:  # class A<T0> {...}  class B<T1>(A<T1>) {...}
+                        if self.generics[key].strong_convertible(left_tar_type.generics[super_gen]):
+                            continue
+                    return False
+                return True
         return False
 
 
@@ -360,6 +382,13 @@ def index_in_generic_list(name: str, generics: list) -> int:
         if name == generics[i].simple_name():
             return i
     return -1
+
+
+def dict_find_key(d: dict, value):
+    for key in d:
+        if d[key] == value:
+            return key
+    return None
 
 
 TYPE_INT = PrimitiveType("int", util.INT_LEN)

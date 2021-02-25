@@ -143,8 +143,8 @@ class Manager:
         for reg in regs:
             self.available_regs.append(reg)
 
-    def map_function(self, name: str, file_path, body: list, clazz):
-        self.functions_map[util.name_with_path(name, file_path, clazz)] = body
+    def map_function(self, name: str, file_path, function_object):
+        self.functions_map[util.name_with_path(name, file_path, function_object.parent_class)] = function_object
 
     def add_class(self, class_type: typ.ClassType):
         self.class_headers.append(class_type)
@@ -559,7 +559,8 @@ class TpaOutput:
         merged.append("")
 
         for fn_name in self.manager.functions_map:
-            content = self.manager.functions_map[fn_name]
+            fo = self.manager.functions_map[fn_name]
+            content = fo.compile()
             merged.extend(content)
 
         self.output = merged + self.output

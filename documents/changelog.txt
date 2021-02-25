@@ -1,4 +1,12 @@
-﻿===== VERSION 2032 =====
+﻿===== VERSION 2033 =====
+2021/02/25
+
+* Lazy function body evaluation
+* Implemented collections.List
+* Bugs fix:
+    * Type check of overriding methods with generic class types
+
+===== VERSION 2032 =====
 2021/02/23
 
 * Implemented class destructor '__del__'

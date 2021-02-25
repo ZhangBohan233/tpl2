@@ -36,9 +36,13 @@
 * ~~Templates and generics~~ Done
 * ~~Templates extension~~ Partially done
 * ~~super~~ Done
-* Auto add parameter 'this'
+* ~~Auto add parameter 'this'~~ Discarded
 * instanceof
 * ~~abstract class and abstract method~~ Done
 * ~~const method~~ Done
 * ~~Generic array~~ Done
-* Destructor
+* ~~Destructor~~ Done
+* Annotations
+
+#### Phase 4
+* Function polymorphism

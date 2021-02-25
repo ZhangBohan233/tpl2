@@ -53,6 +53,7 @@ class Parser:
             "super": self.process_super,
             "++": self.process_inc_operator,
             "--": self.process_dec_operator,
+            "@": self.process_annotation,
             "switch": self.process_switch,
             "case": self.process_case,
             "default": self.process_default
@@ -307,6 +308,12 @@ class Parser:
     def process_dec_operator(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
                              lf: tl.LineFile):
         return self._process_inc_dec_operator("--", parent, index, builder, lf)
+
+    def process_annotation(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
+                           lf: tl.LineFile):
+        index += 1
+        ele = parent[index]
+        return index
 
     def process_switch(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
                        lf: tl.LineFile):

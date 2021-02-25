@@ -969,7 +969,7 @@ class DotExpr(BinaryExpr):
             tpa.value_in_addr_op(attr_ptr, attr_t.memory_length(), res_ptr, attr_t.memory_length())
             return res_ptr
         elif isinstance(left_t, typ.ArrayType) and isinstance(right_node, NameNode):
-            return DotExpr.array_attributes(env, tpa, right_node.name, lf)
+            return DotExpr.array_attributes(left_node, env, tpa, right_node.name, lf)
 
         raise errs.TplCompileError("Left side of dot must be a pointer to struct or an array. ", lf)
 
@@ -1225,49 +1225,55 @@ class FunctionDef(Expression):
         rtype = self.rtype.definition_type(env, tpa.manager)
         fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
 
-        if self.parent_class is None:
-            scope = en.FunctionEnvironment(env, str_name, rtype)
-        else:
-            scope = en.MethodEnvironment(env, str_name, rtype, self.parent_class)
-        tpa.manager.push_stack()
-
-        body_out = tp.TpaOutput(tpa.manager)
-
-        param_types = []
-        for i in range(len(self.params.parts)):
-            param = self.params.parts[i]
-            if isinstance(param, Declaration):
-                pt = param.right.definition_type(env, tpa.manager)
-                param_types.append(pt)
-                param.compile(scope, body_out)
-
-        # func_type = typ.FuncType(param_types, rtype)
         func_type = self.evaluated_type(env, tpa.manager)
+        fo = FunctionObject(env, tpa, fn_ptr, self.parent_class, str_name, self.params, func_type, self.body, self.lf)
         env.define_function(str_name, func_type, fn_ptr, self.lf)
 
-        if self.body is not None:
-            # check return
-            complete_return = self.body.return_check()
-            if not complete_return:
-                if not rtype.is_void():
-                    raise errs.TplCompileError(f"Function '{str_name}' missing a return statement. ", self.lf)
+        # if self.parent_class is None:
+        #     scope = en.FunctionEnvironment(env, str_name, rtype)
+        # else:
+        #     scope = en.MethodEnvironment(env, str_name, rtype, self.parent_class)
+        # tpa.manager.push_stack()
+        #
+        # body_out = tp.TpaOutput(tpa.manager)
+        #
+        # param_types = []
+        # for i in range(len(self.params.parts)):
+        #     param = self.params.parts[i]
+        #     if isinstance(param, Declaration):
+        #         pt = param.right.definition_type(env, tpa.manager)
+        #         param_types.append(pt)
+        #         param.compile(scope, body_out)
+        #
+        # # func_type = typ.FuncType(param_types, rtype)
+        # func_type = self.evaluated_type(env, tpa.manager)
+        # env.define_function(str_name, func_type, fn_ptr, self.lf)
+        #
+        # if self.body is not None:
+        #     # check return
+        #     complete_return = self.body.return_check()
+        #     if not complete_return:
+        #         if not rtype.is_void():
+        #             raise errs.TplCompileError(f"Function '{str_name}' missing a return statement. ", self.lf)
+        #
+        #     # compiling
+        #     body_out.add_function(str_name, self.lf.file_name, fn_ptr, self.parent_class)
+        #     push_index = body_out.add_indefinite_push()
+        #     self.body.compile(scope, body_out)
+        #
+        #     # ending
+        #     if rtype.is_void():
+        #         body_out.return_func()
+        #     body_out.end_func()
+        #
+        #     stack_len = body_out.manager.sp - body_out.manager.blocks[-1]
+        #     body_out.modify_indefinite_push(push_index, stack_len)
+        #
+        # tpa.manager.restore_stack()
+        # body_out.local_generate()
+        # tpa.manager.map_function(str_name, self.lf.file_name, body_out.result(), self.parent_class)
 
-            # compiling
-            body_out.add_function(str_name, self.lf.file_name, fn_ptr, self.parent_class)
-            push_index = body_out.add_indefinite_push()
-            self.body.compile(scope, body_out)
-
-            # ending
-            if rtype.is_void():
-                body_out.return_func()
-            body_out.end_func()
-
-            stack_len = body_out.manager.sp - body_out.manager.blocks[-1]
-            body_out.modify_indefinite_push(push_index, stack_len)
-
-        tpa.manager.restore_stack()
-        body_out.local_generate()
-        tpa.manager.map_function(str_name, self.lf.file_name, body_out.result(), self.parent_class)
+        tpa.manager.map_function(str_name, self.lf.file_name, fo)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.FuncType:
         rtype = self.rtype.definition_type(env, manager)
@@ -1423,7 +1429,8 @@ class ClassStmt(Statement):
                     part.parent_class = class_type
                     method_defs.append(part)
                 else:
-                    raise errs.TplCompileError("Class body should only contain attributes and methods. ", self.lf)
+                    raise errs.TplCompileError(
+                        f"Class body should only contain attributes and methods, but got a '{part}'. ", self.lf)
 
         class_type.length = pos
 
@@ -1445,6 +1452,8 @@ class ClassStmt(Statement):
             if name in class_type.methods:  # overriding
                 m_pos, m_ptr, m_t = class_type.methods[name]
                 if name != "__new__" and not method_t.strong_convertible(m_t):
+                    # print(method_t.param_types[0].base)
+                    # print(m_t.param_types[0])
                     raise errs.TplCompileError(
                         f"Method '{name}' in class '{self.name}' overrides its super method in class '{mro[1].name}', "
                         f"but has incompatible parameter or return type. ", method_def.lf)
@@ -1457,6 +1466,9 @@ class ClassStmt(Statement):
                 class_type.method_rank.append(name)
                 class_type.methods[name] = method_id, method_ptr, method_t
                 method_id += 1
+
+        # for method_def in method_defs:
+        #     method_def.compile(class_env, tpa)
 
         # check if all abstract methods are overridden
         if not self.abstract:
@@ -1572,8 +1584,10 @@ class GenericNode(Expression):
         gen_dict = {}
         for i in range(len(self.generics)):
             gen_t = self.generics[i].evaluated_type(env, manager)
-            if not isinstance(gen_t, typ.ClassType) and not isinstance(gen_t, typ.ArrayType):
-                raise errs.TplCompileError("Generics must be pointer type.")
+            if not (isinstance(gen_t, typ.ClassType) or
+                    isinstance(gen_t, typ.ArrayType) or
+                    isinstance(gen_t, typ.Generic)):
+                raise errs.TplCompileError(f"Generics must be pointer type, got {gen_t}", self.lf)
             gen = class_t.templates[i]
             if not gen.max_t.superclass_of(gen_t):
                 raise errs.TplCompileError(f"Template '{gen.name}' requires subclass of '{gen.max_t}', got '{gen_t}'. ",
@@ -1997,7 +2011,7 @@ class ImportStmt(Statement):
         self.tree = tree
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        module_env = en.ModuleEnvironment()
+        module_env = en.ModuleEnvironment(env)
         self.tree.compile(module_env, tpa)
         if module_env.exports is not None:
             env.import_vars(module_env.exports, self.lf)
@@ -2350,6 +2364,66 @@ class SwitchExpr(Expression):
 
     def __str__(self):
         return f"switch {self.cond} {self.cases} {self.default_case}"
+
+
+class FunctionObject:
+    def __init__(self, def_env: en.Environment, tpa, fn_ptr, parent_class, str_name, params, func_type: typ.FuncType,
+                 body, lf):
+        self.parent_class = parent_class
+        self.fn_ptr = fn_ptr
+        self.def_env = def_env
+        self.tpa = tpa
+        self.str_name = str_name
+        self.func_type = func_type
+        self.params = params
+        self.body = body
+        self.lf = lf
+
+    def compile(self):
+        if self.parent_class is None:
+            scope = en.FunctionEnvironment(self.def_env, self.str_name, self.func_type.rtype)
+        else:
+            scope = en.MethodEnvironment(self.def_env, self.str_name, self.func_type.rtype, self.parent_class)
+        self.tpa.manager.push_stack()
+
+        body_out = tp.TpaOutput(self.tpa.manager)
+
+        param_types = []
+        for i in range(len(self.params.parts)):
+            param = self.params.parts[i]
+            if isinstance(param, Declaration):
+                pt = param.right.definition_type(self.def_env, self.tpa.manager)
+                param_types.append(pt)
+                param.compile(scope, body_out)
+
+        # func_type = typ.FuncType(param_types, rtype)
+        # func_type = self.evaluated_type(env, tpa.manager)
+        # env.define_function(str_name, func_type, fn_ptr, self.lf)
+
+        if self.body is not None:
+            # check return
+            complete_return = self.body.return_check()
+            if not complete_return:
+                if not self.func_type.rtype.is_void():
+                    raise errs.TplCompileError(f"Function '{self.str_name}' missing a return statement. ", self.lf)
+
+            # compiling
+            body_out.add_function(self.str_name, self.lf.file_name, self.fn_ptr, self.parent_class)
+            push_index = body_out.add_indefinite_push()
+            self.body.compile(scope, body_out)
+
+            # ending
+            if self.func_type.rtype.is_void():
+                body_out.return_func()
+            body_out.end_func()
+
+            stack_len = body_out.manager.sp - body_out.manager.blocks[-1]
+            body_out.modify_indefinite_push(push_index, stack_len)
+
+        self.tpa.manager.restore_stack()
+        body_out.local_generate()
+
+        return body_out.result()
 
 
 INT_ARITH_TABLE = {

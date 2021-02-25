@@ -3,60 +3,34 @@ bits
 stack_size
 1024
 global_length
-128
+272
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 13 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 8 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 14 0 0 0 0 0 0 0
 classes
-class E:\GitHub\tpl2\lib\lang.tp$Object mro $1096 methods $1104 $1112 $1120
-class E:\GitHub\tpl2\lib\lib.tp$Map mro $1128 $1096 methods $1104 $1112 $1120
-class E:\GitHub\tpl2\lib\lib.tp$HashMap mro $1136 $1128 $1096 methods $1104 $1112 $1120
+class E:\GitHub\tpl2\lib\lang.tp$Object mro $1080 methods $1088 $1096 $1104 $1112
+class E:\GitHub\tpl2\lib\lang.tp$Number mro $1120 $1080 methods $1128 $1096 $1104 $1112 $1136
+class E:\GitHub\tpl2\lib\lang.tp$Integer mro $1144 $1120 $1080 methods $1152 $1096 $1104 $1112 $1160
+class E:\GitHub\tpl2\lib\collections.tp$Collection mro $1168 $1080 methods $1088 $1096 $1104 $1112 $1176
+class E:\GitHub\tpl2\lib\collections.tp$AbsList mro $1184 $1168 $1080 methods $1088 $1096 $1104 $1112 $1176 $1192 $1200
+class E:\GitHub\tpl2\lib\collections.tp$List mro $1208 $1184 $1168 $1080 methods $1216 $1096 $1104 $1112 $1224 $1232 $1240 $1248 $1256 $1264
+class E:\GitHub\tpl2\lib\collections.tp$Map mro $1272 $1080 methods $1088 $1096 $1104 $1112
+class E:\GitHub\tpl2\lib\collections.tp$HashMap mro $1280 $1272 $1080 methods $1088 $1096 $1104 $1112
 
-fn E:\GitHub\tpl2\lib\lang.tp$add $1080
-    push_fp
-    push          24
-    load          %0      $0
-    load          %1      $8
-    addi          %0      %1
-    iload         %1      16
-    store         %1      %0
-    load          %0      $16
-    put_ret       %0
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\lib\lang.tp$make $1088
-    push_fp
-    push          24
-    load          %0      $1176
-    iload         %1      $8
-    store         %1      %0
-    load          %0      $1184
-    iload         %1      $16
-    store         %1      %0
-    aload_sp      %0      $0
-    load          %1      $8
-    store_abs     %0      %1
-    aload_sp      %0      $8
-    load          %1      $16
-    store_abs     %0      %1
-    iload         %0      0
-    set_ret       %0
-    call          $1080
-    load          %0      $0
-    put_ret       %0
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__ $1104
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__ $1088
     push_fp
     push          8
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.hash $1112
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__del__ $1096
+    push_fp
+    push          8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.hash $1104
     push_fp
     push          24
     load          %0      $0
@@ -77,7 +51,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.hash $1112
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.equals $1120
+fn E:\GitHub\tpl2\lib\lang.tp$Object.equals $1112
     push_fp
     push          24
     load          %0      $0
@@ -91,38 +65,717 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.equals $1120
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\lib_t.tp$main $1144
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__new__ $1128
     push_fp
     push          8
-    load          %0      $1152
-    iload         %1      $0
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1088
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Integer.__new__ $1152
+    push_fp
+    push          24
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1128
+    load          %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Integer.intValue $1160
+    push_fp
+    push          24
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.__new__ $1216
+    push_fp
+    push          80
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1088
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    iload         %0      $1
+    iload         %1      $32
+    store         %1      %0
+    aload         %0      $32
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      48
+    store         %1      %0
+    load          %0      $1320
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $48
+    load          %1      $56
+    store_abs     %0      %1
+    iload         %0      $8
+    iload         %1      $64
+    store         %1      %0
+    require       heap_array $72     %0      %1
+    aload_sp      %0      $0
+    load          %1      $64
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $24
+    store_abs     %0      %1
+    iload         %0      16
+    set_ret       %0
+    invoke        $72
+    load          %0      $8
+    load          %1      $16
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.size $1224
+    push_fp
+    push          24
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.append $1232
+    push_fp
+    push          96
+    load          %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    load          %0      $0
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      32
+    store         %1      %0
+    load          %0      $32
+    rload_abs     %1      %0
+    iload         %0      40
+    store         %0      %1
+    load          %0      $0
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $48
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      48
     store         %1      %0
     load          %0      $0
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $64
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      64
+    store         %1      %0
+    load          %0      $64
+    rload_abs     %1      %0
+    iload         %0      72
+    store         %0      %1
+    load          %0      $1304
+    iload         %1      $80
+    store         %1      %0
+    load          %0      $72
+    load          %1      $80
+    addi          %0      %1
+    iload         %1      56
+    store         %1      %0
+    load          %0      $48
+    load          %1      $56
+    store_abs     %0      %1
+    load          %0      $40
+    iload         %1      $88
+    store         %1      %0
+    load          %0      $88
+    iload         %1      8
+    muli          %0      %1
+    iload         %1      88
+    store         %1      %0
+    load          %0      $88
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      88
+    store         %1      %0
+    load          %0      $24
+    load          %1      $88
+    addi          %0      %1
+    iload         %1      88
+    store         %1      %0
+    load          %0      $88
+    load          %1      $8
+    store_abs     %0      %1
+    load          %0      $0
+    iload         %1      7
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $0
+    store_abs     %1      %2
+    call_reg      %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.get $1240
+    push_fp
+    push          48
+    load          %0      $0
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    rload_abs     %1      %0
+    iload         %0      32
+    store         %0      %1
+    load          %0      $8
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      8
+    muli          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $32
+    load          %1      $40
+    addi          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List._checkSize $1248
+    push_fp
+    push          120
+    load          %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    load          %0      $0
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    rload_abs     %1      %0
+    iload         %0      48
+    store         %0      %1
+    load          %0      $48
+    rload_abs     %1      %0
+    iload         %0      32
+    store         %0      %1
+    load          %0      $24
+    load          %1      $32
+    eqi           %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    if_zero_goto  %0      ENDIF_0
+    load          %0      $0
+    iload         %1      8
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $0
+    store_abs     %1      %2
+    call_reg      %0
+    label         ENDIF_0
+    load          %0      $0
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $64
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      64
+    store         %1      %0
+    load          %0      $64
+    rload_abs     %1      %0
+    iload         %0      72
+    store         %0      %1
+    load          %0      $0
+    iload         %1      $96
+    store         %1      %0
+    load          %0      $96
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      96
+    store         %1      %0
+    load          %0      $96
+    rload_abs     %1      %0
+    iload         %0      104
+    store         %0      %1
+    load          %0      $104
+    rload_abs     %1      %0
+    iload         %0      88
+    store         %0      %1
+    load          %0      $1328
+    iload         %1      $112
+    store         %1      %0
+    load          %0      $88
+    load          %1      $112
+    divi          %0      %1
+    iload         %1      80
+    store         %1      %0
+    load          %0      $72
+    load          %1      $80
+    lti           %0      %1
+    iload         %1      56
+    store         %1      %0
+    load          %0      $56
+    if_zero_goto  %0      ENDIF_1
+    load          %0      $0
+    iload         %1      9
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $0
+    store_abs     %1      %2
+    call_reg      %0
+    label         ENDIF_1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List._expand $1256
+    push_fp
+    push          232
+    iload         %0      $1
+    iload         %1      $32
+    store         %1      %0
+    aload         %0      $32
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      48
+    store         %1      %0
+    load          %0      $0
+    iload         %1      $72
+    store         %1      %0
+    load          %0      $72
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      72
+    store         %1      %0
+    load          %0      $72
+    rload_abs     %1      %0
+    iload         %0      80
+    store         %0      %1
+    load          %0      $80
+    rload_abs     %1      %0
+    iload         %0      64
+    store         %0      %1
+    load          %0      $1336
+    iload         %1      $88
+    store         %1      %0
+    load          %0      $64
+    load          %1      $88
+    muli          %0      %1
+    iload         %1      56
+    store         %1      %0
+    load          %0      $48
+    load          %1      $56
+    store_abs     %0      %1
+    iload         %0      $8
+    iload         %1      $96
+    store         %1      %0
+    require       heap_array $104    %0      %1
+    aload_sp      %0      $0
+    load          %1      $96
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $24
+    store_abs     %0      %1
+    iload         %0      16
+    set_ret       %0
+    invoke        $104
+    load          %0      $16
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $1296
+    iload         %1      $120
+    store         %1      %0
+    load          %0      $120
+    iload         %1      $112
+    store         %1      %0
+    label         LOOP_TITLE_0
+    load          %0      $0
+    iload         %1      $136
+    store         %1      %0
+    load          %0      $136
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      136
+    store         %1      %0
+    load          %0      $136
+    rload_abs     %1      %0
+    iload         %0      144
+    store         %0      %1
+    load          %0      $112
+    load          %1      $144
+    lti           %0      %1
+    iload         %1      128
+    store         %1      %0
+    load          %0      $128
+    if_zero_goto  %0      END_LOOP_0
+    load          %0      $112
+    iload         %1      $152
+    store         %1      %0
+    load          %0      $152
+    iload         %1      8
+    muli          %0      %1
+    iload         %1      152
+    store         %1      %0
+    load          %0      $152
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      152
+    store         %1      %0
+    load          %0      $8
+    load          %1      $152
+    addi          %0      %1
+    iload         %1      152
+    store         %1      %0
+    load          %0      $0
+    iload         %1      $168
+    store         %1      %0
+    load          %0      $168
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      168
+    store         %1      %0
+    load          %0      $168
+    rload_abs     %1      %0
+    iload         %0      176
+    store         %0      %1
+    load          %0      $112
+    iload         %1      $184
+    store         %1      %0
+    load          %0      $184
+    iload         %1      8
+    muli          %0      %1
+    iload         %1      184
+    store         %1      %0
+    load          %0      $184
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      184
+    store         %1      %0
+    load          %0      $176
+    load          %1      $184
+    addi          %0      %1
+    iload         %1      184
+    store         %1      %0
+    load          %0      $184
+    rload_abs     %1      %0
+    iload         %0      160
+    store         %0      %1
+    load          %0      $152
+    load          %1      $160
+    store_abs     %0      %1
+    label         LABEL_0
+    load          %0      $112
+    iload         %1      $192
+    store         %1      %0
+    load          %0      $112
+    iload         %1      1
+    addi          %0      %1
+    iload         %1      112
+    store         %1      %0
+    goto          LOOP_TITLE_0
+    label         END_LOOP_0
+    require       free    $200    %0      %1
+    load          %0      $0
+    iload         %1      $208
+    store         %1      %0
+    load          %0      $208
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      208
+    store         %1      %0
+    load          %0      $208
+    rload_abs     %1      %0
+    iload         %0      216
+    store         %0      %1
+    aload_sp      %0      $0
+    load          %1      $216
+    store_abs     %0      %1
+    invoke        $200
+    load          %0      $0
+    iload         %1      $224
+    store         %1      %0
+    load          %0      $224
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      224
+    store         %1      %0
+    load          %0      $224
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List._collapse $1264
+    push_fp
+    push          8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\lib_t.tp$main $1288
+    push_fp
+    push          120
+    require       malloc  $16     %0      %1
+    iload         %0      $24
+    iload         %1      $24
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $24
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    invoke        $16
+    load          %0      $8
+    iload         %1      1208
+    store_abs     %0      %1
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    call          $1216
+    load          %0      $8
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      $16
+    iload         %1      $40
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $40
+    store_abs     %0      %1
+    iload         %0      32
+    set_ret       %0
+    invoke        $16
+    load          %0      $32
+    iload         %1      1144
+    store_abs     %0      %1
+    load          %0      $1336
+    iload         %1      $48
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $32
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $48
+    store_abs     %0      %1
+    call          $1152
+    load          %0      $0
+    iload         %1      5
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $0
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $32
+    store_abs     %1      %2
+    call_reg      %0
+    iload         %0      $16
+    iload         %1      $64
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $64
+    store_abs     %0      %1
+    iload         %0      56
+    set_ret       %0
+    invoke        $16
+    load          %0      $56
+    iload         %1      1144
+    store_abs     %0      %1
+    load          %0      $1344
+    iload         %1      $72
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $56
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $72
+    store_abs     %0      %1
+    call          $1152
+    load          %0      $0
+    iload         %1      5
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $0
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $56
+    store_abs     %1      %2
+    call_reg      %0
+    require       println_int $80     %0      %1
+    load          %0      $1304
+    iload         %1      $96
+    store         %1      %0
+    load          %0      $0
+    iload         %1      6
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $0
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $96
+    store_abs     %1      %2
+    iload         %1      88
+    set_ret       %1
+    call_reg      %0
+    load          %0      $88
+    iload         %1      4
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $88
+    store_abs     %1      %2
+    iload         %1      104
+    set_ret       %1
+    call_reg      %0
+    aload_sp      %0      $0
+    load          %1      $104
+    store_abs     %0      %1
+    invoke        $80
+    load          %0      $0
+    iload         %1      4
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $0
+    store_abs     %1      %2
+    iload         %1      112
+    set_ret       %1
+    call_reg      %0
+    load          %0      $112
     put_ret       %0
     pull_fp
     ret
     stop
 
 entry
-    load          %0      $1152
+    load          %0      $1296
     iload         %1      $1032
     store         %1      %0
     load          %0      $1032
     iload         %1      $1024
     store         %1      %0
-    load          %0      $1160
+    load          %0      $1304
     iload         %1      $1048
     store         %1      %0
     load          %0      $1048
     iload         %1      $1040
     store         %1      %0
-    load          %0      $1152
+    load          %0      $1296
     iload         %1      $1072
+    store         %1      %0
+    load          %0      $1072
+    iload         %1      $1064
     store         %1      %0
     load          %0      $1064
     iload         %1      $1056
     store         %1      %0
     aload         %0      $1
     set_ret       %0
-    call          $1144
+    call          $1288
     exit

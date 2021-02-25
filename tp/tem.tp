@@ -54,9 +54,24 @@ class B<K, V>(A) {
     }
 }
 
+class Container<T> {
+    val : T;
+
+    fn __new__(this: *Container, val: T) void {
+        super.__new__();
+
+        this.val = val;
+    }
+}
+
 class C<T>(B<X, T>) {
     fn __new__(this: *C) void {
         super.__new__();
+    }
+
+    @Override
+    fn setC(this: *C, other: *C<X>) void {
+        //cprintln(other);
     }
 }
 

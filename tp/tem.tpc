@@ -3,63 +3,33 @@ bits
 stack_size
 1024
 global_length
-224
+240
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 13 0 0 0 0 0 0 0 15 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 23 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 2 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 23 0 0 0 0 0 0 0
 classes
-class E:\GitHub\tpl2\lib\lang.tp$Object mro $1096 methods $1104 $1112 $1120
-class E:\GitHub\tpl2\tp\tem.tp$X mro $1136 $1096 methods $1144 $1112 $1120
-class E:\GitHub\tpl2\tp\tem.tp$Y mro $1152 $1136 $1096 methods $1160 $1112 $1120
-class E:\GitHub\tpl2\tp\tem.tp$A mro $1168 $1096 methods $1176 $1112 $1120 $1184
-class E:\GitHub\tpl2\tp\tem.tp$B mro $1192 $1168 $1096 methods $1200 $1112 $1120 $1184 $1208 $1216
-class E:\GitHub\tpl2\tp\tem.tp$C mro $1224 $1192 $1168 $1096 methods $1232 $1112 $1120 $1184 $1208 $1216
+class E:\GitHub\tpl2\lib\lang.tp$Object mro $1080 methods $1088 $1096 $1104 $1112
+class E:\GitHub\tpl2\tp\tem.tp$X mro $1128 $1080 methods $1136 $1096 $1104 $1112
+class E:\GitHub\tpl2\tp\tem.tp$Y mro $1144 $1128 $1080 methods $1152 $1096 $1104 $1112
+class E:\GitHub\tpl2\tp\tem.tp$A mro $1160 $1080 methods $1168 $1096 $1104 $1112 $1176
+class E:\GitHub\tpl2\tp\tem.tp$B mro $1184 $1160 $1080 methods $1192 $1096 $1104 $1112 $1176 $1200 $1208
+class E:\GitHub\tpl2\tp\tem.tp$Container mro $1216 $1080 methods $1224 $1096 $1104 $1112
+class E:\GitHub\tpl2\tp\tem.tp$C mro $1232 $1184 $1160 $1080 methods $1240 $1096 $1104 $1112 $1176 $1200 $1208 $1248
 
-fn E:\GitHub\tpl2\lib\lang.tp$add $1080
-    push_fp
-    push          24
-    load          %0      $0
-    load          %1      $8
-    addi          %0      %1
-    iload         %1      16
-    store         %1      %0
-    load          %0      $16
-    put_ret       %0
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\lib\lang.tp$make $1088
-    push_fp
-    push          24
-    load          %0      $1272
-    iload         %1      $8
-    store         %1      %0
-    load          %0      $1280
-    iload         %1      $16
-    store         %1      %0
-    aload_sp      %0      $0
-    load          %1      $8
-    store_abs     %0      %1
-    aload_sp      %0      $8
-    load          %1      $16
-    store_abs     %0      %1
-    iload         %0      0
-    set_ret       %0
-    call          $1080
-    load          %0      $0
-    put_ret       %0
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__ $1104
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__ $1088
     push_fp
     push          8
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.hash $1112
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__del__ $1096
+    push_fp
+    push          8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.hash $1104
     push_fp
     push          24
     load          %0      $0
@@ -80,7 +50,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.hash $1112
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.equals $1120
+fn E:\GitHub\tpl2\lib\lang.tp$Object.equals $1112
     push_fp
     push          24
     load          %0      $0
@@ -94,13 +64,13 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.equals $1120
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\tem.tp$X.__new__ $1144
+fn E:\GitHub\tpl2\tp\tem.tp$X.__new__ $1136
     push_fp
     push          24
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1104
+    call          $1088
     load          %0      $0
     iload         %1      $16
     store         %1      %0
@@ -116,7 +86,7 @@ fn E:\GitHub\tpl2\tp\tem.tp$X.__new__ $1144
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\tem.tp$Y.__new__ $1160
+fn E:\GitHub\tpl2\tp\tem.tp$Y.__new__ $1152
     push_fp
     push          32
     load          %0      $1288
@@ -133,18 +103,18 @@ fn E:\GitHub\tpl2\tp\tem.tp$Y.__new__ $1160
     aload_sp      %0      $8
     load          %1      $16
     store_abs     %0      %1
-    call          $1144
+    call          $1136
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\tem.tp$A.__new__ $1176
+fn E:\GitHub\tpl2\tp\tem.tp$A.__new__ $1168
     push_fp
     push          24
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1104
+    call          $1088
     load          %0      $0
     iload         %1      $8
     store         %1      %0
@@ -153,7 +123,7 @@ fn E:\GitHub\tpl2\tp\tem.tp$A.__new__ $1176
     addi          %0      %1
     iload         %1      8
     store         %1      %0
-    load          %0      $1256
+    load          %0      $1272
     iload         %1      $16
     store         %1      %0
     load          %0      $8
@@ -163,7 +133,7 @@ fn E:\GitHub\tpl2\tp\tem.tp$A.__new__ $1176
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\tem.tp$A.foo $1184
+fn E:\GitHub\tpl2\tp\tem.tp$A.foo $1176
     push_fp
     push          40
     load          %0      $0
@@ -189,13 +159,13 @@ fn E:\GitHub\tpl2\tp\tem.tp$A.foo $1184
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\tem.tp$B.__new__ $1200
+fn E:\GitHub\tpl2\tp\tem.tp$B.__new__ $1192
     push_fp
     push          24
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1176
+    call          $1168
     load          %0      $0
     iload         %1      $8
     store         %1      %0
@@ -214,7 +184,7 @@ fn E:\GitHub\tpl2\tp\tem.tp$B.__new__ $1200
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\tem.tp$B.get $1208
+fn E:\GitHub\tpl2\tp\tem.tp$B.get $1200
     push_fp
     push          24
     load          %0      $0
@@ -235,7 +205,7 @@ fn E:\GitHub\tpl2\tp\tem.tp$B.get $1208
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\tem.tp$B.set $1216
+fn E:\GitHub\tpl2\tp\tem.tp$B.set $1208
     push_fp
     push          24
     load          %0      $0
@@ -253,18 +223,47 @@ fn E:\GitHub\tpl2\tp\tem.tp$B.set $1216
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\tem.tp$C.__new__ $1232
+fn E:\GitHub\tpl2\tp\tem.tp$Container.__new__ $1224
+    push_fp
+    push          24
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1088
+    load          %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\tem.tp$C.__new__ $1240
     push_fp
     push          8
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1200
+    call          $1192
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\tem.tp$main $1240
+fn E:\GitHub\tpl2\tp\tem.tp$C.setC $1248
+    push_fp
+    push          16
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\tem.tp$main $1256
     push_fp
     push          96
     iload         %0      $32
@@ -275,14 +274,14 @@ fn E:\GitHub\tpl2\tp\tem.tp$main $1240
     store_abs     %0      %1
     iload         %0      8
     set_ret       %0
-    invoke        $1128
+    invoke        $1120
     load          %0      $8
-    iload         %1      1224
+    iload         %1      1232
     store_abs     %0      %1
     aload_sp      %0      $0
     load          %1      $8
     store_abs     %0      %1
-    call          $1232
+    call          $1240
     load          %0      $8
     iload         %1      $0
     store         %1      %0
@@ -294,9 +293,9 @@ fn E:\GitHub\tpl2\tp\tem.tp$main $1240
     store_abs     %0      %1
     iload         %0      24
     set_ret       %0
-    invoke        $1128
+    invoke        $1120
     load          %0      $24
-    iload         %1      1152
+    iload         %1      1144
     store_abs     %0      %1
     load          %0      $1304
     iload         %1      $40
@@ -307,9 +306,9 @@ fn E:\GitHub\tpl2\tp\tem.tp$main $1240
     aload_sp      %0      $8
     load          %1      $40
     store_abs     %0      %1
-    call          $1160
+    call          $1152
     load          %0      $0
-    iload         %1      5
+    iload         %1      6
     iload         %2      0
     get_method    %0      %1      %2
     aload_sp      %1      $0
@@ -320,7 +319,7 @@ fn E:\GitHub\tpl2\tp\tem.tp$main $1240
     store_abs     %1      %2
     call_reg      %0
     load          %0      $0
-    iload         %1      4
+    iload         %1      5
     iload         %2      0
     get_method    %0      %1      %2
     aload_sp      %1      $0
@@ -342,7 +341,7 @@ fn E:\GitHub\tpl2\tp\tem.tp$main $1240
     iload         %0      64
     store         %0      %1
     load          %0      $0
-    iload         %1      4
+    iload         %1      5
     iload         %2      0
     get_method    %0      %1      %2
     aload_sp      %1      $0
@@ -370,26 +369,29 @@ fn E:\GitHub\tpl2\tp\tem.tp$main $1240
     stop
 
 entry
-    load          %0      $1248
+    load          %0      $1264
     iload         %1      $1032
     store         %1      %0
     load          %0      $1032
     iload         %1      $1024
     store         %1      %0
-    load          %0      $1256
+    load          %0      $1272
     iload         %1      $1048
     store         %1      %0
     load          %0      $1048
     iload         %1      $1040
     store         %1      %0
-    load          %0      $1248
+    load          %0      $1264
     iload         %1      $1072
+    store         %1      %0
+    load          %0      $1072
+    iload         %1      $1064
     store         %1      %0
     load          %0      $1064
     iload         %1      $1056
     store         %1      %0
-    require       malloc  $1128   %0      %1
+    require       malloc  $1120   %0      %1
     aload         %0      $1
     set_ret       %0
-    call          $1240
+    call          $1256
     exit
