@@ -173,6 +173,36 @@ class FuncType(CallableType):
         return False
 
 
+class FunctionPlacer(Type):
+    def __init__(self, first_t: CallableType, first_addr: int):
+        super().__init__(0)
+
+        self.poly = util.NaiveDict(params_eq)  # functions with same name | func_type: ptr
+
+        self.add_poly(first_t, first_addr)
+
+    def add_poly(self, type_: CallableType, addr: int):
+        if type_ in self.poly:
+            raise errs.TplEnvironmentError("Function already defined.")
+        self.poly[type_] = addr
+        # print(self.poly)
+
+    def get_only(self):
+        return self.poly.get_only()
+
+    def get_type_and_ptr_call(self, param_types: list) -> (CallableType, int):
+        t_addr = self.poly.get_entry_by(param_types, func_convertible_params)
+        if t_addr is None:
+            raise errs.TplEnvironmentError(f"Cannot resolve param {param_types}")
+        return t_addr
+
+    def get_type_and_ptr_def(self, param_types: list) -> (CallableType, int):
+        t_addr = self.poly.get_entry_by(param_types, func_eq_params)
+        if t_addr is None:
+            raise errs.TplEnvironmentError(f"Cannot resolve param {param_types}")
+        return t_addr
+
+
 class MethodType(FuncType):
     def __init__(self, param_types, rtype, def_class, abstract: bool, const: bool):
         super().__init__(param_types, rtype)
@@ -209,7 +239,7 @@ class ClassType(Type):
         self.method_rank = []  # keep track of all method names in order
         # this dict records all callable methods in this class, including methods in its superclass
         # methods with same name must have the same id, i.e. overriding methods have the same id
-        self.methods = {}  # name: (method_id, func_ptr, func_type)
+        self.methods = {}  # name: NaiveDict{func_type: (method_id, func_ptr, func_type)}
         self.fields = collections.OrderedDict()  # OrderedDict, name: (position, type)
         # records mapping for superclass
         # e.g. class A<K, V>, class B<X>(A<X, Object>) => {A: {"K": "X", "V": Object}}
@@ -230,11 +260,14 @@ class ClassType(Type):
                 return mro_t.fields[name]
         raise errs.TplCompileError(f"Class {self.name} does not have field '{name}'. ", lf)
 
-    def find_method(self, name: str, lf) -> (int, int, MethodType):
+    def find_method(self, name: str, arg_types: list, lf) -> (int, int, MethodType):
         if name in self.methods:
-            return self.methods[name]
-        else:
-            raise errs.TplCompileError(f"Class {self.name} does not have method '{name}'. ", lf)
+            poly: util.NaiveDict = self.methods[name]
+            res = poly.get_entry_by(arg_types, method_convertible_params)
+            if res is not None:
+                return res[1]
+
+        raise errs.TplCompileError(f"Class {self.name} does not have method '{name}'. ", lf)
 
     def strong_convertible(self, left_tar_type):
         if isinstance(left_tar_type, Generic):
@@ -389,6 +422,59 @@ def dict_find_key(d: dict, value):
         if d[key] == value:
             return key
     return None
+
+
+def function_poly_name(simple_name: str, params_t: list) -> str:
+    res = []
+    for pt in params_t:
+        if isinstance(pt, PrimitiveType):
+            res.append(pt.type_name)
+    return simple_name + "(" + ",".join(res) + ")"
+
+
+def params_eq(ft1: FuncType, ft2: FuncType) -> bool:
+    if len(ft1.param_types) == len(ft2.param_types):
+        for i in range(len(ft1.param_types)):
+            if ft1.param_types[i] != ft2.param_types[i]:
+                return False
+        return True
+    return False
+
+
+def params_eq_methods(ft1: MethodType, ft2: MethodType) -> bool:
+    if len(ft1.param_types) == len(ft2.param_types):
+        for i in range(1, len(ft1.param_types)):
+            if ft1.param_types[i] != ft2.param_types[i]:
+                return False
+        return True
+    return False
+
+
+def func_eq_params(ft: FuncType, param_types: list) -> bool:
+    if len(ft.param_types) == len(param_types):
+        for i in range(len(param_types)):
+            if ft.param_types[i] != param_types[i]:
+                return False
+        return True
+    return False
+
+
+def func_convertible_params(ft: FuncType, param_types: list) -> bool:
+    if len(ft.param_types) == len(param_types):
+        for i in range(len(param_types)):
+            if not param_types[i].strong_convertible(ft.param_types[i]):
+                return False
+        return True
+    return False
+
+
+def method_convertible_params(ft: MethodType, param_types: list) -> bool:
+    if len(ft.param_types) == len(param_types):
+        for i in range(1, len(param_types)):
+            if not param_types[i].strong_convertible(ft.param_types[i]):
+                return False
+        return True
+    return False
 
 
 TYPE_INT = PrimitiveType("int", util.INT_LEN)

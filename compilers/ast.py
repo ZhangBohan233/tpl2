@@ -670,7 +670,7 @@ class NewExpr(UnaryExpr):
         req.compile(env, tpa)
         malloc_size = tpa.manager.allocate_stack(util.INT_LEN)
         tpa.assign_i(malloc_size, malloc_t.memory_length())
-        FunctionCall.call(malloc, [(malloc_size, util.INT_LEN)], env, tpa, dst_addr, self.lf)
+        FunctionCall.call(malloc,  [(malloc_size, util.INT_LEN)], env, tpa, dst_addr, self.lf)
 
         if (isinstance(self.value, FunctionCall) and
                 isinstance(t, typ.PointerType)):
@@ -695,10 +695,11 @@ class NewExpr(UnaryExpr):
             raise errs.TplCompileError(f"Abstract class '{class_t.name_with_path}' is not initialisable. ", self.lf)
         tpa.i_ptr_assign(class_t.class_ptr, util.PTR_LEN, inst_ptr_addr)  # assign __class__
 
-        constructor_id, constructor_ptr, constructor_t = class_t.methods["__new__"]
+        constructor_id, constructor_ptr, constructor_t = class_t.methods["__new__"].get_only()[1]
         ea = self.value.evaluate_args(constructor_t, env, tpa, True)
         ea.insert(0, (inst_ptr_addr, util.PTR_LEN))
-        FunctionCall.call_name(util.name_with_path("__new__", class_t.file_path, class_t),
+        FunctionCall.call_name(util.name_with_path(
+            typ.function_poly_name("__new__", constructor_t.param_types), class_t.file_path, class_t),
                                ea,
                                tpa,
                                0,
@@ -899,7 +900,9 @@ class DotExpr(BinaryExpr):
         def inner_call(ct: typ.ClassType, right, generics):
             right: FunctionCall
             name = right.get_name()
-            method_id, method_p, t = ct.find_method(name, lf)
+            arg_types = right_node.arg_types(env, tpa.manager)
+            arg_types.insert(0, None)
+            method_id, method_p, t = ct.find_method(name, arg_types, lf)
             t = t.copy()
             for i in range(len(t.param_types)):
                 pt = t.param_types[i]
@@ -929,10 +932,13 @@ class DotExpr(BinaryExpr):
             class_t = class_ptr_t.base
             if isinstance(class_t, typ.ClassType):
                 name = right_node.get_name()
-                method_id, method_p, t = class_t.find_method(name, lf)
+                arg_types = right_node.arg_types(env, tpa.manager)
+                arg_types.insert(0, None)
+                method_id, method_p, t = class_t.find_method(name, arg_types, lf)
                 if t.abstract:
                     raise errs.TplCompileError(f"Abstract method '{name}' cannot be called. ", lf)
-                full_name = util.name_with_path(name, t.defined_class.file_path, t.defined_class)
+                full_name = util.name_with_path(typ.function_poly_name(name, arg_types),
+                                                t.defined_class.file_path, t.defined_class)
                 res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
                 ea = right_node.evaluate_args(t, env, tpa, is_method=True)
                 ea.insert(0, (ins_ptr_addr, util.PTR_LEN))
@@ -1211,9 +1217,15 @@ class FunctionDef(Expression):
         self.abstract = abstract
         self.const = const
 
-    def get_name(self) -> str:
+    def get_simple_name(self) -> str:
         if isinstance(self.name, NameNode):
             return self.name.name
+        else:
+            raise errs.TplCompileError("Not a named function. ", self.lf)
+
+    def get_poly_name(self, env, manager):
+        simple_name = self.get_simple_name()
+        func_type = self.evaluated_type(env, manager)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.name, NameNode):
@@ -1221,59 +1233,16 @@ class FunctionDef(Expression):
         else:
             raise errs.TplCompileError("Unexpected function name. ")
 
-    def compile_as(self, str_name: str, env: en.Environment, tpa: tp.TpaOutput):
-        rtype = self.rtype.definition_type(env, tpa.manager)
+    def compile_as(self, simple_name: str, env: en.Environment, tpa: tp.TpaOutput):
+        # rtype = self.rtype.definition_type(env, tpa.manager)
         fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
 
         func_type = self.evaluated_type(env, tpa.manager)
-        fo = FunctionObject(env, tpa, fn_ptr, self.parent_class, str_name, self.params, func_type, self.body, self.lf)
-        env.define_function(str_name, func_type, fn_ptr, self.lf)
+        poly_name = typ.function_poly_name(simple_name, func_type.param_types)
+        fo = FunctionObject(env, tpa, fn_ptr, self.parent_class, poly_name, self.params, func_type, self.body, self.lf)
+        env.define_function(simple_name, func_type, fn_ptr, self.lf)
 
-        # if self.parent_class is None:
-        #     scope = en.FunctionEnvironment(env, str_name, rtype)
-        # else:
-        #     scope = en.MethodEnvironment(env, str_name, rtype, self.parent_class)
-        # tpa.manager.push_stack()
-        #
-        # body_out = tp.TpaOutput(tpa.manager)
-        #
-        # param_types = []
-        # for i in range(len(self.params.parts)):
-        #     param = self.params.parts[i]
-        #     if isinstance(param, Declaration):
-        #         pt = param.right.definition_type(env, tpa.manager)
-        #         param_types.append(pt)
-        #         param.compile(scope, body_out)
-        #
-        # # func_type = typ.FuncType(param_types, rtype)
-        # func_type = self.evaluated_type(env, tpa.manager)
-        # env.define_function(str_name, func_type, fn_ptr, self.lf)
-        #
-        # if self.body is not None:
-        #     # check return
-        #     complete_return = self.body.return_check()
-        #     if not complete_return:
-        #         if not rtype.is_void():
-        #             raise errs.TplCompileError(f"Function '{str_name}' missing a return statement. ", self.lf)
-        #
-        #     # compiling
-        #     body_out.add_function(str_name, self.lf.file_name, fn_ptr, self.parent_class)
-        #     push_index = body_out.add_indefinite_push()
-        #     self.body.compile(scope, body_out)
-        #
-        #     # ending
-        #     if rtype.is_void():
-        #         body_out.return_func()
-        #     body_out.end_func()
-        #
-        #     stack_len = body_out.manager.sp - body_out.manager.blocks[-1]
-        #     body_out.modify_indefinite_push(push_index, stack_len)
-        #
-        # tpa.manager.restore_stack()
-        # body_out.local_generate()
-        # tpa.manager.map_function(str_name, self.lf.file_name, body_out.result(), self.parent_class)
-
-        tpa.manager.map_function(str_name, self.lf.file_name, fo)
+        tpa.manager.map_function(poly_name, self.lf.file_name, fo)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.FuncType:
         rtype = self.rtype.definition_type(env, manager)
@@ -1435,12 +1404,15 @@ class ClassStmt(Statement):
         class_type.length = pos
 
         # update methods
-        method_id = len(class_type.methods)  # id of method in this class
+        method_id = len(class_type.method_rank)  # id of method in this class
         for method_def in method_defs:
             method_def.compile(class_env, tpa)
-            name = method_def.get_name()
-            method_ptr = class_env.get(name, self.lf)
-            method_t = class_env.get_type(name, self.lf)
+            name = method_def.get_simple_name()
+            placer: typ.FunctionPlacer = class_env.get_type(name, self.lf)
+            method_t = method_def.evaluated_type(env, tpa.manager)
+            method_ptr = placer.poly[method_t]
+            # method_ptr = class_env.get(name, self.lf)
+            # method_t = class_env.get_type(name, self.lf)
             if not isinstance(method_t, typ.MethodType):
                 raise errs.TplCompileError("Unexpected method. ", self.lf)
 
@@ -1449,34 +1421,42 @@ class ClassStmt(Statement):
                     f"Class '{self.name}' is not abstract, but has abstract method '{name}'. ", method_def.lf
                 )
 
-            if name in class_type.methods:  # overriding
-                m_pos, m_ptr, m_t = class_type.methods[name]
-                if name != "__new__" and not method_t.strong_convertible(m_t):
-                    # print(method_t.param_types[0].base)
-                    # print(m_t.param_types[0])
-                    raise errs.TplCompileError(
-                        f"Method '{name}' in class '{self.name}' overrides its super method in class '{mro[1].name}', "
-                        f"but has incompatible parameter or return type. ", method_def.lf)
-                if m_t.const:
-                    raise errs.TplCompileError(
-                        f"Method '{name}' is const, which cannot be overridden. ", method_def.lf
-                    )
-                class_type.methods[name] = m_pos, method_ptr, method_t
+            if name in class_type.methods:
+                if method_t in class_type.methods[name]:  # overriding
+                    m_pos, m_ptr, m_t = class_type.methods[name][method_t]
+                    if name != "__new__" and not method_t.strong_convertible(m_t):
+                        # print(method_t.param_types[0].base)
+                        # print(m_t.param_types[0])
+                        raise errs.TplCompileError(
+                            f"Method '{name}' in class '{self.name}' overrides its super method in class '{mro[1].name}', "
+                            f"but has incompatible parameter or return type. ", method_def.lf)
+                    if m_t.const:
+                        raise errs.TplCompileError(
+                            f"Method '{name}' is const, which cannot be overridden. ", method_def.lf
+                        )
+                    class_type.methods[name][method_t] = m_pos, method_ptr, method_t
+                else:  # polymorphism
+                    poly: util.NaiveDict = class_type.methods[name]
+                    class_type.method_rank.append((name, method_t))
+                    poly[method_t] = method_id, method_ptr, method_t
+                    method_id += 1
             else:
-                class_type.method_rank.append(name)
-                class_type.methods[name] = method_id, method_ptr, method_t
+                class_type.method_rank.append((name, method_t))
+                poly = util.NaiveDict(typ.params_eq_methods)
+                poly[method_t] = method_id, method_ptr, method_t
+                class_type.methods[name] = poly
+                # class_type.methods[name] = method_id, method_ptr, method_t
                 method_id += 1
 
-        # for method_def in method_defs:
-        #     method_def.compile(class_env, tpa)
-
-        # check if all abstract methods are overridden
-        if not self.abstract:
-            for method_id, method_ptr, method_t in class_type.methods.values():
-                if method_t.abstract:
-                    raise errs.TplCompileError(
-                        f"Class '{self.name}' does not override all abstract methods of its superclasses. ", self.lf
-                    )
+        # # check if all abstract methods are overridden
+        # if not self.abstract:
+        #     for poly in class_type.methods.values():
+        #         for method_id, method_ptr, method_t in poly.values:
+        #             if method_t.abstract:
+        #                 raise errs.TplCompileError(
+        #                     f"Class '{self.name}' does not override all abstract methods of its superclasses. ",
+        #                     self.lf
+        #                 )
 
     def __str__(self):
         if self.template_nodes is None:
@@ -1622,30 +1602,39 @@ class FunctionCall(Expression):
             raise errs.TplCompileError("Not a named function call. ", self.lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        func_type = self.call_obj.evaluated_type(env, tpa.manager)
-        if isinstance(func_type, typ.CompileTimeFunctionType):
-            dst_addr = tpa.manager.allocate_stack(func_type.rtype.memory_length())
-            call_compile_time_function(func_type, self.args, env, tpa, dst_addr)
+        placer = self.call_obj.evaluated_type(env, tpa.manager)
+        if isinstance(placer, typ.CompileTimeFunctionType):
+            dst_addr = tpa.manager.allocate_stack(placer.rtype.memory_length())
+            call_compile_time_function(placer, self.args, env, tpa, dst_addr)
             return dst_addr
 
-        if not isinstance(func_type, typ.CallableType):
+        if not isinstance(placer, typ.FunctionPlacer):
             raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
 
+        arg_types = self.arg_types(env, tpa.manager)
+        func_type, func_ptr = placer.get_type_and_ptr_call(arg_types)
         rtn_addr = tpa.manager.allocate_stack(func_type.rtype.memory_length())
         self.compile_to(env, tpa, rtn_addr, func_type.rtype.memory_length())
         return rtn_addr
 
     @staticmethod
-    def call(call_obj: Node, evaluated_args: list, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int,
-             lf, func_type=None):
-        if func_type is None:
-            func_type = call_obj.evaluated_type(env, tpa.manager)
+    def call(call_obj, evaluated_args: list,
+             env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, lf,
+             func_type: typ.CallableType = None,
+             fn_ptr: int = -1):
+
         if isinstance(call_obj, NameNode):
+            if func_type is None:
+                placer = env.get_type(call_obj.name, lf)
+                if not isinstance(placer, typ.FunctionPlacer):
+                    raise errs.TplCompileError(f"{call_obj.name} is not a function. ", lf)
+                func_type, fn_ptr = placer.get_only()
+
             if isinstance(func_type, typ.FuncType):
-                fn_ptr = env.get(call_obj.name, lf)
+                # fn_ptr = env.get(call_obj.name, lf)
                 tpa.call_ptr_function(fn_ptr, evaluated_args, dst_addr, func_type.rtype.length)
             elif isinstance(func_type, typ.NativeFuncType):
-                fn_ptr = env.get(call_obj.name, lf)
+                # fn_ptr = env.get(call_obj.name, lf)
                 tpa.invoke_ptr(fn_ptr, evaluated_args, dst_addr, func_type.rtype.length)
             else:
                 raise errs.TplError("Unexpected error. ", lf)
@@ -1667,6 +1656,9 @@ class FunctionCall(Expression):
             tpa.invoke_ptr(fn_ptr, evaluated_args, dst_addr, func_type.rtype.length)
         else:
             raise errs.TplError("Unexpected error. ", lf)
+
+    def arg_types(self, env: en.Environment, manager: tp.Manager) -> list:
+        return [arg.evaluated_type(env, manager) for arg in self.args]
 
     def evaluate_args(self, func_type: typ.CallableType, env, tpa, is_method=False) -> list:
         """
@@ -1700,16 +1692,18 @@ class FunctionCall(Expression):
         return use_compile_to
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
-        func_type = self.call_obj.evaluated_type(env, tpa.manager)
-        if isinstance(func_type, typ.CompileTimeFunctionType):
-            call_compile_time_function(func_type, self.args, env, tpa, dst_addr)
+        placer = self.call_obj.evaluated_type(env, tpa.manager)
+        if isinstance(placer, typ.CompileTimeFunctionType):
+            call_compile_time_function(placer, self.args, env, tpa, dst_addr)
             return
 
-        if not isinstance(func_type, typ.CallableType):
+        if not isinstance(placer, typ.FunctionPlacer):
             raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
 
+        arg_types = self.arg_types(env, tpa.manager)
+        func_type, func_ptr = placer.get_type_and_ptr_call(arg_types)
         evaluated_args = self.evaluate_args(func_type, env, tpa)
-        self.call(self.call_obj, evaluated_args, env, tpa, dst_addr, self.lf, func_type)
+        FunctionCall.call(self.call_obj, evaluated_args, env, tpa, dst_addr, self.lf, func_type, func_ptr)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         func_type = self.call_obj.evaluated_type(env, manager)
@@ -2367,13 +2361,13 @@ class SwitchExpr(Expression):
 
 
 class FunctionObject:
-    def __init__(self, def_env: en.Environment, tpa, fn_ptr, parent_class, str_name, params, func_type: typ.FuncType,
+    def __init__(self, def_env: en.Environment, tpa, fn_ptr, parent_class, poly_name, params, func_type: typ.FuncType,
                  body, lf):
         self.parent_class = parent_class
         self.fn_ptr = fn_ptr
         self.def_env = def_env
         self.tpa = tpa
-        self.str_name = str_name
+        self.poly_name = poly_name
         self.func_type = func_type
         self.params = params
         self.body = body
@@ -2381,9 +2375,9 @@ class FunctionObject:
 
     def compile(self):
         if self.parent_class is None:
-            scope = en.FunctionEnvironment(self.def_env, self.str_name, self.func_type.rtype)
+            scope = en.FunctionEnvironment(self.def_env, self.poly_name, self.func_type.rtype)
         else:
-            scope = en.MethodEnvironment(self.def_env, self.str_name, self.func_type.rtype, self.parent_class)
+            scope = en.MethodEnvironment(self.def_env, self.poly_name, self.func_type.rtype, self.parent_class)
         self.tpa.manager.push_stack()
 
         body_out = tp.TpaOutput(self.tpa.manager)
@@ -2405,10 +2399,10 @@ class FunctionObject:
             complete_return = self.body.return_check()
             if not complete_return:
                 if not self.func_type.rtype.is_void():
-                    raise errs.TplCompileError(f"Function '{self.str_name}' missing a return statement. ", self.lf)
+                    raise errs.TplCompileError(f"Function '{self.poly_name}' missing a return statement. ", self.lf)
 
             # compiling
-            body_out.add_function(self.str_name, self.lf.file_name, self.fn_ptr, self.parent_class)
+            body_out.add_function(self.poly_name, self.lf.file_name, self.fn_ptr, self.parent_class)
             push_index = body_out.add_indefinite_push()
             self.body.compile(scope, body_out)
 

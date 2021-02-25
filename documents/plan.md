@@ -45,4 +45,6 @@
 * Annotations
 
 #### Phase 4
+* Auto detect super call
+* Duplicate require removal
 * Function polymorphism

@@ -553,8 +553,10 @@ class TpaOutput:
                 line += " $" + str(mro_t.class_ptr)
             line += " methods"
             # print(ct.method_rank)
-            for method_name in ct.method_rank:
-                line += " $" + str(ct.methods[method_name][1])
+            for method_name, method_t in ct.method_rank:
+                # for name in ct.methods:
+                #     if name == method_name:
+                line += " $" + str(ct.methods[method_name][method_t][1])
             merged.append(line)
         merged.append("")
 
@@ -566,10 +568,14 @@ class TpaOutput:
         self.output = merged + self.output
 
         if main_has_arg:
+            param_types = [typ.TYPE_STRING_ARR]
             self.write_format("main_arg")
+        else:
+            param_types = []
         self.write_format("aload", "%0", "$1")
         self.write_format("set_ret", "%0")
-        self.write_format("call_fn", util.name_with_path("main", main_file_path, None))
+        self.write_format("call_fn",
+                          util.name_with_path(typ.function_poly_name("main", param_types), main_file_path, None))
         self.write_format("exit")
 
     def local_generate(self):

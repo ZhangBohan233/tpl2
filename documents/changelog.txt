@@ -1,4 +1,9 @@
-﻿===== VERSION 2033 =====
+﻿===== VERSION 2034 =====
+2021/02/26
+
+* Function and method polymorphism for primitive type parameters
+
+===== VERSION 2033 =====
 2021/02/25
 
 * Lazy function body evaluation

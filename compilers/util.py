@@ -16,6 +16,60 @@ NEG_ONE_POS = INT_LEN + INT_LEN
 float_pack = "d" if FLOAT_LEN == 8 else "f"
 
 
+class NaiveDict:
+    def __init__(self, checker=None):
+        self.keys = []
+        self.values = []
+        self.checker = checker
+
+    def check(self, v1, v2):
+        if self.checker is None:
+            return v1 == v2
+        else:
+            return self.checker(v1, v2)
+
+    def get_entry_by(self, some_key, checker) -> tuple:
+        for i in range(len(self)):
+            if checker(self.keys[i], some_key):
+                return self.keys[i], self.values[i]
+        return None
+
+    def get_only(self) -> tuple:
+        if len(self) != 1:
+            raise IndexError("NaiveDict has not only 1 pairs.")
+        return self.keys[0], self.values[0]
+
+    def __len__(self):
+        return len(self.keys)
+
+    def __contains__(self, item):
+        try:
+            _ = self[item]
+            return True
+        except IndexError:
+            return False
+
+    def __getitem__(self, item):
+        for i in range(len(self)):
+            if self.check(self.keys[i], item):
+                return self.values[i]
+        raise IndexError(f"Key '{item}' is not in this NaiveDict.")
+
+    def __setitem__(self, key, value):
+        for i in range(len(self)):
+            if self.check(self.keys[i], key):
+                self.values[i] = value
+                return
+        self.keys.append(key)
+        self.values.append(value)
+
+    def __str__(self):
+        kv = []
+        for i in range(len(self)):
+            kv.append(f"{self.keys[i]}: {self.values[i]}")
+        return "NaiveDict{" + ", ".join(kv) + "}"
+
+
 def replace_extension(file_name: str, ext: str) -> str:
     ind = file_name.rfind(".")
     return file_name[:ind + 1] + ext

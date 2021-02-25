@@ -29,9 +29,10 @@ class Compiler:
         # call 'main'
         if not env.has_name("main"):
             raise errs.TplCompileError("Trash program without function 'main' cannot compile as executable. ")
-        main_fn = env.get_type("main", tl.LF_COMPILER)
-        if not isinstance(main_fn, typ.FuncType):
+        main_fp = env.get_type("main", tl.LF_COMPILER)
+        if not isinstance(main_fp, typ.FunctionPlacer):
             raise errs.TplCompileError("Main must be a function")
+        main_fn, main_addr = main_fp.get_only()
         if len(main_fn.param_types) == 0:
             out.generate(self.main_path)
         elif len(main_fn.param_types) == 1:

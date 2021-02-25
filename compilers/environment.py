@@ -1,6 +1,7 @@
 import compilers.errors as errs
 import compilers.tokens_lib as tl
 import compilers.types as typ
+import compilers.util as util
 
 
 class VarEntry:
@@ -18,10 +19,11 @@ class VarEntry:
 
 
 class FunctionEntry(VarEntry):
-    def __init__(self, type_: typ.Type, addr: int, const=True, named=False):
-        super().__init__(type_, addr, const)
+    def __init__(self, placer: typ.FunctionPlacer, const=True, named=False):
+        super().__init__(placer, -1, const)
 
         self.named = named  # whether this function entry is defined by keyword 'fn'
+        self.placer = placer
 
 
 class Environment:
@@ -55,9 +57,14 @@ class Environment:
         self.vars[name] = entry
 
     def define_function(self, name: str, func_type: typ.CallableType, fn_ptr: int, lf: tl.LineFile):
-        if self._inner_get(name) is not None:
+        old_entry = self._inner_get(name)
+        if old_entry is not None:
+            if isinstance(old_entry, FunctionEntry):
+                old_entry.placer.add_poly(func_type, fn_ptr)
+                return
             raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
-        entry = FunctionEntry(func_type, fn_ptr, const=True, named=True)
+        placer = typ.FunctionPlacer(func_type, fn_ptr)
+        entry = FunctionEntry(placer, const=True, named=True)
         self.vars[name] = entry
 
     def is_const(self, name: str, lf) -> bool:
@@ -208,7 +215,7 @@ class MethodEnvironment(FunctionEnvironment):
 
 class ModuleEnvironment(MainAbstractEnvironment):
     def __init__(self, outer):
-        super().__init__(outer)
+        super().__init__(None)
 
         self.exports = None
 
@@ -228,8 +235,13 @@ class ClassEnvironment(MainAbstractEnvironment):
 
     def define_function(self, name: str, func_type: typ.CallableType, fn_ptr: int, lf: tl.LineFile):
         if name in self.vars:
+            old_entry = self.vars[name]
+            if isinstance(old_entry, FunctionEntry):
+                old_entry.placer.add_poly(func_type, fn_ptr)
+                return
             raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
-        entry = FunctionEntry(func_type, fn_ptr, const=True, named=True)
+        placer = typ.FunctionPlacer(func_type, fn_ptr)
+        entry = FunctionEntry(placer, const=True, named=True)
         self.vars[name] = entry
 
     def _inner_get(self, name) -> VarEntry:

@@ -1,0 +1,180 @@
+bits
+64
+stack_size
+1024
+global_length
+144
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 2 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0
+classes
+class E:\GitHub\tpl2\lib\lang.tp$Object mro $1080 methods $1128 $1096 $1104 $1112
+class E:\GitHub\tpl2\tp\poly.tp$A mro $1120 $1080 methods $1128 $1096 $1104 $1112 $1136 $1144 $1152
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__() $1088
+    push_fp
+    push          8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__del__() $1096
+    push_fp
+    push          8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.hash() $1104
+    push_fp
+    push          24
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      0
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.equals() $1112
+    push_fp
+    push          24
+    load          %0      $0
+    load          %1      $8
+    eqi           %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\poly.tp$A.__new__() $1128
+    push_fp
+    push          8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\poly.tp$A.t() $1136
+    push_fp
+    push          24
+    require       println_int $8      %0      %1
+    load_lit      %0      $8
+    iload         %1      $16
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    invoke        $8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\poly.tp$A.t(int) $1144
+    push_fp
+    push          32
+    require       println_int $16     %0      %1
+    load_lit      %0      $24
+    iload         %1      $24
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $24
+    store_abs     %0      %1
+    invoke        $16
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\poly.tp$A.t(int,int) $1152
+    push_fp
+    push          40
+    require       println_int $24     %0      %1
+    load_lit      %0      $32
+    iload         %1      $32
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $32
+    store_abs     %0      %1
+    invoke        $24
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\poly.tp$main() $1160
+    push_fp
+    push          40
+    require       malloc  $16     %0      %1
+    iload         %0      $8
+    iload         %1      $24
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $24
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    invoke        $16
+    load          %0      $8
+    iload         %1      1120
+    store_abs     %0      %1
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\tp\poly.tp$A.__new__()
+    load          %0      $8
+    iload         %1      $0
+    store         %1      %0
+    load_lit      %0      $32
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $0
+    iload         %1      5
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $0
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $32
+    store_abs     %1      %2
+    call_reg      %0
+    pull_fp
+    ret
+    stop
+
+entry
+    load_lit      %0      $0
+    iload         %1      $1032
+    store         %1      %0
+    load          %0      $1032
+    iload         %1      $1024
+    store         %1      %0
+    load_lit      %0      $8
+    iload         %1      $1048
+    store         %1      %0
+    load          %0      $1048
+    iload         %1      $1040
+    store         %1      %0
+    load_lit      %0      $0
+    iload         %1      $1072
+    store         %1      %0
+    load          %0      $1072
+    iload         %1      $1064
+    store         %1      %0
+    load          %0      $1064
+    iload         %1      $1056
+    store         %1      %0
+    aload         %0      $1
+    set_ret       %0
+    call_fn       E:\GitHub\tpl2\tp\poly.tp$main()
+    exit

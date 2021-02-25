@@ -18,29 +18,29 @@ class Object {
     }
 }
 
-abstract class Number {
-    fn __new__(this: *Number) void {
-        super.__new__();
-    }
+//abstract class Number {
+//    fn __new__(this: *Number) void {
+//        super.__new__();
+//    }
+//
+//    abstract fn intValue(this: *Number) int;
+//}
 
-    abstract fn intValue(this: *Number) int;
-}
+//class Integer(Number) {
+//  const value: int;
+//
+//  fn __new__(this: *Integer, value: int) void {
+//      super.__new__();
+//
+  //      this.value = value;
+    //}
 
-class Integer(Number) {
-    const value: int;
-
-    fn __new__(this: *Integer, value: int) void {
-        super.__new__();
-
-        this.value = value;
-    }
-
-    @Override
-    fn intValue(this: *Integer) int {
-        return this.value;
-    }
-}
+    //@Override
+    //fn intValue(this: *Integer) int {
+      //  return this.value;
+    //}
+//}
 
 export {
-    FALSE, TRUE, NULL, Object, Number, Integer
+    FALSE, TRUE, NULL, Object
 }

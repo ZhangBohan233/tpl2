@@ -1,0 +1,24 @@
+﻿import lang;
+
+class A {
+    fn __new__(this: *A) void {
+
+    }
+
+    fn t(this: *A) void {
+        cprintln(1);
+    }
+
+    fn t(this: *A, a: int) void {
+        cprintln(2);
+    }
+
+    fn t(this: *A, a: int, b: int) void {
+        cprintln(3);
+    }
+}
+
+fn main() void {
+    a := new A();
+    a.t(3);
+}
