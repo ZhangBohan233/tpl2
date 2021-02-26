@@ -3,9 +3,9 @@ bits
 stack_size
 1024
 global_length
-280
+296
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 2 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 9 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 2 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0 5 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 105 0 110 0 116 0 5 0 0 0 0 0 0 0 102 0 108 0 111 0 97 0 116 0 8 0 0 0 0 0 0 0 9 0 0 0 0 0 0 0
 classes
 class E:\GitHub\tpl2\lib\lang.tp$Object mro $1056 methods $1064 $1072 $1080 $1088
 class E:\GitHub\tpl2\lib\lang.tp$Number mro $1096 $1056 methods $1104 $1072 $1080 $1088 $1112
@@ -254,11 +254,41 @@ fn E:\GitHub\tpl2\tp\poly.tp$A.f(int,*B,*B) $1272
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\poly.tp$f(int,*Object,*B) $1280
+fn E:\GitHub\tpl2\tp\poly.tp$t(int) $1280
+    push_fp
+    push          24
+    require       println_str $8      %0      %1
+    lit_abs       %0      $56
+    iload         %1      $16
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    invoke        $8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\poly.tp$t(float) $1288
+    push_fp
+    push          24
+    require       println_str $8      %0      %1
+    lit_abs       %0      $70
+    iload         %1      $16
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    invoke        $8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\poly.tp$f(int,*Object,*B) $1296
     push_fp
     push          40
     require       println_int $24     %0      %1
-    load_lit      %0      $56
+    load_lit      %0      $88
     iload         %1      $32
     store         %1      %0
     aload_sp      %0      $0
@@ -269,11 +299,11 @@ fn E:\GitHub\tpl2\tp\poly.tp$f(int,*Object,*B) $1280
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\poly.tp$f(int,*B,*B) $1288
+fn E:\GitHub\tpl2\tp\poly.tp$f(int,*B,*B) $1304
     push_fp
     push          40
     require       println_int $24     %0      %1
-    load_lit      %0      $64
+    load_lit      %0      $96
     iload         %1      $32
     store         %1      %0
     aload_sp      %0      $0
@@ -284,9 +314,9 @@ fn E:\GitHub\tpl2\tp\poly.tp$f(int,*B,*B) $1288
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\poly.tp$main() $1296
+fn E:\GitHub\tpl2\tp\poly.tp$main() $1312
     push_fp
-    push          208
+    push          216
     require       malloc  $16     %0      %1
     iload         %0      $8
     iload         %1      $24
@@ -409,74 +439,81 @@ fn E:\GitHub\tpl2\tp\poly.tp$main() $1296
     aload_sp      %0      $16
     load          %1      $104
     store_abs     %0      %1
-    call          $1288
+    call          $1304
     load          %0      $1144
     iload         %1      $120
     store         %1      %0
-    require       println_int $128    %0      %1
-    load          %0      $0
-    iload         %1      $144
+    load_lit      %0      $8
+    iload         %1      $128
     store         %1      %0
-    load          %0      $144
+    aload_sp      %0      $0
+    load          %1      $128
+    store_abs     %0      %1
+    call          $1280
+    require       println_int $136    %0      %1
+    load          %0      $0
+    iload         %1      $152
+    store         %1      %0
+    load          %0      $152
     iload         %1      0
     addi          %0      %1
-    iload         %1      144
+    iload         %1      152
     store         %1      %0
-    load          %0      $144
+    load          %0      $152
     rload_abs     %1      %0
-    iload         %0      152
+    iload         %0      160
     store         %0      %1
     iload         %0      1056
-    load          %1      $152
+    load          %1      $160
     subclass      %0      %1      %2      %3
-    iload         %1      136
+    iload         %1      144
     store         %1      %0
     aload_sp      %0      $0
-    load          %1      $136
+    load          %1      $144
     store_abs     %0      %1
-    invoke        $128
+    invoke        $136
     load          %0      $0
-    iload         %1      $168
+    iload         %1      $176
     store         %1      %0
-    load          %0      $168
+    load          %0      $176
     iload         %1      0
     addi          %0      %1
-    iload         %1      168
+    iload         %1      176
     store         %1      %0
-    load          %0      $168
+    load          %0      $176
     rload_abs     %1      %0
-    iload         %0      176
+    iload         %0      184
     store         %0      %1
     iload         %0      1216
-    load          %1      $176
+    load          %1      $184
     subclass      %0      %1      %2      %3
-    iload         %1      160
+    iload         %1      168
     store         %1      %0
     aload_sp      %0      $0
-    load          %1      $160
+    load          %1      $168
     store_abs     %0      %1
-    invoke        $128
+    invoke        $136
     load          %0      $0
-    iload         %1      $192
+    iload         %1      $200
     store         %1      %0
-    load          %0      $192
+    load          %0      $200
     iload         %1      0
     addi          %0      %1
-    iload         %1      192
+    iload         %1      200
     store         %1      %0
-    load          %0      $192
+    load          %0      $200
     rload_abs     %1      %0
-    iload         %0      200
+    iload         %0      208
     store         %0      %1
     iload         %0      1168
-    load          %1      $200
+    load          %1      $208
     subclass      %0      %1      %2      %3
-    iload         %1      184
+    iload         %1      192
     store         %1      %0
     aload_sp      %0      $0
-    load          %1      $184
+    load          %1      $192
     store_abs     %0      %1
-    invoke        $128
+    invoke        $136
     pull_fp
     ret
     stop

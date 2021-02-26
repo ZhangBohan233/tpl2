@@ -49,6 +49,14 @@ class A(C) {
     }
 }
 
+fn t(x: int) void {
+    cprintln("int");
+}
+
+fn t(x: float) void {
+    cprintln("float");
+}
+
 fn f(num: int, obj: *Object, b: *B) void {
     cprintln(8);
 }
@@ -63,6 +71,8 @@ fn main() void {
     a.f(1, new B(), new B());
     f(1, new B(), new B());
     b: *B = NULL;
+
+    t('a');
 
     cprintln(a instanceof Object);
     cprintln(a instanceof A);
