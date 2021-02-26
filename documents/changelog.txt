@@ -1,4 +1,9 @@
-﻿===== VERSION 2036 =====
+﻿===== VERSION 2037 =====
+2021/02/26
+
+* Implemented function method polymorphism for object types
+
+===== VERSION 2036 =====
 2021/02/26
 
 * Implemented operator 'instanceof'

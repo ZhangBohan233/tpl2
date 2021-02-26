@@ -37,7 +37,7 @@
 * ~~Templates extension~~ Partially done
 * ~~super~~ Done
 * ~~Auto add parameter 'this'~~ Discarded
-* instanceof
+* ~~instanceof~~ Done
 * ~~abstract class and abstract method~~ Done
 * ~~const method~~ Done
 * ~~Generic array~~ Done
@@ -46,5 +46,5 @@
 
 #### Phase 4
 * Auto detect super call
-* Duplicate require removal
-* Function polymorphism
+* ~~Duplicate require removal~~ Already done
+* ~~Function polymorphism~~ Done

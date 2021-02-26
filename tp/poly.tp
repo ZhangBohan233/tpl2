@@ -49,11 +49,19 @@ class A(C) {
     }
 }
 
+fn f(num: int, obj: *Object, b: *B) void {
+    cprintln(8);
+}
+
+fn f(num: int, obj: *B, b: *B) void {
+    cprintln(9);
+}
 
 fn main() void {
     a := new A(2);
     //a.t(3);
-    a.f(1, new B(), NULL);
+    a.f(1, new B(), new B());
+    f(1, new B(), new B());
     b: *B = NULL;
 
     cprintln(a instanceof Object);

@@ -199,11 +199,13 @@ class FunctionPlacer(Type):
     def get_only(self):
         return self.poly.get_only()
 
-    def get_type_and_ptr_call(self, param_types: list) -> (CallableType, int):
-        t_addr = self.poly.get_entry_by(param_types, func_convertible_params)
-        if t_addr is None:
-            raise errs.TplEnvironmentError(f"Cannot resolve param {param_types}")
-        return t_addr
+    def get_type_and_ptr_call(self, arg_types: list) -> (CallableType, int):
+        # print(self.poly, arg_types)
+        return find_closet_func(self.poly, arg_types, "fn", False, lambda poly_d, i: poly_d.keys[i])
+        # t_addr = self.poly.get_entry_by(arg_types, func_convertible_params)
+        # if t_addr is None:
+        #     raise errs.TplEnvironmentError(f"Cannot resolve param {arg_types}")
+        # return t_addr
 
     def get_type_and_ptr_def(self, param_types: list) -> (CallableType, int):
         t_addr = self.poly.get_entry_by(param_types, func_eq_params)
@@ -246,10 +248,13 @@ class ClassType(Type):
         self.mro: list = None  # Method resolution order, ranked from closest to farthest
         self.templates = templates  # list of Generic
         self.method_rank = []  # keep track of all method names in order | (name, method_t)
+
         # this dict records all callable methods in this class, including methods in its superclass
         # methods with same name must have the same id, i.e. overriding methods have the same id
+        # note that in each NaiveDict, the key is the type of the most super method, real type is in the values
         self.methods = {}  # name: NaiveDict{func_type: (method_id, func_ptr, func_type)}
         self.fields = collections.OrderedDict()  # OrderedDict, name: (position, type)
+
         # records mapping for superclass
         # e.g. class A<K, V>, class B<X>(A<X, Object>) => {A: {"K": "X", "V": Object}}
         self.super_generics_map = super_generics_map
@@ -276,7 +281,7 @@ class ClassType(Type):
         if name in self.methods:
             poly: util.NaiveDict = self.methods[name]
             # res = poly.get_entry_by(arg_types, method_convertible_params)
-            return find_closet_method(poly, arg_types, name)
+            return find_closet_func(poly, arg_types, name, True, lambda poly_d, i: poly_d.values[i][2])[1]
 
         raise errs.TplCompileError(f"Class {self.name} does not have method '{name}'. ", lf)
 
@@ -530,7 +535,8 @@ def type_distance(left_type, right_real_type):
     return 0
 
 
-def find_closet_method(poly: util.NaiveDict, arg_types: [Type], name: str) -> (int, int, MethodType):
+def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_method: bool,
+                     get_type_func) -> (FuncType, object):
     """
     Returns the closet method.
 
@@ -539,18 +545,25 @@ def find_closet_method(poly: util.NaiveDict, arg_types: [Type], name: str) -> (i
     :param poly:
     :param arg_types:
     :param name: the simple name of function
-    :return: tuple of (method_id, method_ptr, method_type)
+    :param is_method:
+    :param get_type_func: a function that extract the function type from a unit in poly dict
+    :return: anything that gets from the poly dict.
+        usually (method_key_type, (method_id, method_ptr, method_type)) for method,
+        (fn_type, (fn_type, fn_ptr)) for function
     """
+    param_begin = 1 if is_method else 0
     matched = {}
     for i in range(len(poly)):
+        # fn_t = poly.keys[i]
         tup = poly.values[i]
-        method_t: MethodType = tup[2]
-        if len(arg_types) == len(method_t.param_types):
+        # print(name, fn_t)
+        fn_t: CallableType = get_type_func(poly, i)
+        if len(arg_types) == len(fn_t.param_types):
             sum_dt = 0
             match = True
-            for j in range(1, len(arg_types)):
+            for j in range(param_begin, len(arg_types)):
                 arg = arg_types[j]
-                param = method_t.param_types[j]
+                param = fn_t.param_types[j]
                 if arg.strong_convertible(param):
                     # print(arg, param, type_distance(arg, param))
                     sum_dt += type_distance(param, arg)
@@ -559,8 +572,8 @@ def find_closet_method(poly: util.NaiveDict, arg_types: [Type], name: str) -> (i
                     break
             if match:
                 if sum_dt in matched:
-                    raise errs.TplCompileError(f"Ambiguous call: {function_poly_name(name, arg_types, True)}")
-                matched[sum_dt] = tup
+                    raise errs.TplCompileError(f"Ambiguous call: {function_poly_name(name, arg_types, is_method)}")
+                matched[sum_dt] = (fn_t, tup)
     min_dt = 65536
     min_tup = None
     for dt in matched:
@@ -568,7 +581,7 @@ def find_closet_method(poly: util.NaiveDict, arg_types: [Type], name: str) -> (i
             min_dt = dt
             min_tup = matched[dt]
     if min_tup is None:
-        raise errs.TplCompileError(f"Cannot resolve call: {function_poly_name(name, arg_types, True)}")
+        raise errs.TplCompileError(f"Cannot resolve call: {function_poly_name(name, arg_types, is_method)}")
     return min_tup
 
 
