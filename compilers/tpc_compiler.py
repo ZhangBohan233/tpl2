@@ -82,6 +82,9 @@ INSTRUCTIONS = {
     "storeb_abs": (82, 1, 1),
     "get_method": (83, 1, 1, 1),  # %reg1 inst_ptr_addr  %reg2 method_id  %reg3 backup   |
     #                             # get method ptr of a class, store to %reg1
+    "subclass": (84, 1, 1, 1, 1),   # %reg1 parent_class   %reg2 child_class   %reg3 temp1   %reg4 temp2
+    #                               # | store true to %reg1
+    #                               # if parent_class is super of child_class
 }
 
 MNEMONIC = {

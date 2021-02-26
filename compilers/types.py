@@ -245,7 +245,7 @@ class ClassType(Type):
         self.direct_superclasses = direct_sc
         self.mro: list = None  # Method resolution order, ranked from closest to farthest
         self.templates = templates  # list of Generic
-        self.method_rank = []  # keep track of all method names in order
+        self.method_rank = []  # keep track of all method names in order | (name, method_t)
         # this dict records all callable methods in this class, including methods in its superclass
         # methods with same name must have the same id, i.e. overriding methods have the same id
         self.methods = {}  # name: NaiveDict{func_type: (method_id, func_ptr, func_type)}
@@ -518,6 +518,8 @@ def type_distance(left_type, right_real_type):
     :return:
     """
     if isinstance(left_type, PointerType) and isinstance(right_real_type, PointerType):
+        if right_real_type == TYPE_VOID_PTR:  # NULL
+            return 0
         left = get_class_type(left_type.base)
         right = get_class_type(right_real_type.base)
         for i in range(len(right.mro)):

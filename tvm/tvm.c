@@ -32,6 +32,7 @@ char *ERR_MSG = "";
 
 #define MEMORY_SIZE 16384
 #define RECURSION_LIMIT 1000
+#define CLASS_FIXED_HEADER (INT_LEN * 2)
 
 tp_int stack_end;
 tp_int literal_end;
@@ -751,7 +752,8 @@ void tvm_mainloop() {
                 reg1 = MEMORY[pc++];  // inst_ptr_addr
                 reg2 = MEMORY[pc++];  // method id
                 reg3 = MEMORY[pc++];  // backup
-                regs[reg1].int_value = bytes_to_int(MEMORY + true_addr(regs[reg1].int_value + regs[reg3].int_value));  // class pointer
+                regs[reg1].int_value = bytes_to_int(
+                        MEMORY + true_addr(regs[reg1].int_value + regs[reg3].int_value));  // class pointer
 //                printf("class pointer %lld\n", regs[reg1].int_value);
                 regs[reg1].int_value = bytes_to_int(MEMORY + regs[reg1].int_value);  // class header address
                 regs[reg3].int_value = bytes_to_int(MEMORY + regs[reg1].int_value);  // mro count
@@ -763,6 +765,32 @@ void tvm_mainloop() {
                 regs[reg1].int_value += regs[reg2].int_value * PTR_LEN;  // true addr of method ptr
                 regs[reg1].int_value = bytes_to_int(MEMORY + regs[reg1].int_value);
 //                printf("method ptr %lld\n", regs[reg1].int_value);
+                break;
+
+            case 84:  // subclass   %reg1 parent  %reg2 child  %reg3 temp1  %reg4 temp2
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                reg3 = MEMORY[pc++];
+                reg4 = MEMORY[pc++];
+                regs[reg1].int_value = bytes_to_int(MEMORY + true_addr(regs[reg1].int_value));
+                regs[reg2].int_value = bytes_to_int(MEMORY + true_addr(regs[reg2].int_value));
+                regs[reg3].int_value = bytes_to_int(MEMORY + true_addr(regs[reg2].int_value));  // child mro len
+//                printf("%lld %lld %lld\n", regs[reg1].int_value, regs[reg2].int_value, regs[reg3].int_value);
+                for (regs[reg4].int_value = 0; regs[reg4].int_value < regs[reg3].int_value; regs[reg4].int_value++) {
+                    if (regs[reg1].int_value ==
+                        bytes_to_int(MEMORY +
+                                     true_addr(bytes_to_int(MEMORY +  // class ptr address
+                                                            true_addr(regs[reg2].int_value +  // addr of class ptr in mro
+                                                                      CLASS_FIXED_HEADER +
+                                                                      regs[reg4].int_value *
+                                                                      INT_LEN))))) {
+                        regs[reg1].int_value = 1;
+                        goto FOUND_CLASS;
+                    }
+                    // check superclass
+                }
+                regs[reg1].int_value = 0;
+            FOUND_CLASS:
                 break;
             default:
                 fprintf(stderr, "%d: ", instruction);

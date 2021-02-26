@@ -1,6 +1,5 @@
 const FALSE: int = 0;
 const TRUE: int = 1;
-const NULL: *void = 0 as *void;
 
 class Object {
     fn __new__(this: *Object) void {
@@ -18,29 +17,31 @@ class Object {
     }
 }
 
-//abstract class Number {
-//    fn __new__(this: *Number) void {
-//        super.__new__();
-//    }
-//
-//    abstract fn intValue(this: *Number) int;
-//}
+abstract class Number {
+    fn __new__(this: *Number) void {
+        super.__new__();
+    }
 
-//class Integer(Number) {
-//  const value: int;
-//
-//  fn __new__(this: *Integer, value: int) void {
-//      super.__new__();
-//
-  //      this.value = value;
-    //}
+    abstract fn intValue(this: *Number) int;
+}
 
-    //@Override
-    //fn intValue(this: *Integer) int {
-      //  return this.value;
-    //}
-//}
+class Integer(Number) {
+    const value: int;
+
+    fn __new__(this: *Integer, value: int) void {
+      super.__new__();
+
+        this.value = value;
+    }
+
+    @Override
+    fn intValue(this: *Integer) int {
+        return this.value;
+    }
+}
+
+const NULL: *void = 0 as *void;
 
 export {
-    FALSE, TRUE, NULL, Object
+    FALSE, TRUE, NULL, Object, Number, Integer
 }

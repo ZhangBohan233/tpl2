@@ -5,15 +5,27 @@ class B {
     fn __new__(this: *B) void {
 
     }
+
+    fn hash(this: *B) int {
+        return 0;
+    }
 }
 
-class A {
+abstract class C {
+    fn __new__(this: *C) void {
+        super.__new__();
+    }
+
+    abstract fn t(this: *C) void;
+}
+
+class A(C) {
     fn __new__(this: *A) void {
         this.__new__(1);
     }
 
     fn __new__(this: *A, b: int) void {
-
+        super.__new__();
     }
 
     fn t(this: *A) void {
@@ -41,5 +53,10 @@ class A {
 fn main() void {
     a := new A(2);
     //a.t(3);
-    a.f(1, new B(), new B());
+    a.f(1, new B(), NULL);
+    b: *B = NULL;
+
+    cprintln(a instanceof Object);
+    cprintln(a instanceof A);
+    cprintln(a instanceof B);
 }

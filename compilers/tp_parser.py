@@ -54,6 +54,7 @@ class Parser:
             "++": self.process_inc_operator,
             "--": self.process_dec_operator,
             "@": self.process_annotation,
+            "instanceof": self.process_instanceof,
             "switch": self.process_switch,
             "case": self.process_case,
             "default": self.process_default
@@ -314,6 +315,10 @@ class Parser:
         index += 1
         ele = parent[index]
         return index
+
+    def process_instanceof(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
+                           lf: tl.LineFile):
+        builder.add_node(ast.InstanceOfExpr(lf))
 
     def process_switch(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
                        lf: tl.LineFile):

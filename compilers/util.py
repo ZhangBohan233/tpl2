@@ -39,6 +39,12 @@ class NaiveDict:
             raise IndexError("NaiveDict has not only 1 pairs.")
         return self.keys[0], self.values[0]
 
+    def copy(self):
+        cpy = NaiveDict(self.checker)
+        cpy.keys.extend(self.keys)
+        cpy.values.extend(self.values)
+        return cpy
+
     def __len__(self):
         return len(self.keys)
 

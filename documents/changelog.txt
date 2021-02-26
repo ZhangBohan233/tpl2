@@ -1,4 +1,12 @@
-﻿===== VERSION 2035 =====
+﻿===== VERSION 2036 =====
+2021/02/26
+
+* Implemented operator 'instanceof'
+* Bugs fix:
+    * Fixed method overriding
+    * Fixed abstract overriding check
+
+===== VERSION 2035 =====
 2021/02/26
 
 * Implemented method polymorphism for object types:

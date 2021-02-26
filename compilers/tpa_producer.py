@@ -517,6 +517,17 @@ class TpaOutput:
 
         self.manager.append_regs(reg1)
 
+    def subclass_of(self, parent, child_ptr_addr, dst_addr):
+        reg1, reg2, reg3, reg4 = self.manager.require_regs(4)
+
+        self.write_format("iload", register(reg1), number(parent))
+        self.write_format("load", register(reg2), address(child_ptr_addr))
+        self.write_format("subclass", register(reg1), register(reg2), register(reg3), register(reg4))
+        self.write_format("iload", register(reg2), number(dst_addr))
+        self.write_format("store", register(reg2), register(reg1))
+
+        self.manager.append_regs(reg4, reg3, reg2, reg1)
+
     def write_format(self, *inst):
         self.output.append(self._format(*inst))
 

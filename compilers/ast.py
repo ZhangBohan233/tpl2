@@ -587,6 +587,34 @@ class BinaryOperatorAssignment(BinaryExpr, FakeNode):
         self.op_type = op_type
 
 
+class InstanceOfExpr(BinaryExpr):
+    def __init__(self, lf):
+        super().__init__("instanceof", lf)
+
+    def use_compile_to(self) -> bool:
+        return use_compile_to
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        dst_addr = tpa.manager.allocate_stack(util.INT_LEN)
+        self.compile_to(env, tpa, dst_addr, util.INT_LEN)
+        return dst_addr
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
+        class_node = DotExpr(self.lf)
+        class_node.left = self.left
+        class_node.right = NameNode("__class__", self.lf)
+
+        right_t = self.right.evaluated_type(env, tpa.manager)
+        if not isinstance(right_t, typ.ClassType):
+            raise errs.TplCompileError("Right side of 'instanceof' must be class. ")
+        right_ptr_addr = self.right.compile(env, tpa)
+        ins_class_ptr_addr = class_node.compile(env, tpa)
+        tpa.subclass_of(right_ptr_addr, ins_class_ptr_addr, dst_addr)
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        return typ.TYPE_INT
+
+
 class ReturnStmt(UnaryStmt):
     def __init__(self, lf):
         super().__init__("return", lf)
@@ -1385,7 +1413,8 @@ class ClassStmt(Statement):
             pos = util.INT_LEN
         else:
             pos = mro[1].memory_length()
-            class_type.methods.update(mro[1].methods)
+            for m_name in mro[1].methods:
+                class_type.methods[m_name] = mro[1].methods[m_name].copy()
             class_type.method_rank.extend(mro[1].method_rank)
 
         # the class pointer
@@ -1430,6 +1459,7 @@ class ClassStmt(Statement):
             if name in class_type.methods:
                 if method_t in class_type.methods[name]:  # overriding
                     m_pos, m_ptr, m_t = class_type.methods[name][method_t]
+                    # print(f"class {self.name} overrides method {name} at {m_ptr}, new ptr {method_ptr}")
                     if name != "__new__" and not method_t.strong_convertible(m_t):
                         # print(method_t.param_types[0].base)
                         # print(m_t.param_types[0])
@@ -1455,14 +1485,14 @@ class ClassStmt(Statement):
                 method_id += 1
 
         # # check if all abstract methods are overridden
-        # if not self.abstract:
-        #     for poly in class_type.methods.values():
-        #         for method_id, method_ptr, method_t in poly.values:
-        #             if method_t.abstract:
-        #                 raise errs.TplCompileError(
-        #                     f"Class '{self.name}' does not override all abstract methods of its superclasses. ",
-        #                     self.lf
-        #                 )
+        if not self.abstract:
+            for poly in class_type.methods.values():
+                for method_id, method_ptr, method_t in poly.values:
+                    if method_t.abstract:
+                        raise errs.TplCompileError(
+                            f"Class '{self.name}' does not override all abstract methods of its superclasses. ",
+                            self.lf
+                        )
 
     def __str__(self):
         if self.template_nodes is None:
