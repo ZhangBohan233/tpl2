@@ -15,11 +15,12 @@ fn t() void {
 }
 
 fn t(x: int) void {
-    cprintln(2);
+    cprintln(x);
 }
 
 fn main() void {
     func := getfunc(t, int);
+    func(33);
     a := new A();
     A.foo(a, 2);
 }

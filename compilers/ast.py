@@ -1650,19 +1650,70 @@ class FunctionCall(Expression):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         placer = self.call_obj.evaluated_type(env, tpa.manager)
+        if isinstance(placer, typ.SpecialCtfType):
+            func_class = COMPILE_TIME_FUNCTIONS[placer]
+            assert isinstance(func_class, type)
+            func = func_class(self.args)
+            func_type = func.evaluated_type(env, tpa.manager)
+            dst_addr = tpa.manager.allocate_stack(func_type.memory_length())
+            func.compile_to(env, tpa, dst_addr)
+            return dst_addr
         if isinstance(placer, typ.CompileTimeFunctionType):
             dst_addr = tpa.manager.allocate_stack(placer.rtype.memory_length())
             call_compile_time_function(placer, self.args, env, tpa, dst_addr)
             return dst_addr
 
-        if not isinstance(placer, typ.FunctionPlacer):
-            raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
-
         arg_types = self.arg_types(env, tpa.manager)
-        func_type, func_ptr = placer.get_type_and_ptr_call(arg_types)
+        if isinstance(placer, typ.FunctionPlacer):  # function defined by 'fn'
+            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types)
+        elif isinstance(placer, typ.CallableType):  # function get by 'getfunc'
+            func_type = placer
+        else:
+            raise errs.TplCompileError(f"Node '{self.call_obj}' not callable because it has type {placer}. ", self.lf)
+
         rtn_addr = tpa.manager.allocate_stack(func_type.rtype.memory_length())
         self.compile_to(env, tpa, rtn_addr, func_type.rtype.memory_length())
         return rtn_addr
+
+    def use_compile_to(self) -> bool:
+        return use_compile_to
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
+        placer = self.call_obj.evaluated_type(env, tpa.manager)
+        if isinstance(placer, typ.SpecialCtfType):
+            func_class = COMPILE_TIME_FUNCTIONS[placer]
+            assert isinstance(func_class, type)
+            func = func_class(self.args)
+            func_type = func.evaluated_type(env, tpa.manager)
+            func.compile_to(env, tpa, dst_addr)
+            return
+        if isinstance(placer, typ.CompileTimeFunctionType):
+            call_compile_time_function(placer, self.args, env, tpa, dst_addr)
+            return
+
+        arg_types = self.arg_types(env, tpa.manager)
+        if isinstance(placer, typ.FunctionPlacer):  # function defined by 'fn'
+            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types)
+        elif isinstance(placer, typ.CallableType):  # function get by 'getfunc'
+            func_type = placer
+            func_ptr = self.call_obj.compile(env, tpa)
+        else:
+            raise errs.TplCompileError(f"Node '{self.call_obj}' not callable because it has type {placer}. ", self.lf)
+
+        evaluated_args = self.evaluate_args(func_type, env, tpa)
+        FunctionCall.call(self.call_obj, evaluated_args, env, tpa, dst_addr, self.lf, func_type, func_ptr)
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        func_type = self.call_obj.evaluated_type(env, manager)
+        if isinstance(func_type, typ.SpecialCtfType):
+            func = COMPILE_TIME_FUNCTIONS[func_type]
+            assert isinstance(func, type)
+            return func(self.args).evaluated_type(env, manager)
+        if isinstance(func_type, typ.CompileTimeFunctionType):
+            return func_type.rtype
+        if not isinstance(func_type, typ.CallableType):
+            raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
+        return func_type.rtype
 
     @staticmethod
     def call(call_obj, evaluated_args: list,
@@ -1734,31 +1785,6 @@ class FunctionCall(Expression):
             arg_addr = self.args[i - diff].compile(env, tpa)
             evaluated_args.append((arg_addr, arg_t.length))
         return evaluated_args
-
-    def use_compile_to(self) -> bool:
-        return use_compile_to
-
-    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
-        placer = self.call_obj.evaluated_type(env, tpa.manager)
-        if isinstance(placer, typ.CompileTimeFunctionType):
-            call_compile_time_function(placer, self.args, env, tpa, dst_addr)
-            return
-
-        if not isinstance(placer, typ.FunctionPlacer):
-            raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
-
-        arg_types = self.arg_types(env, tpa.manager)
-        func_type, func_ptr = placer.get_type_and_ptr_call(arg_types)
-        evaluated_args = self.evaluate_args(func_type, env, tpa)
-        FunctionCall.call(self.call_obj, evaluated_args, env, tpa, dst_addr, self.lf, func_type, func_ptr)
-
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        func_type = self.call_obj.evaluated_type(env, manager)
-        if isinstance(func_type, typ.CompileTimeFunctionType):
-            return func_type.rtype
-        if not isinstance(func_type, typ.CallableType):
-            raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
-        return func_type.rtype
 
     def __str__(self):
         return "{}({})".format(self.call_obj, self.args)
@@ -2651,8 +2677,50 @@ def ctf_array(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
                       env, tpa, dst_addr, args.lf)
 
 
-def ctf_get_function(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
-    print(args)
+class SpecialCtf:
+    def __init__(self, args: Line):
+        self.args = args
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        raise NotImplementedError()
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager):
+        raise NotImplementedError()
+
+
+class CtfGetFunc(SpecialCtf):
+    def __init__(self, args: Line):
+        super().__init__(args)
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        if len(self.args) > 0:
+            name_node = self.args[0]
+            if isinstance(name_node, NameNode):
+                placer = env.get_type(name_node.name, self.args.lf)
+                if isinstance(placer, typ.FunctionPlacer):
+                    arg_types = []
+                    for i in range(1, len(self.args)):
+                        arg_types.append(self.args[i].evaluated_type(env, tpa.manager))
+                    t, addr = placer.get_type_and_ptr_call(arg_types)
+                    tpa.assign(dst_addr, addr)
+                    return
+        raise errs.TplCompileError(f"Cannot make call {self}. ", self.args.lf)
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager):
+        if len(self.args) > 0:
+            name_node = self.args[0]
+            if isinstance(name_node, NameNode):
+                placer = env.get_type(name_node.name, self.args.lf)
+                if isinstance(placer, typ.FunctionPlacer):
+                    arg_types = []
+                    for i in range(1, len(self.args)):
+                        arg_types.append(self.args[i].evaluated_type(env, manager))
+                    t, addr = placer.get_type_and_ptr_call(arg_types)
+                    return t
+        raise errs.TplCompileError(f"Cannot make call {self}. ", self.args.lf)
+
+    def __str__(self):
+        return "getfunc(" + str(self.args) + ")"
 
 
 COMPILE_TIME_FUNCTIONS = {
@@ -2660,7 +2728,7 @@ COMPILE_TIME_FUNCTIONS = {
     typ.CompileTimeFunctionType("cprint", typ.TYPE_VOID): ctf_cprint,
     typ.CompileTimeFunctionType("cprintln", typ.TYPE_VOID): ctf_cprintln,
     typ.CompileTimeFunctionType("array", typ.TYPE_VOID_PTR): ctf_array,
-    typ.CompileTimeFunctionType("getfunc", typ.TYPE_VOID_PTR): ctf_get_function
+    typ.SpecialCtfType("getfunc"): CtfGetFunc
 }
 
 

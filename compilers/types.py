@@ -145,7 +145,12 @@ class CompileTimeFunctionType(Type):
         return hash(self.name)
 
     def __eq__(self, other):
-        return isinstance(other, CompileTimeFunctionType) and self.name == other.name
+        return type(self) == type(other) and self.name == other.name
+
+
+class SpecialCtfType(CompileTimeFunctionType):
+    def __init__(self, name):
+        super().__init__(name, None)
 
 
 class CallableType(Type):
@@ -200,12 +205,7 @@ class FunctionPlacer(Type):
         return self.poly.get_only()
 
     def get_type_and_ptr_call(self, arg_types: list) -> (CallableType, int):
-        # print(self.poly, arg_types)
         return find_closet_func(self.poly, arg_types, "fn", False, lambda poly_d, i: poly_d.keys[i])
-        # t_addr = self.poly.get_entry_by(arg_types, func_convertible_params)
-        # if t_addr is None:
-        #     raise errs.TplEnvironmentError(f"Cannot resolve param {arg_types}")
-        # return t_addr
 
     def get_type_and_ptr_def(self, param_types: list) -> (CallableType, int):
         t_addr = self.poly.get_entry_by(param_types, func_eq_params)

@@ -1,4 +1,9 @@
-﻿===== VERSION 2038 =====
+﻿===== VERSION 2039 =====
+2021/02/27
+
+* Implemented reflective compile time function 'getfunc'
+
+===== VERSION 2038 =====
 2021/02/27
 
 * Implemented method call via static content: Class.method(instance, ...)

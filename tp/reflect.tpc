@@ -5,7 +5,7 @@ stack_size
 global_length
 192
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 2 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 33 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0
 classes
 class E:\GitHub\tpl2\lib\lang.tp$Object mro $1056 methods $1064 $1072 $1080 $1088
 class E:\GitHub\tpl2\lib\lang.tp$Number mro $1096 $1056 methods $1104 $1072 $1080 $1088 $1112
@@ -155,13 +155,10 @@ fn E:\GitHub\tpl2\tp\reflect.tp$t() $1192
 
 fn E:\GitHub\tpl2\tp\reflect.tp$t(int) $1200
     push_fp
-    push          24
+    push          16
     require       println_int $8      %0      %1
-    load          %0      $1240
-    iload         %1      $16
-    store         %1      %0
     aload_sp      %0      $0
-    load          %1      $16
+    load          %1      $0
     store_abs     %0      %1
     invoke        $8
     pull_fp
@@ -170,38 +167,48 @@ fn E:\GitHub\tpl2\tp\reflect.tp$t(int) $1200
 
 fn E:\GitHub\tpl2\tp\reflect.tp$main() $1208
     push_fp
-    push          56
+    push          64
+    load          %0      $1200
+    iload         %1      $8
+    store         %1      %0
     load          %0      $8
     iload         %1      $0
     store         %1      %0
-    require       malloc  $32     %0      %1
-    iload         %0      $8
-    iload         %1      $40
-    store         %1      %0
-    aload_sp      %0      $0
-    load          %1      $40
-    store_abs     %0      %1
-    iload         %0      24
-    set_ret       %0
-    invoke        $32
-    load          %0      $24
-    iload         %1      1168
-    store_abs     %0      %1
-    aload_sp      %0      $0
-    load          %1      $24
-    store_abs     %0      %1
-    call          $1176
-    load          %0      $24
-    iload         %1      $16
-    store         %1      %0
     load          %0      $1240
-    iload         %1      $48
+    iload         %1      $16
     store         %1      %0
     aload_sp      %0      $0
     load          %1      $16
     store_abs     %0      %1
-    aload_sp      %0      $8
+    call          $0
+    require       malloc  $40     %0      %1
+    iload         %0      $8
+    iload         %1      $48
+    store         %1      %0
+    aload_sp      %0      $0
     load          %1      $48
+    store_abs     %0      %1
+    iload         %0      32
+    set_ret       %0
+    invoke        $40
+    load          %0      $32
+    iload         %1      1168
+    store_abs     %0      %1
+    aload_sp      %0      $0
+    load          %1      $32
+    store_abs     %0      %1
+    call          $1176
+    load          %0      $32
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $1248
+    iload         %1      $56
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $24
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $56
     store_abs     %0      %1
     call          $1184
     pull_fp
