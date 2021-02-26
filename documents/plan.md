@@ -48,3 +48,5 @@
 * Auto detect super call
 * ~~Duplicate require removal~~ Already done
 * ~~Function polymorphism~~ Done
+* ~~Call method via Class.method()~~ Done
+* Reflection: getfunc

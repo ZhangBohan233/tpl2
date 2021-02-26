@@ -1,0 +1,236 @@
+bits
+64
+stack_size
+1024
+global_length
+192
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 2 0 0 0 0 0 0 0
+classes
+class E:\GitHub\tpl2\lib\lang.tp$Object mro $1056 methods $1064 $1072 $1080 $1088
+class E:\GitHub\tpl2\lib\lang.tp$Number mro $1096 $1056 methods $1104 $1072 $1080 $1088 $1112
+class E:\GitHub\tpl2\lib\lang.tp$Integer mro $1120 $1096 $1056 methods $1104 $1072 $1080 $1088 $1136 $1128
+class E:\GitHub\tpl2\tp\reflect.tp$A mro $1168 $1056 methods $1176 $1072 $1080 $1088 $1184
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__() $1064
+    push_fp
+    push          8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__del__() $1072
+    push_fp
+    push          8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.hash() $1080
+    push_fp
+    push          24
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      0
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object) $1088
+    push_fp
+    push          24
+    load          %0      $0
+    load          %1      $8
+    eqi           %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__new__() $1104
+    push_fp
+    push          8
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1064
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Integer.__new__(int) $1128
+    push_fp
+    push          24
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1104
+    load          %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Integer.intValue() $1136
+    push_fp
+    push          24
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\reflect.tp$A.__new__() $1176
+    push_fp
+    push          8
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1064
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\reflect.tp$A.foo(int) $1184
+    push_fp
+    push          24
+    require       println_int $16     %0      %1
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    invoke        $16
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\reflect.tp$t() $1192
+    push_fp
+    push          16
+    require       println_int $0      %0      %1
+    load          %0      $1224
+    iload         %1      $8
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    invoke        $0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\reflect.tp$t(int) $1200
+    push_fp
+    push          24
+    require       println_int $8      %0      %1
+    load          %0      $1240
+    iload         %1      $16
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    invoke        $8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\reflect.tp$main() $1208
+    push_fp
+    push          56
+    load          %0      $8
+    iload         %1      $0
+    store         %1      %0
+    require       malloc  $32     %0      %1
+    iload         %0      $8
+    iload         %1      $40
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $40
+    store_abs     %0      %1
+    iload         %0      24
+    set_ret       %0
+    invoke        $32
+    load          %0      $24
+    iload         %1      1168
+    store_abs     %0      %1
+    aload_sp      %0      $0
+    load          %1      $24
+    store_abs     %0      %1
+    call          $1176
+    load          %0      $24
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $1240
+    iload         %1      $48
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $48
+    store_abs     %0      %1
+    call          $1184
+    pull_fp
+    ret
+    stop
+
+entry
+    load          %0      $1216
+    iload         %1      $1032
+    store         %1      %0
+    load          %0      $1032
+    iload         %1      $1024
+    store         %1      %0
+    load          %0      $1224
+    iload         %1      $1048
+    store         %1      %0
+    load          %0      $1048
+    iload         %1      $1040
+    store         %1      %0
+    load          %0      $1216
+    iload         %1      $1160
+    store         %1      %0
+    load          %0      $1160
+    iload         %1      $1152
+    store         %1      %0
+    load          %0      $1152
+    iload         %1      $1144
+    store         %1      %0
+    aload         %0      $1
+    set_ret       %0
+    call          $1208
+    exit

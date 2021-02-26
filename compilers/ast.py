@@ -698,7 +698,7 @@ class NewExpr(UnaryExpr):
         req.compile(env, tpa)
         malloc_size = tpa.manager.allocate_stack(util.INT_LEN)
         tpa.assign_i(malloc_size, malloc_t.memory_length())
-        FunctionCall.call(malloc,  [(malloc_size, util.INT_LEN)], env, tpa, dst_addr, self.lf)
+        FunctionCall.call(malloc, [(malloc_size, util.INT_LEN)], env, tpa, dst_addr, self.lf)
 
         if (isinstance(self.value, FunctionCall) and
                 isinstance(t, typ.PointerType)):
@@ -731,11 +731,11 @@ class NewExpr(UnaryExpr):
         ea.insert(0, (inst_ptr_addr, util.PTR_LEN))
         FunctionCall.call_name(util.name_with_path(
             typ.function_poly_name("__new__", constructor_t.param_types, True), class_t.file_path, class_t),
-                               ea,
-                               tpa,
-                               0,
-                               self.lf,
-                               constructor_t)
+            ea,
+            tpa,
+            0,
+            self.lf,
+            constructor_t)
 
     def use_compile_to(self) -> bool:
         return use_compile_to
@@ -928,6 +928,7 @@ class DotExpr(BinaryExpr):
         """
         Compiles a method call, with mro resolved at runtime.
         """
+
         def inner_call(ct: typ.ClassType, right, generics):
             right: FunctionCall
             name = right.get_name()
@@ -958,21 +959,28 @@ class DotExpr(BinaryExpr):
     def compile_fixed_method_call(right_node, class_ptr_t, ins_ptr_addr, env: en.Environment, tpa: tp.TpaOutput, lf):
         """
         Compiles a method call, with mro resolved at compile time.
+
+        Note that if ins_ptr_addr == -1, it is a static method call.
+        For example, Object.hash(obj)
         """
+        is_method = ins_ptr_addr >= 0
         if isinstance(class_ptr_t, typ.PointerType):
             class_t = class_ptr_t.base
             if isinstance(class_t, typ.ClassType):
                 name = right_node.get_name()
                 arg_types = right_node.arg_types(env, tpa.manager)
-                arg_types.insert(0, None)  # insert a positional arg of 'this'
+                if is_method:
+                    arg_types.insert(0, None)  # insert a positional arg of 'this'
                 method_id, method_p, t = class_t.find_method(name, arg_types, lf)
                 if t.abstract:
                     raise errs.TplCompileError(f"Abstract method '{name}' cannot be called. ", lf)
-                full_name = util.name_with_path(typ.function_poly_name(name, arg_types, True),
-                                                t.defined_class.file_path, t.defined_class)
+                full_name = util.name_with_path(
+                    typ.function_poly_name(name, arg_types, method=True),  # do not modify 'method=True'
+                    t.defined_class.file_path, t.defined_class)
                 res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
-                ea = right_node.evaluate_args(t, env, tpa, is_method=True)
-                ea.insert(0, (ins_ptr_addr, util.PTR_LEN))
+                ea = right_node.evaluate_args(t, env, tpa, is_method=is_method)
+                if is_method:
+                    ea.insert(0, (ins_ptr_addr, util.PTR_LEN))
                 FunctionCall.call_name(full_name, ea, tpa, res_ptr, lf, t)
                 return res_ptr
         raise errs.TplCompileError("Cannot make method call. ", lf)
@@ -1007,6 +1015,9 @@ class DotExpr(BinaryExpr):
             return res_ptr
         elif isinstance(left_t, typ.ArrayType) and isinstance(right_node, NameNode):
             return DotExpr.array_attributes(left_node, env, tpa, right_node.name, lf)
+        elif isinstance(left_t, typ.ClassType):
+            if isinstance(right_node, FunctionCall):
+                return DotExpr.compile_fixed_method_call(right_node, typ.PointerType(left_t), -1, env, tpa, lf)
 
         raise errs.TplCompileError("Left side of dot must be a pointer to struct or an array. ", lf)
 
@@ -2640,11 +2651,16 @@ def ctf_array(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
                       env, tpa, dst_addr, args.lf)
 
 
+def ctf_get_function(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
+    print(args)
+
+
 COMPILE_TIME_FUNCTIONS = {
     typ.CompileTimeFunctionType("sizeof", typ.TYPE_INT): ctf_sizeof,
     typ.CompileTimeFunctionType("cprint", typ.TYPE_VOID): ctf_cprint,
     typ.CompileTimeFunctionType("cprintln", typ.TYPE_VOID): ctf_cprintln,
-    typ.CompileTimeFunctionType("array", typ.TYPE_VOID_PTR): ctf_array
+    typ.CompileTimeFunctionType("array", typ.TYPE_VOID_PTR): ctf_array,
+    typ.CompileTimeFunctionType("getfunc", typ.TYPE_VOID_PTR): ctf_get_function
 }
 
 

@@ -215,7 +215,7 @@ class MethodEnvironment(FunctionEnvironment):
 
 class ModuleEnvironment(MainAbstractEnvironment):
     def __init__(self, outer):
-        super().__init__(None)
+        super().__init__(outer)
 
         self.exports = None
 
