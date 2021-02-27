@@ -19,8 +19,9 @@ fn t(x: int) void {
 }
 
 fn main() void {
-    func := getfunc(t, int);
-    func(33);
     a := new A();
+    func: fn(*A, int) -> void = getfunc(A.foo, int);
+    func(a, 33);
+    //method := getmethod(A, )
     A.foo(a, 2);
 }

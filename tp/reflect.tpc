@@ -168,44 +168,47 @@ fn E:\GitHub\tpl2\tp\reflect.tp$t(int) $1200
 fn E:\GitHub\tpl2\tp\reflect.tp$main() $1208
     push_fp
     push          64
-    load          %0      $1200
-    iload         %1      $8
-    store         %1      %0
-    load          %0      $8
-    iload         %1      $0
-    store         %1      %0
-    load          %0      $1240
-    iload         %1      $16
-    store         %1      %0
-    aload_sp      %0      $0
-    load          %1      $16
-    store_abs     %0      %1
-    call          $0
-    require       malloc  $40     %0      %1
+    require       malloc  $16     %0      %1
     iload         %0      $8
-    iload         %1      $48
+    iload         %1      $24
     store         %1      %0
     aload_sp      %0      $0
-    load          %1      $48
+    load          %1      $24
     store_abs     %0      %1
-    iload         %0      32
+    iload         %0      8
     set_ret       %0
-    invoke        $40
-    load          %0      $32
+    invoke        $16
+    load          %0      $8
     iload         %1      1168
     store_abs     %0      %1
     aload_sp      %0      $0
-    load          %1      $32
+    load          %1      $8
     store_abs     %0      %1
     call          $1176
-    load          %0      $32
-    iload         %1      $24
+    load          %0      $8
+    iload         %1      $0
     store         %1      %0
+    load          %0      $1184
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $1240
+    iload         %1      $48
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $48
+    store_abs     %0      %1
+    call          $32
     load          %0      $1248
     iload         %1      $56
     store         %1      %0
     aload_sp      %0      $0
-    load          %1      $24
+    load          %1      $0
     store_abs     %0      %1
     aload_sp      %0      $8
     load          %1      $56

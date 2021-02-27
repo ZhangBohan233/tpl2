@@ -204,13 +204,13 @@ class FunctionPlacer(Type):
     def get_only(self):
         return self.poly.get_only()
 
-    def get_type_and_ptr_call(self, arg_types: list) -> (CallableType, int):
-        return find_closet_func(self.poly, arg_types, "fn", False, lambda poly_d, i: poly_d.keys[i])
+    def get_type_and_ptr_call(self, arg_types: list, lf) -> (CallableType, int):
+        return find_closet_func(self.poly, arg_types, "fn", False, lambda poly_d, i: poly_d.keys[i], lf)
 
-    def get_type_and_ptr_def(self, param_types: list) -> (CallableType, int):
+    def get_type_and_ptr_def(self, param_types: list, lf) -> (CallableType, int):
         t_addr = self.poly.get_entry_by(param_types, func_eq_params)
         if t_addr is None:
-            raise errs.TplEnvironmentError(f"Cannot resolve param {param_types}")
+            raise errs.TplEnvironmentError(f"Cannot resolve param {param_types}. ", lf)
         return t_addr
 
 
@@ -281,7 +281,7 @@ class ClassType(Type):
         if name in self.methods:
             poly: util.NaiveDict = self.methods[name]
             # res = poly.get_entry_by(arg_types, method_convertible_params)
-            return find_closet_func(poly, arg_types, name, True, lambda poly_d, i: poly_d.values[i][2])[1]
+            return find_closet_func(poly, arg_types, name, True, lambda poly_d, i: poly_d.values[i][2], lf)[1]
 
         raise errs.TplCompileError(f"Class {self.name} does not have method '{name}'. ", lf)
 
@@ -536,7 +536,7 @@ def type_distance(left_type, right_real_type):
 
 
 def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_method: bool,
-                     get_type_func) -> (FuncType, object):
+                     get_type_func, lf) -> (FuncType, object):
     """
     Returns the closet method.
 
@@ -547,6 +547,7 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
     :param name: the simple name of function
     :param is_method:
     :param get_type_func: a function that extract the function type from a unit in poly dict
+    :param lf:
     :return: anything that gets from the poly dict.
         usually (method_key_type, (method_id, method_ptr, method_type)) for method,
         (fn_type, (fn_type, fn_ptr)) for function
@@ -572,7 +573,8 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
                     break
             if match:
                 if sum_dt in matched:
-                    raise errs.TplCompileError(f"Ambiguous call: {function_poly_name(name, arg_types, is_method)}")
+                    raise errs.TplCompileError(
+                        f"Ambiguous call: {function_poly_name(name, arg_types, is_method)}. ", lf)
                 matched[sum_dt] = (fn_t, tup)
     min_dt = 65536
     min_tup = None
@@ -581,7 +583,7 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
             min_dt = dt
             min_tup = matched[dt]
     if min_tup is None:
-        raise errs.TplCompileError(f"Cannot resolve call: {function_poly_name(name, arg_types, is_method)}")
+        raise errs.TplCompileError(f"Cannot resolve call: {function_poly_name(name, arg_types, is_method)}. ", lf)
     return min_tup
 
 

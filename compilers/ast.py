@@ -1016,7 +1016,7 @@ class DotExpr(BinaryExpr):
         elif isinstance(left_t, typ.ArrayType) and isinstance(right_node, NameNode):
             return DotExpr.array_attributes(left_node, env, tpa, right_node.name, lf)
         elif isinstance(left_t, typ.ClassType):
-            if isinstance(right_node, FunctionCall):
+            if isinstance(right_node, FunctionCall):  # call via Class.method(obj, ...)
                 return DotExpr.compile_fixed_method_call(right_node, typ.PointerType(left_t), -1, env, tpa, lf)
 
         raise errs.TplCompileError("Left side of dot must be a pointer to struct or an array. ", lf)
@@ -1085,9 +1085,6 @@ class DotExpr(BinaryExpr):
                     if typ.is_generic(t.rtype):
                         return typ.replace_generic_with_real(t.rtype, struct_t.generics)
                     return t.rtype
-            # elif isinstance(right_node, IndexingExpr):
-            #     arr_t = DotExpr.dot_right_t(left_node, right_node.indexing_obj, env, manager, lf)
-            #     return right_node.get_eval_type(arr_t, env, manager)
         elif isinstance(left_t, typ.ArrayType) and isinstance(right_node, NameNode):
             return array_attribute_types(right_node.name, lf)
 
@@ -1665,7 +1662,7 @@ class FunctionCall(Expression):
 
         arg_types = self.arg_types(env, tpa.manager)
         if isinstance(placer, typ.FunctionPlacer):  # function defined by 'fn'
-            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types)
+            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, self.lf)
         elif isinstance(placer, typ.CallableType):  # function get by 'getfunc'
             func_type = placer
         else:
@@ -1693,7 +1690,7 @@ class FunctionCall(Expression):
 
         arg_types = self.arg_types(env, tpa.manager)
         if isinstance(placer, typ.FunctionPlacer):  # function defined by 'fn'
-            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types)
+            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, self.lf)
         elif isinstance(placer, typ.CallableType):  # function get by 'getfunc'
             func_type = placer
             func_ptr = self.call_obj.compile(env, tpa)
@@ -2692,32 +2689,34 @@ class CtfGetFunc(SpecialCtf):
     def __init__(self, args: Line):
         super().__init__(args)
 
-    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+    def get_func(self, env, manager) -> (typ.FuncType, int):
         if len(self.args) > 0:
-            name_node = self.args[0]
-            if isinstance(name_node, NameNode):
-                placer = env.get_type(name_node.name, self.args.lf)
-                if isinstance(placer, typ.FunctionPlacer):
-                    arg_types = []
-                    for i in range(1, len(self.args)):
-                        arg_types.append(self.args[i].evaluated_type(env, tpa.manager))
-                    t, addr = placer.get_type_and_ptr_call(arg_types)
-                    tpa.assign(dst_addr, addr)
-                    return
-        raise errs.TplCompileError(f"Cannot make call {self}. ", self.args.lf)
-
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager):
-        if len(self.args) > 0:
-            name_node = self.args[0]
-            if isinstance(name_node, NameNode):
-                placer = env.get_type(name_node.name, self.args.lf)
+            func_node = self.args[0]
+            if isinstance(func_node, NameNode):
+                placer = env.get_type(func_node.name, self.args.lf)
                 if isinstance(placer, typ.FunctionPlacer):
                     arg_types = []
                     for i in range(1, len(self.args)):
                         arg_types.append(self.args[i].evaluated_type(env, manager))
-                    t, addr = placer.get_type_and_ptr_call(arg_types)
-                    return t
+                    t, addr = placer.get_type_and_ptr_call(arg_types, self.args.lf)
+                    return t, addr
+            elif isinstance(func_node, DotExpr) and isinstance(func_node.right, NameNode):
+                class_t = func_node.left.evaluated_type(env, manager)
+                if isinstance(class_t, typ.ClassType):
+                    arg_types = [None]
+                    for i in range(1, len(self.args)):
+                        arg_types.append(self.args[i].evaluated_type(env, manager))
+                    method_id, method_ptr, method_t = class_t.find_method(func_node.right.name, arg_types, self.args.lf)
+                    return method_t, method_ptr
         raise errs.TplCompileError(f"Cannot make call {self}. ", self.args.lf)
+
+    def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
+        t, ptr = self.get_func(env, tpa.manager)
+        tpa.assign(dst_addr, ptr)
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager):
+        t, ptr = self.get_func(env, manager)
+        return t
 
     def __str__(self):
         return "getfunc(" + str(self.args) + ")"

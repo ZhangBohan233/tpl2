@@ -1,4 +1,9 @@
-﻿===== VERSION 2039 =====
+﻿===== VERSION 2040 =====
+2021/02/27
+
+* Improved 'getfunc' to get methods
+
+===== VERSION 2039 =====
 2021/02/27
 
 * Implemented reflective compile time function 'getfunc'
