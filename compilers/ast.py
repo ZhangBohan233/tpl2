@@ -459,10 +459,17 @@ class UnaryOperator(UnaryExpr):
         value = self.value.compile(env, tpa)
         if self.op_type == UNA_ARITH:
             if isinstance(vt, typ.PrimitiveType):
-                if vt.t_name == "int":
-                    res_addr = tpa.manager.allocate_stack(vt.length)
+                if vt == typ.TYPE_INT:
+                    res_addr = tpa.manager.allocate_stack(util.INT_LEN)
                     if self.op == "neg":
                         tpa.unary_arith("negi", value, res_addr)
+                    else:
+                        raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lf)
+                    return res_addr
+                elif vt == typ.TYPE_FLOAT:
+                    res_addr = tpa.manager.allocate_stack(util.FLOAT_LEN)
+                    if self.op == "neg":
+                        tpa.unary_arith("negf", value, res_addr)
                     else:
                         raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lf)
                     return res_addr
@@ -476,6 +483,7 @@ class UnaryOperator(UnaryExpr):
                 else:
                     raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lf)
                 return res_addr
+        raise errs.TplCompileError(f"Unsupported unary operator '{self.op}'")
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if self.op_type == UNA_ARITH:
@@ -542,7 +550,13 @@ class BinaryOperator(BinaryExpr):
                     int_int_to_int(self.op, left_addr, right_addr, dst_addr, tpa)
                     return
         elif self.op_type == BIN_BITWISE:
-            pass
+            lt = self.left.evaluated_type(env, tpa.manager)
+            rt = self.right.evaluated_type(env, tpa.manager)
+            left_addr = self.left.compile(env, tpa)
+            right_addr = self.right.compile(env, tpa)
+            if lt == typ.TYPE_INT and rt == typ.TYPE_INT:
+                int_int_to_int(self.op, left_addr, right_addr, dst_addr, tpa)
+                return
         elif self.op_type == BIN_LAZY:
             # x and y: if x then y else 0
             # x or y: if x then 1 else y
@@ -559,7 +573,7 @@ class BinaryOperator(BinaryExpr):
             ife.compile_to(env, tpa, dst_addr, dst_len)
             return
 
-        raise errs.TplCompileError("Unsupported binary operation. ", self.lf)
+        raise errs.TplCompileError(f"Unsupported binary operation {self.op}. ", self.lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if self.op_type == BIN_ARITH:
@@ -1681,7 +1695,7 @@ class FunctionCall(Expression):
             func_class = COMPILE_TIME_FUNCTIONS[placer]
             assert isinstance(func_class, type)
             func = func_class(self.args)
-            func_type = func.evaluated_type(env, tpa.manager)
+            # func_type = func.evaluated_type(env, tpa.manager)
             func.compile_to(env, tpa, dst_addr)
             return
         if isinstance(placer, typ.CompileTimeFunctionType):
@@ -1701,15 +1715,22 @@ class FunctionCall(Expression):
         FunctionCall.call(self.call_obj, evaluated_args, env, tpa, dst_addr, self.lf, func_type, func_ptr)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        func_type = self.call_obj.evaluated_type(env, manager)
-        if isinstance(func_type, typ.SpecialCtfType):
-            func = COMPILE_TIME_FUNCTIONS[func_type]
+        placer = self.call_obj.evaluated_type(env, manager)
+        if isinstance(placer, typ.SpecialCtfType):
+            func = COMPILE_TIME_FUNCTIONS[placer]
             assert isinstance(func, type)
             return func(self.args).evaluated_type(env, manager)
-        if isinstance(func_type, typ.CompileTimeFunctionType):
-            return func_type.rtype
-        if not isinstance(func_type, typ.CallableType):
-            raise errs.TplCompileError("Node {} not callable. ".format(self.call_obj), self.lf)
+        if isinstance(placer, typ.CompileTimeFunctionType):
+            return placer.rtype
+
+        arg_types = self.arg_types(env, manager)
+        if isinstance(placer, typ.FunctionPlacer):  # function defined by 'fn'
+            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, self.lf)
+        elif isinstance(placer, typ.CallableType):  # function get by 'getfunc'
+            func_type = placer
+        else:
+            raise errs.TplCompileError(f"Node '{self.call_obj}' not callable because it has type {placer}. ", self.lf)
+
         return func_type.rtype
 
     @staticmethod
@@ -1726,10 +1747,8 @@ class FunctionCall(Expression):
                 func_type, fn_ptr = placer.get_only()
 
             if isinstance(func_type, typ.FuncType):
-                # fn_ptr = env.get(call_obj.name, lf)
                 tpa.call_ptr_function(fn_ptr, evaluated_args, dst_addr, func_type.rtype.length)
             elif isinstance(func_type, typ.NativeFuncType):
-                # fn_ptr = env.get(call_obj.name, lf)
                 tpa.invoke_ptr(fn_ptr, evaluated_args, dst_addr, func_type.rtype.length)
             else:
                 raise errs.TplError("Unexpected error. ", lf)
@@ -1895,6 +1914,8 @@ class IfExpr(Expression):
         self.else_expr = else_expr
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        if self.condition is None or self.then_expr is None or self.else_expr is None:
+            raise errs.TplCompileError("Incomplete if-expr. ", self.lf)
         res_t = self.evaluated_type(env, tpa.manager)
         res_addr = tpa.manager.allocate_stack(res_t.memory_length())
         self.compile_to(env, tpa, res_addr, res_t.memory_length())
@@ -2509,6 +2530,15 @@ INT_LOGIC_TABLE = {
     "<=": "lei"
 }
 
+INT_BIT_TABLE = {
+    "<<": "lshift",
+    ">>": "rshift",
+    ">>>": "rshiftl",
+    "&": "and",
+    "|": "or",
+    "^": "xor"
+}
+
 FLOAT_ARITH_TABLE = {
     "+": "addf",
     "-": "subf",
@@ -2532,6 +2562,8 @@ def int_int_to_int(op: str, left_addr: int, right_addr: int, res_addr: int, tpa:
         op_inst = INT_ARITH_TABLE[op]
     elif op in INT_LOGIC_TABLE:
         op_inst = INT_LOGIC_TABLE[op]
+    elif op in INT_BIT_TABLE:
+        op_inst = INT_BIT_TABLE[op]
     else:
         raise errs.TplCompileError("No such binary operator '" + op + "'. ")
     tpa.binary_arith(op_inst, left_addr, right_addr, util.INT_LEN, util.INT_LEN, res_addr, util.INT_LEN)

@@ -1,4 +1,11 @@
-﻿===== VERSION 2040 =====
+﻿===== VERSION 2041 =====
+2021/03/01
+
+* Implemented bitwise binary operators: '<<', '>>', '>>>', '&', '|', '^'
+* Implemented float negation
+* Implemented some functions in math.tp
+
+===== VERSION 2040 =====
 2021/02/27
 
 * Improved 'getfunc' to get methods

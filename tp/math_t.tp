@@ -1,0 +1,10 @@
+﻿import math;
+
+require clock;
+
+fn main() void {
+    cprintln(sin(1));
+    cprintln(clock());
+    cprintln(random());
+    cprintln(isNaN(1.0 / 0.0));
+}

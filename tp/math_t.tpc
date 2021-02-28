@@ -1,0 +1,1005 @@
+bits
+64
+stack_size
+1024
+global_length
+352
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 105 87 20 139 10 191 5 64 24 45 68 84 251 33 9 64 57 157 82 162 70 223 145 63 248 193 99 26 220 165 76 64 0 1 0 0 0 0 0 0 21 0 0 0 0 0 0 0 32 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 239 57 250 254 66 46 230 63 2 0 0 0 0 0 0 0 0 0 0 0 0 0 240 63 15 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 100 0 0 0 0 0 0 0 0 128 0 0 0 0 0 0 4 0 0 0 0 0 0 0
+classes
+
+fn E:\GitHub\tpl2\lib\math.tp$abs(int) $1208
+    push_fp
+    push          40
+    load          %0      $1376
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $0
+    load          %1      $24
+    lti           %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    if_zero_goto  %0      ELSE_0
+    load          %0      $0
+    negi          %0
+    iload         %1      32
+    store         %1      %0
+    load          %0      $32
+    iload         %1      $8
+    store         %1      %0
+    goto          ENDIF_0
+    label         ELSE_0
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    label         ENDIF_0
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$abs(float) $1216
+    push_fp
+    push          48
+    load          %0      $1376
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    i_to_f        %0
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $0
+    load          %1      $32
+    ltf           %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    if_zero_goto  %0      ELSE_1
+    load          %0      $0
+    negf          %0
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      $8
+    store         %1      %0
+    goto          ENDIF_1
+    label         ELSE_1
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    label         ENDIF_1
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$isNaN(float) $1224
+    push_fp
+    push          16
+    load          %0      $0
+    load          %1      $0
+    nef           %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$logE(float) $1232
+    push_fp
+    push          16
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    invoke        $1040
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$log2(float) $1240
+    push_fp
+    push          24
+    load          %0      $1472
+    iload         %1      $16
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $0
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    call          $1256
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$log(float,float) $1248
+    push_fp
+    push          40
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    iload         %0      24
+    set_ret       %0
+    call          $1232
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    iload         %0      32
+    set_ret       %0
+    call          $1232
+    load          %0      $24
+    load          %1      $32
+    divf          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$log(int,float) $1256
+    push_fp
+    push          48
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    iload         %0      24
+    set_ret       %0
+    call          $1232
+    load          %0      $0
+    i_to_f        %0
+    iload         %1      $40
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $40
+    store_abs     %0      %1
+    iload         %0      32
+    set_ret       %0
+    call          $1232
+    load          %0      $24
+    load          %1      $32
+    divf          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$pow(int,int) $1264
+    push_fp
+    push          152
+    load          %0      $1376
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $8
+    load          %1      $24
+    eqi           %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    if_zero_goto  %0      ENDIF_2
+    load          %0      $1384
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    put_ret       %0
+    pull_fp
+    ret
+    label         ENDIF_2
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    iload         %0      48
+    set_ret       %0
+    call          $1208
+    load          %0      $48
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $1384
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $64
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $1376
+    iload         %1      $80
+    store         %1      %0
+    load          %0      $80
+    iload         %1      $72
+    store         %1      %0
+    label         LOOP_TITLE_0
+    load          %0      $72
+    load          %1      $40
+    lti           %0      %1
+    iload         %1      88
+    store         %1      %0
+    load          %0      $88
+    if_zero_goto  %0      END_LOOP_0
+    load          %0      $56
+    load          %1      $0
+    muli          %0      %1
+    iload         %1      96
+    store         %1      %0
+    load          %0      $96
+    iload         %1      $56
+    store         %1      %0
+    label         LABEL_0
+    load          %0      $72
+    iload         %1      $104
+    store         %1      %0
+    load          %0      $72
+    iload         %1      1
+    addi          %0      %1
+    iload         %1      72
+    store         %1      %0
+    goto          LOOP_TITLE_0
+    label         END_LOOP_0
+    load          %0      $1376
+    iload         %1      $128
+    store         %1      %0
+    load          %0      $8
+    load          %1      $128
+    gti           %0      %1
+    iload         %1      120
+    store         %1      %0
+    load          %0      $120
+    if_zero_goto  %0      ELSE_3
+    load          %0      $56
+    iload         %1      $112
+    store         %1      %0
+    goto          ENDIF_3
+    label         ELSE_3
+    load          %0      $1384
+    iload         %1      $144
+    store         %1      %0
+    load          %0      $144
+    load          %1      $56
+    divi          %0      %1
+    iload         %1      136
+    store         %1      %0
+    load          %0      $136
+    iload         %1      $112
+    store         %1      %0
+    label         ENDIF_3
+    load          %0      $112
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$pow(float,float) $1272
+    push_fp
+    push          272
+    load          %0      $1376
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    i_to_f        %0
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $8
+    load          %1      $32
+    eqf           %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    if_zero_goto  %0      ENDIF_4
+    load          %0      $1480
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $40
+    put_ret       %0
+    pull_fp
+    ret
+    label         ENDIF_4
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    iload         %0      56
+    set_ret       %0
+    call          $1216
+    load          %0      $56
+    iload         %1      $48
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    iload         %0      80
+    set_ret       %0
+    call          $1240
+    load          %0      $48
+    load          %1      $80
+    mulf          %0      %1
+    iload         %1      72
+    store         %1      %0
+    load          %0      $72
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $1480
+    iload         %1      $96
+    store         %1      %0
+    load          %0      $96
+    iload         %1      $88
+    store         %1      %0
+    load          %0      $64
+    iload         %1      $104
+    store         %1      %0
+    load          %0      $1192
+    iload         %1      $112
+    store         %1      %0
+    load          %0      $1384
+    iload         %1      $128
+    store         %1      %0
+    load          %0      $128
+    iload         %1      $120
+    store         %1      %0
+    load          %0      $1384
+    iload         %1      $144
+    store         %1      %0
+    load          %0      $144
+    iload         %1      $136
+    store         %1      %0
+    label         LOOP_TITLE_1
+    load          %0      $136
+    load          %1      $1128
+    lti           %0      %1
+    iload         %1      152
+    store         %1      %0
+    load          %0      $152
+    if_zero_goto  %0      END_LOOP_1
+    load          %0      $120
+    load          %1      $136
+    muli          %0      %1
+    iload         %1      160
+    store         %1      %0
+    load          %0      $160
+    iload         %1      $120
+    store         %1      %0
+    load          %0      $112
+    load          %1      $104
+    mulf          %0      %1
+    iload         %1      184
+    store         %1      %0
+    load          %0      $120
+    i_to_f        %0
+    iload         %1      $192
+    store         %1      %0
+    load          %0      $184
+    load          %1      $192
+    divf          %0      %1
+    iload         %1      176
+    store         %1      %0
+    load          %0      $88
+    load          %1      $176
+    addf          %0      %1
+    iload         %1      168
+    store         %1      %0
+    load          %0      $168
+    iload         %1      $88
+    store         %1      %0
+    load          %0      $104
+    load          %1      $64
+    mulf          %0      %1
+    iload         %1      200
+    store         %1      %0
+    load          %0      $200
+    iload         %1      $104
+    store         %1      %0
+    load          %0      $112
+    load          %1      $1192
+    mulf          %0      %1
+    iload         %1      208
+    store         %1      %0
+    load          %0      $208
+    iload         %1      $112
+    store         %1      %0
+    label         LABEL_1
+    load          %0      $136
+    iload         %1      $216
+    store         %1      %0
+    load          %0      $136
+    iload         %1      1
+    addi          %0      %1
+    iload         %1      136
+    store         %1      %0
+    goto          LOOP_TITLE_1
+    label         END_LOOP_1
+    load          %0      $1376
+    iload         %1      $240
+    store         %1      %0
+    load          %0      $240
+    i_to_f        %0
+    iload         %1      $248
+    store         %1      %0
+    load          %0      $8
+    load          %1      $248
+    gtf           %0      %1
+    iload         %1      232
+    store         %1      %0
+    load          %0      $232
+    if_zero_goto  %0      ELSE_5
+    load          %0      $88
+    iload         %1      $224
+    store         %1      %0
+    goto          ENDIF_5
+    label         ELSE_5
+    load          %0      $1480
+    iload         %1      $264
+    store         %1      %0
+    load          %0      $264
+    load          %1      $88
+    divf          %0      %1
+    iload         %1      256
+    store         %1      %0
+    load          %0      $256
+    iload         %1      $224
+    store         %1      %0
+    label         ENDIF_5
+    load          %0      $224
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$random() $1296
+    push_fp
+    push          176
+    load          %0      $1384
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $1488
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $24
+    load          %1      $32
+    lshift        %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $1384
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $16
+    load          %1      $40
+    subi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      $0
+    store         %1      %0
+    load          %0      $1496
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $56
+    iload         %1      $48
+    store         %1      %0
+    iload         %0      80
+    set_ret       %0
+    invoke        $1024
+    load          %0      $80
+    load          %1      $1280
+    addi          %0      %1
+    iload         %1      72
+    store         %1      %0
+    load          %0      $72
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $1376
+    iload         %1      $96
+    store         %1      %0
+    load          %0      $96
+    iload         %1      $88
+    store         %1      %0
+    label         LOOP_TITLE_2
+    load          %0      $1504
+    iload         %1      $112
+    store         %1      %0
+    load          %0      $88
+    load          %1      $112
+    lti           %0      %1
+    iload         %1      104
+    store         %1      %0
+    load          %0      $104
+    if_zero_goto  %0      END_LOOP_2
+    load          %0      $64
+    load          %1      $48
+    muli          %0      %1
+    iload         %1      128
+    store         %1      %0
+    load          %0      $128
+    load          %1      $0
+    modi          %0      %1
+    iload         %1      120
+    store         %1      %0
+    load          %0      $120
+    iload         %1      $64
+    store         %1      %0
+    label         LABEL_2
+    load          %0      $88
+    iload         %1      $136
+    store         %1      %0
+    load          %0      $88
+    iload         %1      1
+    addi          %0      %1
+    iload         %1      88
+    store         %1      %0
+    goto          LOOP_TITLE_2
+    label         END_LOOP_2
+    load          %0      $64
+    iload         %1      $1280
+    store         %1      %0
+    load          %0      $64
+    i_to_f        %0
+    iload         %1      $152
+    store         %1      %0
+    load          %0      $1512
+    iload         %1      $160
+    store         %1      %0
+    load          %0      $160
+    i_to_f        %0
+    iload         %1      $168
+    store         %1      %0
+    load          %0      $152
+    load          %1      $168
+    divf          %0      %1
+    iload         %1      144
+    store         %1      %0
+    load          %0      $144
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$randInt(int,int) $1304
+    push_fp
+    push          80
+    load          %0      $8
+    load          %1      $0
+    subi          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      $16
+    store         %1      %0
+    iload         %0      48
+    set_ret       %0
+    call          $1296
+    load          %0      $16
+    i_to_f        %0
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $48
+    load          %1      $56
+    mulf          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    f_to_i        %0
+    iload         %1      $72
+    store         %1      %0
+    load          %0      $72
+    load          %1      $0
+    addi          %0      %1
+    iload         %1      64
+    store         %1      %0
+    load          %0      $64
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$cos(float) $1312
+    push_fp
+    push          248
+    load          %0      $1384
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $0
+    load          %1      $0
+    mulf          %0      %1
+    iload         %1      32
+    store         %1      %0
+    load          %0      $32
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $1472
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $56
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $1472
+    iload         %1      $80
+    store         %1      %0
+    load          %0      $1144
+    load          %1      $80
+    muli          %0      %1
+    iload         %1      72
+    store         %1      %0
+    load          %0      $72
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $1480
+    iload         %1      $96
+    store         %1      %0
+    load          %0      $96
+    iload         %1      $88
+    store         %1      %0
+    load          %0      $1376
+    iload         %1      $112
+    store         %1      %0
+    load          %0      $112
+    iload         %1      $104
+    store         %1      %0
+    label         LOOP_TITLE_3
+    load          %0      $104
+    load          %1      $64
+    lti           %0      %1
+    iload         %1      120
+    store         %1      %0
+    load          %0      $120
+    if_zero_goto  %0      END_LOOP_3
+    load          %0      $8
+    negi          %0
+    iload         %1      128
+    store         %1      %0
+    load          %0      $128
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    i_to_f        %0
+    iload         %1      $160
+    store         %1      %0
+    load          %0      $160
+    load          %1      $40
+    mulf          %0      %1
+    iload         %1      152
+    store         %1      %0
+    load          %0      $48
+    i_to_f        %0
+    iload         %1      $168
+    store         %1      %0
+    load          %0      $152
+    load          %1      $168
+    divf          %0      %1
+    iload         %1      144
+    store         %1      %0
+    load          %0      $88
+    load          %1      $144
+    addf          %0      %1
+    iload         %1      136
+    store         %1      %0
+    load          %0      $136
+    iload         %1      $88
+    store         %1      %0
+    load          %0      $40
+    load          %1      $24
+    mulf          %0      %1
+    iload         %1      176
+    store         %1      %0
+    load          %0      $176
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $1496
+    iload         %1      $208
+    store         %1      %0
+    load          %0      $104
+    load          %1      $208
+    addi          %0      %1
+    iload         %1      200
+    store         %1      %0
+    load          %0      $1520
+    iload         %1      $224
+    store         %1      %0
+    load          %0      $104
+    load          %1      $224
+    addi          %0      %1
+    iload         %1      216
+    store         %1      %0
+    load          %0      $200
+    load          %1      $216
+    muli          %0      %1
+    iload         %1      192
+    store         %1      %0
+    load          %0      $48
+    load          %1      $192
+    muli          %0      %1
+    iload         %1      184
+    store         %1      %0
+    load          %0      $184
+    iload         %1      $48
+    store         %1      %0
+    label         LABEL_3
+    load          %0      $1472
+    iload         %1      $240
+    store         %1      %0
+    load          %0      $104
+    load          %1      $240
+    addi          %0      %1
+    iload         %1      232
+    store         %1      %0
+    load          %0      $232
+    iload         %1      $104
+    store         %1      %0
+    goto          LOOP_TITLE_3
+    label         END_LOOP_3
+    load          %0      $88
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$cos(int) $1320
+    push_fp
+    push          24
+    load          %0      $0
+    i_to_f        %0
+    iload         %1      $16
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    call          $1312
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$sin(float) $1328
+    push_fp
+    push          48
+    load          %0      $1472
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    i_to_f        %0
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $1064
+    load          %1      $40
+    divf          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    load          %1      $0
+    subf          %0      %1
+    iload         %1      16
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    call          $1312
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$sin(int) $1336
+    push_fp
+    push          24
+    load          %0      $0
+    i_to_f        %0
+    iload         %1      $16
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    call          $1328
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$tan(float) $1344
+    push_fp
+    push          32
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    iload         %0      16
+    set_ret       %0
+    call          $1328
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    iload         %0      24
+    set_ret       %0
+    call          $1312
+    load          %0      $16
+    load          %1      $24
+    divf          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\math.tp$tan(int) $1352
+    push_fp
+    push          24
+    load          %0      $0
+    i_to_f        %0
+    iload         %1      $16
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    call          $1344
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\math_t.tp$main() $1368
+    push_fp
+    push          80
+    require       println_float $0      %0      %1
+    load          %0      $1384
+    iload         %1      $16
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    call          $1336
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    invoke        $0
+    require       println_int $24     %0      %1
+    iload         %0      32
+    set_ret       %0
+    invoke        $1360
+    aload_sp      %0      $0
+    load          %1      $32
+    store_abs     %0      %1
+    invoke        $24
+    iload         %0      40
+    set_ret       %0
+    call          $1296
+    aload_sp      %0      $0
+    load          %1      $40
+    store_abs     %0      %1
+    invoke        $0
+    load          %0      $1480
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $1456
+    iload         %1      $72
+    store         %1      %0
+    load          %0      $64
+    load          %1      $72
+    divf          %0      %1
+    iload         %1      56
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $56
+    store_abs     %0      %1
+    iload         %0      48
+    set_ret       %0
+    call          $1224
+    aload_sp      %0      $0
+    load          %1      $48
+    store_abs     %0      %1
+    invoke        $24
+    pull_fp
+    ret
+    stop
+
+entry
+    require       clock   $1024   %0      %1
+    require       nat_cos $1032   %0      %1
+    require       nat_log $1040   %0      %1
+    load          %0      $1400
+    iload         %1      $1056
+    store         %1      %0
+    load          %0      $1056
+    iload         %1      $1048
+    store         %1      %0
+    load          %0      $1408
+    iload         %1      $1072
+    store         %1      %0
+    load          %0      $1072
+    iload         %1      $1064
+    store         %1      %0
+    load          %0      $1416
+    iload         %1      $1088
+    store         %1      %0
+    load          %0      $1088
+    iload         %1      $1080
+    store         %1      %0
+    load          %0      $1424
+    iload         %1      $1104
+    store         %1      %0
+    load          %0      $1104
+    iload         %1      $1096
+    store         %1      %0
+    load          %0      $1432
+    iload         %1      $1120
+    store         %1      %0
+    load          %0      $1120
+    iload         %1      $1112
+    store         %1      %0
+    load          %0      $1440
+    iload         %1      $1136
+    store         %1      %0
+    load          %0      $1136
+    iload         %1      $1128
+    store         %1      %0
+    load          %0      $1448
+    iload         %1      $1152
+    store         %1      %0
+    load          %0      $1152
+    iload         %1      $1144
+    store         %1      %0
+    load          %0      $1456
+    iload         %1      $1176
+    store         %1      %0
+    load          %0      $1456
+    iload         %1      $1184
+    store         %1      %0
+    load          %0      $1176
+    load          %1      $1184
+    divf          %0      %1
+    iload         %1      1168
+    store         %1      %0
+    load          %0      $1168
+    iload         %1      $1160
+    store         %1      %0
+    load          %0      $1464
+    iload         %1      $1200
+    store         %1      %0
+    load          %0      $1200
+    iload         %1      $1192
+    store         %1      %0
+    load          %0      $1376
+    iload         %1      $1288
+    store         %1      %0
+    load          %0      $1288
+    iload         %1      $1280
+    store         %1      %0
+    require       clock   $1360   %0      %1
+    aload         %0      $1
+    set_ret       %0
+    call          $1368
+    exit

@@ -59,6 +59,12 @@ INSTRUCTIONS = {
     "lei": (40, 1, 1),
     "negi": (41, 1),
     "not": (42, 1),
+    "lshift": (43, 1, 1),
+    "rshift": (44, 1, 1),  # arithmetic right shift, fill the first bit
+    "rshiftl": (45, 1, 1),  # logical right shift, fill 0
+    "and": (46, 1, 1),  # bitwise and
+    "or": (47, 1, 1),  # bitwise of
+    "xor": (48, 1, 1),  # bitwise xor
     "addf": (50, 1, 1),
     "subf": (51, 1, 1),
     "mulf": (52, 1, 1),

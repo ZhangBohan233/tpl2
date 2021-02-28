@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <locale.h>
+#include <math.h>
 #include "os_spec.h"
 #include "mem.h"
 #include "tvm.h"
@@ -14,9 +15,7 @@
 // Interrupt the vm if the code is not 0
 //
 // 0: No error
-// 1: Memory address error
-// 2: Native invoke error
-// 3: VM option error
+// Non-zero: defined in tvm.h
 
 const unsigned char SIGNATURE[] = "TPC_";
 
@@ -33,6 +32,8 @@ char *ERR_MSG = "";
 #define MEMORY_SIZE 16384
 #define RECURSION_LIMIT 1000
 #define CLASS_FIXED_HEADER (INT_LEN * 2)
+
+#define rshift_logical(val, n) ((tp_int) (int_fast64_t) ((uint_fast64_t) val >> n));
 
 tp_int stack_end;
 tp_int literal_end;
@@ -109,6 +110,10 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
 
 void nat_return_int(tp_int value) {
     int_to_bytes(MEMORY + ret_stack[ret_p--], value);
+}
+
+void nat_return_float(tp_float value) {
+    float_to_bytes(MEMORY + ret_stack[ret_p--], value);
 }
 
 void nat_return() {
@@ -390,6 +395,30 @@ void nat_heap_array() {
     pull_fp
 }
 
+void nat_cos() {
+    push_fp
+    push(FLOAT_LEN)
+
+    tp_float arg = bytes_to_float(MEMORY + true_addr(0));
+    tp_float res = (tp_float) cos(arg);
+
+    nat_return_float(res);
+
+    pull_fp
+}
+
+void nat_log() {
+    push_fp
+    push(FLOAT_LEN)
+
+    tp_float arg = bytes_to_float(MEMORY + true_addr(0));
+    tp_float res = (tp_float) log(arg);
+
+    nat_return_float(res);
+
+    pull_fp
+}
+
 void invoke(tp_int func_ptr) {
     tp_int func_id = bytes_to_int(MEMORY + func_ptr);
     switch (func_id) {
@@ -428,6 +457,12 @@ void invoke(tp_int func_ptr) {
             break;
         case 12:  // heap_array
             nat_heap_array();
+            break;
+        case 13:  // nat_cos
+            nat_cos();
+            break;
+        case 14:  // nat_log
+            nat_log();
             break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;
@@ -641,6 +676,36 @@ void tvm_mainloop() {
                 reg1 = MEMORY[pc++];
                 regs[reg1].int_value = !regs[reg1].int_value;
                 break;
+            case 43:  // lshift
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value << regs[reg2].int_value;
+                break;
+            case 44:  // rshift
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value >> regs[reg2].int_value;
+                break;
+            case 45:  // rshiftl
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = rshift_logical(regs[reg1].int_value, regs[reg2].int_value);
+                break;
+            case 46:  // bit and
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value & regs[reg2].int_value;
+                break;
+            case 47:  // bit or
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value | regs[reg2].int_value;
+                break;
+            case 48:  // bit xor
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value ^ regs[reg2].int_value;
+                break;
             case 50:  // addf
                 reg1 = MEMORY[pc++];
                 reg2 = MEMORY[pc++];
@@ -780,10 +845,11 @@ void tvm_mainloop() {
                     if (regs[reg1].int_value ==
                         bytes_to_int(MEMORY +
                                      true_addr(bytes_to_int(MEMORY +  // class ptr address
-                                                            true_addr(regs[reg2].int_value +  // addr of class ptr in mro
-                                                                      CLASS_FIXED_HEADER +
-                                                                      regs[reg4].int_value *
-                                                                      INT_LEN))))) {
+                                                            true_addr(
+                                                                    regs[reg2].int_value +  // addr of class ptr in mro
+                                                                    CLASS_FIXED_HEADER +
+                                                                    regs[reg4].int_value *
+                                                                    INT_LEN))))) {
                         regs[reg1].int_value = 1;
                         goto FOUND_CLASS;
                     }

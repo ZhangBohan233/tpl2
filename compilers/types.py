@@ -59,6 +59,9 @@ class Type:
     def is_void(self):
         return self.length == 0
 
+    def __str__(self):
+        return "Type of length " + str(self.length)
+
     def __repr__(self):
         return self.__str__()
 
@@ -86,9 +89,6 @@ class PrimitiveType(Type):
 
     def __str__(self):
         return self.t_name
-
-    def __repr__(self):
-        return self.__str__()
 
 
 class PointerType(Type):
@@ -123,9 +123,6 @@ class PointerType(Type):
 
     def __str__(self):
         return "*" + str(self.base)
-
-    def __repr__(self):
-        return self.__str__()
 
 
 class CompileTimeFunctionType(Type):
@@ -212,6 +209,9 @@ class FunctionPlacer(Type):
         if t_addr is None:
             raise errs.TplEnvironmentError(f"Cannot resolve param {param_types}. ", lf)
         return t_addr
+
+    def __str__(self):
+        return "FunctionPlacer:" + str(self.poly)
 
 
 class MethodType(FuncType):
@@ -611,5 +611,7 @@ NATIVE_FUNCTIONS = {
     "println_str": (9, NativeFuncType([TYPE_CHAR_ARR], TYPE_VOID)),
     "malloc": (10, NativeFuncType([TYPE_INT], TYPE_VOID_PTR)),
     "free": (11, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID)),
-    "heap_array": (12, NativeFuncType([TYPE_INT, ArrayType(TYPE_INT)], TYPE_VOID_PTR))
+    "heap_array": (12, NativeFuncType([TYPE_INT, ArrayType(TYPE_INT)], TYPE_VOID_PTR)),
+    "nat_cos": (13, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT)),
+    "nat_log": (14, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT))
 }

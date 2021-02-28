@@ -13,6 +13,8 @@
 #define ERR_HEAP_COLLISION 4
 #define ERR_INSTRUCTION 5
 #define ERR_MEMORY_OUT 6
+#define ERR_SEGMENT 7
+#define ERR_NULL_POINTER 8
 
 void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_argv);
 
