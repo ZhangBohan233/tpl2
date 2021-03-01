@@ -36,7 +36,7 @@
 * ~~Templates and generics~~ Done
 * ~~Templates extension~~ Partially done
 * ~~super~~ Done
-* ~~Auto add parameter 'this'~~ Discarded
+* ~~Auto add parameter 'this'~~ Done
 * ~~instanceof~~ Done
 * ~~abstract class and abstract method~~ Done
 * ~~const method~~ Done
@@ -45,8 +45,8 @@
 * Annotations
 
 #### Phase 4
-* Auto detect super call
+* ~~Auto detect super call~~ Done
 * ~~Duplicate require removal~~ Already done
 * ~~Function polymorphism~~ Done
 * ~~Call method via Class.method()~~ Done
-* Reflection: getfunc
+* ~~Reflection: getfunc~~ Done
