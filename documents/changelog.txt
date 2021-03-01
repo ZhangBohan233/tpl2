@@ -1,4 +1,9 @@
-﻿===== VERSION 2042 =====
+﻿===== VERSION 2043 =====
+2021/03/02
+
+* Lazy class body evaluation
+
+===== VERSION 2042 =====
 2021/03/02
 
 * Automatically inserts param 'this' to methods, if they do not have
