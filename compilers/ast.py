@@ -1437,153 +1437,146 @@ class ClassStmt(Statement):
 
         env.define_const_set(self.name, class_type, class_ptr, self.lf)
 
-        tpa.manager.add_class(class_type)
+        class_wrapper = ClassObject(class_type, self.body, self.abstract, class_env, tpa, self.lf)
+        tpa.manager.add_class(class_wrapper)
 
-        method_defs = []
-        if len(mro) == 1:  # Object itself
-            pos = util.INT_LEN
-        else:
-            pos = mro[1].memory_length()
-            for m_name in mro[1].methods:
-                class_type.methods[m_name] = mro[1].methods[m_name].copy()
-            class_type.method_rank.extend(mro[1].method_rank)
+        # method_defs = []
+        # if len(mro) == 1:  # Object itself
+        #     pos = util.INT_LEN
+        # else:
+        #     pos = mro[1].memory_length()
+        #     for m_name in mro[1].methods:
+        #         class_type.methods[m_name] = mro[1].methods[m_name].copy()
+        #     class_type.method_rank.extend(mro[1].method_rank)
+        #
+        # # the class pointer
+        # class_type.fields["__class__"] = 0, typ.TYPE_INT
+        #
+        # for line in self.body:
+        #     for part in line:
+        #         if isinstance(part, Declaration):
+        #             name = part.get_name()
+        #             if class_type.has_field(name):
+        #                 raise errs.TplCompileError(f"Name '{name}' already defined in class '{self.name}'. ", self.lf)
+        #             t = part.right.definition_type(class_env, tpa.manager)
+        #             class_type.fields[name] = pos, t
+        #             pos += t.memory_length()
+        #         elif isinstance(part, FunctionDef):
+        #             part.parent_class = class_type
+        #             method_defs.append(part)
+        #         else:
+        #             raise errs.TplCompileError(
+        #                 f"Class body should only contain attributes and methods, but got a '{part}'. ", self.lf)
+        #
+        # class_type.length = pos
 
-        # the class pointer
-        class_type.fields["__class__"] = 0, typ.TYPE_INT
-
-        for line in self.body:
-            for part in line:
-                if isinstance(part, Declaration):
-                    name = part.get_name()
-                    if class_type.has_field(name):
-                        raise errs.TplCompileError(f"Name '{name}' already defined in class '{self.name}'. ", self.lf)
-                    t = part.right.definition_type(class_env, tpa.manager)
-                    class_type.fields[name] = pos, t
-                    pos += t.memory_length()
-                elif isinstance(part, FunctionDef):
-                    part.parent_class = class_type
-                    method_defs.append(part)
-                else:
-                    raise errs.TplCompileError(
-                        f"Class body should only contain attributes and methods, but got a '{part}'. ", self.lf)
-
-        class_type.length = pos
-
-        # check if there is a constructor
-        self.add_constructor_if_none(method_defs, class_type)
-
-        # update methods
-        method_id = len(class_type.method_rank)  # id of method in this class
-        for method_def in method_defs:
-            # check method params and content
-            self.check_method_def(method_def, class_type, env, tpa.manager)
-
-            method_def.compile(class_env, tpa)
-            name = method_def.get_simple_name()
-            placer: typ.FunctionPlacer = class_env.get_type(name, self.lf)
-            method_t = method_def.evaluated_type(env, tpa.manager)
-            method_ptr = placer.poly[method_t]
-            # method_ptr = class_env.get(name, self.lf)
-            # method_t = class_env.get_type(name, self.lf)
-            if not isinstance(method_t, typ.MethodType):
-                raise errs.TplCompileError("Unexpected method. ", self.lf)
-
-            if not self.abstract and method_t.abstract:
-                raise errs.TplCompileError(
-                    f"Class '{self.name}' is not abstract, but has abstract method '{name}'. ", method_def.lf
-                )
-
-            if name in class_type.methods:
-                if method_t in class_type.methods[name]:  # overriding
-                    m_pos, m_ptr, m_t = class_type.methods[name][method_t]
-                    # print(f"class {self.name} overrides method {name} at {m_ptr}, new ptr {method_ptr}")
-                    if name != "__new__" and not method_t.strong_convertible(m_t):
-                        # print(method_t.param_types[0].base)
-                        # print(m_t.param_types[0])
-                        raise errs.TplCompileError(
-                            f"Method '{name}' in class '{self.name}' overrides its super method in class '{mro[1].name}', "
-                            f"but has incompatible parameter or return type. ", method_def.lf)
-                    if m_t.const:
-                        raise errs.TplCompileError(
-                            f"Method '{name}' is const, which cannot be overridden. ", method_def.lf
-                        )
-                    class_type.methods[name][method_t] = m_pos, method_ptr, method_t
-                else:  # polymorphism
-                    poly: util.NaiveDict = class_type.methods[name]
-                    class_type.method_rank.append((name, method_t))
-                    poly[method_t] = method_id, method_ptr, method_t
-                    method_id += 1
-            else:
-                class_type.method_rank.append((name, method_t))
-                poly = util.NaiveDict(typ.params_eq_methods)
-                poly[method_t] = method_id, method_ptr, method_t
-                class_type.methods[name] = poly
-                # class_type.methods[name] = method_id, method_ptr, method_t
-                method_id += 1
-
-        # # check if all abstract methods are overridden
-        if not self.abstract:
-            for poly in class_type.methods.values():
-                for method_id, method_ptr, method_t in poly.values:
-                    if method_t.abstract:
-                        raise errs.TplCompileError(
-                            f"Class '{self.name}' does not override all abstract methods of its superclasses. ",
-                            self.lf
-                        )
-
-    def check_method_def(self, method: FunctionDef, class_type: typ.ClassType, env, manager):
-        insert_this = True
-        if len(method.params) > 0:
-            first_param = method.params[0]
-            if isinstance(first_param, Declaration) and \
-                    isinstance(first_param.left, NameNode) and \
-                    first_param.left.name == "this":
-                this_t = first_param.right.definition_type(env, manager)
-                if not isinstance(this_t, typ.PointerType) or this_t.base != class_type:
-                    raise errs.TplCompileError("Parameter 'this' must be *" + class_type.name + ". ", self.lf)
-                insert_this = False
-        if insert_this:
-            dec = Declaration(VAR_CONST, method.lf)
-            dec.left = NameNode("this", method.lf)
-            dec.right = StarExpr(method.lf)
-            dec.right.value = NameNode(class_type.name, method.lf)
-            method.params.parts.insert(0, dec)
-
-        if class_type.name != "Object" and method.get_simple_name() == "__new__":
-            insert_super = True
-            first_stmt = method.body.get_first_content()
-            # print(first_stmt)
-            if first_stmt is not None:
-                if isinstance(first_stmt, DotExpr) and \
-                        isinstance(first_stmt.left, SuperExpr) and \
-                        isinstance(first_stmt.right, FunctionCall) and \
-                        isinstance(first_stmt.right.call_obj, NameNode) and \
-                        first_stmt.right.call_obj.name == "__new__":
-                    insert_super = False
-            if insert_super:
-                dot = DotExpr(method.lf)
-                dot.left = SuperExpr(method.lf)
-                dot.right = FunctionCall(NameNode("__new__", method.lf), Line(method.lf), method.lf)
-                method.body.lines.insert(0, Line(method.lf, dot))
-
-    def add_constructor_if_none(self, method_defs: [FunctionDef], class_type: typ.ClassType):
-        no_constructor = len(list(filter(lambda fd: fd.get_simple_name() == "__new__", method_defs))) == 0
-        if no_constructor:
-            const = FunctionDef(NameNode("__new__", self.lf),
-                                Line(self.lf),
-                                NameNode("void", self.lf),
-                                False,
-                                False,
-                                BlockStmt(self.lf),
-                                self.lf)
-            const.parent_class = class_type
-            method_defs.append(const)
-
-    def __str__(self):
-        if self.template_nodes is None:
-            return f"Class {self.name} ({self.extensions}) {self.body}"
-        else:
-            return f"Class {self.name}<{self.template_nodes}> ({self.extensions}) {self.body}"
+    #     # check if there is a constructor
+    #     self.add_constructor_if_none(method_defs, class_type)
+    #
+    #     # update methods
+    #     method_id = len(class_type.method_rank)  # id of method in this class
+    #     for method_def in method_defs:
+    #         # check method params and content
+    #         self.check_method_def(method_def, class_type, env, tpa.manager)
+    #
+    #         method_def.compile(class_env, tpa)
+    #         name = method_def.get_simple_name()
+    #         placer: typ.FunctionPlacer = class_env.get_type(name, self.lf)
+    #         method_t = method_def.evaluated_type(env, tpa.manager)
+    #         method_ptr = placer.poly[method_t]
+    #         if not isinstance(method_t, typ.MethodType):
+    #             raise errs.TplCompileError("Unexpected method. ", self.lf)
+    #
+    #         if not self.abstract and method_t.abstract:
+    #             raise errs.TplCompileError(
+    #                 f"Class '{self.name}' is not abstract, but has abstract method '{name}'. ", method_def.lf
+    #             )
+    #
+    #         if name in class_type.methods:
+    #             if method_t in class_type.methods[name]:  # overriding
+    #                 m_pos, m_ptr, m_t = class_type.methods[name][method_t]
+    #                 # print(f"class {self.name} overrides method {name} at {m_ptr}, new ptr {method_ptr}")
+    #                 if name != "__new__" and not method_t.strong_convertible(m_t):
+    #                     # print(method_t.param_types[0].base)
+    #                     # print(m_t.param_types[0])
+    #                     raise errs.TplCompileError(
+    #                         f"Method '{name}' in class '{self.name}' overrides its super method in class '{mro[1].name}', "
+    #                         f"but has incompatible parameter or return type. ", method_def.lf)
+    #                 if m_t.const:
+    #                     raise errs.TplCompileError(
+    #                         f"Method '{name}' is const, which cannot be overridden. ", method_def.lf
+    #                     )
+    #                 class_type.methods[name][method_t] = m_pos, method_ptr, method_t
+    #             else:  # polymorphism
+    #                 poly: util.NaiveDict = class_type.methods[name]
+    #                 class_type.method_rank.append((name, method_t))
+    #                 poly[method_t] = method_id, method_ptr, method_t
+    #                 method_id += 1
+    #         else:
+    #             class_type.method_rank.append((name, method_t))
+    #             poly = util.NaiveDict(typ.params_eq_methods)
+    #             poly[method_t] = method_id, method_ptr, method_t
+    #             class_type.methods[name] = poly
+    #             # class_type.methods[name] = method_id, method_ptr, method_t
+    #             method_id += 1
+    #
+    #     # # check if all abstract methods are overridden
+    #     if not self.abstract:
+    #         for poly in class_type.methods.values():
+    #             for method_id, method_ptr, method_t in poly.values:
+    #                 if method_t.abstract:
+    #                     raise errs.TplCompileError(
+    #                         f"Class '{self.name}' does not override all abstract methods of its superclasses. ",
+    #                         self.lf
+    #                     )
+    #
+    # def check_method_def(self, method: FunctionDef, class_type: typ.ClassType, env, manager):
+    #     insert_this = True
+    #     if len(method.params) > 0:
+    #         first_param = method.params[0]
+    #         if isinstance(first_param, Declaration) and \
+    #                 isinstance(first_param.left, NameNode) and \
+    #                 first_param.left.name == "this":
+    #             this_t = first_param.right.definition_type(env, manager)
+    #             if not isinstance(this_t, typ.PointerType) or this_t.base != class_type:
+    #                 raise errs.TplCompileError("Parameter 'this' must be *" + class_type.name + ". ", self.lf)
+    #             insert_this = False
+    #     if insert_this:
+    #         dec = Declaration(VAR_CONST, method.lf)
+    #         dec.left = NameNode("this", method.lf)
+    #         dec.right = StarExpr(method.lf)
+    #         dec.right.value = NameNode(class_type.name, method.lf)
+    #         method.params.parts.insert(0, dec)
+    #
+    #     if class_type.name != "Object" and method.get_simple_name() == "__new__":
+    #         insert_super = True
+    #         first_stmt = method.body.get_first_content()
+    #         # print(first_stmt)
+    #         if first_stmt is not None:
+    #             if isinstance(first_stmt, DotExpr) and \
+    #                     isinstance(first_stmt.left, SuperExpr) and \
+    #                     isinstance(first_stmt.right, FunctionCall) and \
+    #                     isinstance(first_stmt.right.call_obj, NameNode) and \
+    #                     first_stmt.right.call_obj.name == "__new__":
+    #                 insert_super = False
+    #         if insert_super:
+    #             dot = DotExpr(method.lf)
+    #             dot.left = SuperExpr(method.lf)
+    #             dot.right = FunctionCall(NameNode("__new__", method.lf), Line(method.lf), method.lf)
+    #             method.body.lines.insert(0, Line(method.lf, dot))
+    #
+    # def add_constructor_if_none(self, method_defs: [FunctionDef], class_type: typ.ClassType):
+    #     no_constructor = len(list(filter(lambda fd: fd.get_simple_name() == "__new__", method_defs))) == 0
+    #     if no_constructor:
+    #         const = FunctionDef(NameNode("__new__", self.lf),
+    #                             Line(self.lf),
+    #                             NameNode("void", self.lf),
+    #                             False,
+    #                             False,
+    #                             BlockStmt(self.lf),
+    #                             self.lf)
+    #         const.parent_class = class_type
+    #         method_defs.append(const)
 
     def make_mro(self, class_type: typ.ClassType):
         def lin(ct: typ.ClassType):
@@ -1625,6 +1618,12 @@ class ClassStmt(Statement):
             return out
 
         return lin(class_type)
+
+    def __str__(self):
+        if self.template_nodes is None:
+            return f"Class {self.name} ({self.extensions}) {self.body}"
+        else:
+            return f"Class {self.name}<{self.template_nodes}> ({self.extensions}) {self.body}"
 
 
 class SuperExpr(Statement):
@@ -2546,10 +2545,6 @@ class FunctionObject:
                 param_types.append(pt)
                 param.compile(scope, body_out)
 
-        # func_type = typ.FuncType(param_types, rtype)
-        # func_type = self.evaluated_type(env, tpa.manager)
-        # env.define_function(str_name, func_type, fn_ptr, self.lf)
-
         if self.body is not None:
             # check return
             complete_return = self.body.return_check()
@@ -2574,6 +2569,173 @@ class FunctionObject:
         body_out.local_generate()
 
         return body_out.result()
+
+
+class ClassObject:
+    def __init__(self, class_type: typ.ClassType, body, abstract: bool,
+                 class_env: en.ClassEnvironment, tpa, lf):
+        self.class_type = class_type
+        self.body = body
+        self.abstract = abstract
+        self.class_env = class_env
+        self.tpa = tpa
+        self.lf = lf
+
+        self.local_method_full_names = []
+
+    def compile(self):
+        mro = self.class_type.mro
+
+        method_defs = []
+        if len(mro) == 1:  # Object itself
+            pos = util.INT_LEN
+        else:
+            pos = mro[1].memory_length()
+            for m_name in mro[1].methods:
+                self.class_type.methods[m_name] = mro[1].methods[m_name].copy()
+            self.class_type.method_rank.extend(mro[1].method_rank)
+
+        # the class pointer
+        self.class_type.fields["__class__"] = 0, typ.TYPE_INT
+
+        for line in self.body:
+            for part in line:
+                if isinstance(part, Declaration):
+                    name = part.get_name()
+                    if self.class_type.has_field(name):
+                        raise errs.TplCompileError(
+                            f"Name '{name}' already defined in class '{self.class_type.name}'. ", self.lf)
+                    t = part.right.definition_type(self.class_env, self.tpa.manager)
+                    self.class_type.fields[name] = pos, t
+                    pos += t.memory_length()
+                elif isinstance(part, FunctionDef):
+                    part.parent_class = self.class_type
+                    method_defs.append(part)
+                else:
+                    raise errs.TplCompileError(
+                        f"Class body should only contain attributes and methods, but got a '{part}'. ", self.lf)
+
+        self.class_type.length = pos
+
+        # check if there is a constructor
+        self.add_constructor_if_none(method_defs, self.class_type)
+
+        # update methods
+        method_id = len(self.class_type.method_rank)  # id of method in this class
+        for method_def in method_defs:
+            # check method params and content
+            self.check_method_def(method_def, self.class_type, self.class_env.outer, self.tpa.manager)
+
+            method_def.compile(self.class_env, self.tpa)
+            name = method_def.get_simple_name()
+
+            placer: typ.FunctionPlacer = self.class_env.get_type(name, self.lf)
+            method_t = method_def.evaluated_type(self.class_env.outer, self.tpa.manager)
+            method_ptr = placer.poly[method_t]
+
+            self.local_method_full_names.append(
+                util.name_with_path(
+                    typ.function_poly_name(name, method_t.param_types, True),
+                    self.class_type.file_path,
+                    self.class_type
+                ))
+            # method_ptr = class_env.get(name, self.lf)
+            # method_t = class_env.get_type(name, self.lf)
+            if not isinstance(method_t, typ.MethodType):
+                raise errs.TplCompileError("Unexpected method. ", self.lf)
+
+            if not self.abstract and method_t.abstract:
+                raise errs.TplCompileError(
+                    f"Class '{self.class_type.name}' is not abstract, but has abstract method '{name}'. ", method_def.lf
+                )
+
+            if name in self.class_type.methods:
+                if method_t in self.class_type.methods[name]:  # overriding
+                    m_pos, m_ptr, m_t = self.class_type.methods[name][method_t]
+                    # print(f"class {self.name} overrides method {name} at {m_ptr}, new ptr {method_ptr}")
+                    if name != "__new__" and not method_t.strong_convertible(m_t):
+                        # print(method_t.param_types[0].base)
+                        # print(m_t.param_types[0])
+                        raise errs.TplCompileError(
+                            f"Method '{name}' in class '{self.class_type.name}' "
+                            f"overrides its super method in class '{self.class_type.mro[1].name}', "
+                            f"but has incompatible parameter or return type. ", method_def.lf)
+                    if m_t.const:
+                        raise errs.TplCompileError(
+                            f"Method '{name}' is const, which cannot be overridden. ", method_def.lf
+                        )
+                    self.class_type.methods[name][method_t] = m_pos, method_ptr, method_t
+                else:  # polymorphism
+                    poly: util.NaiveDict = self.class_type.methods[name]
+                    self.class_type.method_rank.append((name, method_t))
+                    poly[method_t] = method_id, method_ptr, method_t
+                    method_id += 1
+            else:
+                self.class_type.method_rank.append((name, method_t))
+                poly = util.NaiveDict(typ.params_eq_methods)
+                poly[method_t] = method_id, method_ptr, method_t
+                self.class_type.methods[name] = poly
+                # class_type.methods[name] = method_id, method_ptr, method_t
+                method_id += 1
+
+        # # check if all abstract methods are overridden
+        if not self.abstract:
+            for poly in self.class_type.methods.values():
+                for method_id, method_ptr, method_t in poly.values:
+                    if method_t.abstract:
+                        raise errs.TplCompileError(
+                            f"Class '{self.class_type.name}' "
+                            f"does not override all abstract methods of its superclasses. ",
+                            self.lf
+                        )
+
+    def check_method_def(self, method: FunctionDef, class_type: typ.ClassType, env, manager):
+        insert_this = True
+        if len(method.params) > 0:
+            first_param = method.params[0]
+            if isinstance(first_param, Declaration) and \
+                    isinstance(first_param.left, NameNode) and \
+                    first_param.left.name == "this":
+                this_t = first_param.right.definition_type(env, manager)
+                if not isinstance(this_t, typ.PointerType) or this_t.base != class_type:
+                    raise errs.TplCompileError("Parameter 'this' must be *" + class_type.name + ". ", self.lf)
+                insert_this = False
+        if insert_this:
+            dec = Declaration(VAR_CONST, method.lf)
+            dec.left = NameNode("this", method.lf)
+            dec.right = StarExpr(method.lf)
+            dec.right.value = NameNode(class_type.name, method.lf)
+            method.params.parts.insert(0, dec)
+
+        if class_type.name != "Object" and method.get_simple_name() == "__new__":
+            insert_super = True
+            first_stmt = method.body.get_first_content()
+            # print(first_stmt)
+            if first_stmt is not None:
+                if isinstance(first_stmt, DotExpr) and \
+                        isinstance(first_stmt.left, SuperExpr) and \
+                        isinstance(first_stmt.right, FunctionCall) and \
+                        isinstance(first_stmt.right.call_obj, NameNode) and \
+                        first_stmt.right.call_obj.name == "__new__":
+                    insert_super = False
+            if insert_super:
+                dot = DotExpr(method.lf)
+                dot.left = SuperExpr(method.lf)
+                dot.right = FunctionCall(NameNode("__new__", method.lf), Line(method.lf), method.lf)
+                method.body.lines.insert(0, Line(method.lf, dot))
+
+    def add_constructor_if_none(self, method_defs: [FunctionDef], class_type: typ.ClassType):
+        no_constructor = len(list(filter(lambda fd: fd.get_simple_name() == "__new__", method_defs))) == 0
+        if no_constructor:
+            const = FunctionDef(NameNode("__new__", self.lf),
+                                Line(self.lf),
+                                NameNode("void", self.lf),
+                                False,
+                                False,
+                                BlockStmt(self.lf),
+                                self.lf)
+            const.parent_class = class_type
+            method_defs.append(const)
 
 
 INT_ARITH_TABLE = {

@@ -111,7 +111,8 @@ class Manager:
         self.gp = util.STACK_SIZE
         self.sp = util.INT_LEN + 1
         self.functions_map = {}
-        self.class_headers = []  # class type
+        self.class_headers = []  # class object
+        self.class_func_order = []
         self.label_manager = LabelManager()
 
     def allocate_stack(self, length):
@@ -144,10 +145,15 @@ class Manager:
             self.available_regs.append(reg)
 
     def map_function(self, name: str, file_path, function_object):
-        self.functions_map[util.name_with_path(name, file_path, function_object.parent_class)] = function_object
+        full_name = util.name_with_path(name, file_path, function_object.parent_class)
+        self.functions_map[full_name] = function_object
+        self.class_func_order.append((full_name, 0))
 
-    def add_class(self, class_type: typ.ClassType):
-        self.class_headers.append(class_type)
+    def add_class(self, class_object):
+        ct = class_object.class_type
+        full_name = util.class_name_with_path(ct.name, ct.file_path)
+        self.class_headers.append(class_object)
+        self.class_func_order.append((full_name, 1))
 
     def global_length(self):
         return self.gp - util.STACK_SIZE
@@ -158,9 +164,6 @@ class TpaOutput:
         self.manager: Manager = manager
         self.is_global = is_global
         self.output = ["entry"] if is_global else []
-
-    def add_class(self):
-        pass
 
     def add_function(self, name, file_path, fn_ptr, clazz):
         self.output.append("fn " + util.name_with_path(name, file_path, clazz) + " " + address(fn_ptr))
@@ -549,6 +552,8 @@ class TpaOutput:
             self.local_generate()
 
     def _global_generate(self, main_file_path, main_has_arg):
+        # print(self.manager.class_func_order)
+
         literal_str = " ".join([str(int(b)) for b in self.manager.literal])
         merged = ["bits", str(util.VM_BITS),
                   "stack_size", str(util.STACK_SIZE),
@@ -556,25 +561,42 @@ class TpaOutput:
                   "literal", literal_str,
                   "classes"]
 
-        for ct in self.manager.class_headers:
-            ct: typ.ClassType
+        class_methods_map = {}
+
+        for co in self.manager.class_headers:
+            co.compile()
+
+            ct: typ.ClassType = co.class_type
             full_name = util.class_name_with_path(ct.name, ct.file_path)
+
+            class_methods_map[full_name] = co.local_method_full_names
+
             line = "class " + full_name + " mro"
             for mro_t in ct.mro:
                 line += " $" + str(mro_t.class_ptr)
             line += " methods"
             # print(ct.method_rank)
             for method_name, method_t in ct.method_rank:
-                # for name in ct.methods:
-                #     if name == method_name:
                 line += " $" + str(ct.methods[method_name][method_t][1])
             merged.append(line)
         merged.append("")
 
-        for fn_name in self.manager.functions_map:
-            fo = self.manager.functions_map[fn_name]
-            content = fo.compile()
-            merged.extend(content)
+        for name, t in self.manager.class_func_order:
+            if t == 0:  # function
+                fo = self.manager.functions_map[name]
+                content = fo.compile()
+                merged.extend(content)
+            else:  # class
+                class_methods = class_methods_map[name]
+                for method_name in class_methods:
+                    fo = self.manager.functions_map[method_name]
+                    content = fo.compile()
+                    merged.extend(content)
+
+        # for fn_name in self.manager.functions_map:
+        #     fo = self.manager.functions_map[fn_name]
+        #     content = fo.compile()
+        #     merged.extend(content)
 
         self.output = merged + self.output
 

@@ -2,52 +2,60 @@ const FALSE: int = 0;
 const TRUE: int = 1;
 
 class Object {
-    fn __new__(this: *Object) void {
+    fn __new__() void {
     }
 
-    fn __del__(this: *Object) void {
+    fn __del__() void {
     }
 
-    fn hash(this: *Object) int {
+    fn hash() int {
         return this.__class__;
     }
 
-    fn equals(this: *Object, other: *Object) int {
+    fn equals(other: *Object) int {
         return this == other;
     }
+}
+
+fn shit() void {
+
 }
 
 class String {
     const array: char[];
 
-    fn __new__(this: *String) void {
+    fn __new__() void {
         super.__new__();
     }
 
-    fn __del__(this: *String) void {
+    fn __del__() void {
+
+    }
+
+    fn test(a: *Integer) void {
 
     }
 }
 
 abstract class Number {
-    fn __new__(this: *Number) void {
+    fn __new__() void {
         super.__new__();
     }
 
-    abstract fn intValue(this: *Number) int;
+    abstract fn intValue() int;
 }
 
 class Integer(Number) {
     const value: int;
 
-    fn __new__(this: *Integer, value: int) void {
+    fn __new__(value: int) void {
         super.__new__();
 
         this.value = value;
     }
 
     @Override
-    fn intValue(this: *Integer) int {
+    fn intValue() int {
         return this.value;
     }
 }
