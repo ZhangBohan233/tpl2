@@ -553,6 +553,8 @@ class TpaOutput:
 
     def _global_generate(self, main_file_path, main_has_arg):
         # print(self.manager.class_func_order)
+        for co in self.manager.class_headers:
+            co.compile()
 
         literal_str = " ".join([str(int(b)) for b in self.manager.literal])
         merged = ["bits", str(util.VM_BITS),
@@ -564,8 +566,6 @@ class TpaOutput:
         class_methods_map = {}
 
         for co in self.manager.class_headers:
-            co.compile()
-
             ct: typ.ClassType = co.class_type
             full_name = util.class_name_with_path(ct.name, ct.file_path)
 

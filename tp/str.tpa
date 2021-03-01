@@ -3,7 +3,7 @@ bits
 stack_size
 1024
 global_length
-120
+232
 literal
 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 42 0 0 0 0 0 0 0
 classes

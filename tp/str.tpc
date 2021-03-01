@@ -3,7 +3,7 @@ bits
 stack_size
 1024
 global_length
-120
+232
 literal
 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 42 0 0 0 0 0 0 0
 classes
@@ -178,7 +178,7 @@ fn E:\GitHub\tpl2\tp\str.tp$Parent.__new__() $1240
     load          %1      $0
     store_abs     %0      %1
     call          $1144
-    load          %0      $1168
+    load          %0      $1280
     iload         %1      $8
     store         %1      %0
     load          %0      $0
@@ -405,7 +405,7 @@ fn E:\GitHub\tpl2\tp\str.tp$Parent.__new__() $1240
     load          %1      $0
     store_abs     %0      %1
     call          $1144
-    load          %0      $1168
+    load          %0      $1280
     iload         %1      $8
     store         %1      %0
     load          %0      $0
@@ -435,19 +435,19 @@ fn E:\GitHub\tpl2\tp\str.tp$Child.__new__() $1248
     stop
 
 entry
-    load          %0      $1144
+    load          %0      $1256
     iload         %1      $1032
     store         %1      %0
     load          %0      $1032
     iload         %1      $1024
     store         %1      %0
-    load          %0      $1152
+    load          %0      $1264
     iload         %1      $1048
     store         %1      %0
     load          %0      $1048
     iload         %1      $1040
     store         %1      %0
-    load          %0      $1144
+    load          %0      $1256
     iload         %1      $1112
     store         %1      %0
     load          %0      $1112
