@@ -1,0 +1,51 @@
+﻿import lang
+
+class A {
+    value: int;
+
+    fn __new__(this: *A, val: int) void {
+        super.__new__();
+
+        this.value = val;
+    }
+
+    fn get(this: *A) int {
+        return this.value;
+    }
+}
+
+class B<T> {
+    arr: T[]
+    fn __new__(this: *B) void {
+        super.__new__();
+
+        this.arr = new T[2];
+    }
+
+    fn __del__(this: *B) void {
+        del this.arr;
+
+        super.__del__();
+    }
+
+    fn get_arr(this: *B) T[] {
+        return this.arr;
+    }
+
+    fn get_first(this: *B) *T {
+        return this.arr[0];
+    }
+}
+
+fn main() int {
+    bb := new B<Object>();
+    bb.arr[0] = new A(34);
+
+    cprintln((bb.get_first() as *A).get());
+
+    arr2 := new Object[3];
+    del arr2;
+    del bb;
+
+    return 2;
+}

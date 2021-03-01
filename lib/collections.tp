@@ -1,0 +1,73 @@
+﻿import lang
+
+abstract class Collection<ColT> {
+    abstract fn size(this: *Collection) int;
+}
+
+abstract class AbsList<AbsListT>(Collection<AbsListT>) {
+    abstract fn append(this: *AbsList<AbsListT>, value: *AbsListT) void;
+
+    abstract fn get(this: *AbsList<AbsListT>, index: int) *AbsListT;
+}
+
+class List<ListT>(AbsList<ListT>) {
+    array: ListT[];
+    size: int;
+
+    fn __new__(this: *List<ListT>) void {
+        super.__new__();
+
+        this.array = new ListT[8];
+    }
+
+    @Override
+    fn size(this: *List) int {
+        return this.size;
+    }
+
+    @Override
+    fn append(this: *List<ListT>, value: *ListT) void {
+        this.array[this.size++] = value;
+
+        this._checkSize();
+    }
+
+    @Override
+    fn get(this: *List<ListT>, index: int) *ListT {
+        return this.array[index];
+    }
+
+    fn _checkSize(this: *List<ListT>) void {
+        if this.size == this.array.length {
+            this._expand();
+        }
+        if this.size < this.array.length / 4 {
+            this._collapse();
+        }
+    }
+
+    fn _expand(this: *List<ListT>) void {
+        arr := new ListT[this.array.length * 2];
+        for i := 0; i < this.size; i++ {
+            arr[i] = this.array[i];
+        }
+        del this.array;
+        this.array = arr;
+    }
+
+    fn _collapse(this: *List<ListT>) void {
+
+    }
+}
+
+abstract class Map<MapK, MapV> {
+
+}
+
+class HashMap<HashK, HashV>(Map<HashK, HashV>) {
+
+}
+
+export {
+    Map, HashMap, AbsList, List
+}

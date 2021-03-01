@@ -1,4 +1,179 @@
-﻿===== VERSION 2012 =====
+﻿===== VERSION 2042 =====
+2021/03/02
+
+* Automatically inserts param 'this' to methods, if they do not have
+* Automatically inserts 'super.__new__()' call to __new__, if it does not have
+* Added type check of 'this': must exactly be the pointer to instance of the child-most class
+* Optimized the method finding mechanism of '__new__'
+
+===== VERSION 2041 =====
+2021/03/01
+
+* Implemented bitwise binary operators: '<<', '>>', '>>>', '&', '|', '^'
+* Implemented float negation
+* Implemented some functions in math.tp
+
+===== VERSION 2040 =====
+2021/02/27
+
+* Improved 'getfunc' to get methods
+
+===== VERSION 2039 =====
+2021/02/27
+
+* Implemented reflective compile time function 'getfunc'
+
+===== VERSION 2038 =====
+2021/02/27
+
+* Implemented method call via static content: Class.method(instance, ...)
+
+===== VERSION 2037 =====
+2021/02/26
+
+* Implemented function method polymorphism for object types
+
+===== VERSION 2036 =====
+2021/02/26
+
+* Implemented operator 'instanceof'
+* Bugs fix:
+    * Fixed method overriding
+    * Fixed abstract overriding check
+
+===== VERSION 2035 =====
+2021/02/26
+
+* Implemented method polymorphism for object types:
+    * Minimal sum inheritance distance algorithm
+
+===== VERSION 2034 =====
+2021/02/26
+
+* Function and method polymorphism for primitive type parameters
+
+===== VERSION 2033 =====
+2021/02/25
+
+* Lazy function body evaluation
+* Implemented collections.List
+* Bugs fix:
+    * Type check of overriding methods with generic class types
+
+===== VERSION 2032 =====
+2021/02/23
+
+* Implemented class destructor '__del__'
+
+===== VERSION 2031 =====
+2021/02/23
+
+* Implemented generic array
+
+===== VERSION 2030 =====
+2021/02/23
+
+* Updated ast preprocessor that process `obj.attr[index]` as `(obj.attr)[index]`
+
+===== VERSION 2029 =====
+2021/02/23
+
+* Object pointer array
+
+===== VERSION 2028 =====
+2021/02/23
+
+* Implemented abstract class and abstract method
+* Implemented const method
+
+===== VERSION 2027 =====
+2021/02/21
+
+* Generic class extension
+
+===== VERSION 2026 =====
+2021/02/20
+
+* Removed struct
+
+===== VERSION 2025 =====
+2021/02/20
+
+* Improved generic check
+* Added duplicated class field check
+
+===== VERSION 2024 =====
+2021/02/20
+
+* Basic generic classes
+
+===== VERSION 2023 =====
+2021/02/18
+
+* Updated macros for tvm bits control
+* Current bug: cannot run in 32 bits mode
+
+===== VERSION 2022 =====
+2021/02/18
+
+* Redesigned inheritance system:
+    * Method that actually be called is now determined at runtime
+* Bug fixes:
+    * length error of 'new Object()'
+
+===== VERSION 2021 =====
+2021/02/16
+
+* Added auto call to constructor
+* Improved arguments type check
+* Added support of '==' and '!=' to pointers
+
+===== VERSION 2020 =====
+2021/02/16
+
+* Added basic instance info header and '__class__' field
+* Added records of class pointer to each instance
+
+===== VERSION 2019 =====
+2021/02/15
+
+* Improved class and inheritance:
+    * Passes class header info to tvm
+
+===== VERSION 2018 =====
+2021/02/14
+
+* Improved class and inheritance
+* keyword 'super'
+
+===== VERSION 2017 =====
+2021/02/14
+
+* Implemented basic class and inheritance
+* Swapped the functionality of '.' and '$'
+
+===== VERSION 2016 =====
+2021/02/12
+
+* Implemented templates <T>
+
+===== VERSION 2015 =====
+2020/10/26
+
+* Implemented byte basics
+* Implemented more float computations
+
+===== VERSION 2014 =====
+2020/10/26
+
+* Implemented float basics
+
+===== VERSION 2013 =====
+2020/10/25
+
+* Added more supports for char type
+
+===== VERSION 2012 =====
 2020/09/26
 
 * Implemented switch expression

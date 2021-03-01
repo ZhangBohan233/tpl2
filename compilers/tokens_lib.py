@@ -6,12 +6,13 @@ LOGICAL_BINARY = {"<", ">", "==", "!=", "<=", ">="}
 LAZY_BINARY = {"and", "or"}
 ARITH_UNARY = {"-", "*", "&"}
 LOGICAL_UNARY = {"not"}
-SYMBOLS = {"{", "}", "[", "]", "(", ")", ".", "$", ",", ";", ":"}
+SYMBOLS = {"{", "}", "[", "]", "(", ")", ".", "$", ",", ";", ":", "::", "@"}
 OTHERS = {"=", "->", ":=", "++", "--"}
 
-RESERVED = {"as", "break", "case", "cond", "const", "continue", "del", "do", "else",
+RESERVED = {"abstract", "as", "break", "case", "class", "cond", "const", "continue", "del", "do", "else",
             "export", "exportmacro", "fallthrough", "fn", "for",
-            "if", "import", "macro", "new", "require", "return", "struct", "switch", "then", "var", "while", "yield"}
+            "if", "import", "instanceof", "macro", "new", "require", "return", "super", "switch", "then",
+            "this", "var", "while", "yield"}
 
 ALL_BINARY = set.union(
     ARITH_BINARY,
@@ -79,6 +80,16 @@ class IntToken(Token):
         return "Int{" + str(self.value) + "}"
 
 
+class ByteToken(Token):
+    def __init__(self, v: str, lf):
+        super().__init__(lf)
+
+        self.value = int(v)
+
+    def __str__(self):
+        return "Byte{" + str(self.value) + "}"
+
+
 class FloatToken(Token):
     def __init__(self, v: str, lf):
         super().__init__(lf)
@@ -112,6 +123,7 @@ class StrToken(Token):
 CE_BRACKET = 1
 CE_BRACE = 2
 CE_SQR_BRACKET = 3
+CE_ARROW_BRACKET = 4
 
 
 class Element:
@@ -163,6 +175,8 @@ class CollectiveElement(Element):
             return "SqrBracket"
         if self.ce_type == CE_BRACKET:
             return "Bracket"
+        if self.ce_type == CE_ARROW_BRACKET:
+            return "ArrowBracket"
         return "???"
 
     def is_bracket(self):
@@ -174,6 +188,9 @@ class CollectiveElement(Element):
     def is_sqr_bracket(self):
         return self.ce_type == CE_SQR_BRACKET
 
+    def is_arrow_bracket(self):
+        return self.ce_type == CE_ARROW_BRACKET
+
     def __str__(self):
         return self.name() + str(self.children)
 
@@ -184,6 +201,10 @@ def is_brace(ele: Element):
 
 def is_bracket(ele: Element):
     return isinstance(ele, CollectiveElement) and ele.is_bracket()
+
+
+def is_arrow_bracket(ele: Element):
+    return isinstance(ele, CollectiveElement) and ele.is_arrow_bracket()
 
 
 def identifier_of(ele: Element, target: str) -> bool:

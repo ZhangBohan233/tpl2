@@ -5,67 +5,70 @@ stack_size
 global_length
 8
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 10 0 0 0 0 0 0 0 20 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 30 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 53 3 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 98 0 3 0 0 0 0 0 0 0 10 0 0 0 0 0 0 0 97 0 20 0 0 0 0 0 0 0 30 0 0 0 0 0 0 0 99 0 53 3 0 0 0 0 0 0
 
 fn E:\GitHub\tpl2\tp\switch.tp$main $1024
     push_fp
-    push          56
+    push          40
     load          %0      $1032
     iload         %1      $0
     store         %1      %0
-    load          %0      $1040
+    loadc         %0      $1056
     iload         %1      $8
+    storec        %1      %0
+    load          %0      $1058
+    iload         %1      $10
     store         %1      %0
-    load          %0      $1040
-    iload         %1      $32
-    store         %1      %0
-    load          %0      $8
-    load          %1      $32
+    loadc         %0      $1074
+    iload         %1      $34
+    storec        %1      %0
+    loadc         %0      $8
+    loadc         %1      $34
     eqi           %0      %1
-    iload         %1      24
+    iload         %1      26
     store         %1      %0
-    load          %0      $24
+    load          %0      $26
     if_zero_goto  %0      CASE_0
-    load          %0      $1056
-    iload         %1      $16
+    load          %0      $1066
+    iload         %1      $18
     store         %1      %0
     goto          END_CASE_0
     label         CASE_0
-    load          %0      $1072
-    iload         %1      $40
-    store         %1      %0
-    load          %0      $8
-    load          %1      $40
+    loadc         %0      $1056
+    iload         %1      $36
+    storec        %1      %0
+    loadc         %0      $8
+    loadc         %1      $36
     eqi           %0      %1
-    iload         %1      24
+    iload         %1      26
     store         %1      %0
-    load          %0      $24
+    load          %0      $26
     if_zero_goto  %0      CASE_1
-    load          %0      $1064
-    iload         %1      $16
+    load          %0      $1076
+    iload         %1      $18
     store         %1      %0
     goto          END_CASE_0
     label         CASE_1
-    load          %0      $1088
-    iload         %1      $48
-    store         %1      %0
-    load          %0      $8
-    load          %1      $48
+    loadc         %0      $1092
+    iload         %1      $38
+    storec        %1      %0
+    loadc         %0      $8
+    loadc         %1      $38
     eqi           %0      %1
-    iload         %1      24
+    iload         %1      26
     store         %1      %0
-    load          %0      $24
+    load          %0      $26
     if_zero_goto  %0      CASE_2
-    load          %0      $1080
-    iload         %1      $16
+    load          %0      $1084
+    iload         %1      $18
     store         %1      %0
     goto          END_CASE_0
     label         CASE_2
-    load          %0      $1096
-    iload         %1      $16
+    load          %0      $1094
+    iload         %1      $18
     store         %1      %0
     label         END_CASE_0
-    load          %0      $16
+    load          %0      $18
     put_ret       %0
     pull_fp
     ret

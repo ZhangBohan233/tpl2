@@ -1,0 +1,7 @@
+﻿fn main() int {
+    a: float = 3.0;
+    b: float = 1.45;
+    cprintln(a + b);
+
+    return a != b;
+}

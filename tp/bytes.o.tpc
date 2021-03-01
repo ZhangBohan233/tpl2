@@ -1,0 +1,120 @@
+bits
+64
+stack_size
+1024
+global_length
+8
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 175 8 0 0 0 0 0 0 0 33 2 0 0 0 0 0 0 0 1 3 0 0 0 0 0 0 0 4
+
+fn E:\GitHub\tpl2\tp\bytes.tp$main $1024
+    push_fp
+    push          92
+    loadb         %0      $1056
+    iload         %1      $0
+    storeb        %1      %0
+    iload         %0      $8
+    iload         %1      $17
+    store         %1      %0
+    aload         %0      $17
+    iload         %1      9
+    store         %1      %0
+    load          %0      $9
+    iload         %1      $1
+    store         %1      %0
+    load          %0      $1040
+    iload         %1      $33
+    store         %1      %0
+    load          %0      $33
+    iload         %1      $41
+    store         %1      %0
+    load          %0      $41
+    iload         %1      1
+    muli          %0      %1
+    iload         %1      41
+    store         %1      %0
+    load          %0      $41
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      41
+    store         %1      %0
+    load          %0      $1
+    load          %1      $41
+    addi          %0      %1
+    iload         %1      41
+    store         %1      %0
+    loadb         %0      $1065
+    iload         %1      $49
+    storeb        %1      %0
+    load          %0      $41
+    load          %1      $49
+    storeb_abs    %0      %1
+    load          %0      $1066
+    iload         %1      $50
+    store         %1      %0
+    load          %0      $50
+    iload         %1      $58
+    store         %1      %0
+    load          %0      $58
+    iload         %1      1
+    muli          %0      %1
+    iload         %1      58
+    store         %1      %0
+    load          %0      $58
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      58
+    store         %1      %0
+    load          %0      $1
+    load          %1      $58
+    addi          %0      %1
+    iload         %1      58
+    store         %1      %0
+    loadb         %0      $1074
+    iload         %1      $66
+    storeb        %1      %0
+    load          %0      $58
+    load          %1      $66
+    storeb_abs    %0      %1
+    load          %0      $1075
+    iload         %1      $67
+    store         %1      %0
+    load          %0      $67
+    iload         %1      $75
+    store         %1      %0
+    load          %0      $75
+    iload         %1      1
+    muli          %0      %1
+    iload         %1      75
+    store         %1      %0
+    load          %0      $75
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      75
+    store         %1      %0
+    load          %0      $1
+    load          %1      $75
+    addi          %0      %1
+    iload         %1      75
+    store         %1      %0
+    loadb         %0      $1083
+    iload         %1      $83
+    storeb        %1      %0
+    load          %0      $75
+    load          %1      $83
+    storeb_abs    %0      %1
+    loadb         %0      $0
+    iload         %1      $84
+    store         %1      %0
+    load          %0      $84
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    entry
+    aload         %0      $1
+    set_ret       %0
+    call          $1024
+    exit

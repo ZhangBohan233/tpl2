@@ -1,26 +1,59 @@
-macro ONE {
-    1
-}
-
-macro TWO {
-    2
-}
-
 const FALSE: int = 0;
 const TRUE: int = 1;
 
-fn add(x: int, y: int) int {
-    return x + y;
+class Object {
+    fn __new__(this: *Object) void {
+    }
+
+    fn __del__(this: *Object) void {
+    }
+
+    fn hash(this: *Object) int {
+        return this.__class__;
+    }
+
+    fn equals(this: *Object, other: *Object) int {
+        return this == other;
+    }
 }
 
-fn make() int {
-    return add(13, 15)
+class String {
+    const array: char[];
+
+    fn __new__(this: *String) void {
+        super.__new__();
+    }
+
+    fn __del__(this: *String) void {
+
+    }
 }
+
+abstract class Number {
+    fn __new__(this: *Number) void {
+        super.__new__();
+    }
+
+    abstract fn intValue(this: *Number) int;
+}
+
+class Integer(Number) {
+    const value: int;
+
+    fn __new__(this: *Integer, value: int) void {
+        super.__new__();
+
+        this.value = value;
+    }
+
+    @Override
+    fn intValue(this: *Integer) int {
+        return this.value;
+    }
+}
+
+const NULL: *void = 0 as *void;
 
 export {
-    FALSE, TRUE, make
-}
-
-exportmacro {
-    ONE, TWO
+    FALSE, TRUE, NULL, Object, Number, Integer
 }

@@ -1,0 +1,27 @@
+﻿import lang
+
+class A {
+    fn __new__(this: *A) void {
+        super.__new__();
+    }
+
+    fn foo(this: *A, v: int) void {
+        cprintln(v);
+    }
+}
+
+fn t() void {
+    cprintln(1);
+}
+
+fn t(x: int) void {
+    cprintln(x);
+}
+
+fn main() void {
+    a := new A();
+    func: fn(*A, int) -> void = getfunc(A.foo, int);
+    func(a, 33);
+    //method := getmethod(A, )
+    A.foo(a, 2);
+}

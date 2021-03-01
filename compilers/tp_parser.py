@@ -13,13 +13,15 @@ class Parser:
     def __init__(self, tokens: tl.CollectiveElement):
         self.tokens = tokens
         self.var_level = ast.VAR_VAR
+        self.abstract = False
 
         self.special_binary = {
             "=": ast.Assignment,
-            ".": ast.Dot,
+            "$": ast.DollarExpr,
             "->": ast.RightArrowExpr,
             "as": ast.AsExpr,
-            "$": ast.DollarExpr,
+            ".": ast.DotExpr,
+            "::": ast.MethodExpr,
             ":=": ast.QuickAssignment
         }
 
@@ -34,7 +36,9 @@ class Parser:
             ":": self.process_declare,
             ",": self.process_comma,
             ";": self.process_eol,
+            "abstract": self.process_abstract,
             "fn": self.process_fn,
+            "class": self.process_class,
             "var": self.process_var,
             "const": self.process_const,
             "if": self.process_if_stmt,
@@ -46,9 +50,11 @@ class Parser:
             "fallthrough": self.process_fallthrough,
             "import": self.process_import,
             "export": self.process_export,
-            "struct": self.process_struct,
+            "super": self.process_super,
             "++": self.process_inc_operator,
             "--": self.process_dec_operator,
+            "@": self.process_annotation,
+            "instanceof": self.process_instanceof,
             "switch": self.process_switch,
             "case": self.process_case,
             "default": self.process_default
@@ -65,18 +71,30 @@ class Parser:
     #
     # Note: do not return the index of the next
 
+    def process_abstract(self, p, i, b, lf):
+        self.abstract = True
+
     def process_declare(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
         builder.add_node(ast.Declaration(self.var_level, lf))
 
     def process_fn(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+        abstract = self.abstract
+        self.abstract = False
+        const = self.var_level == ast.VAR_CONST
+        self.var_level = ast.VAR_VAR
         index += 1
+        name_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
         next_ele = parent[index]
-        if isinstance(next_ele, tl.AtomicElement):
-            fn_name = next_ele.atom.identifier
+        while not tl.is_bracket(next_ele):
+            name_list.append(next_ele)
             index += 1
-        else:
+            next_ele = parent[index]
+        if len(name_list) == 0:
             fn_name = None
-        param_list = parent[index]
+        else:
+            fn_name = self.parse_as_part(name_list)
+
+        param_list = next_ele
         params = self.parse_as_line(param_list)
         prob_arrow = parent[index + 1]
         if tl.identifier_of(prob_arrow, "->"):
@@ -95,7 +113,34 @@ class Parser:
         else:
             body = self.parse_as_block(body_list)
 
-        builder.add_node(ast.FunctionDef(fn_name, params, rtype, body, lf))
+        if not abstract and body is None:
+            raise errs.TplSyntaxError("Non-abstract method must have body. ", lf)
+        if abstract and body is not None:
+            raise errs.TplSyntaxError("Abstract method must not have body. ", lf)
+
+        builder.add_node(ast.FunctionDef(fn_name, params, rtype, abstract, const, body, lf))
+        return index
+
+    def process_class(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf):
+        abstract = self.abstract
+        self.abstract = False
+        index += 1
+        name = parent[index].atom.identifier
+        index += 1
+        templates = None
+        extensions = None
+        next_ele = parent[index]
+        if tl.is_arrow_bracket(next_ele):
+            templates = self.parse_as_line(next_ele)
+            index += 1
+            next_ele = parent[index]
+        if tl.is_bracket(next_ele):
+            extensions = self.parse_as_line(next_ele)
+            index += 1
+            next_ele = parent[index]
+        body = self.parse_as_block(next_ele)
+        class_stmt = ast.ClassStmt(name, extensions, templates, abstract, body, lf)
+        builder.add_node(class_stmt)
         return index
 
     def process_eol(self, p, i, builder: ab.AstBuilder, lf):
@@ -236,20 +281,8 @@ class Parser:
 
         return index
 
-    def process_struct(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
-        name_ele = parent[index + 1]
-        body_ele = parent[index + 2]
-
-        if not (isinstance(name_ele, tl.AtomicElement) and
-                isinstance(name_ele.atom, tl.IdToken) and
-                tl.is_brace(body_ele)):
-            raise errs.TplSyntaxError("Invalid struct syntax. ", lf)
-
-        name = name_ele.atom.identifier
-        body = self.parse_as_block(body_ele)
-        builder.add_node(ast.StructStmt(name, body, lf))
-
-        return index + 2
+    def process_super(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+        builder.add_node(ast.SuperExpr(lf))
 
     def _process_inc_dec_operator(self, op, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
                                   lf: tl.LineFile):
@@ -276,6 +309,16 @@ class Parser:
     def process_dec_operator(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
                              lf: tl.LineFile):
         return self._process_inc_dec_operator("--", parent, index, builder, lf)
+
+    def process_annotation(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
+                           lf: tl.LineFile):
+        index += 1
+        ele = parent[index]
+        return index
+
+    def process_instanceof(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
+                           lf: tl.LineFile):
+        builder.add_node(ast.InstanceOfExpr(lf))
 
     def process_switch(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
                        lf: tl.LineFile):
@@ -387,6 +430,8 @@ class Parser:
                 builder.add_node(ast.FakeFloatLit(token.value, lf))
             elif isinstance(token, tl.CharToken):
                 builder.add_node(ast.FakeCharLit(token.char, lf))
+            elif isinstance(token, tl.ByteToken):
+                builder.add_node(ast.FakeByteLit(token.value, lf))
             elif isinstance(token, tl.StrToken):
                 builder.add_node(ast.FakeStrLit(token.value, lf))
             elif isinstance(token, tl.IdToken):
@@ -443,6 +488,9 @@ class Parser:
                 lf = ele.lf
                 if index > 0:
                     prob_call_obj = parent[index - 1]
+                    if tl.is_arrow_bracket(prob_call_obj):
+                        prob_call_obj = parent[index - 2]
+
                     if is_call_obj(prob_call_obj):
                         args = self.parse_as_line(ele)
                         call_obj = builder.remove_last()
@@ -459,6 +507,16 @@ class Parser:
                         args = self.parse_as_line(ele)
                         call_obj = builder.remove_last()
                         call = ast.IndexingExpr(call_obj, args, lf)
+                        builder.add_node(call)
+                        return index + 1
+            elif ele.is_arrow_bracket():
+                lf = ele.lf
+                if index > 0:
+                    prob_call_obj = parent[index - 1]
+                    if is_call_obj(prob_call_obj):
+                        args = self.parse_as_line(ele)
+                        call_obj = builder.remove_last()
+                        call = ast.GenericNode(call_obj, args, lf)
                         builder.add_node(call)
                         return index + 1
         else:

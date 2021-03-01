@@ -1,0 +1,51 @@
+﻿import lang
+
+require {
+    println_int
+}
+
+fn foo(g: int) int {
+    return g + 77;
+}
+
+abstract class A {
+    x: int;
+    fn __new__(this: *A) void {
+        super.__new__();
+        this.x = 78;
+    }
+
+    fn foo(this: *A) int {
+        return 2;
+    }
+
+    fn bar(this: *A) void {
+        cprintln(this.x);
+    }
+
+    abstract fn inner(this: *A) int;
+
+    fn invoke(this: *A) void {
+        cprintln(this.inner());
+    }
+}
+
+class B(A) {
+    fn __new__(this: *B) void {
+        super.__new__();
+    }
+
+    fn bar(this: *B) void {
+        cprintln(12321);
+    }
+
+    fn inner(this: *B) int {
+        return 333;
+    }
+}
+
+fn main() int {
+    bb := new B();
+    bb.invoke();
+    return 0;
+}

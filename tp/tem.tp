@@ -1,0 +1,87 @@
+﻿import lang
+
+require {
+    malloc
+}
+
+class X {
+    value: int;
+
+    fn __new__(this: *X, val: int) void {
+        super.__new__();
+
+        this.value = val;
+    }
+}
+
+class Y(X) {
+    fn __new__(this: *Y, val: int) void {
+        super.__new__(val + 2);
+
+        //this.value = val;
+    }
+}
+
+class A {
+    xx: int;
+
+    fn __new__(this: *A) void {
+        super.__new__();
+        this.xx = 1;
+    }
+
+    fn foo(this: *A, x: int) int {
+        return this.xx + x;
+    }
+}
+
+class B<K, V>(A) {
+    k: *K;
+    t: *V;
+
+    fn __new__(this: *B) void {
+        super.__new__();
+
+        this.xx = 6;
+    }
+
+    fn get(this: *B) *V {
+        return this.t;
+    }
+
+    fn set(this: *B, t: *V) void {
+        this.t = t;
+    }
+}
+
+class Container<T> {
+    val : T;
+
+    fn __new__(this: *Container, val: T) void {
+        super.__new__();
+
+        this.val = val;
+    }
+}
+
+class C<T>(B<X, T>) {
+    fn __new__(this: *C) void {
+        super.__new__();
+    }
+
+    @Override
+    fn setC(this: *C, other: *C<X>) void {
+        //cprintln(other);
+    }
+}
+
+fn main() int {
+    cc: *C<Y> = new C<Y>();
+    cc.set(new Y(23));
+    cc.get().value;
+
+    //bb: *B<X, Y> = new B<X, Y>();
+    //cprintln(bb.get().value);
+
+    return cc.get().value;
+}

@@ -5,7 +5,8 @@ stack_size
 global_length
 24
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 2 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 128 0 0 0 0 0 0 0 129 0 0 0 0 0 0 0 134 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 2 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 99 0
+classes
 
 fn E:\GitHub\tpl2\tp\arr.tp$test $1032
     push_fp
@@ -45,14 +46,14 @@ fn E:\GitHub\tpl2\tp\arr.tp$test $1032
 
 fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     push_fp
-    push          304
-    iload         %0      $2
-    iload         %1      $16
+    push          132
+    iload         %0      $1
+    iload         %1      $24
     store         %1      %0
-    aload         %0      $16
-    iload         %1      8
+    aload         %0      $24
+    iload         %1      16
     store         %1      %0
-    load          %0      $8
+    load          %0      $16
     iload         %1      8
     addi          %0      %1
     iload         %1      40
@@ -63,243 +64,86 @@ fn E:\GitHub\tpl2\tp\arr.tp$main $1040
     load          %0      $40
     load          %1      $48
     store_abs     %0      %1
-    load          %0      $8
-    iload         %1      16
-    addi          %0      %1
-    iload         %1      40
-    store         %1      %0
-    load_lit      %0      $16
+    iload         %0      $2
     iload         %1      $56
     store         %1      %0
-    load          %0      $40
+    require       heap_array $64     %0      %1
+    aload_sp      %0      $0
     load          %1      $56
     store_abs     %0      %1
-    iload         %0      $8
-    iload         %1      $64
-    store         %1      %0
-    require       heap_array $72     %0      %1
-    aload_sp      %0      $0
-    load          %1      $64
-    store_abs     %0      %1
     aload_sp      %0      $8
-    load          %1      $8
+    load          %1      $16
     store_abs     %0      %1
-    iload         %0      0
+    iload         %0      8
     set_ret       %0
-    invoke        $72
-    load_lit      %0      $8
+    invoke        $64
+    load          %0      $8
+    iload         %1      $0
+    store         %1      %0
+    load_lit      %0      $40
     iload         %1      $80
     store         %1      %0
     load          %0      $80
+    iload         %1      $72
+    store         %1      %0
+    load_lit      %0      $24
     iload         %1      $88
     store         %1      %0
     load          %0      $88
-    iload         %1      8
-    muli          %0      %1
-    iload         %1      88
+    iload         %1      $96
     store         %1      %0
-    load          %0      $88
+    load          %0      $96
+    iload         %1      2
+    muli          %0      %1
+    iload         %1      96
+    store         %1      %0
+    load          %0      $96
     iload         %1      8
     addi          %0      %1
-    iload         %1      88
+    iload         %1      96
     store         %1      %0
     load          %0      $0
-    load          %1      $88
-    addi          %0      %1
-    iload         %1      88
-    store         %1      %0
-    iload         %0      $1
-    iload         %1      $112
-    store         %1      %0
-    aload         %0      $112
-    iload         %1      104
-    store         %1      %0
-    load          %0      $104
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      128
-    store         %1      %0
-    load_lit      %0      $32
-    iload         %1      $136
-    store         %1      %0
-    load          %0      $128
-    load          %1      $136
-    store_abs     %0      %1
-    iload         %0      $8
-    iload         %1      $144
-    store         %1      %0
-    aload_sp      %0      $0
-    load          %1      $144
-    store_abs     %0      %1
-    aload_sp      %0      $8
-    load          %1      $104
-    store_abs     %0      %1
-    iload         %0      96
-    set_ret       %0
-    invoke        $72
-    load          %0      $88
     load          %1      $96
-    store_abs     %0      %1
-    load_lit      %0      $8
-    iload         %1      $160
-    store         %1      %0
-    load          %0      $160
-    iload         %1      $168
-    store         %1      %0
-    load          %0      $168
-    iload         %1      8
-    muli          %0      %1
-    iload         %1      168
-    store         %1      %0
-    load          %0      $168
-    iload         %1      8
     addi          %0      %1
-    iload         %1      168
+    iload         %1      96
     store         %1      %0
-    load          %0      $0
-    load          %1      $168
-    addi          %0      %1
-    iload         %1      168
-    store         %1      %0
-    load          %0      $168
-    rload_abs     %1      %0
-    iload         %0      152
-    store         %0      %1
-    load_lit      %0      $0
-    iload         %1      $176
-    store         %1      %0
-    load          %0      $176
-    iload         %1      $184
-    store         %1      %0
-    load          %0      $184
-    iload         %1      8
-    muli          %0      %1
-    iload         %1      184
-    store         %1      %0
-    load          %0      $184
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      184
-    store         %1      %0
-    load          %0      $152
-    load          %1      $184
-    addi          %0      %1
-    iload         %1      184
-    store         %1      %0
-    load_lit      %0      $40
-    iload         %1      $192
-    store         %1      %0
-    load          %0      $184
-    load          %1      $192
-    store_abs     %0      %1
-    load_lit      %0      $8
-    iload         %1      $208
-    store         %1      %0
-    load          %0      $208
-    iload         %1      $216
-    store         %1      %0
-    load          %0      $216
-    iload         %1      8
-    muli          %0      %1
-    iload         %1      216
-    store         %1      %0
-    load          %0      $216
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      216
-    store         %1      %0
-    load          %0      $0
-    load          %1      $216
-    addi          %0      %1
-    iload         %1      216
-    store         %1      %0
-    load          %0      $216
-    rload_abs     %1      %0
-    iload         %0      200
-    store         %0      %1
-    load_lit      %0      $8
-    iload         %1      $224
-    store         %1      %0
-    load          %0      $224
-    iload         %1      $232
-    store         %1      %0
-    load          %0      $232
-    iload         %1      8
-    muli          %0      %1
-    iload         %1      232
-    store         %1      %0
-    load          %0      $232
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      232
-    store         %1      %0
-    load          %0      $200
-    load          %1      $232
-    addi          %0      %1
-    iload         %1      232
-    store         %1      %0
-    load_lit      %0      $48
-    iload         %1      $240
-    store         %1      %0
-    load          %0      $232
-    load          %1      $240
-    store_abs     %0      %1
-    load_lit      %0      $8
-    iload         %1      $256
-    store         %1      %0
-    load          %0      $256
-    iload         %1      $264
-    store         %1      %0
-    load          %0      $264
-    iload         %1      8
-    muli          %0      %1
-    iload         %1      264
-    store         %1      %0
-    load          %0      $264
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      264
-    store         %1      %0
-    load          %0      $0
-    load          %1      $264
-    addi          %0      %1
-    iload         %1      264
-    store         %1      %0
-    load          %0      $264
-    rload_abs     %1      %0
-    iload         %0      248
-    store         %0      %1
+    loadc_lit     %0      $48
+    iload         %1      $104
+    storec        %1      %0
+    load          %0      $96
+    load          %1      $104
+    storec_abs    %0      %1
+    require       println_char $106    %0      %1
     load_lit      %0      $24
-    iload         %1      $272
+    iload         %1      $116
     store         %1      %0
-    load          %0      $272
-    iload         %1      $280
+    load          %0      $116
+    iload         %1      $124
     store         %1      %0
-    load          %0      $280
-    iload         %1      8
+    load          %0      $124
+    iload         %1      2
     muli          %0      %1
-    iload         %1      280
+    iload         %1      124
     store         %1      %0
-    load          %0      $280
+    load          %0      $124
     iload         %1      8
     addi          %0      %1
-    iload         %1      280
+    iload         %1      124
     store         %1      %0
-    load          %0      $248
-    load          %1      $280
+    load          %0      $0
+    load          %1      $124
     addi          %0      %1
-    iload         %1      280
+    iload         %1      124
     store         %1      %0
-    load_lit      %0      $56
-    iload         %1      $288
-    store         %1      %0
-    load          %0      $280
-    load          %1      $288
+    load          %0      $124
+    rloadc_abs    %1      %0
+    iload         %0      114
+    storec        %0      %1
+    aload_sp      %0      $0
+    loadc         %1      $114
     store_abs     %0      %1
-    load_lit      %0      $8
-    iload         %1      $296
-    store         %1      %0
-    load          %0      $296
+    invoke        $106
+    load          %0      $72
     put_ret       %0
     pull_fp
     ret

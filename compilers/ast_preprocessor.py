@@ -11,6 +11,7 @@ class AstPreprocessor:
         self.int_literals = util.initial_int_literal_dict()  # int_lit : position in literal_bytes
         self.float_literals = {}
         self.char_literals = {}
+        self.byte_literals = {}
         self.str_literals = {}
 
     def preprocess(self):
@@ -41,6 +42,14 @@ class AstPreprocessor:
                 self.literal_bytes.extend(util.char_to_bytes(node.value))
                 self.char_literals[node.value] = pos
             return ast.CharLiteral(pos, node.lf)
+        elif isinstance(node, ast.FakeByteLit):
+            if node.value in self.byte_literals:
+                pos = self.byte_literals[node.value]
+            else:
+                pos = len(self.literal_bytes)
+                self.literal_bytes.append(node.value & 0xff)
+                self.byte_literals[node.value] = pos
+            return ast.ByteLiteral(pos, node.lf)
         elif isinstance(node, ast.FakeStrLit):
             if node.value in self.str_literals:
                 pos = self.str_literals[node.value]
@@ -59,15 +68,32 @@ class AstPreprocessor:
             ass.left = left
             ass.right = bo
             return ass
-        else:
-            attrs = dir(node)
+        elif isinstance(node, ast.DotExpr):
+            left = self.process_node(node.left)
+            right = self.process_node(node.right)
+            if isinstance(right, ast.IndexingExpr):
+                new_dot = ast.DotExpr(node.lf)
+                new_dot.left = left
+                new_dot.right = right.indexing_obj
+                return ast.IndexingExpr(new_dot, right.args, node.lf)
+            # elif isinstance(right, ast.FunctionCall):
+            #     new_dot = ast.DotExpr(node.lf)
+            #     new_dot.left = left
+            #     new_dot.right = right.call_obj
+            #     return ast.FunctionCall(new_dot, right.args, node.lf)
 
-            for attr_name in attrs:
-                attr = getattr(node, attr_name)
-                if isinstance(attr, ast.Node):
-                    setattr(node, attr_name, self.process_node(attr))
-                elif isinstance(attr, list):
-                    for i in range(len(attr)):
-                        attr[i] = self.process_node(attr[i])
-
+            node.left = left
+            node.right = right
             return node
+
+        attrs = dir(node)
+
+        for attr_name in attrs:
+            attr = getattr(node, attr_name)
+            if isinstance(attr, ast.Node):
+                setattr(node, attr_name, self.process_node(attr))
+            elif isinstance(attr, list):
+                for i in range(len(attr)):
+                    attr[i] = self.process_node(attr[i])
+
+        return node

@@ -1,0 +1,84 @@
+﻿import lang;
+
+
+class B {
+    fn __new__(this: *B) void {
+
+    }
+
+    fn hash(this: *B) int {
+        return 0;
+    }
+}
+
+abstract class C {
+    fn __new__(this: *C) void {
+        super.__new__();
+    }
+
+    fn __new__(this: *C, v: int) void {
+        super.__new__();
+
+        cprintln(v);
+    }
+
+    abstract fn t(this: *C) void;
+}
+
+class A(C) {
+    fn __new__(this: *A) void {
+        this.__new__(1);
+    }
+
+    fn __new__(this: *A, b: int) void {
+        super.__new__(b);
+    }
+
+    fn t(this: *A) void {
+        cprintln(1);
+    }
+
+    fn t(this: *A, a: int) void {
+        cprintln(2);
+    }
+
+    fn t(this: *A, a: int, b: int) void {
+        cprintln(3);
+    }
+
+    fn f(this: *A, num: int, obj: *Object, b: *B) void {
+        cprintln(4);
+    }
+
+    fn f(this: *A, num: int, obj: *B, b: *B) void {
+        cprintln(5);
+    }
+}
+
+fn t(x: int) void {
+    cprintln("int");
+}
+
+fn t(x: float) void {
+    cprintln("float");
+}
+
+fn f(num: int, obj: *Object, b: *B) void {
+    cprintln(8);
+}
+
+fn f(num: int, obj: *B, b: *B) void {
+    cprintln(9);
+}
+
+fn main() void {
+    a := new A(233);
+    //a.t(3);
+    a.f(1, new B(), new B());
+    f(1, new B(), new B());
+    b: *B = NULL;
+
+    cprintln(a instanceof Object);
+    cprintln(a instanceof A);
+    cprintln(a instanceof B);
+}

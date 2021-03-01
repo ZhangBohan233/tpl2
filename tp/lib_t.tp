@@ -1,0 +1,12 @@
+﻿import lang
+import collections
+
+
+fn main() int {
+    list: *AbsList<Number> = new List<Number>();
+    list.append(new Integer(2));
+    list.append(new Integer(14));
+    cprintln(list.get(1).intValue());
+
+    return list.size();
+}

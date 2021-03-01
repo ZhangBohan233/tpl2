@@ -33,7 +33,7 @@ INSTRUCTIONS = {
     "push_fp": (14,),
     "pull_fp": (15,),
     "set_ret": (16, 1),  # set_ret    %reg   | set the return abs addr in %reg to ret_stack
-    "call": (17, util.INT_LEN),
+    "call": (17, util.INT_LEN),  # | call function at addr
     "exit": (18,),
     "true_addr": (19, 1),  # true_addr   %reg    | relative addr to absolute addr
     "stop": (20,),
@@ -43,6 +43,9 @@ INSTRUCTIONS = {
     "invoke": (24, util.INT_LEN),
     "rload_abs": (25, 1, 1),  # rload_abs   %reg1   %reg2   | load value with abs addr stored in %reg2 to %reg1
     #                         # 使用存储在%reg2内的绝对地址，将该地址的内存读入%reg1
+    "rloadc_abs": (26, 1, 1),
+    "rloadb_abs": (27, 1, 1),
+    "call_reg": (28, 1),  # %reg fn_addr
     "addi": (30, 1, 1),
     "subi": (31, 1, 1),
     "muli": (32, 1, 1),
@@ -56,11 +59,38 @@ INSTRUCTIONS = {
     "lei": (40, 1, 1),
     "negi": (41, 1),
     "not": (42, 1),
-    "i_to_f": (60, 1),  # convert int in %reg to float, store in %reg
-    "f_to_i": (61, 1),
+    "lshift": (43, 1, 1),
+    "rshift": (44, 1, 1),  # arithmetic right shift, fill the first bit
+    "rshiftl": (45, 1, 1),  # logical right shift, fill 0
+    "and": (46, 1, 1),  # bitwise and
+    "or": (47, 1, 1),  # bitwise of
+    "xor": (48, 1, 1),  # bitwise xor
+    "addf": (50, 1, 1),
+    "subf": (51, 1, 1),
+    "mulf": (52, 1, 1),
+    "divf": (53, 1, 1),
+    "modf": (54, 1, 1),
+    "eqf": (55, 1, 1),
+    "nef": (56, 1, 1),
+    "gtf": (57, 1, 1),
+    "ltf": (58, 1, 1),
+    "gef": (59, 1, 1),
+    "lef": (60, 1, 1),
+    "negf": (61, 1),
+    "i_to_f": (65, 1),  # convert int in %reg to float, store in %reg
+    "f_to_i": (66, 1),
     "loadc": (70, 1, util.INT_LEN),
     "storec": (71, 1, 1),
-    "main_arg": (72,)
+    "storec_abs": (72, 1, 1),
+    "main_arg": (79,),
+    "loadb": (80, 1, util.INT_LEN),
+    "storeb": (81, 1, 1),
+    "storeb_abs": (82, 1, 1),
+    "get_method": (83, 1, 1, 1),  # %reg1 inst_ptr_addr  %reg2 method_id  %reg3 backup   |
+    #                             # get method ptr of a class, store to %reg1
+    "subclass": (84, 1, 1, 1, 1),   # %reg1 parent_class   %reg2 child_class   %reg3 temp1   %reg4 temp2
+    #                               # | store true to %reg1
+    #                               # if parent_class is super of child_class
 }
 
 MNEMONIC = {
@@ -70,6 +100,7 @@ MNEMONIC = {
 PSEUDO_INSTRUCTIONS = {
     "load_lit": (256, 1, util.INT_LEN),
     "loadc_lit": (257, 1, util.INT_LEN),
+    "loadb_lit": (258, 1, util.INT_LEN),
     "lit_abs": (259, 1, util.INT_LEN),  # convert the lit_pos to addr
 }
 
@@ -191,6 +222,9 @@ class TpcCompiler:
         elif inst == "loadc_lit":
             lit_start = self.stack_size + self.global_length
             self.write_format(output, "loadc", inst_line[1], "$" + str(num_inst[2] + lit_start))
+        elif inst == "loadb_lit":
+            lit_start = self.stack_size + self.global_length
+            self.write_format(output, "loadb", inst_line[1], "$" + str(num_inst[2] + lit_start))
         elif inst == "lit_abs":
             lit_start = self.stack_size + self.global_length
             self.write_format(output, "aload", inst_line[1], "$" + str(num_inst[2] + lit_start))
@@ -239,9 +273,13 @@ class TpeCompiler:
         stack_size: 16 ~ @24
         global_length: @24 ~ @32
         literal_length: @32 ~ @40
-        literal: @40 ~ (@40 + literal_length)
-        functions: (@40 + literal_length) ~ end of functions
-        function_assignments: end of functions ~ end of functions + (function count * length of assignment)
+        class_header_length: @40 ~ @48
+        literal: @48 ~ (@48 + literal_length)
+        class_headers: (@48 + literal_length) ~ (@48 + literal_length + class_header_length)
+        functions: (@48 + literal_length + class_header_length) ~ end of functions
+        class_assignments: end of functions ~ (end of functions + class count * length of assignment)
+        function_assignments: end of class_assignments ~
+            end of class_assignments + (function count * length of assignment)
         entry: end of function_assignments ~ end - @8
         entry_len: (end - @8) ~ end
 
@@ -254,6 +292,10 @@ class TpeCompiler:
         function_body_positions = {}
         function_pointers = {}
         function_list = []
+        class_header_lengths = {}
+        class_pointers = {}
+        class_list = []
+        class_bodies = bytearray()
         body = bytearray()  # body begins with index 'literal_length + global_length'
         cur_fn_body = []
         entry_part = None
@@ -282,6 +324,38 @@ class TpeCompiler:
                     for lit in literal_str:
                         literal.append(int(lit))
                     i += 1
+                elif line == "classes":
+                    pass
+                elif line.startswith("class"):
+                    # format of class header:
+                    # Example in 64 bits
+                    # 0 ~ 8: len(mro)
+                    # 8 ~ 16: len(methods)
+                    # 16 ~ 16 + 8 * len(mro): pointers of mro
+                    # 16 + 8 * len(mro) ~ 16 + 8 * len(mro) + 8 * len(methods): method pointers
+                    # len(class_name)
+                    # class_name
+                    content = [part for part in [part.strip() for part in line.split(" ")] if len(part) > 0]
+                    method_start = content.index("methods")
+                    mro_str = content[3:method_start]
+                    methods_str = content[method_start + 1:]
+                    class_name = content[1]
+                    class_list.append(class_name)  # name
+                    class_ptr = int(mro_str[0][1:])
+                    class_pointers[class_name] = class_ptr
+
+                    class_header = bytearray()
+                    class_header.extend(util.int_to_bytes(len(mro_str)))  # len of mro
+                    class_header.extend(util.int_to_bytes(len(methods_str)))  # methods count
+
+                    for m in mro_str:
+                        class_header.extend(util.int_to_bytes(int(m[1:])))  # mro pointers
+                    for m in methods_str:
+                        class_header.extend(util.int_to_bytes(int(m[1:])))  # method pointers
+
+                    class_header.extend(util.string_to_bytes(class_name))  # class name
+                    class_header_lengths[class_name] = len(class_header)
+                    class_bodies.extend(class_header)
                 else:
                     instructions = \
                         [part for part in [part.strip() for part in line.split(" ")] if len(part) > 0]
@@ -350,19 +424,29 @@ class TpeCompiler:
                             if inst == "exit":  # end of program
                                 entry_part = self.compile_function(cur_fn_body, labels, jumps)
 
-                        # elif inst in PSEUDO_INSTRUCTIONS:
-                        #     self.compile_pseudo_inst(inst, instructions, cur_fn_body, lf)
                         else:
                             raise errs.TpaError("Unknown instruction {}. ".format(inst), lf)
                 i += 1
 
         header = SIGNATURE + bytes((vm_bits,)) + util.empty_bytes(11) + \
                  util.int_to_bytes(self.stack_size) + util.int_to_bytes(self.global_length) + \
-                 util.int_to_bytes(len(literal)) + literal
+                 util.int_to_bytes(len(literal)) + util.int_to_bytes(len(class_bodies)) + \
+                 literal + class_bodies
+
+        entry_lf = tl.LineFile("tpa compiler ", 0)
+        # assigns value to all class pointers
+        all_len_before_classes = self.stack_size + self.global_length + len(literal)
+        class_assignments = bytearray()
+        class_pos = all_len_before_classes
+        for class_name in class_list:
+            class_ptr = class_pointers[class_name]
+            self.compile_inst("iload", ["iload", "%0", "$" + str(class_pos)], class_assignments, entry_lf)
+            self.compile_inst("iload", ["iload", "%1", "$" + str(class_ptr)], class_assignments, entry_lf)
+            self.compile_inst("store", ["store", "%1", "%0"], class_assignments, entry_lf)
+            class_pos += class_header_lengths[class_name]
 
         fn_assignments = bytearray()
-        all_len_before_real_fn = self.stack_size + self.global_length + len(literal)
-        entry_lf = tl.LineFile("tpa compiler ", 0)
+        all_len_before_real_fn = all_len_before_classes + len(class_bodies)
         for name in function_list:
             pos = function_body_positions[name]
             fn_ptr = function_pointers[name]
@@ -371,8 +455,8 @@ class TpeCompiler:
             self.compile_inst("iload", ["iload", "%1", "$" + str(fn_ptr)], fn_assignments, entry_lf)
             self.compile_inst("store", ["store", "%1", "%0"], fn_assignments, entry_lf)
 
-        entry_len = len(entry_part) + len(fn_assignments)
-        return header + body + fn_assignments + entry_part + util.int_to_bytes(entry_len)
+        entry_len = len(entry_part) + len(class_assignments) + len(fn_assignments)
+        return header + body + class_assignments + fn_assignments + entry_part + util.int_to_bytes(entry_len)
 
     def compile_function(self, body: iter, labels: dict, jumps: dict) -> bytearray:
         goto = STR_PSEUDO_INSTRUCTIONS["goto"]
@@ -404,28 +488,6 @@ class TpeCompiler:
             else:
                 i += 1
         return bytearray(body)
-
-    # def compile_pseudo_inst(self, inst: str, instruction: iter, cur_fn_body: iter, lf: tl.LineFile):
-    #     tup = PSEUDO_INSTRUCTIONS[inst]
-    #     num_inst = inst_to_num(instruction, tup, lf)
-    #     if inst == "load_lit":
-    #         lit_start = self.stack_size + self.global_length
-    #         self.compile_inst("load",
-    #                           ["load", instruction[1], "$" + str(num_inst[2] + lit_start)],
-    #                           cur_fn_body,
-    #                           lf)
-    #     elif inst == "loadc_lit":
-    #         lit_start = self.stack_size + self.global_length
-    #         self.compile_inst("loadc",
-    #                           ["loadc", instruction[1], "$" + str(num_inst[2] + lit_start)],
-    #                           cur_fn_body,
-    #                           lf)
-    #     elif inst == "lit_abs":
-    #         lit_start = self.stack_size + self.global_length
-    #         self.compile_inst("aload",
-    #                           ["aload", instruction[1], "$" + str(num_inst[2] + lit_start)],
-    #                           cur_fn_body,
-    #                           lf)
 
     def compile_inst(self, inst: str, instruction: list, cur_fn_body: iter, lf: tl.LineFile):
         tup = INSTRUCTIONS[inst]

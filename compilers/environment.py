@@ -1,6 +1,7 @@
 import compilers.errors as errs
 import compilers.tokens_lib as tl
 import compilers.types as typ
+import compilers.util as util
 
 
 class VarEntry:
@@ -18,10 +19,11 @@ class VarEntry:
 
 
 class FunctionEntry(VarEntry):
-    def __init__(self, type_: typ.Type, addr: int, const=True, named=False):
-        super().__init__(type_, addr, const)
+    def __init__(self, placer: typ.FunctionPlacer, const=True, named=False):
+        super().__init__(placer, -1, const)
 
         self.named = named  # whether this function entry is defined by keyword 'fn'
+        self.placer = placer
 
 
 class Environment:
@@ -55,15 +57,20 @@ class Environment:
         self.vars[name] = entry
 
     def define_function(self, name: str, func_type: typ.CallableType, fn_ptr: int, lf: tl.LineFile):
-        if self._inner_get(name) is not None:
+        old_entry = self._inner_get(name)
+        if old_entry is not None:
+            if isinstance(old_entry, FunctionEntry):
+                old_entry.placer.add_poly(func_type, fn_ptr)
+                return
             raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
-        entry = FunctionEntry(func_type, fn_ptr, const=True, named=True)
+        placer = typ.FunctionPlacer(func_type, fn_ptr)
+        entry = FunctionEntry(placer, const=True, named=True)
         self.vars[name] = entry
 
     def is_const(self, name: str, lf) -> bool:
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
         return entry.const
 
     def get_type(self, name, lf) -> typ.Type:
@@ -71,13 +78,13 @@ class Environment:
             return typ.PRIMITIVE_TYPES[name]
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
         return entry.type
 
     def get(self, name, lf) -> int:
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
         return entry.addr
 
     def is_type(self, name, lf) -> bool:
@@ -85,13 +92,14 @@ class Environment:
             return True
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
-        return isinstance(entry.type, typ.StructType)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
+        return (isinstance(entry.type, typ.ClassType) or
+                isinstance(entry.type, typ.Generic))
 
     def is_named_function(self, name: str, lf) -> bool:
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
         if isinstance(entry, FunctionEntry):
             return entry.named
         return False
@@ -198,9 +206,16 @@ class FunctionEnvironment(MainAbstractEnvironment):
                                        .format(self.name, self.rtype, actual_rtype), lf)
 
 
+class MethodEnvironment(FunctionEnvironment):
+    def __init__(self, outer, name: str, rtype: typ.Type, defined_class: typ.ClassType):
+        super().__init__(outer, name, rtype)
+
+        self.defined_class = defined_class  # class where this method is defined
+
+
 class ModuleEnvironment(MainAbstractEnvironment):
-    def __init__(self):
-        super().__init__(None)
+    def __init__(self, outer):
+        super().__init__(outer)
 
         self.exports = None
 
@@ -209,6 +224,35 @@ class ModuleEnvironment(MainAbstractEnvironment):
             self.exports = exports
         else:
             raise errs.TplEnvironmentError("Multiple exports in one module. ", lf)
+
+
+class ClassEnvironment(MainAbstractEnvironment):
+    def __init__(self, outer, class_full_name: str):
+        super().__init__(outer)
+
+        self.full_name = class_full_name
+        self.templates = {}  # name: generic, ConstEntry (-1, Object if not specified)
+
+    def define_function(self, name: str, func_type: typ.CallableType, fn_ptr: int, lf: tl.LineFile):
+        if name in self.vars:
+            old_entry = self.vars[name]
+            if isinstance(old_entry, FunctionEntry):
+                old_entry.placer.add_poly(func_type, fn_ptr)
+                return
+            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
+        placer = typ.FunctionPlacer(func_type, fn_ptr)
+        entry = FunctionEntry(placer, const=True, named=True)
+        self.vars[name] = entry
+
+    def _inner_get(self, name) -> VarEntry:
+        if name in self.templates:
+            return self.templates[name]
+        return super()._inner_get(name)
+
+    def define_template(self, gen: typ.Generic, lf: tl.LineFile):
+        if gen.simple_name() in self.templates:
+            raise errs.TplEnvironmentError(f"Template '{gen.simple_name()}' already defined. ", lf)
+        self.templates[gen.simple_name()] = VarEntry(gen, -1, True)
 
 
 class BlockEnvironment(SubAbstractEnvironment):

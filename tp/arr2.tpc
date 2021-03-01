@@ -1,0 +1,438 @@
+bits
+64
+stack_size
+1024
+global_length
+168
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 2 0 0 0 0 0 0 0 34 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0
+classes
+class E:\GitHub\tpl2\lib\lang.tp$Object mro $1080 methods $1088 $1096 $1104 $1112
+class E:\GitHub\tpl2\tp\arr2.tp$A mro $1120 $1080 methods $1128 $1096 $1104 $1112 $1136
+class E:\GitHub\tpl2\tp\arr2.tp$B mro $1144 $1080 methods $1152 $1160 $1104 $1112 $1168 $1176
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__ $1088
+    push_fp
+    push          8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__del__ $1096
+    push_fp
+    push          8
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.hash $1104
+    push_fp
+    push          24
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      0
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Object.equals $1112
+    push_fp
+    push          24
+    load          %0      $0
+    load          %1      $8
+    eqi           %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\arr2.tp$A.__new__ $1128
+    push_fp
+    push          24
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1088
+    load          %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\arr2.tp$A.get $1136
+    push_fp
+    push          24
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\arr2.tp$B.__new__ $1152
+    push_fp
+    push          80
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1088
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    iload         %0      $1
+    iload         %1      $32
+    store         %1      %0
+    aload         %0      $32
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      48
+    store         %1      %0
+    load          %0      $1216
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $48
+    load          %1      $56
+    store_abs     %0      %1
+    iload         %0      $8
+    iload         %1      $64
+    store         %1      %0
+    require       heap_array $72     %0      %1
+    aload_sp      %0      $0
+    load          %1      $64
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $24
+    store_abs     %0      %1
+    iload         %0      16
+    set_ret       %0
+    invoke        $72
+    load          %0      $8
+    load          %1      $16
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\arr2.tp$B.__del__ $1160
+    push_fp
+    push          32
+    require       free    $8      %0      %1
+    load          %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    aload_sp      %0      $0
+    load          %1      $24
+    store_abs     %0      %1
+    invoke        $8
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1096
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\arr2.tp$B.get_arr $1168
+    push_fp
+    push          24
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\arr2.tp$B.get_first $1176
+    push_fp
+    push          48
+    load          %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    load          %0      $1192
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      8
+    muli          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $24
+    load          %1      $40
+    addi          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    rload_abs     %1      %0
+    iload         %0      8
+    store         %0      %1
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\arr2.tp$main $1184
+    push_fp
+    push          208
+    require       malloc  $16     %0      %1
+    iload         %0      $16
+    iload         %1      $24
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $24
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    invoke        $16
+    load          %0      $8
+    iload         %1      1144
+    store_abs     %0      %1
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    call          $1152
+    load          %0      $8
+    iload         %1      $0
+    store         %1      %0
+    load          %0      $0
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      32
+    store         %1      %0
+    load          %0      $32
+    rload_abs     %1      %0
+    iload         %0      40
+    store         %0      %1
+    load          %0      $1192
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $48
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $56
+    iload         %1      8
+    muli          %0      %1
+    iload         %1      56
+    store         %1      %0
+    load          %0      $56
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      56
+    store         %1      %0
+    load          %0      $40
+    load          %1      $56
+    addi          %0      %1
+    iload         %1      56
+    store         %1      %0
+    iload         %0      $16
+    iload         %1      $72
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $72
+    store_abs     %0      %1
+    iload         %0      64
+    set_ret       %0
+    invoke        $16
+    load          %0      $64
+    iload         %1      1120
+    store_abs     %0      %1
+    load          %0      $1224
+    iload         %1      $80
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $64
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $80
+    store_abs     %0      %1
+    call          $1128
+    load          %0      $56
+    load          %1      $64
+    store_abs     %0      %1
+    require       println_int $88     %0      %1
+    load          %0      $0
+    iload         %1      5
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $0
+    store_abs     %1      %2
+    iload         %1      104
+    set_ret       %1
+    call_reg      %0
+    load          %0      $104
+    iload         %1      $96
+    store         %1      %0
+    load          %0      $96
+    iload         %1      4
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $96
+    store_abs     %1      %2
+    iload         %1      112
+    set_ret       %1
+    call_reg      %0
+    aload_sp      %0      $0
+    load          %1      $112
+    store_abs     %0      %1
+    invoke        $88
+    iload         %0      $1
+    iload         %1      $144
+    store         %1      %0
+    aload         %0      $144
+    iload         %1      136
+    store         %1      %0
+    load          %0      $136
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      160
+    store         %1      %0
+    load          %0      $1232
+    iload         %1      $168
+    store         %1      %0
+    load          %0      $160
+    load          %1      $168
+    store_abs     %0      %1
+    iload         %0      $8
+    iload         %1      $176
+    store         %1      %0
+    require       heap_array $184    %0      %1
+    aload_sp      %0      $0
+    load          %1      $176
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $136
+    store_abs     %0      %1
+    iload         %0      128
+    set_ret       %0
+    invoke        $184
+    load          %0      $128
+    iload         %1      $120
+    store         %1      %0
+    require       free    $192    %0      %1
+    aload_sp      %0      $0
+    load          %1      $120
+    store_abs     %0      %1
+    invoke        $192
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    invoke        $192
+    load          %0      $1216
+    iload         %1      $200
+    store         %1      %0
+    load          %0      $200
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    load          %0      $1192
+    iload         %1      $1032
+    store         %1      %0
+    load          %0      $1032
+    iload         %1      $1024
+    store         %1      %0
+    load          %0      $1200
+    iload         %1      $1048
+    store         %1      %0
+    load          %0      $1048
+    iload         %1      $1040
+    store         %1      %0
+    load          %0      $1192
+    iload         %1      $1072
+    store         %1      %0
+    load          %0      $1072
+    iload         %1      $1064
+    store         %1      %0
+    load          %0      $1064
+    iload         %1      $1056
+    store         %1      %0
+    aload         %0      $1
+    set_ret       %0
+    call          $1184
+    exit

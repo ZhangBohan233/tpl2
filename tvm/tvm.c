@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <locale.h>
+#include <math.h>
 #include "os_spec.h"
 #include "mem.h"
 #include "tvm.h"
@@ -14,9 +15,7 @@
 // Interrupt the vm if the code is not 0
 //
 // 0: No error
-// 1: Memory address error
-// 2: Native invoke error
-// 3: VM option error
+// Non-zero: defined in tvm.h
 
 const unsigned char SIGNATURE[] = "TPC_";
 
@@ -32,12 +31,16 @@ char *ERR_MSG = "";
 
 #define MEMORY_SIZE 16384
 #define RECURSION_LIMIT 1000
+#define CLASS_FIXED_HEADER (INT_LEN * 2)
+
+#define rshift_logical(val, n) ((tp_int) (int_fast64_t) ((uint_fast64_t) val >> n));
 
 tp_int stack_end;
 tp_int literal_end;
 tp_int global_end;
 tp_int functions_end;
 tp_int entry_end;
+tp_int class_header_end;
 
 unsigned char MEMORY[MEMORY_SIZE];
 
@@ -83,8 +86,9 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
     stack_end = bytes_to_int(src_code + 16);  // 16 is fixed header length
     global_end = stack_end + bytes_to_int(src_code + 16 + INT_LEN);
     literal_end = global_end + bytes_to_int(src_code + 16 + INT_LEN * 2);
+    class_header_end = literal_end + bytes_to_int(src_code + 16 + INT_LEN * 3);
 
-    tp_int copy_len = code_length - 16 - INT_LEN * 4;  // stack, global, literal, entry
+    tp_int copy_len = code_length - 16 - INT_LEN * 5;  // stack, global, literal, class_headers, entry
     entry_end = global_end + copy_len;
 
     if (global_end + copy_len > MEMORY_SIZE) {
@@ -92,8 +96,9 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
         ERROR_CODE = ERR_MEMORY_OUT;
         return 1;
     }
+//    printf("code len %d, copy len %d\n", code_length, copy_len);
 
-    memcpy(MEMORY + global_end, src_code + 16 + INT_LEN * 3, copy_len);
+    memcpy(MEMORY + global_end, src_code + 16 + INT_LEN * 4, copy_len);
 
     functions_end = entry_end - entry_len;
     pc = functions_end;
@@ -105,6 +110,10 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
 
 void nat_return_int(tp_int value) {
     int_to_bytes(MEMORY + ret_stack[ret_p--], value);
+}
+
+void nat_return_float(tp_float value) {
+    float_to_bytes(MEMORY + ret_stack[ret_p--], value);
 }
 
 void nat_return() {
@@ -178,7 +187,7 @@ void nat_println_float() {
     push_fp
     push(FLOAT_LEN)
 
-    tp_float arg = bytes_to_float32(MEMORY + true_addr(0));
+    tp_float arg = bytes_to_float(MEMORY + true_addr(0));
     tp_printf("%f\n", arg);
 
     pull_fp
@@ -230,7 +239,7 @@ tp_int _malloc_essential(tp_int asked_len) {
 
     if (location <= 0) {
         int ava_size = link_len(available) * MEM_BLOCK - INT_LEN;
-        fprintf(stderr, "Cannot allocate length %lld, available memory %d\n", asked_len, ava_size);
+        tp_fprintf(stderr, "Cannot allocate length %lld, available memory %d\n", asked_len, ava_size);
         ERROR_CODE = ERR_MEMORY_OUT;
         return 0;
     }
@@ -343,6 +352,13 @@ void _create_arr_rec(tp_int to_write, tp_int atom_len,
 
 }
 
+tp_float float_mod(tp_float d1, tp_float d2) {
+    while (d1 >= d2) {
+        d1 -= d2;
+    }
+    return d1;
+}
+
 void nat_heap_array() {
     push_fp
     push(INT_LEN * 2)
@@ -375,6 +391,30 @@ void nat_heap_array() {
 
     free(dimension);
     nat_return();
+
+    pull_fp
+}
+
+void nat_cos() {
+    push_fp
+    push(FLOAT_LEN)
+
+    tp_float arg = bytes_to_float(MEMORY + true_addr(0));
+    tp_float res = (tp_float) cos(arg);
+
+    nat_return_float(res);
+
+    pull_fp
+}
+
+void nat_log() {
+    push_fp
+    push(FLOAT_LEN)
+
+    tp_float arg = bytes_to_float(MEMORY + true_addr(0));
+    tp_float res = (tp_float) log(arg);
+
+    nat_return_float(res);
 
     pull_fp
 }
@@ -417,6 +457,12 @@ void invoke(tp_int func_ptr) {
             break;
         case 12:  // heap_array
             nat_heap_array();
+            break;
+        case 13:  // nat_cos
+            nat_cos();
+            break;
+        case 14:  // nat_log
+            nat_log();
             break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;
@@ -510,9 +556,10 @@ void tvm_mainloop() {
 //                printf("ret %lld\n", ret_stack[ret_p]);
                 break;
             case 17:  // call fn
-//                printf("call\n");
+//                printf("call %lld\n", bytes_to_int(MEMORY + pc));
                 pc_stack[++pc_p] = pc + INT_LEN;
                 pc = true_addr(bytes_to_int(MEMORY + true_addr(bytes_to_int(MEMORY + pc))));
+//                printf("called pc %lld\n", pc);
                 break;
             case 18:  // exit
                 return;
@@ -548,6 +595,23 @@ void tvm_mainloop() {
                 reg1 = MEMORY[pc++];
                 reg2 = MEMORY[pc++];
                 memcpy(regs[reg1].bytes, MEMORY + regs[reg2].int_value, INT_LEN);
+                break;
+            case 26:  // rloadc_abs
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                memcpy(regs[reg1].bytes, MEMORY + regs[reg2].int_value, CHAR_LEN);
+                break;
+            case 27:  // rloadb_abs
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].byte_value = MEMORY[regs[reg2].int_value];
+                break;
+            case 28:  // call_reg
+                reg1 = MEMORY[pc++];
+//                printf("method ptr %lld\n", regs[reg1].int_value);
+                pc_stack[++pc_p] = pc;
+                pc = true_addr(bytes_to_int(MEMORY + true_addr(regs[reg1].int_value)));
+//                printf("method called pc %lld\n", pc);
                 break;
             case 30:  // addi
                 reg1 = MEMORY[pc++];
@@ -612,6 +676,103 @@ void tvm_mainloop() {
                 reg1 = MEMORY[pc++];
                 regs[reg1].int_value = !regs[reg1].int_value;
                 break;
+            case 43:  // lshift
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value << regs[reg2].int_value;
+                break;
+            case 44:  // rshift
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value >> regs[reg2].int_value;
+                break;
+            case 45:  // rshiftl
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = rshift_logical(regs[reg1].int_value, regs[reg2].int_value);
+                break;
+            case 46:  // bit and
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value & regs[reg2].int_value;
+                break;
+            case 47:  // bit or
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value | regs[reg2].int_value;
+                break;
+            case 48:  // bit xor
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].int_value ^ regs[reg2].int_value;
+                break;
+            case 50:  // addf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].double_value = regs[reg1].double_value + regs[reg2].double_value;
+                break;
+            case 51:  // subf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].double_value = regs[reg1].double_value - regs[reg2].double_value;
+                break;
+            case 52:  // mulf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].double_value = regs[reg1].double_value * regs[reg2].double_value;
+                break;
+            case 53:  // divf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].double_value = regs[reg1].double_value / regs[reg2].double_value;
+                break;
+            case 54:  // modf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].double_value = float_mod(regs[reg1].double_value, regs[reg2].double_value);
+                break;
+            case 55:  // eqf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value == regs[reg2].double_value;
+                break;
+            case 56:  // nef
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value != regs[reg2].double_value;
+                break;
+            case 57:  // gtf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value > regs[reg2].double_value;
+                break;
+            case 58:  // ltf
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value < regs[reg2].double_value;
+                break;
+            case 59:  // gef
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value >= regs[reg2].double_value;
+                break;
+            case 60:  // lef
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value <= regs[reg2].double_value;
+                break;
+            case 61:  // negf
+                reg1 = MEMORY[pc++];
+                regs[reg1].double_value = -regs[reg1].double_value;
+                break;
+            case 65:  // i_to_f
+                reg1 = MEMORY[pc++];
+                regs[reg1].double_value = regs[reg1].int_value;
+                break;
+            case 66:  // f_to_i
+                reg1 = MEMORY[pc++];
+                regs[reg1].int_value = regs[reg1].double_value;
+                break;
             case 70:  // loadc
                 reg1 = MEMORY[pc++];
                 memcpy(regs[reg1].bytes, MEMORY + pc, INT_LEN);
@@ -623,10 +784,82 @@ void tvm_mainloop() {
                 reg2 = MEMORY[pc++];
                 char_to_bytes(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].char_value);
                 break;
-            case 72:  // main args
+            case 72:  // storec_abs
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                char_to_bytes(MEMORY + regs[reg1].int_value, regs[reg2].char_value);
+//                memcpy(MEMORY + regs[reg1].char_value, regs[reg2].bytes, CHAR_LEN);
+                break;
+            case 79:  // main args
                 int_to_bytes(MEMORY + true_addr_sp(0), tvm_set_args());
                 break;
+            case 80:  // loadb
+                reg1 = MEMORY[pc++];
+                memcpy(regs[reg1].bytes, MEMORY + pc, INT_LEN);
+                pc += INT_LEN;
+//                regs[reg1].char_value = bytes_to_char(MEMORY + true_addr(regs[reg1].int_value));
+                regs[reg1].byte_value = MEMORY[true_addr(regs[reg1].int_value)];
+                break;
+            case 81:  // storeb
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                MEMORY[true_addr(regs[reg1].int_value)] = regs[reg2].byte_value;
+//                char_to_bytes(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].char_value);
+                break;
+            case 82:  // storeb_abs
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                MEMORY[regs[reg1].int_value] = regs[reg2].byte_value;
+//                char_to_bytes(MEMORY + regs[reg1].int_value, regs[reg2].char_value);
+//                memcpy(MEMORY + regs[reg1].char_value, regs[reg2].bytes, CHAR_LEN);
+                break;
+            case 83:  // get_method  %inst_ptr_addr  method id  %offset of class in instance
+                reg1 = MEMORY[pc++];  // inst_ptr_addr
+                reg2 = MEMORY[pc++];  // method id
+                reg3 = MEMORY[pc++];  // backup
+                regs[reg1].int_value = bytes_to_int(
+                        MEMORY + true_addr(regs[reg1].int_value + regs[reg3].int_value));  // class pointer
+//                printf("class pointer %lld\n", regs[reg1].int_value);
+                regs[reg1].int_value = bytes_to_int(MEMORY + regs[reg1].int_value);  // class header address
+                regs[reg3].int_value = bytes_to_int(MEMORY + regs[reg1].int_value);  // mro count
+//                printf("mro count %lld\n", regs[reg1].int_value);
+
+                // skips mro, "mro count", and "method count"
+                regs[reg1].int_value += regs[reg3].int_value * PTR_LEN + INT_LEN * 2;
+//                printf("addr %lld\n", regs[reg1].int_value);
+                regs[reg1].int_value += regs[reg2].int_value * PTR_LEN;  // true addr of method ptr
+                regs[reg1].int_value = bytes_to_int(MEMORY + regs[reg1].int_value);
+//                printf("method ptr %lld\n", regs[reg1].int_value);
+                break;
+
+            case 84:  // subclass   %reg1 parent  %reg2 child  %reg3 temp1  %reg4 temp2
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                reg3 = MEMORY[pc++];
+                reg4 = MEMORY[pc++];
+                regs[reg1].int_value = bytes_to_int(MEMORY + true_addr(regs[reg1].int_value));
+                regs[reg2].int_value = bytes_to_int(MEMORY + true_addr(regs[reg2].int_value));
+                regs[reg3].int_value = bytes_to_int(MEMORY + true_addr(regs[reg2].int_value));  // child mro len
+//                printf("%lld %lld %lld\n", regs[reg1].int_value, regs[reg2].int_value, regs[reg3].int_value);
+                for (regs[reg4].int_value = 0; regs[reg4].int_value < regs[reg3].int_value; regs[reg4].int_value++) {
+                    if (regs[reg1].int_value ==
+                        bytes_to_int(MEMORY +
+                                     true_addr(bytes_to_int(MEMORY +  // class ptr address
+                                                            true_addr(
+                                                                    regs[reg2].int_value +  // addr of class ptr in mro
+                                                                    CLASS_FIXED_HEADER +
+                                                                    regs[reg4].int_value *
+                                                                    INT_LEN))))) {
+                        regs[reg1].int_value = 1;
+                        goto FOUND_CLASS;
+                    }
+                    // check superclass
+                }
+                regs[reg1].int_value = 0;
+            FOUND_CLASS:
+                break;
             default:
+                fprintf(stderr, "%d: ", instruction);
                 ERROR_CODE = ERR_INSTRUCTION;
                 break;
         }
@@ -668,6 +901,7 @@ tp_int tvm_set_args() {
 }
 
 void print_memory() {
+    //printf("mmm %lld\n", bytes_to_int(MEMORY + 1510));
     int i = 0;
     printf("Stack ");
     for (; i < stack_end; i++) {
@@ -677,6 +911,7 @@ void print_memory() {
 
     tp_printf("\nGlobal %d: ", stack_end)
     for (; i < global_end; ++i) {
+        if (i % INT_LEN == 0) printf("| ");
         printf("%d ", MEMORY[i]);
     }
 
@@ -685,12 +920,17 @@ void print_memory() {
         printf("%d ", MEMORY[i]);
     }
 
-    tp_printf("\nFunctions %d: ", literal_end)
+    tp_printf("\nClass header %d: ", literal_end)
+    for (; i < class_header_end; ++i) {
+        printf("%d ", MEMORY[i]);
+    }
+
+    tp_printf("\nFunctions %d: ", class_header_end)
     for (; i < functions_end; i++) {
         printf("%d ", MEMORY[i]);
     }
 
-    tp_printf("\nEntry %d: ", functions_end);
+    tp_printf("\nEntry %d: ", functions_end)
     for (; i < entry_end; i++) {
         printf("%d ", MEMORY[i]);
     }
@@ -715,7 +955,7 @@ void print_error(int error_code) {
             fprintf(stderr, "\nHeap collision: ");
             break;
         case ERR_INSTRUCTION:
-            fprintf(stderr, "\nUnexpected instruction: ");
+            fprintf(stderr, "\nUnexpected instruction");
             break;
         default:
             fprintf(stderr, "\nSomething wrong: ");
