@@ -581,22 +581,18 @@ class TpaOutput:
             merged.append(line)
         merged.append("")
 
+        def compile_function(fn_name):
+            fo = self.manager.functions_map[fn_name]
+            content = fo.compile()
+            merged.extend(content)
+
         for name, t in self.manager.class_func_order:
             if t == 0:  # function
-                fo = self.manager.functions_map[name]
-                content = fo.compile()
-                merged.extend(content)
+                compile_function(name)
             else:  # class
                 class_methods = class_methods_map[name]
                 for method_name in class_methods:
-                    fo = self.manager.functions_map[method_name]
-                    content = fo.compile()
-                    merged.extend(content)
-
-        # for fn_name in self.manager.functions_map:
-        #     fo = self.manager.functions_map[fn_name]
-        #     content = fo.compile()
-        #     merged.extend(content)
+                    compile_function(method_name)
 
         self.output = merged + self.output
 
