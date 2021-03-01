@@ -280,10 +280,28 @@ class ClassType(Type):
     def find_method(self, name: str, arg_types: list, lf) -> (int, int, MethodType):
         if name in self.methods:
             poly: util.NaiveDict = self.methods[name]
-            # res = poly.get_entry_by(arg_types, method_convertible_params)
             return find_closet_func(poly, arg_types, name, True, lambda poly_d, i: poly_d.values[i][2], lf)[1]
 
         raise errs.TplCompileError(f"Class {self.name} does not have method '{name}'. ", lf)
+
+    def find_local_method(self, name: str, arg_types: list, lf) -> (int, int, MethodType):
+        """
+        Returns only the matching method that is defined in this class, not in superclasses.
+
+        The mechanism is that, for example, the signature of 'hash' defined in 'Object' is 'hash(this: *Object) int',
+        but in 'String' is 'hash(this: *String) int'. Checking the param type of 'this' should determine
+        the method's definition class.
+
+        :param name:
+        :param arg_types:
+        :param lf:
+        :return:
+        """
+        method_id, method_ptr, method_t = self.find_method(name, arg_types, lf)
+        def_this_t = method_t.param_types[0].base
+        if def_this_t != self:
+            raise errs.TplCompileError(f"Cannot resolve local method {name}{arg_types[1:]}. ", lf)
+        return method_id, method_ptr, method_t
 
     def strong_convertible(self, left_tar_type):
         if isinstance(left_tar_type, Generic):

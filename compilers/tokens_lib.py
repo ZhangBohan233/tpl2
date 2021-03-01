@@ -12,7 +12,7 @@ OTHERS = {"=", "->", ":=", "++", "--"}
 RESERVED = {"abstract", "as", "break", "case", "class", "cond", "const", "continue", "del", "do", "else",
             "export", "exportmacro", "fallthrough", "fn", "for",
             "if", "import", "instanceof", "macro", "new", "require", "return", "super", "switch", "then",
-            "var", "while", "yield"}
+            "this", "var", "while", "yield"}
 
 ALL_BINARY = set.union(
     ARITH_BINARY,

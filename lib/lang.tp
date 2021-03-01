@@ -17,6 +17,18 @@ class Object {
     }
 }
 
+class String {
+    const array: char[];
+
+    fn __new__(this: *String) void {
+        super.__new__();
+    }
+
+    fn __del__(this: *String) void {
+
+    }
+}
+
 abstract class Number {
     fn __new__(this: *Number) void {
         super.__new__();
@@ -29,7 +41,7 @@ class Integer(Number) {
     const value: int;
 
     fn __new__(this: *Integer, value: int) void {
-      super.__new__();
+        super.__new__();
 
         this.value = value;
     }

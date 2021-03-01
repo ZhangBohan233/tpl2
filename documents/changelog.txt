@@ -1,4 +1,12 @@
-﻿===== VERSION 2041 =====
+﻿===== VERSION 2042 =====
+2021/03/02
+
+* Automatically inserts param 'this' to methods, if they do not have
+* Automatically inserts 'super.__new__()' call to __new__, if it does not have
+* Added type check of 'this': must exactly be the pointer to instance of the child-most class
+* Optimized the method finding mechanism of '__new__'
+
+===== VERSION 2041 =====
 2021/03/01
 
 * Implemented bitwise binary operators: '<<', '>>', '>>>', '&', '|', '^'

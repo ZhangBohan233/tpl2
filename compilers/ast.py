@@ -228,6 +228,12 @@ class BlockStmt(Statement):
     def return_check(self):
         return any([line.return_check() for line in self.lines])
 
+    def get_first_content(self):
+        for line in self.lines:
+            for part in line:
+                return part
+        return None
+
     def __len__(self):
         return len(self.lines)
 
@@ -739,8 +745,10 @@ class NewExpr(UnaryExpr):
 
         const_args = self.value.arg_types(env, tpa.manager)
         const_args.insert(0, None)  # insert a positional arg of 'this'
+
         constructor_id, constructor_ptr, constructor_t = \
-            class_t.methods["__new__"].get_entry_by(const_args, typ.method_convertible_params)[1]
+            class_t.find_local_method("__new__", const_args, self.lf)
+
         ea = self.value.evaluate_args(constructor_t, env, tpa, True)
         ea.insert(0, (inst_ptr_addr, util.PTR_LEN))
         FunctionCall.call_name(util.name_with_path(
@@ -985,7 +993,10 @@ class DotExpr(BinaryExpr):
                 arg_types = right_node.arg_types(env, tpa.manager)
                 if is_method:
                     arg_types.insert(0, None)  # insert a positional arg of 'this'
-                method_id, method_p, t = class_t.find_method(name, arg_types, lf)
+                if name == "__new__":
+                    method_id, method_p, t = class_t.find_local_method(name, arg_types, lf)
+                else:
+                    method_id, method_p, t = class_t.find_method(name, arg_types, lf)
                 if t.abstract:
                     raise errs.TplCompileError(f"Abstract method '{name}' cannot be called. ", lf)
                 full_name = util.name_with_path(
@@ -1276,10 +1287,6 @@ class FunctionDef(Expression):
         else:
             raise errs.TplCompileError("Not a named function. ", self.lf)
 
-    def get_poly_name(self, env, manager):
-        simple_name = self.get_simple_name()
-        func_type = self.evaluated_type(env, manager)
-
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.name, NameNode):
             self.compile_as(self.name.name, env, tpa)
@@ -1305,6 +1312,8 @@ class FunctionDef(Expression):
             if isinstance(param, Declaration):
                 pt = param.right.definition_type(env, manager)
                 param_types.append(pt)
+            else:
+                raise errs.TplCompileError("Invalid parameter. ", self.lf)
 
         if self.parent_class is None:
             if self.abstract:
@@ -1460,9 +1469,15 @@ class ClassStmt(Statement):
 
         class_type.length = pos
 
+        # check if there is a constructor
+        self.add_constructor_if_none(method_defs, class_type)
+
         # update methods
         method_id = len(class_type.method_rank)  # id of method in this class
         for method_def in method_defs:
+            # check method params and content
+            self.check_method_def(method_def, class_type, env, tpa.manager)
+
             method_def.compile(class_env, tpa)
             name = method_def.get_simple_name()
             placer: typ.FunctionPlacer = class_env.get_type(name, self.lf)
@@ -1515,6 +1530,54 @@ class ClassStmt(Statement):
                             f"Class '{self.name}' does not override all abstract methods of its superclasses. ",
                             self.lf
                         )
+
+    def check_method_def(self, method: FunctionDef, class_type: typ.ClassType, env, manager):
+        insert_this = True
+        if len(method.params) > 0:
+            first_param = method.params[0]
+            if isinstance(first_param, Declaration) and \
+                    isinstance(first_param.left, NameNode) and \
+                    first_param.left.name == "this":
+                this_t = first_param.right.definition_type(env, manager)
+                if not isinstance(this_t, typ.PointerType) or this_t.base != class_type:
+                    raise errs.TplCompileError("Parameter 'this' must be *" + class_type.name + ". ", self.lf)
+                insert_this = False
+        if insert_this:
+            dec = Declaration(VAR_CONST, method.lf)
+            dec.left = NameNode("this", method.lf)
+            dec.right = StarExpr(method.lf)
+            dec.right.value = NameNode(class_type.name, method.lf)
+            method.params.parts.insert(0, dec)
+
+        if class_type.name != "Object" and method.get_simple_name() == "__new__":
+            insert_super = True
+            first_stmt = method.body.get_first_content()
+            # print(first_stmt)
+            if first_stmt is not None:
+                if isinstance(first_stmt, DotExpr) and \
+                        isinstance(first_stmt.left, SuperExpr) and \
+                        isinstance(first_stmt.right, FunctionCall) and \
+                        isinstance(first_stmt.right.call_obj, NameNode) and \
+                        first_stmt.right.call_obj.name == "__new__":
+                    insert_super = False
+            if insert_super:
+                dot = DotExpr(method.lf)
+                dot.left = SuperExpr(method.lf)
+                dot.right = FunctionCall(NameNode("__new__", method.lf), Line(method.lf), method.lf)
+                method.body.lines.insert(0, Line(method.lf, dot))
+
+    def add_constructor_if_none(self, method_defs: [FunctionDef], class_type: typ.ClassType):
+        no_constructor = len(list(filter(lambda fd: fd.get_simple_name() == "__new__", method_defs))) == 0
+        if no_constructor:
+            const = FunctionDef(NameNode("__new__", self.lf),
+                                Line(self.lf),
+                                NameNode("void", self.lf),
+                                False,
+                                False,
+                                BlockStmt(self.lf),
+                                self.lf)
+            const.parent_class = class_type
+            method_defs.append(const)
 
     def __str__(self):
         if self.template_nodes is None:
