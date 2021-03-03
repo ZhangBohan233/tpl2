@@ -22,20 +22,42 @@ class Object {
 }
 
 class String {
-    const array: char[];
+    const chars: char[];
 
-    fn __new__(arrays: char[]) void {
+    fn __new__(chars: char[]) void {
         super.__new__();
 
-        this.array = arrays;
+        this.chars = chars;
+    }
+
+    fn __new__(other: *String) void {
+        super.__new__();
+
+        this.chars = other.chars;
     }
 
     fn __del__() void {
 
     }
 
+    fn equals(other: *Object) int {
+        if not (other instanceof String) {
+            return FALSE;
+        }
+        os := other as *String;
+        if this.length() != os.length() {
+            return FALSE;
+        }
+        for i := 0; i < this.chars.length; i++ {
+            if this.chars[i] != os.chars[i] {
+                return FALSE;
+            }
+        }
+        return TRUE;
+    }
+
     fn length() int {
-        return this.array.length;
+        return this.chars.length;
     }
 }
 
@@ -106,12 +128,12 @@ fn println(value: byte) void {
 
 fn print(value: *String) void {
     require print_str;
-    print_str(value.array);
+    print_str(value.chars);
 }
 
 fn println(value: *String) void {
     require println_str;
-    println_str(value.array);
+    println_str(value.chars);
 }
 
 fn print(value: *Object) void {

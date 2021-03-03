@@ -177,6 +177,8 @@ class FileTokenizer:
                 self.tokens.append(tl.IdToken(s, lf))
             elif s in tl.ALL:
                 self.tokens.append(tl.IdToken(s, lf))
+            elif len(s.strip()) > 0:
+                raise errs.TplSyntaxError(f"Unexpected token '{s.strip()}'. ", lf)
             i += 1
 
 

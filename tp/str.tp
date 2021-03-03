@@ -25,5 +25,5 @@ class Child(Parent) {
 fn main() int {
     x := "asd";
     println("asd");
-    return String.length(x);
+    return new String("xxs").length();
 }

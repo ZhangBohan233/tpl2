@@ -548,7 +548,9 @@ def is_unary(leading_ele: tl.Element) -> bool:
 def is_call(token_before: tl.Token) -> bool:
     if isinstance(token_before, tl.IdToken):
         symbol = token_before.identifier
-        return symbol.isidentifier() and symbol not in tl.RESERVED
+        return symbol.isidentifier() and \
+            symbol not in tl.RESERVED and \
+            symbol not in tl.LOGICAL_UNARY
     return False
 
 

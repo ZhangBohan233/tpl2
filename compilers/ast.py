@@ -369,7 +369,7 @@ class ByteLiteral(LiteralNode):
         return "Char@" + str(self.lit_pos)
 
 
-class StringLiteral(LiteralNode):
+class CharArrayLiteral(LiteralNode):
     def __init__(self, lit_pos, lf):
         super().__init__(lit_pos, lf)
 
@@ -385,7 +385,7 @@ class StringLiteral(LiteralNode):
         return typ.TYPE_CHAR_ARR
 
     def __str__(self):
-        return "String@" + str(self.lit_pos)
+        return "CharArray@" + str(self.lit_pos)
 
 
 class Buildable:

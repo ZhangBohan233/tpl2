@@ -57,7 +57,7 @@ class AstPreprocessor:
                 pos = len(self.literal_bytes)
                 self.literal_bytes.extend(util.string_to_bytes(node.value))
                 self.str_literals[node.value] = pos
-            sl = ast.StringLiteral(pos, node.lf)
+            sl = ast.CharArrayLiteral(pos, node.lf)
             creation = ast.NewExpr(node.lf)
             creation.value = ast.FunctionCall(ast.NameNode("String", node.lf),
                                               ast.Line(node.lf, sl),

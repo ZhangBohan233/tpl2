@@ -50,3 +50,5 @@
 * ~~Function polymorphism~~ Done
 * ~~Call method via Class.method()~~ Done
 * ~~Reflection: getfunc~~ Done
+* Char and byte binary operations
+* Iterator for loop
