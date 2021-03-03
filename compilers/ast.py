@@ -375,8 +375,7 @@ class StringLiteral(LiteralNode):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         res_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
-        tpa.load_literal_ptr(res_ptr, self.lit_pos)
-
+        self.compile_to(env, tpa, res_ptr, util.PTR_LEN)
         return res_ptr
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
@@ -987,10 +986,7 @@ class DotExpr(BinaryExpr):
                 arg_types = right_node.arg_types(env, tpa.manager)
                 if is_method:
                     arg_types.insert(0, None)  # insert a positional arg of 'this'
-                if name == "__new__":
-                    method_id, method_p, t = class_t.find_local_method(name, arg_types, lf)
-                else:
-                    method_id, method_p, t = class_t.find_method(name, arg_types, lf)
+                method_id, method_p, t = class_t.find_method(name, arg_types, lf)
                 if t.abstract:
                     raise errs.TplCompileError(f"Abstract method '{name}' cannot be called. ", lf)
                 full_name = util.name_with_path(
@@ -1091,22 +1087,29 @@ class DotExpr(BinaryExpr):
                         return typ.replace_generic_with_real(attr_t, struct_t.generics)
                     return attr_t
             elif isinstance(right_node, FunctionCall):
+                arg_types = right_node.arg_types(env, manager)
+                arg_types.insert(0, None)
                 if isinstance(struct_t, typ.ClassType):
                     name = right_node.get_name()
-                    pos, ptr, t = struct_t.find_method(name, lf)
+                    pos, ptr, t = struct_t.find_method(name, arg_types, lf)
                     return t.rtype
                 elif isinstance(struct_t, typ.GenericClassType):
                     name = right_node.get_name()
-                    pos, ptr, t = struct_t.base.find_method(name, lf)
+                    pos, ptr, t = struct_t.base.find_method(name, arg_types, lf)
                     t: typ.MethodType
                     if typ.is_generic(t.rtype):
                         return typ.replace_generic_with_real(t.rtype, struct_t.generics)
                     return t.rtype
         elif isinstance(left_t, typ.ArrayType) and isinstance(right_node, NameNode):
             return array_attribute_types(right_node.name, lf)
+        elif isinstance(left_t, typ.ClassType) and isinstance(right_node, FunctionCall):  # Class.method(instance, ...)
+            arg_types = right_node.arg_types(env, manager)
+            name = right_node.get_name()
+            pos, ptr, t = left_t.find_method(name, arg_types, lf)
+            return t.rtype
 
         raise errs.TplCompileError(
-            f"Left side of dot must be a pointer to struct or an array, got {left_t}. ", lf)
+            f"Left side of dot must be a pointer to class or an array, got {left_t}. ", lf)
 
 
 class Assignment(BinaryExpr):
@@ -1130,7 +1133,7 @@ class Assignment(BinaryExpr):
             return self.ptr_assign(self.left, env, tpa)
         elif isinstance(self.left, DollarExpr) or isinstance(self.left, DotExpr):
             right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lf)
-            return self.struct_attr_assign(self.left, env, tpa)
+            return self.class_attr_assign(self.left, env, tpa)
         elif isinstance(self.left, IndexingExpr):
             right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lf)
             return self.array_index_assign(self.left, self.right, env, tpa, self.lf)
@@ -1143,10 +1146,10 @@ class Assignment(BinaryExpr):
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return self.right.evaluated_type(env, manager)
 
-    def struct_attr_assign(self, dot: DotExpr, env: en.Environment, tpa: tp.TpaOutput):
+    def class_attr_assign(self, dot: DotExpr, env: en.Environment, tpa: tp.TpaOutput):
         attr_ptr, attr_t = DotExpr.get_dot_attr_and_type(dot.left, dot.right, env, tpa, dot.lf)
         res_addr = self.right.compile(env, tpa)
-        tpa.ptr_assign(res_addr, attr_t.memory_length(), attr_ptr)
+        tpa.ptr_assign(res_addr, attr_t.length, attr_ptr)
         return res_addr
 
     @staticmethod

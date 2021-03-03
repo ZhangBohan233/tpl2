@@ -1,4 +1,13 @@
-﻿===== VERSION 2046 =====
+﻿===== VERSION 2047 =====
+2021/03/04
+
+* Completely fixed function order problem: traverse all functions before compile .tpa to .tpc
+* Implemented native function 'print_byte' and 'println_byte'
+* Fixed bug that byte argument error
+* Implemented library function 'print' and 'println'
+* Implemented type 'String' as the default evaluation of double quotes
+
+===== VERSION 2046 =====
 2021/03/04
 
 * Compiler code optimization and bugs fix

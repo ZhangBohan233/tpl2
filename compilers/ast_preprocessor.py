@@ -57,7 +57,12 @@ class AstPreprocessor:
                 pos = len(self.literal_bytes)
                 self.literal_bytes.extend(util.string_to_bytes(node.value))
                 self.str_literals[node.value] = pos
-            return ast.StringLiteral(pos, node.lf)
+            sl = ast.StringLiteral(pos, node.lf)
+            creation = ast.NewExpr(node.lf)
+            creation.value = ast.FunctionCall(ast.NameNode("String", node.lf),
+                                              ast.Line(node.lf, sl),
+                                              node.lf)
+            return creation
         elif isinstance(node, ast.BinaryOperatorAssignment):
             left = self.process_node(node.left)
             right = self.process_node(node.right)

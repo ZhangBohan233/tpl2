@@ -15,25 +15,27 @@ class Object {
     fn equals(other: *Object) int {
         return this == other;
     }
-}
 
-fn shit() void {
-
+    fn toString() *String {
+        return "Object";
+    }
 }
 
 class String {
     const array: char[];
 
-    fn __new__() void {
+    fn __new__(arrays: char[]) void {
         super.__new__();
+
+        this.array = arrays;
     }
 
     fn __del__() void {
 
     }
 
-    fn test(a: *Integer) void {
-
+    fn length() int {
+        return this.array.length;
     }
 }
 
@@ -62,6 +64,64 @@ class Integer(Number) {
 
 const NULL: *void = 0 as *void;
 
+fn print(value: int) void {
+    require print_int;
+    print_int(value);
+}
+
+fn println(value: int) void {
+    require println_int;
+    println_int(value);
+}
+
+fn print(value: float) void {
+    require print_float;
+    print_float(value);
+}
+
+fn println(value: float) void {
+    require println_float;
+    println_float(value);
+}
+
+fn print(value: char) void {
+    require print_char;
+    print_char(value);
+}
+
+fn println(value: char) void {
+    require println_char;
+    println_char(value);
+}
+
+fn print(value: byte) void {
+    require print_byte;
+    print_byte(value);
+}
+
+fn println(value: byte) void {
+    require println_byte;
+    println_byte(value);
+}
+
+fn print(value: *String) void {
+    require print_str;
+    print_str(value.array);
+}
+
+fn println(value: *String) void {
+    require println_str;
+    println_str(value.array);
+}
+
+fn print(value: *Object) void {
+    print(value.toString());
+}
+
+fn println(value: *Object) void {
+    println(value.toString());
+}
+
 export {
-    FALSE, TRUE, NULL, Object, Number, Integer
+    FALSE, TRUE, NULL, Object, String, Number, Integer, print, println
 }

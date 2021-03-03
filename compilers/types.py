@@ -279,12 +279,18 @@ class ClassType(Type):
                 return mro_t.fields[name]
         raise errs.TplCompileError(f"Class {self.name} does not have field '{name}'. ", lf)
 
-    def find_method(self, name: str, arg_types: list, lf) -> (int, int, MethodType):
+    def _find_method(self, name, arg_types, lf):
         if name in self.methods:
             poly: util.NaiveDict = self.methods[name]
             return find_closet_func(poly, arg_types, name, True, lambda poly_d, i: poly_d.values[i][2], lf)[1]
 
         raise errs.TplCompileError(f"Class {self.name} does not have method '{name}'. ", lf)
+
+    def find_method(self, name: str, arg_types: list, lf) -> (int, int, MethodType):
+        if name == "__new__":
+            return self.find_local_method(name, arg_types, lf)
+        else:
+            return self._find_method(name, arg_types, lf)
 
     def find_local_method(self, name: str, arg_types: list, lf) -> (int, int, MethodType):
         """
@@ -299,7 +305,7 @@ class ClassType(Type):
         :param lf:
         :return:
         """
-        method_id, method_ptr, method_t = self.find_method(name, arg_types, lf)
+        method_id, method_ptr, method_t = self._find_method(name, arg_types, lf)
         def_this_t = method_t.param_types[0].base
         if def_this_t != self:
             raise errs.TplCompileError(f"Cannot resolve local method {name}{arg_types[1:]}. ", lf)
@@ -633,5 +639,7 @@ NATIVE_FUNCTIONS = {
     "free": (11, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID)),
     "heap_array": (12, NativeFuncType([TYPE_INT, ArrayType(TYPE_INT)], TYPE_VOID_PTR)),
     "nat_cos": (13, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT)),
-    "nat_log": (14, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT))
+    "nat_log": (14, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT)),
+    "print_byte": (15, NativeFuncType([TYPE_BYTE], TYPE_VOID)),
+    "println_byte": (16, NativeFuncType([TYPE_BYTE], TYPE_VOID))
 }

@@ -193,6 +193,26 @@ void nat_println_float() {
     pull_fp
 }
 
+void nat_print_byte() {
+    push_fp
+    push(1)
+
+    tp_byte arg = MEMORY[true_addr(0)];
+    printf("%db", arg);
+
+    pull_fp
+}
+
+void nat_println_byte() {
+    push_fp
+    push(1)
+
+    tp_byte arg = MEMORY[true_addr(0)];
+    printf("%db\n", arg);
+
+    pull_fp
+}
+
 void nat_print_str() {
     push_fp
     push(PTR_LEN)
@@ -463,6 +483,12 @@ void invoke(tp_int func_ptr) {
             break;
         case 14:  // nat_log
             nat_log();
+            break;
+        case 15:  // print_byte
+            nat_print_byte();
+            break;
+        case 16:  // println_byte
+            nat_println_byte();
             break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;

@@ -479,7 +479,8 @@ class TpaOutput:
             arg_length = arg[1]
             self.write_format("aload_sp", register(reg1), address(count))
             if arg_length == 1:
-                pass
+                self.write_format("loadb", register(reg2), address(arg_addr))
+                self.write_format("store_abs", register(reg1), register(reg2))
             elif arg_length == util.INT_LEN:
                 self.write_format("load", register(reg2), address(arg_addr))
                 self.write_format("store_abs", register(reg1), register(reg2))
@@ -491,15 +492,6 @@ class TpaOutput:
 
             count += arg_length
 
-        # if ret_len == 1:
-        #     pass
-        # elif ret_len == util.CHAR_LEN:
-        #     self.write_format("iload", register(reg1), number(rtn_addr))
-        #     self.write_format("set_ret", register(reg1))
-        # elif ret_len == util.INT_LEN:
-        #     self.write_format("iload", register(reg1), number(rtn_addr))
-        #     self.write_format("set_ret", register(reg1))
-        # elif ret_len == util.FLOAT_LEN:
         if ret_len > 0:
             self.write_format("iload", register(reg1), number(rtn_addr))
             self.write_format("set_ret", register(reg1))

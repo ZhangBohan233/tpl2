@@ -23,6 +23,7 @@ class Child(Parent) {
 }
 
 fn main() int {
-    child: *Child = new Child();
-    return child.value + child.value2;  // returns 42
+    x := "asd";
+    println("asd");
+    return String.length(x);
 }

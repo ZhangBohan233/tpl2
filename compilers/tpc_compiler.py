@@ -150,65 +150,62 @@ class TpcCompiler:
 
         with open(self.tpa_file, "r") as rf:
             lines = [line.strip("\n") for line in rf.readlines()]
-            i = 0
-            length = len(lines)
-            while i < length:
-                orig_line = lines[i]
-                line = orig_line.strip()
-                lf = tl.LineFile(self.tpa_file, i + 1)
+        for line in lines:
+            if line.startswith("fn"):
+                fn, name, addr = (part.strip() for part in line.split(" "))
+                function_pointers[name] = int(addr[1:])
 
-                if line == "stack_size":
-                    cur_out.append(lines[i])
-                    cur_out.append(lines[i + 1])
-                    self.stack_size = int(lines[i + 1])
-                    i += 1
-                elif line == "global_length":
-                    cur_out.append(lines[i])
-                    cur_out.append(lines[i + 1])
-                    self.global_length = int(lines[i + 1])
-                    i += 1
-                elif line == "literal":
-                    cur_out.append(lines[i])
-                    cur_out.append(lines[i + 1])
-                    literal_str = lines[i + 1].split(" ")
-                    for lit in literal_str:
-                        literal.append(int(lit))
-                    i += 1
-                else:
-                    instructions = \
-                        [part for part in [part.strip() for part in line.split(" ")] if len(part) > 0]
-                    for j in range(len(instructions)):
-                        part = instructions[j]
-                        if part == ";" or part.startswith(";", 0, -1):
-                            instructions = instructions[:j]
-                            break
+        i = 0
+        length = len(lines)
+        while i < length:
+            orig_line = lines[i]
+            line = orig_line.strip()
+            lf = tl.LineFile(self.tpa_file, i + 1)
 
-                    if len(instructions) > 0:
-                        inst = instructions[0]
-                        if inst == "fn":
-                            cur_out = body_out
-                            cur_out.append(orig_line)
+            if line == "stack_size":
+                cur_out.append(lines[i])
+                cur_out.append(lines[i + 1])
+                self.stack_size = int(lines[i + 1])
+                i += 1
+            elif line == "global_length":
+                cur_out.append(lines[i])
+                cur_out.append(lines[i + 1])
+                self.global_length = int(lines[i + 1])
+                i += 1
+            elif line == "literal":
+                cur_out.append(lines[i])
+                cur_out.append(lines[i + 1])
+                literal_str = lines[i + 1].split(" ")
+                for lit in literal_str:
+                    literal.append(int(lit))
+                i += 1
+            else:
+                instructions = \
+                    [part for part in [part.strip() for part in line.split(" ")] if len(part) > 0]
+                for j in range(len(instructions)):
+                    part = instructions[j]
+                    if part == ";" or part.startswith(";", 0, -1):
+                        instructions = instructions[:j]
+                        break
 
-                            cur_fn_name = instructions[1]
-                            cur_fn_ptr = int(instructions[2][1:])
-                            function_pointers[cur_fn_name] = cur_fn_ptr
+                if len(instructions) > 0:
+                    inst = instructions[0]
+                    if inst == "entry":
+                        cur_out = entry_out
+                        cur_out.append(orig_line)
+                    elif inst == "call_fn":
+                        fn_name = instructions[1]
+                        fn_ptr = function_pointers[fn_name]
 
-                        elif inst == "entry":
-                            cur_out = entry_out
-                            cur_out.append(orig_line)
-                        elif inst == "call_fn":
-                            fn_name = instructions[1]
-                            fn_ptr = function_pointers[fn_name]
-
-                            self.write_format(cur_out, "call", "$" + str(fn_ptr))
-                        elif inst in PSEUDO_INSTRUCTIONS:
-                            self.compile_pseudo_inst(instructions, cur_out, lf)
-                        else:
-                            cur_out.append(orig_line)
+                        self.write_format(cur_out, "call", "$" + str(fn_ptr))
+                    elif inst in PSEUDO_INSTRUCTIONS:
+                        self.compile_pseudo_inst(instructions, cur_out, lf)
                     else:
                         cur_out.append(orig_line)
+                else:
+                    cur_out.append(orig_line)
 
-                i += 1
+            i += 1
 
         return header_out + body_out + entry_out
 
