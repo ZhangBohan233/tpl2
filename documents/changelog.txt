@@ -1,4 +1,9 @@
-﻿===== VERSION 2043 =====
+﻿===== VERSION 2044 =====
+2021/03/04
+
+* Assignments in class body are now permitted
+
+===== VERSION 2043 =====
 2021/03/02
 
 * Lazy class body evaluation

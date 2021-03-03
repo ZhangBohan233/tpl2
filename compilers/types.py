@@ -259,6 +259,8 @@ class ClassType(Type):
         # e.g. class A<K, V>, class B<X>(A<X, Object>) => {A: {"K": "X", "V": Object}}
         self.super_generics_map = super_generics_map
 
+        self.initializers = []  # nodes that will be executed in __new__
+
     def type_name(self):
         return self.name
 

@@ -234,6 +234,17 @@ class BlockStmt(Statement):
                 return part
         return None
 
+    def insert_at(self, part_index, lines: [Line]):
+        line_index = 0
+        for i in range(len(self.lines)):
+            for _ in self.lines[i]:
+                if part_index == 0:
+                    line_index = i
+                    break
+                else:
+                    part_index -= 1
+        self.lines = self.lines[:line_index] + lines + self[line_index:]
+
     def __len__(self):
         return len(self.lines)
 
@@ -1197,9 +1208,12 @@ class Declaration(BinaryStmt):
 
         self.level = level
 
-    def get_name(self):
+    def get_name(self) -> str:
+        return self.get_name_node().name
+
+    def get_name_node(self) -> NameNode:
         if isinstance(self.left, NameNode):
-            return self.left.name
+            return self.left
         else:
             raise errs.TplCompileError("Left side of declaration must be a name. ", self.lf)
 
@@ -2460,22 +2474,38 @@ class ClassObject:
         # the class pointer
         self.class_type.fields["__class__"] = 0, typ.TYPE_INT
 
+        def eval_declaration(dec: Declaration, cur_field_pos):
+            dec_name = dec.get_name()
+            if self.class_type.has_field(dec_name):
+                raise errs.TplCompileError(
+                    f"Name '{dec_name}' already defined in class '{self.class_type.name}'. ", self.lf)
+            t = dec.right.definition_type(self.class_env, self.tpa.manager)
+            self.class_type.fields[dec_name] = cur_field_pos, t
+            return t.memory_length()
+
         for line in self.body:
             for part in line:
                 if isinstance(part, Declaration):
-                    name = part.get_name()
-                    if self.class_type.has_field(name):
-                        raise errs.TplCompileError(
-                            f"Name '{name}' already defined in class '{self.class_type.name}'. ", self.lf)
-                    t = part.right.definition_type(self.class_env, self.tpa.manager)
-                    self.class_type.fields[name] = pos, t
-                    pos += t.memory_length()
+                    pos += eval_declaration(part, pos)
+                    continue
+                elif isinstance(part, Assignment):
+                    if isinstance(part.left, Declaration):
+                        pos += eval_declaration(part.left, pos)
+                        ass = Assignment(part.lf)
+                        this_dot = DotExpr(part.lf)
+                        this_dot.left = NameNode("this", part.lf)
+                        this_dot.right = part.left.get_name_node()
+                        ass.left = this_dot
+                        ass.right = part.right
+                        self.class_type.initializers.append(ass)
+                        continue
                 elif isinstance(part, FunctionDef):
                     part.parent_class = self.class_type
                     method_defs.append(part)
-                else:
-                    raise errs.TplCompileError(
-                        f"Class body should only contain attributes and methods, but got a '{part}'. ", self.lf)
+                    continue
+
+                raise errs.TplCompileError(
+                    f"Class body should only contain attributes and methods, but got a '{part}'. ", self.lf)
 
         self.class_type.length = pos
 
@@ -2501,8 +2531,7 @@ class ClassObject:
                     self.class_type.file_path,
                     self.class_type
                 ))
-            # method_ptr = class_env.get(name, self.lf)
-            # method_t = class_env.get_type(name, self.lf)
+
             if not isinstance(method_t, typ.MethodType):
                 raise errs.TplCompileError("Unexpected method. ", self.lf)
 
@@ -2569,22 +2598,25 @@ class ClassObject:
             dec.right.value = NameNode(class_type.name, method.lf)
             method.params.parts.insert(0, dec)
 
-        if class_type.name != "Object" and method.get_simple_name() == "__new__":
-            insert_super = True
-            first_stmt = method.body.get_first_content()
-            # print(first_stmt)
-            if first_stmt is not None:
-                if isinstance(first_stmt, DotExpr) and \
-                        isinstance(first_stmt.left, SuperExpr) and \
-                        isinstance(first_stmt.right, FunctionCall) and \
-                        isinstance(first_stmt.right.call_obj, NameNode) and \
-                        first_stmt.right.call_obj.name == "__new__":
-                    insert_super = False
-            if insert_super:
-                dot = DotExpr(method.lf)
-                dot.left = SuperExpr(method.lf)
-                dot.right = FunctionCall(NameNode("__new__", method.lf), Line(method.lf), method.lf)
-                method.body.lines.insert(0, Line(method.lf, dot))
+        if method.get_simple_name() == "__new__":
+            if class_type.name != "Object" and method.get_simple_name() == "__new__":
+                insert_super = True
+                first_stmt = method.body.get_first_content()
+                # print(first_stmt)
+                if first_stmt is not None:
+                    if isinstance(first_stmt, DotExpr) and \
+                            isinstance(first_stmt.left, SuperExpr) and \
+                            isinstance(first_stmt.right, FunctionCall) and \
+                            isinstance(first_stmt.right.call_obj, NameNode) and \
+                            first_stmt.right.call_obj.name == "__new__":
+                        insert_super = False
+                if insert_super:
+                    dot = DotExpr(method.lf)
+                    dot.left = SuperExpr(method.lf)
+                    dot.right = FunctionCall(NameNode("__new__", method.lf), Line(method.lf), method.lf)
+                    method.body.lines.insert(0, Line(method.lf, dot))
+            initializer_index = 0 if class_type.name == "Object" else 1
+            method.body.insert_at(initializer_index, class_type.initializers)
 
     def add_constructor_if_none(self, method_defs: [FunctionDef], class_type: typ.ClassType):
         no_constructor = len(list(filter(lambda fd: fd.get_simple_name() == "__new__", method_defs))) == 0

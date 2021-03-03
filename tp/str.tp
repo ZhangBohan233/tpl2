@@ -2,6 +2,7 @@
 
 class Parent {
     value: int;
+    value2: int = 4;
 
     // 'this: *Parent' is inserted automatically before 'val: int'
     fn __new__(val: int) void {
@@ -23,5 +24,5 @@ class Child(Parent) {
 
 fn main() int {
     child: *Child = new Child();
-    return child.value;  // returns 42
+    return child.value + child.value2;  // returns 42
 }

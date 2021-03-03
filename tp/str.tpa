@@ -5,7 +5,7 @@ stack_size
 global_length
 232
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 42 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 4 0 0 0 0 0 0 0 42 0 0 0 0 0 0 0
 classes
 class E:\GitHub\tpl2\lib\lang.tp$Object mro $1056 methods $1144 $1152 $1160 $1168
 class E:\GitHub\tpl2\lib\lang.tp$String mro $1072 $1056 methods $1176 $1184 $1160 $1168 $1192
@@ -151,7 +151,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Integer.intValue() $1224
 
 fn E:\GitHub\tpl2\tp\str.tp$Parent.__new__(int) $1232
     push_fp
-    push          24
+    push          40
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
@@ -160,11 +160,25 @@ fn E:\GitHub\tpl2\tp\str.tp$Parent.__new__(int) $1232
     iload         %1      $16
     store         %1      %0
     load          %0      $16
-    iload         %1      8
+    iload         %1      16
     addi          %0      %1
     iload         %1      16
     store         %1      %0
+    load_lit      %0      $24
+    iload         %1      $24
+    store         %1      %0
     load          %0      $16
+    load          %1      $24
+    store_abs     %0      %1
+    load          %0      $0
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      32
+    store         %1      %0
+    load          %0      $32
     load          %1      $8
     store_abs     %0      %1
     pull_fp
@@ -173,13 +187,27 @@ fn E:\GitHub\tpl2\tp\str.tp$Parent.__new__(int) $1232
 
 fn E:\GitHub\tpl2\tp\str.tp$Parent.__new__() $1240
     push_fp
-    push          16
+    push          32
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
     call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
-    load_lit      %0      $24
+    load          %0      $0
     iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load_lit      %0      $24
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $8
+    load          %1      $16
+    store_abs     %0      %1
+    load_lit      %0      $32
+    iload         %1      $24
     store         %1      %0
     load          %0      $0
     iload         %1      4
@@ -189,7 +217,7 @@ fn E:\GitHub\tpl2\tp\str.tp$Parent.__new__() $1240
     load          %2      $0
     store_abs     %1      %2
     aload_sp      %1      $8
-    load          %2      $8
+    load          %2      $24
     store_abs     %1      %2
     call_reg      %0
     pull_fp
@@ -209,9 +237,9 @@ fn E:\GitHub\tpl2\tp\str.tp$Child.__new__() $1248
 
 fn E:\GitHub\tpl2\tp\str.tp$main() $1136
     push_fp
-    push          48
+    push          72
     require       malloc  $16     %0      %1
-    iload         %0      $16
+    iload         %0      $24
     iload         %1      $24
     store         %1      %0
     aload_sp      %0      $0
@@ -231,18 +259,35 @@ fn E:\GitHub\tpl2\tp\str.tp$main() $1136
     iload         %1      $0
     store         %1      %0
     load          %0      $0
-    iload         %1      $32
+    iload         %1      $40
     store         %1      %0
-    load          %0      $32
+    load          %0      $40
     iload         %1      8
+    addi          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    rload_abs     %1      %0
+    iload         %0      48
+    store         %0      %1
+    load          %0      $0
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $56
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      56
+    store         %1      %0
+    load          %0      $56
+    rload_abs     %1      %0
+    iload         %0      64
+    store         %0      %1
+    load          %0      $48
+    load          %1      $64
     addi          %0      %1
     iload         %1      32
     store         %1      %0
     load          %0      $32
-    rload_abs     %1      %0
-    iload         %0      40
-    store         %0      %1
-    load          %0      $40
     put_ret       %0
     pull_fp
     ret
@@ -378,7 +423,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Integer.intValue() $1224
 
 fn E:\GitHub\tpl2\tp\str.tp$Parent.__new__(int) $1232
     push_fp
-    push          24
+    push          40
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
@@ -387,11 +432,25 @@ fn E:\GitHub\tpl2\tp\str.tp$Parent.__new__(int) $1232
     iload         %1      $16
     store         %1      %0
     load          %0      $16
-    iload         %1      8
+    iload         %1      16
     addi          %0      %1
     iload         %1      16
     store         %1      %0
+    load_lit      %0      $24
+    iload         %1      $24
+    store         %1      %0
     load          %0      $16
+    load          %1      $24
+    store_abs     %0      %1
+    load          %0      $0
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      32
+    store         %1      %0
+    load          %0      $32
     load          %1      $8
     store_abs     %0      %1
     pull_fp
@@ -400,13 +459,27 @@ fn E:\GitHub\tpl2\tp\str.tp$Parent.__new__(int) $1232
 
 fn E:\GitHub\tpl2\tp\str.tp$Parent.__new__() $1240
     push_fp
-    push          16
+    push          32
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
     call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
-    load_lit      %0      $24
+    load          %0      $0
     iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load_lit      %0      $24
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $8
+    load          %1      $16
+    store_abs     %0      %1
+    load_lit      %0      $32
+    iload         %1      $24
     store         %1      %0
     load          %0      $0
     iload         %1      4
@@ -416,7 +489,7 @@ fn E:\GitHub\tpl2\tp\str.tp$Parent.__new__() $1240
     load          %2      $0
     store_abs     %1      %2
     aload_sp      %1      $8
-    load          %2      $8
+    load          %2      $24
     store_abs     %1      %2
     call_reg      %0
     pull_fp
