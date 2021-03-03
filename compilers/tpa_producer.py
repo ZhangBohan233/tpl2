@@ -320,6 +320,14 @@ class TpaOutput:
 
         self.manager.append_regs(reg1)
 
+    def return_byte_value(self, src_addr):
+        reg1 = self.manager.require_reg()
+
+        self.write_format("loadb", register(reg1), address(src_addr))
+        self.write_format("put_ret", register(reg1))
+
+        self.manager.append_regs(reg1)
+
     def binary_arith(self, op_inst: str, left: int, right: int, left_len: int, right_len: int, res: int, res_len: int):
         reg1, reg2 = self.manager.require_regs(2)
 

@@ -18,13 +18,10 @@ UNA_LOGICAL = 2
 VAR_VAR = 1
 VAR_CONST = 2
 
-use_compile_to = False
-
 
 def set_optimize_level(opt_level: int):
     if opt_level >= 1:
-        global use_compile_to
-        use_compile_to = True
+        pass
 
 
 class IntWrapper:
@@ -115,9 +112,6 @@ class Node:
 class Expression(Node, ABC):
     def __init__(self, lf):
         super().__init__(lf)
-
-    def use_compile_to(self) -> bool:
-        return False
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         et = self.evaluated_type(env, tpa.manager)
@@ -297,9 +291,6 @@ class LiteralNode(Expression, ABC):
         super().__init__(lf)
 
         self.lit_pos = lit_pos
-
-    def use_compile_to(self) -> bool:
-        return use_compile_to
 
 
 class IntLiteral(LiteralNode):
@@ -524,9 +515,6 @@ class BinaryOperator(BinaryExpr):
         self.compile_to(env, tpa, res_addr, res_t.memory_length())
         return res_addr
 
-    def use_compile_to(self) -> bool:
-        return use_compile_to
-
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         if self.op_type == BIN_ARITH or self.op_type == BIN_LOGICAL:
             lt = self.left.evaluated_type(env, tpa.manager)
@@ -622,9 +610,6 @@ class InstanceOfExpr(BinaryExpr):
     def __init__(self, lf):
         super().__init__("instanceof", lf)
 
-    def use_compile_to(self) -> bool:
-        return use_compile_to
-
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         dst_addr = tpa.manager.allocate_stack(util.INT_LEN)
         self.compile_to(env, tpa, dst_addr, util.INT_LEN)
@@ -665,6 +650,10 @@ class ReturnStmt(UnaryStmt):
                 tpa.return_value(value_addr)
             elif rtype.length == util.CHAR_LEN:
                 tpa.return_char_value(value_addr)
+            elif rtype.length == 1:
+                tpa.return_byte_value(value_addr)
+            else:
+                raise errs.TplCompileError("Unexpected value length. ", self.lf)
         tpa.return_func()
 
     def return_check(self):
@@ -770,9 +759,6 @@ class NewExpr(UnaryExpr):
             self.lf,
             constructor_t)
 
-    def use_compile_to(self) -> bool:
-        return use_compile_to
-
     def compile_heap_arr_init(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr, dst_len: int):
         self.value: IndexingExpr
         args = [self.value.get_atomic_node()] + self.value.flatten_args(env, tpa.manager, True)
@@ -840,9 +826,6 @@ class AsExpr(BinaryExpr):
 
     def __init__(self, lf):
         super().__init__("as", lf)
-
-    def use_compile_to(self) -> bool:
-        return use_compile_to
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         right_t = self.right.definition_type(env, tpa.manager)
@@ -1086,8 +1069,6 @@ class DotExpr(BinaryExpr):
                     else:
                         raise errs.TplCompileError("Unsupported length.", lf)
                     return real_attr_ptr, t
-        # elif isinstance(right_node, IndexingExpr):
-        #     DotExpr.compile_dot(left_node, right_node.indexing_obj, env, tpa, lf)
 
         raise errs.TplCompileError("Left side of dot must be a pointer to class. ", lf)
 
@@ -1128,17 +1109,6 @@ class DotExpr(BinaryExpr):
             f"Left side of dot must be a pointer to struct or an array, got {left_t}. ", lf)
 
 
-class MethodExpr(BinaryExpr):
-    def __init__(self, lf):
-        super().__init__("::", lf)
-
-    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        pass
-
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        pass
-
-
 class Assignment(BinaryExpr):
     def __init__(self, lf):
         super().__init__("=", lf)
@@ -1167,11 +1137,7 @@ class Assignment(BinaryExpr):
         else:
             raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.left.__class__.__name__), self.lf)
 
-        if self.right.use_compile_to():
-            self.right.compile_to(env, tpa, left_addr, left_t.memory_length())
-        else:
-            right_addr = self.right.compile(env, tpa)
-            tpa.assign(left_addr, right_addr)
+        self.right.compile_to(env, tpa, left_addr, left_t.memory_length())
         return left_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -1255,11 +1221,7 @@ class QuickAssignment(BinaryStmt):
         res_addr = tpa.manager.allocate_stack(t.memory_length())
         env.define_var_set(self.left.name, t, res_addr, self.lf)
 
-        if self.right.use_compile_to():
-            self.right.compile_to(env, tpa, res_addr, t.memory_length())
-        else:
-            right_addr = self.right.compile(env, tpa)
-            tpa.assign(res_addr, right_addr)
+        self.right.compile_to(env, tpa, res_addr, t.memory_length())
 
 
 class RightArrowExpr(BinaryExpr):
@@ -1624,9 +1586,6 @@ class FunctionCall(Expression):
         self.compile_to(env, tpa, rtn_addr, func_type.rtype.memory_length())
         return rtn_addr
 
-    def use_compile_to(self) -> bool:
-        return use_compile_to
-
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         placer = self.call_obj.evaluated_type(env, tpa.manager)
         if isinstance(placer, typ.SpecialCtfType):
@@ -1858,9 +1817,6 @@ class IfExpr(Expression):
         res_addr = tpa.manager.allocate_stack(res_t.memory_length())
         self.compile_to(env, tpa, res_addr, res_t.memory_length())
         return res_addr
-
-    def use_compile_to(self) -> bool:
-        return use_compile_to
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         cond_addr = self.condition.compile(env, tpa)
@@ -2342,9 +2298,6 @@ class SwitchExpr(Expression):
         res_addr = tpa.manager.allocate_stack(res_t.memory_length())
         self.compile_to(env, tpa, res_addr, res_t.memory_length())
         return res_addr
-
-    def use_compile_to(self) -> bool:
-        return use_compile_to
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         eq_inst = "eqi"  # todo

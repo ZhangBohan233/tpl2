@@ -1,7 +1,6 @@
 import compilers.tokens_lib as tl
 import compilers.ast as ast
 import compilers.ast_builder as ab
-import compilers.util as util
 import compilers.errors as errs
 
 
@@ -21,7 +20,6 @@ class Parser:
             "->": ast.RightArrowExpr,
             "as": ast.AsExpr,
             ".": ast.DotExpr,
-            "::": ast.MethodExpr,
             ":=": ast.QuickAssignment
         }
 
@@ -352,7 +350,7 @@ class Parser:
             ele = parent[index]
             if tl.is_brace(ele):
                 body_block = self.parse_as_block(ele)
-                builder.add_node(ast.CaseExpr(cond, body_block, lf))
+                builder.add_node(ast.CaseExpr(body_block, lf, cond))
             else:
                 body_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
                 while not tl.identifier_of(ele, ";"):

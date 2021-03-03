@@ -1,4 +1,9 @@
-﻿===== VERSION 2045 =====
+﻿===== VERSION 2046 =====
+2021/03/04
+
+* Compiler code optimization and bugs fix
+
+===== VERSION 2045 =====
 2021/03/04
 
 * Modified the environment structure: MainEnvironment
