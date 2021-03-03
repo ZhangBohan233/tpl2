@@ -226,6 +226,14 @@ class ModuleEnvironment(MainAbstractEnvironment):
             raise errs.TplEnvironmentError("Multiple exports in one module. ", lf)
 
 
+class MainEnvironment(MainAbstractEnvironment):
+    """
+    The environment containing the entry function.
+    """
+    def __init__(self, outer: GlobalEnvironment):
+        super().__init__(outer)
+
+
 class ClassEnvironment(MainAbstractEnvironment):
     def __init__(self, outer, class_full_name: str):
         super().__init__(outer)

@@ -1,4 +1,9 @@
-﻿===== VERSION 2044 =====
+﻿===== VERSION 2045 =====
+2021/03/04
+
+* Modified the environment structure: MainEnvironment
+
+===== VERSION 2044 =====
 2021/03/04
 
 * Assignments in class body are now permitted
