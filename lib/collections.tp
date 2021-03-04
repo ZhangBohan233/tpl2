@@ -1,7 +1,7 @@
-﻿import lang
+﻿import lang;
 
 abstract class Collection<ColT> {
-    abstract fn size(this: *Collection) int;
+    abstract fn size(this: *Collection<ColT>) int;
 }
 
 abstract class AbsList<AbsListT>(Collection<AbsListT>) {
@@ -21,7 +21,7 @@ class List<ListT>(AbsList<ListT>) {
     }
 
     @Override
-    fn size(this: *List) int {
+    fn size(this: *List<ListT>) int {
         return this.size;
     }
 

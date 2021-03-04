@@ -2485,13 +2485,13 @@ class ClassObject:
         method_id = len(self.class_type.method_rank)  # id of method in this class
         for method_def in method_defs:
             # check method params and content
-            self.check_method_def(method_def, self.class_type, self.class_env.outer, self.tpa.manager)
+            self.check_method_def(method_def, self.class_type, self.class_env, self.tpa.manager)
 
             method_def.compile(self.class_env, self.tpa)
             name = method_def.get_simple_name()
 
             placer: typ.FunctionPlacer = self.class_env.get_type(name, self.lf)
-            method_t = method_def.evaluated_type(self.class_env.outer, self.tpa.manager)
+            method_t = method_def.evaluated_type(self.class_env, self.tpa.manager)
             method_ptr = placer.poly[method_t]
 
             self.local_method_full_names.append(
@@ -2512,13 +2512,13 @@ class ClassObject:
             if name in self.class_type.methods:
                 if method_t in self.class_type.methods[name]:  # overriding
                     m_pos, m_ptr, m_t = self.class_type.methods[name][method_t]
-                    # print(f"class {self.name} overrides method {name} at {m_ptr}, new ptr {method_ptr}")
+                    # print(f"class {self.class_type.name} overrides method {name} at {m_ptr}, new ptr {method_ptr}")
                     if name != "__new__" and not method_t.strong_convertible(m_t):
                         # print(method_t.param_types[0].base)
                         # print(m_t.param_types[0])
                         raise errs.TplCompileError(
                             f"Method '{name}' in class '{self.class_type.name}' "
-                            f"overrides its super method in class '{self.class_type.mro[1].name}', "
+                            f"overrides its super method in class '{m_t.defined_class.name}', "
                             f"but has incompatible parameter or return type. ", method_def.lf)
                     if m_t.const:
                         raise errs.TplCompileError(
@@ -2535,7 +2535,6 @@ class ClassObject:
                 poly = util.NaiveDict(typ.params_eq_methods)
                 poly[method_t] = method_id, method_ptr, method_t
                 self.class_type.methods[name] = poly
-                # class_type.methods[name] = method_id, method_ptr, method_t
                 method_id += 1
 
         # # check if all abstract methods are overridden
@@ -2557,8 +2556,9 @@ class ClassObject:
                     isinstance(first_param.left, NameNode) and \
                     first_param.left.name == "this":
                 this_t = first_param.right.definition_type(env, manager)
-                if not isinstance(this_t, typ.PointerType) or this_t.base != class_type:
-                    raise errs.TplCompileError("Parameter 'this' must be *" + class_type.name + ". ", self.lf)
+
+                # if not isinstance(this_t, typ.PointerType) or this_t.base != class_type:
+                #     raise errs.TplCompileError("Parameter 'this' must be *" + class_type.name + ". ", self.lf)
                 insert_this = False
         if insert_this:
             dec = Declaration(VAR_CONST, method.lf)

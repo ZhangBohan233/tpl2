@@ -7,8 +7,13 @@ require {
     memory_segment
 }
 
+/*
+Macro constants
+*/
+macro boolean {int}
 const FALSE: int = 0;
 const TRUE: int = 1;
+const NULL: *void = 0 as *void;
 
 class Object {
     fn __new__() void {
@@ -21,7 +26,7 @@ class Object {
         return this.__class__ * ((this as *void) as int);
     }
 
-    fn equals(other: *Object) int {
+    fn equals(other: *Object) boolean {
         return this == other;
     }
 
@@ -54,7 +59,7 @@ class String {
         super.__del__();
     }
 
-    fn equals(other: *Object) int {
+    fn equals(other: *Object) boolean {
         if not (other instanceof String) {
             return FALSE;
         }
@@ -97,8 +102,6 @@ class Integer(Number) {
         return this.value;
     }
 }
-
-const NULL: *void = 0 as *void;
 
 /*
 Documents for native functions.
@@ -163,6 +166,10 @@ fn print(value: *Object) void {
 
 fn println(value: *Object) void {
     println(value.toString());
+}
+
+exportmacro {
+    boolean
 }
 
 export {

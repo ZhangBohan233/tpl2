@@ -7,12 +7,12 @@ global_length
 literal
 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 7 0 0 0 0 0 0 0 79 0 98 0 106 0 101 0 99 0 116 0 64 0 3 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0 42 0 0 0 0 0 0 0 3 0 0 0 0 0 0 0 97 0 115 0 100 0 3 0 0 0 0 0 0 0 120 0 115 0 97 0
 classes
-class E:\GitHub\tpl2\lib\lang.tp$Object mro $1128 methods $1304 $1312 $1320 $1328 $1336
-class E:\GitHub\tpl2\lib\lang.tp$String mro $1136 $1128 methods $1304 $1360 $1320 $1368 $1336 $1344 $1352 $1376
-class E:\GitHub\tpl2\lib\lang.tp$Number mro $1144 $1128 methods $1384 $1312 $1320 $1328 $1336 $1392
-class E:\GitHub\tpl2\lib\lang.tp$Integer mro $1152 $1144 $1128 methods $1384 $1312 $1320 $1328 $1336 $1408 $1400
-class E:\GitHub\tpl2\tp\str.tp$Parent mro $1280 $1128 methods $1424 $1312 $1320 $1328 $1336 $1416
-class E:\GitHub\tpl2\tp\str.tp$Child mro $1288 $1280 $1128 methods $1432 $1312 $1320 $1328 $1336 $1416
+class E:\GitHub\tpl2\lib\lang.tp$Object mro $1144 methods $1304 $1312 $1320 $1328 $1336
+class E:\GitHub\tpl2\lib\lang.tp$String mro $1152 $1144 methods $1304 $1360 $1320 $1368 $1336 $1344 $1352 $1376
+class E:\GitHub\tpl2\lib\lang.tp$Number mro $1160 $1144 methods $1384 $1312 $1320 $1328 $1336 $1392
+class E:\GitHub\tpl2\lib\lang.tp$Integer mro $1168 $1160 $1144 methods $1384 $1312 $1320 $1328 $1336 $1408 $1400
+class E:\GitHub\tpl2\tp\str.tp$Parent mro $1280 $1144 methods $1424 $1312 $1320 $1328 $1336 $1416
+class E:\GitHub\tpl2\tp\str.tp$Child mro $1288 $1280 $1144 methods $1432 $1312 $1320 $1328 $1336 $1416
 
 fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__() $1304
     push_fp
@@ -88,7 +88,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.toString() $1336
     set_ret       %0
     invoke        $16
     load          %0      $8
-    iload         %1      1136
+    iload         %1      1152
     store_abs     %0      %1
     aload         %0      $1464
     iload         %1      $32
@@ -213,6 +213,10 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__del__() $1360
     load          %1      $64
     store_abs     %0      %1
     invoke        $48
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1312
     pull_fp
     ret
     stop
@@ -232,7 +236,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $1368
     rload_abs     %1      %0
     iload         %0      32
     store         %0      %1
-    iload         %0      1136
+    iload         %0      1152
     load          %1      $32
     subclass      %0      %1      %2      %3
     iload         %1      16
@@ -768,7 +772,7 @@ fn E:\GitHub\tpl2\tp\str.tp$main() $1296
     set_ret       %0
     invoke        $8
     load          %0      $0
-    iload         %1      1136
+    iload         %1      1152
     store_abs     %0      %1
     aload         %0      $1510
     iload         %1      $24
@@ -790,7 +794,7 @@ fn E:\GitHub\tpl2\tp\str.tp$main() $1296
     set_ret       %0
     invoke        $8
     load          %0      $40
-    iload         %1      1136
+    iload         %1      1152
     store_abs     %0      %1
     aload         %0      $1510
     iload         %1      $56
@@ -834,7 +838,7 @@ fn E:\GitHub\tpl2\tp\str.tp$main() $1296
     set_ret       %0
     invoke        $8
     load          %0      $80
-    iload         %1      1136
+    iload         %1      1152
     store_abs     %0      %1
     aload         %0      $1524
     iload         %1      $96
@@ -856,7 +860,7 @@ fn E:\GitHub\tpl2\tp\str.tp$main() $1296
     set_ret       %0
     invoke        $8
     load          %0      $112
-    iload         %1      1136
+    iload         %1      1152
     store_abs     %0      %1
     aload         %0      $1524
     iload         %1      $128
@@ -961,7 +965,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.toString() $1336
     set_ret       %0
     invoke        $16
     load          %0      $8
-    iload         %1      1136
+    iload         %1      1152
     store_abs     %0      %1
     aload         %0      $1464
     iload         %1      $32
@@ -1086,6 +1090,10 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__del__() $1360
     load          %1      $64
     store_abs     %0      %1
     invoke        $48
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1312
     pull_fp
     ret
     stop
@@ -1105,7 +1113,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $1368
     rload_abs     %1      %0
     iload         %0      32
     store         %0      %1
-    iload         %0      1136
+    iload         %0      1152
     load          %1      $32
     subclass      %0      %1      %2      %3
     iload         %1      16
@@ -1470,10 +1478,10 @@ entry
     iload         %1      $1120
     store         %1      %0
     load          %0      $1440
-    iload         %1      $1168
+    iload         %1      $1136
     store         %1      %0
-    load          %0      $1168
-    iload         %1      $1160
+    load          %0      $1136
+    iload         %1      $1128
     store         %1      %0
     require       memory_segment $1272   %0      %1
     aload         %0      $1

@@ -53,4 +53,5 @@
 * ~~Char and byte binary operations~~ Done
 * Iterator for loop
 * Private field
-* Native function 'memory_segment'
+* ~~Native function 'memory_segment'~~ Done
+* Update LineFile to LineFilePos

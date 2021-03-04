@@ -249,7 +249,7 @@ class ClassType(Type):
         self.abstract = abstract
         self.direct_superclasses = direct_sc
         self.mro: list = None  # Method resolution order, ranked from closest to farthest
-        self.templates = templates  # list of Generic
+        self.templates = templates  # list of self templates
         self.method_rank = []  # keep track of all method names in order | (name, method_t)
 
         # this dict records all callable methods in this class, including methods in its superclass
@@ -369,25 +369,6 @@ class GenericType(Type):
     def __str__(self):
         return f"Gen{self.base}<{self.generics}>"
 
-    def strong_convertible(self, left_tar_type):
-        # print("000", self)
-        # print("112", left_tar_type)
-        # print(self.base.super_generics_map)
-        if isinstance(left_tar_type, GenericType):
-            if self.base.strong_convertible(left_tar_type.base):
-                # if len(self.generics) == len(left_tar_type.generics):
-                for key in self.generics:
-                    if key in left_tar_type.generics:  # same T
-                        if self.generics[key].strong_convertible(left_tar_type.generics[key]):
-                            continue
-                    super_gen = dict_find_key(self.base.super_generics_map[left_tar_type.base], key)
-                    if super_gen is not None:  # class A<T0> {...}  class B<T1>(A<T1>) {...}
-                        if self.generics[key].strong_convertible(left_tar_type.generics[super_gen]):
-                            continue
-                    return False
-                return True
-        return False
-
 
 class GenericClassType(GenericType):
     def __init__(self, base: ClassType, generic: dict):
@@ -395,6 +376,41 @@ class GenericClassType(GenericType):
 
     def type_name(self):
         return self.base.type_name()
+
+    def strong_convertible(self, left_tar_type):
+        # print("000", self)
+        # print("112", left_tar_type)
+        # print(self.base.super_generics_map)
+        def compare_generic(left_tar, mro_index=0):
+            if mro_index >= len(self.base.mro):
+                return False
+            this_base = self.base.mro[mro_index]
+            print(this_base, this_base.super_generics_map, left_tar.base)
+            if left_tar.base in this_base.super_generics_map:
+                super_gen = dict_find_key(this_base.super_generics_map[left_tar.base], key)
+                if super_gen is not None:  # class A<T0> {...}  class B<T1>(A<T1>) {...}
+                    if self.generics[key].strong_convertible(left_tar.generics[super_gen]):
+                        return True
+            #     return False
+            # else:
+            return compare_generic(left_tar, mro_index + 1)
+
+        if isinstance(left_tar_type, GenericType):
+            if self.base.strong_convertible(left_tar_type.base):
+                # if len(self.generics) == len(left_tar_type.generics):
+                for key in self.generics:
+                    if key in left_tar_type.generics:  # same T
+                        if self.generics[key].strong_convertible(left_tar_type.generics[key]):
+                            continue
+                    if not compare_generic(left_tar_type):
+                        return False
+                    # super_gen = dict_find_key(self.base.super_generics_map[left_tar_type.base], key)
+                    # if super_gen is not None:  # class A<T0> {...}  class B<T1>(A<T1>) {...}
+                    #     if self.generics[key].strong_convertible(left_tar_type.generics[super_gen]):
+                    #         continue
+                    # return False
+                return True
+        return False
 
 
 class Generic(Type):
@@ -486,10 +502,31 @@ def function_poly_name(simple_name: str, params_t: list, method: bool) -> str:
     return simple_name + "(" + ",".join(res) + ")"
 
 
+def type_eq_no_generic(t1: Type, t2: Type) -> bool:
+    if t1 == t2:
+        return True
+
+    def get_pointer_base_no_generic(ptr_t):
+        if isinstance(ptr_t, PointerType):
+            if isinstance(ptr_t.base, ClassType):
+                return ptr_t.base
+            elif isinstance(ptr_t.base, GenericClassType):
+                return ptr_t.base.base
+            # elif isinstance(ptr_t.base, Generic):
+            #     print(12313213123)
+        return None
+
+    t1_base = get_pointer_base_no_generic(t1)
+    t2_base = get_pointer_base_no_generic(t2)
+    if t1_base is None or t2_base is None:
+        return False
+    return t1_base == t2_base
+
+
 def params_eq(ft1: FuncType, ft2: FuncType) -> bool:
     if len(ft1.param_types) == len(ft2.param_types):
         for i in range(len(ft1.param_types)):
-            if ft1.param_types[i] != ft2.param_types[i]:
+            if not type_eq_no_generic(ft1.param_types[i], ft2.param_types[i]):
                 return False
         return True
     return False
@@ -498,7 +535,7 @@ def params_eq(ft1: FuncType, ft2: FuncType) -> bool:
 def params_eq_methods(ft1: MethodType, ft2: MethodType) -> bool:
     if len(ft1.param_types) == len(ft2.param_types):
         for i in range(1, len(ft1.param_types)):
-            if ft1.param_types[i] != ft2.param_types[i]:
+            if not type_eq_no_generic(ft1.param_types[i], ft2.param_types[i]):
                 return False
         return True
     return False
@@ -507,7 +544,7 @@ def params_eq_methods(ft1: MethodType, ft2: MethodType) -> bool:
 def func_eq_params(ft: FuncType, param_types: list) -> bool:
     if len(ft.param_types) == len(param_types):
         for i in range(len(param_types)):
-            if ft.param_types[i] != param_types[i]:
+            if not type_eq_no_generic(ft.param_types[i], param_types[i]):
                 return False
         return True
     return False
