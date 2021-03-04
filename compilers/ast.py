@@ -1064,7 +1064,7 @@ class DotExpr(BinaryExpr):
                         tpa.assign(real_attr_ptr, struct_addr)
                         tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
                     else:
-                        raise errs.TplCompileError("Unsupported length.", lf)
+                        raise errs.TplCompileError("Unsupported length. ", lf)
                     return real_attr_ptr, t
                 elif isinstance(struct_t, typ.GenericClassType):
                     struct_addr = left_node.compile(env, tpa)

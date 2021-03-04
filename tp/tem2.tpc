@@ -3,36 +3,33 @@ bits
 stack_size
 1024
 global_length
-504
+416
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 7 0 0 0 0 0 0 0 79 0 98 0 106 0 101 0 99 0 116 0 64 0 3 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 23 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 7 0 0 0 0 0 0 0 79 0 98 0 106 0 101 0 99 0 116 0 64 0 3 0 0 0 0 0 0 0
 classes
-class E:\GitHub\tpl2\lib\lang.tp$Object mro $1144 methods $1336 $1344 $1352 $1360 $1368
-class E:\GitHub\tpl2\lib\lang.tp$String mro $1152 $1144 methods $1336 $1392 $1352 $1400 $1368 $1376 $1384 $1408
-class E:\GitHub\tpl2\lib\lang.tp$Number mro $1160 $1144 methods $1416 $1344 $1352 $1360 $1368 $1424
-class E:\GitHub\tpl2\lib\lang.tp$Integer mro $1168 $1160 $1144 methods $1416 $1344 $1352 $1360 $1368 $1440 $1432
-class E:\GitHub\tpl2\tp\tem.tp$X mro $1280 $1144 methods $1336 $1344 $1352 $1360 $1368 $1448
-class E:\GitHub\tpl2\tp\tem.tp$Y mro $1288 $1280 $1144 methods $1336 $1344 $1352 $1360 $1368 $1456
-class E:\GitHub\tpl2\tp\tem.tp$A mro $1296 $1144 methods $1464 $1344 $1352 $1360 $1368 $1472
-class E:\GitHub\tpl2\tp\tem.tp$B mro $1304 $1296 $1144 methods $1480 $1344 $1352 $1360 $1368 $1472 $1488 $1496
-class E:\GitHub\tpl2\tp\tem.tp$Container mro $1312 $1144 methods $1336 $1344 $1352 $1360 $1368 $1504
-class E:\GitHub\tpl2\tp\tem.tp$C mro $1320 $1304 $1296 $1144 methods $1512 $1344 $1352 $1360 $1368 $1472 $1488 $1496 $1520
+class E:\GitHub\tpl2\lib\lang.tp$Object mro $1144 methods $1304 $1312 $1320 $1328 $1336
+class E:\GitHub\tpl2\lib\lang.tp$String mro $1152 $1144 methods $1304 $1360 $1320 $1368 $1336 $1344 $1352 $1376
+class E:\GitHub\tpl2\lib\lang.tp$Number mro $1160 $1144 methods $1384 $1312 $1320 $1328 $1336 $1392
+class E:\GitHub\tpl2\lib\lang.tp$Integer mro $1168 $1160 $1144 methods $1384 $1312 $1320 $1328 $1336 $1408 $1400
+class E:\GitHub\tpl2\tp\tem2.tp$A mro $1272 $1144 methods $1416 $1312 $1320 $1328 $1336
+class E:\GitHub\tpl2\tp\tem2.tp$B mro $1280 $1272 $1144 methods $1424 $1312 $1320 $1328 $1336
+class E:\GitHub\tpl2\tp\tem2.tp$C mro $1288 $1280 $1272 $1144 methods $1432 $1312 $1320 $1328 $1336
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__() $1336
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__() $1304
     push_fp
     push          8
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.__del__() $1344
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__del__() $1312
     push_fp
     push          8
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.hash() $1352
+fn E:\GitHub\tpl2\lib\lang.tp$Object.hash() $1320
     push_fp
     push          48
     load          %0      $0
@@ -64,7 +61,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.hash() $1352
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object) $1360
+fn E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object) $1328
     push_fp
     push          24
     load          %0      $0
@@ -78,44 +75,45 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object) $1360
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.toString() $1368
+fn E:\GitHub\tpl2\lib\lang.tp$Object.toString() $1336
     push_fp
-    push          32
+    push          40
+    require       malloc  $16     %0      %1
     iload         %0      $16
-    iload         %1      $16
+    iload         %1      $24
     store         %1      %0
     aload_sp      %0      $0
-    load          %1      $16
+    load          %1      $24
     store_abs     %0      %1
     iload         %0      8
     set_ret       %0
-    invoke        $1272
+    invoke        $16
     load          %0      $8
     iload         %1      1152
     store_abs     %0      %1
-    aload         %0      $1552
-    iload         %1      $24
+    aload         %0      $1464
+    iload         %1      $32
     store         %1      %0
     aload_sp      %0      $0
     load          %1      $8
     store_abs     %0      %1
     aload_sp      %0      $8
-    load          %1      $24
+    load          %1      $32
     store_abs     %0      %1
-    call          $1376
+    call          $1344
     load          %0      $8
     put_ret       %0
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(char[]) $1376
+fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(char[]) $1344
     push_fp
     push          24
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1336
+    call          $1304
     load          %0      $0
     iload         %1      $16
     store         %1      %0
@@ -131,13 +129,13 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(char[]) $1376
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(*String) $1384
+fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(*String) $1352
     push_fp
     push          40
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1336
+    call          $1304
     load          %0      $0
     iload         %1      $16
     store         %1      %0
@@ -165,7 +163,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(*String) $1384
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.__del__() $1392
+fn E:\GitHub\tpl2\lib\lang.tp$String.__del__() $1360
     push_fp
     push          72
     load          %0      $0
@@ -186,7 +184,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__del__() $1392
     iload         %0      16
     set_ret       %0
     invoke        $1104
-    load          %0      $1574
+    load          %0      $1486
     iload         %1      $40
     store         %1      %0
     load          %0      $16
@@ -219,12 +217,12 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__del__() $1392
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1344
+    call          $1312
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $1400
+fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $1368
     push_fp
     push          204
     load          %0      $8
@@ -290,7 +288,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $1400
     pull_fp
     ret
     label         ENDIF_2
-    load          %0      $1528
+    load          %0      $1440
     iload         %1      $80
     store         %1      %0
     label         LOOP_TITLE_0
@@ -420,7 +418,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $1400
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.length() $1408
+fn E:\GitHub\tpl2\lib\lang.tp$String.length() $1376
     push_fp
     push          32
     load          %0      $0
@@ -445,24 +443,24 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.length() $1408
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.__new__() $1416
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__new__() $1384
     push_fp
     push          8
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1336
+    call          $1304
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Integer.__new__(int) $1432
+fn E:\GitHub\tpl2\lib\lang.tp$Integer.__new__(int) $1400
     push_fp
     push          24
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1416
+    call          $1384
     load          %0      $0
     iload         %1      $16
     store         %1      %0
@@ -478,7 +476,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Integer.__new__(int) $1432
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Integer.intValue() $1440
+fn E:\GitHub\tpl2\lib\lang.tp$Integer.intValue() $1408
     push_fp
     push          24
     load          %0      $0
@@ -675,322 +673,78 @@ fn E:\GitHub\tpl2\lib\lang.tp$println(*Object) $1264
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\tem.tp$X.__new__(int) $1448
-    push_fp
-    push          24
-    aload_sp      %0      $0
-    load          %1      $0
-    store_abs     %0      %1
-    call          $1336
-    load          %0      $0
-    iload         %1      $16
-    store         %1      %0
-    load          %0      $16
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      16
-    store         %1      %0
-    load          %0      $16
-    load          %1      $8
-    store_abs     %0      %1
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$Y.__new__(int) $1456
-    push_fp
-    push          32
-    load          %0      $1582
-    iload         %1      $24
-    store         %1      %0
-    load          %0      $8
-    load          %1      $24
-    addi          %0      %1
-    iload         %1      16
-    store         %1      %0
-    aload_sp      %0      $0
-    load          %1      $0
-    store_abs     %0      %1
-    aload_sp      %0      $8
-    load          %1      $16
-    store_abs     %0      %1
-    call          $1448
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$A.__new__() $1464
-    push_fp
-    push          24
-    aload_sp      %0      $0
-    load          %1      $0
-    store_abs     %0      %1
-    call          $1336
-    load          %0      $0
-    iload         %1      $8
-    store         %1      %0
-    load          %0      $8
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      8
-    store         %1      %0
-    load          %0      $1536
-    iload         %1      $16
-    store         %1      %0
-    load          %0      $8
-    load          %1      $16
-    store_abs     %0      %1
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$A.foo(int) $1472
-    push_fp
-    push          40
-    load          %0      $0
-    iload         %1      $24
-    store         %1      %0
-    load          %0      $24
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      24
-    store         %1      %0
-    load          %0      $24
-    rload_abs     %1      %0
-    iload         %0      32
-    store         %0      %1
-    load          %0      $32
-    load          %1      $8
-    addi          %0      %1
-    iload         %1      16
-    store         %1      %0
-    load          %0      $16
-    put_ret       %0
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$B.__new__() $1480
-    push_fp
-    push          24
-    aload_sp      %0      $0
-    load          %1      $0
-    store_abs     %0      %1
-    call          $1464
-    load          %0      $0
-    iload         %1      $8
-    store         %1      %0
-    load          %0      $8
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      8
-    store         %1      %0
-    load          %0      $1590
-    iload         %1      $16
-    store         %1      %0
-    load          %0      $8
-    load          %1      $16
-    store_abs     %0      %1
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$B.get() $1488
-    push_fp
-    push          24
-    load          %0      $0
-    iload         %1      $8
-    store         %1      %0
-    load          %0      $8
-    iload         %1      24
-    addi          %0      %1
-    iload         %1      8
-    store         %1      %0
-    load          %0      $8
-    rload_abs     %1      %0
-    iload         %0      16
-    store         %0      %1
-    load          %0      $16
-    put_ret       %0
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$B.set(*Object) $1496
-    push_fp
-    push          24
-    load          %0      $0
-    iload         %1      $16
-    store         %1      %0
-    load          %0      $16
-    iload         %1      24
-    addi          %0      %1
-    iload         %1      16
-    store         %1      %0
-    load          %0      $16
-    load          %1      $8
-    store_abs     %0      %1
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$Container.__new__(*Object) $1504
-    push_fp
-    push          24
-    aload_sp      %0      $0
-    load          %1      $0
-    store_abs     %0      %1
-    call          $1336
-    load          %0      $0
-    iload         %1      $16
-    store         %1      %0
-    load          %0      $16
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      16
-    store         %1      %0
-    load          %0      $16
-    load          %1      $8
-    store_abs     %0      %1
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$C.__new__() $1512
+fn E:\GitHub\tpl2\tp\tem2.tp$A.__new__() $1416
     push_fp
     push          8
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1480
+    call          $1304
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\tem.tp$C.setC(*C) $1520
+fn E:\GitHub\tpl2\tp\tem2.tp$B.__new__() $1424
     push_fp
-    push          16
+    push          8
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1416
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\tem.tp$main() $1328
+fn E:\GitHub\tpl2\tp\tem2.tp$C.__new__() $1432
     push_fp
-    push          88
-    iload         %0      $32
-    iload         %1      $8
+    push          8
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1424
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\tem2.tp$main() $1296
+    push_fp
+    push          24
+    require       malloc  $8      %0      %1
+    iload         %0      $8
+    iload         %1      $16
     store         %1      %0
     aload_sp      %0      $0
-    load          %1      $8
+    load          %1      $16
     store_abs     %0      %1
     iload         %0      0
     set_ret       %0
-    invoke        $1272
+    invoke        $8
     load          %0      $0
-    iload         %1      1320
+    iload         %1      1288
     store_abs     %0      %1
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1512
-    iload         %0      $16
-    iload         %1      $24
-    store         %1      %0
-    aload_sp      %0      $0
-    load          %1      $24
-    store_abs     %0      %1
-    iload         %0      16
-    set_ret       %0
-    invoke        $1272
-    load          %0      $16
-    iload         %1      1288
-    store_abs     %0      %1
-    load          %0      $1598
-    iload         %1      $32
-    store         %1      %0
-    aload_sp      %0      $0
-    load          %1      $16
-    store_abs     %0      %1
-    aload_sp      %0      $8
-    load          %1      $32
-    store_abs     %0      %1
-    call          $1456
-    load          %0      $0
-    iload         %1      7
-    iload         %2      0
-    get_method    %0      %1      %2
-    aload_sp      %1      $0
-    load          %2      $0
-    store_abs     %1      %2
-    aload_sp      %1      $8
-    load          %2      $16
-    store_abs     %1      %2
-    call_reg      %0
-    load          %0      $0
-    iload         %1      6
-    iload         %2      0
-    get_method    %0      %1      %2
-    aload_sp      %1      $0
-    load          %2      $0
-    store_abs     %1      %2
-    iload         %1      40
-    set_ret       %1
-    call_reg      %0
-    load          %0      $40
-    iload         %1      $48
-    store         %1      %0
-    load          %0      $48
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      48
-    store         %1      %0
-    load          %0      $48
-    rload_abs     %1      %0
-    iload         %0      56
-    store         %0      %1
-    load          %0      $0
-    iload         %1      6
-    iload         %2      0
-    get_method    %0      %1      %2
-    aload_sp      %1      $0
-    load          %2      $0
-    store_abs     %1      %2
-    iload         %1      64
-    set_ret       %1
-    call_reg      %0
-    load          %0      $64
-    iload         %1      $72
-    store         %1      %0
-    load          %0      $72
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      72
-    store         %1      %0
-    load          %0      $72
-    rload_abs     %1      %0
-    iload         %0      80
-    store         %0      %1
-    load          %0      $80
-    put_ret       %0
+    call          $1432
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__() $1336
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__() $1304
     push_fp
     push          8
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.__del__() $1344
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__del__() $1312
     push_fp
     push          8
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.hash() $1352
+fn E:\GitHub\tpl2\lib\lang.tp$Object.hash() $1320
     push_fp
     push          48
     load          %0      $0
@@ -1022,7 +776,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.hash() $1352
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object) $1360
+fn E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object) $1328
     push_fp
     push          24
     load          %0      $0
@@ -1036,44 +790,45 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object) $1360
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.toString() $1368
+fn E:\GitHub\tpl2\lib\lang.tp$Object.toString() $1336
     push_fp
-    push          32
+    push          40
+    require       malloc  $16     %0      %1
     iload         %0      $16
-    iload         %1      $16
+    iload         %1      $24
     store         %1      %0
     aload_sp      %0      $0
-    load          %1      $16
+    load          %1      $24
     store_abs     %0      %1
     iload         %0      8
     set_ret       %0
-    invoke        $1272
+    invoke        $16
     load          %0      $8
     iload         %1      1152
     store_abs     %0      %1
-    aload         %0      $1552
-    iload         %1      $24
+    aload         %0      $1464
+    iload         %1      $32
     store         %1      %0
     aload_sp      %0      $0
     load          %1      $8
     store_abs     %0      %1
     aload_sp      %0      $8
-    load          %1      $24
+    load          %1      $32
     store_abs     %0      %1
-    call          $1376
+    call          $1344
     load          %0      $8
     put_ret       %0
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(char[]) $1376
+fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(char[]) $1344
     push_fp
     push          24
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1336
+    call          $1304
     load          %0      $0
     iload         %1      $16
     store         %1      %0
@@ -1089,13 +844,13 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(char[]) $1376
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(*String) $1384
+fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(*String) $1352
     push_fp
     push          40
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1336
+    call          $1304
     load          %0      $0
     iload         %1      $16
     store         %1      %0
@@ -1123,7 +878,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(*String) $1384
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.__del__() $1392
+fn E:\GitHub\tpl2\lib\lang.tp$String.__del__() $1360
     push_fp
     push          72
     load          %0      $0
@@ -1144,7 +899,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__del__() $1392
     iload         %0      16
     set_ret       %0
     invoke        $1104
-    load          %0      $1574
+    load          %0      $1486
     iload         %1      $40
     store         %1      %0
     load          %0      $16
@@ -1177,12 +932,12 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__del__() $1392
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1344
+    call          $1312
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $1400
+fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $1368
     push_fp
     push          204
     load          %0      $8
@@ -1248,7 +1003,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $1400
     pull_fp
     ret
     label         ENDIF_6
-    load          %0      $1528
+    load          %0      $1440
     iload         %1      $80
     store         %1      %0
     label         LOOP_TITLE_1
@@ -1378,7 +1133,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $1400
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.length() $1408
+fn E:\GitHub\tpl2\lib\lang.tp$String.length() $1376
     push_fp
     push          32
     load          %0      $0
@@ -1403,255 +1158,89 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.length() $1408
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.__new__() $1416
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__new__() $1384
     push_fp
     push          8
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1336
+    call          $1304
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Integer.__new__(int) $1432
+fn E:\GitHub\tpl2\lib\lang.tp$Integer.__new__(int) $1400
     push_fp
     push          24
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1384
+    load          %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\lang.tp$Integer.intValue() $1408
+    push_fp
+    push          24
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\tem2.tp$A.__new__() $1416
+    push_fp
+    push          8
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call          $1304
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\tem2.tp$B.__new__() $1424
+    push_fp
+    push          8
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
     call          $1416
-    load          %0      $0
-    iload         %1      $16
-    store         %1      %0
-    load          %0      $16
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      16
-    store         %1      %0
-    load          %0      $16
-    load          %1      $8
-    store_abs     %0      %1
     pull_fp
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Integer.intValue() $1440
-    push_fp
-    push          24
-    load          %0      $0
-    iload         %1      $8
-    store         %1      %0
-    load          %0      $8
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      8
-    store         %1      %0
-    load          %0      $8
-    rload_abs     %1      %0
-    iload         %0      16
-    store         %0      %1
-    load          %0      $16
-    put_ret       %0
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$X.__new__(int) $1448
-    push_fp
-    push          24
-    aload_sp      %0      $0
-    load          %1      $0
-    store_abs     %0      %1
-    call          $1336
-    load          %0      $0
-    iload         %1      $16
-    store         %1      %0
-    load          %0      $16
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      16
-    store         %1      %0
-    load          %0      $16
-    load          %1      $8
-    store_abs     %0      %1
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$Y.__new__(int) $1456
-    push_fp
-    push          32
-    load          %0      $1582
-    iload         %1      $24
-    store         %1      %0
-    load          %0      $8
-    load          %1      $24
-    addi          %0      %1
-    iload         %1      16
-    store         %1      %0
-    aload_sp      %0      $0
-    load          %1      $0
-    store_abs     %0      %1
-    aload_sp      %0      $8
-    load          %1      $16
-    store_abs     %0      %1
-    call          $1448
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$A.__new__() $1464
-    push_fp
-    push          24
-    aload_sp      %0      $0
-    load          %1      $0
-    store_abs     %0      %1
-    call          $1336
-    load          %0      $0
-    iload         %1      $8
-    store         %1      %0
-    load          %0      $8
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      8
-    store         %1      %0
-    load          %0      $1536
-    iload         %1      $16
-    store         %1      %0
-    load          %0      $8
-    load          %1      $16
-    store_abs     %0      %1
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$A.foo(int) $1472
-    push_fp
-    push          40
-    load          %0      $0
-    iload         %1      $24
-    store         %1      %0
-    load          %0      $24
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      24
-    store         %1      %0
-    load          %0      $24
-    rload_abs     %1      %0
-    iload         %0      32
-    store         %0      %1
-    load          %0      $32
-    load          %1      $8
-    addi          %0      %1
-    iload         %1      16
-    store         %1      %0
-    load          %0      $16
-    put_ret       %0
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$B.__new__() $1480
-    push_fp
-    push          24
-    aload_sp      %0      $0
-    load          %1      $0
-    store_abs     %0      %1
-    call          $1464
-    load          %0      $0
-    iload         %1      $8
-    store         %1      %0
-    load          %0      $8
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      8
-    store         %1      %0
-    load          %0      $1590
-    iload         %1      $16
-    store         %1      %0
-    load          %0      $8
-    load          %1      $16
-    store_abs     %0      %1
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$B.get() $1488
-    push_fp
-    push          24
-    load          %0      $0
-    iload         %1      $8
-    store         %1      %0
-    load          %0      $8
-    iload         %1      24
-    addi          %0      %1
-    iload         %1      8
-    store         %1      %0
-    load          %0      $8
-    rload_abs     %1      %0
-    iload         %0      16
-    store         %0      %1
-    load          %0      $16
-    put_ret       %0
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$B.set(*Object) $1496
-    push_fp
-    push          24
-    load          %0      $0
-    iload         %1      $16
-    store         %1      %0
-    load          %0      $16
-    iload         %1      24
-    addi          %0      %1
-    iload         %1      16
-    store         %1      %0
-    load          %0      $16
-    load          %1      $8
-    store_abs     %0      %1
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$Container.__new__(*Object) $1504
-    push_fp
-    push          24
-    aload_sp      %0      $0
-    load          %1      $0
-    store_abs     %0      %1
-    call          $1336
-    load          %0      $0
-    iload         %1      $16
-    store         %1      %0
-    load          %0      $16
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      16
-    store         %1      %0
-    load          %0      $16
-    load          %1      $8
-    store_abs     %0      %1
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$C.__new__() $1512
+fn E:\GitHub\tpl2\tp\tem2.tp$C.__new__() $1432
     push_fp
     push          8
     aload_sp      %0      $0
     load          %1      $0
     store_abs     %0      %1
-    call          $1480
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\tem.tp$C.setC(*C) $1520
-    push_fp
-    push          16
+    call          $1424
     pull_fp
     ret
     stop
@@ -1668,20 +1257,19 @@ entry
     require       print_str $1088   %0      %1
     require       println_str $1096   %0      %1
     require       memory_segment $1104   %0      %1
-    load          %0      $1528
+    load          %0      $1440
     iload         %1      $1112
     store         %1      %0
-    load          %0      $1536
+    load          %0      $1448
     iload         %1      $1120
     store         %1      %0
-    load          %0      $1528
+    load          %0      $1440
     iload         %1      $1136
     store         %1      %0
     load          %0      $1136
     iload         %1      $1128
     store         %1      %0
-    require       malloc  $1272   %0      %1
     aload         %0      $1
     set_ret       %0
-    call          $1328
+    call          $1296
     exit

@@ -55,9 +55,9 @@ class B<K, V>(A) {
 }
 
 class Container<T> {
-    val : T;
+    val : *T;
 
-    fn __new__(this: *Container, val: T) void {
+    fn __new__(this: *Container, val: *T) void {
         super.__new__();
 
         this.val = val;

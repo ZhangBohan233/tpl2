@@ -1,0 +1,23 @@
+﻿import lang;
+
+class A<T> {
+
+}
+
+class B<K, V>(A<K>) {
+
+}
+
+class Other<T> {
+
+}
+
+class C<T(Number)>(B<T, Object>, Other<T>) {
+
+}
+
+fn main() void {
+    cc := new C<Integer>();
+    abc : A<Number> = cc;
+
+}
