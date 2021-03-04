@@ -36,7 +36,7 @@ class Object {
 }
 
 class String {
-    const chars: char[];
+    private const chars: char[];
 
     fn __new__(chars: char[]) void {
         super.__new__();
@@ -77,6 +77,14 @@ class String {
 
     fn length() int {
         return this.chars.length;
+    }
+
+    fn print() void {
+        print_str(this.chars);
+    }
+
+    fn println() void {
+        println_str(this.chars);
     }
 }
 
@@ -153,11 +161,11 @@ fn println(value: byte) void {
 }
 
 fn print(value: *String) void {
-    print_str(value.chars);
+    value.print();
 }
 
 fn println(value: *String) void {
-    println_str(value.chars);
+    value.println();
 }
 
 fn print(value: *Object) void {

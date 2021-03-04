@@ -155,6 +155,9 @@ class Environment:
     def fallthrough(self):
         raise errs.TplEnvironmentError("Fallthrough outside switch-case")
 
+    def get_working_class(self) -> typ.ClassType:
+        raise errs.TplEnvironmentError("Not in class")
+
 
 class SubAbstractEnvironment(Environment):
     def __init__(self, outer):
@@ -171,6 +174,9 @@ class SubAbstractEnvironment(Environment):
 
     def fallthrough(self):
         return self.outer.fallthrough()
+
+    def get_working_class(self) -> typ.ClassType:
+        return self.outer.get_working_class()
 
 
 class MainAbstractEnvironment(Environment):
@@ -211,6 +217,9 @@ class MethodEnvironment(FunctionEnvironment):
         super().__init__(outer, name, rtype)
 
         self.defined_class = defined_class  # class where this method is defined
+
+    def get_working_class(self) -> typ.ClassType:
+        return self.defined_class
 
 
 class ModuleEnvironment(MainAbstractEnvironment):

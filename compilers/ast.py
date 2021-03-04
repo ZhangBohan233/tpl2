@@ -18,6 +18,10 @@ UNA_LOGICAL = 2
 VAR_VAR = 1
 VAR_CONST = 2
 
+PUBLIC = 0
+PROTECTED = 1
+PRIVATE = 2
+
 
 def set_optimize_level(opt_level: int):
     if opt_level >= 1:
@@ -960,8 +964,8 @@ class DotExpr(BinaryExpr):
         raise errs.TplCompileError("Super must follow a name or a call. ", lf)
 
     @staticmethod
-    def compile_method_call(right_node, class_ptr_t, ins_ptr_addr, env: en.Environment, tpa: tp.TpaOutput, lf,
-                            class_offset=0):
+    def compile_method_call(right_node, class_ptr_t, ins_ptr_addr, env: en.Environment, tpa: tp.TpaOutput,
+                            lf, class_offset=0):
         """
         Compiles a method call, with mro resolved at runtime.
         """
@@ -972,6 +976,7 @@ class DotExpr(BinaryExpr):
             arg_types = right_node.arg_types(env, tpa.manager)
             arg_types.insert(0, None)  # insert a positional arg of 'this'
             method_id, method_p, t = ct.find_method(name, arg_types, lf)
+            DotExpr.check_permission(t.defined_class, t.permission, env, lf)
             t = t.copy()
             for i in range(len(t.param_types)):
                 pt = t.param_types[i]
@@ -993,7 +998,8 @@ class DotExpr(BinaryExpr):
         raise errs.TplCompileError("Cannot make method call. ", lf)
 
     @staticmethod
-    def compile_fixed_method_call(right_node, class_ptr_t, ins_ptr_addr, env: en.Environment, tpa: tp.TpaOutput, lf):
+    def compile_fixed_method_call(right_node, class_ptr_t, ins_ptr_addr, env: en.Environment,
+                                  tpa: tp.TpaOutput, lf):
         """
         Compiles a method call, with mro resolved at compile time.
 
@@ -1011,6 +1017,7 @@ class DotExpr(BinaryExpr):
                 method_id, method_p, t = class_t.find_method(name, arg_types, lf)
                 if t.abstract:
                     raise errs.TplCompileError(f"Abstract method '{name}' cannot be called. ", lf)
+                DotExpr.check_permission(t.defined_class, t.permission, env, lf)
                 full_name = util.name_with_path(
                     typ.function_poly_name(name, arg_types, method=True),  # do not modify 'method=True'
                     t.defined_class.file_path, t.defined_class)
@@ -1045,7 +1052,7 @@ class DotExpr(BinaryExpr):
         if isinstance(left_t, typ.PointerType):
             if isinstance(right_node, FunctionCall):
                 return DotExpr.compile_method_call(right_node, left_t, left_node.compile(env, tpa), env, tpa, lf)
-            attr_ptr, attr_t = DotExpr.get_dot_attr_and_type(left_node, right_node, env, tpa, lf)
+            attr_ptr, attr_t, const = DotExpr.get_dot_attr_and_type(left_node, right_node, env, tpa, lf)
 
             res_ptr = tpa.manager.allocate_stack(attr_t.memory_length())
             tpa.value_in_addr_op(attr_ptr, attr_t.memory_length(), res_ptr, attr_t.memory_length())
@@ -1054,39 +1061,61 @@ class DotExpr(BinaryExpr):
             return DotExpr.array_attributes(left_node, env, tpa, right_node.name, lf)
         elif isinstance(left_t, typ.ClassType):
             if isinstance(right_node, FunctionCall):  # call via Class.method(obj, ...)
-                return DotExpr.compile_fixed_method_call(right_node, typ.PointerType(left_t), -1, env, tpa, lf)
+                return DotExpr.compile_fixed_method_call(right_node,
+                                                         typ.PointerType(left_t), -1, env, tpa, lf)
 
         raise errs.TplCompileError("Left side of dot must be a pointer to struct or an array. ", lf)
 
     @staticmethod
+    def check_permission(class_t: typ.ClassType, perm, env, lf):
+        if perm != PUBLIC:
+            try:
+                wc = env.get_working_class()
+            except errs.TplEnvironmentError:
+                raise errs.TplCompileError("Cannot access private or protected field outside class. ",
+                                           lf)
+            if perm == PRIVATE:
+                if wc != class_t:
+                    raise errs.TplCompileError("Cannot access private field outside its defining class. ",
+                                               lf)
+            elif perm == PROTECTED:
+                if not class_t.superclass_of(wc):
+                    raise errs.TplCompileError("Cannot access protected field outside its defining class or its "
+                                               "child class. ",
+                                               lf)
+
+    @staticmethod
     def get_dot_attr_and_type(left_node: Expression, right_node: Node, env: en.Environment, tpa: tp.TpaOutput,
-                              lf) -> (int, typ.Type):
+                              lf) -> (int, typ.Type, bool):
         left_t = left_node.evaluated_type(env, tpa.manager)
         if isinstance(right_node, NameNode):
             if isinstance(left_t, typ.PointerType):
                 struct_t = left_t.base
                 if isinstance(struct_t, typ.ClassType):
                     struct_addr = left_node.compile(env, tpa)
-                    pos, t = struct_t.find_field(right_node.name, lf)
+                    pos, t, class_t, const, perm = struct_t.find_field(right_node.name, lf)
+                    DotExpr.check_permission(class_t, perm, env, lf)
+
                     real_attr_ptr = tpa.manager.allocate_stack(t.length)
                     if t.length == util.INT_LEN:
                         tpa.assign(real_attr_ptr, struct_addr)
                         tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
                     else:
                         raise errs.TplCompileError("Unsupported length. ", lf)
-                    return real_attr_ptr, t
+                    return real_attr_ptr, t, const
                 elif isinstance(struct_t, typ.GenericClassType):
                     struct_addr = left_node.compile(env, tpa)
-                    pos, t = struct_t.base.find_field(right_node.name, lf)
+                    pos, t, class_t, const, perm = struct_t.base.find_field(right_node.name, lf)
                     if isinstance(t, str):
                         t = struct_t.generics[t]
+                    DotExpr.check_permission(class_t, perm, env, lf)
                     real_attr_ptr = tpa.manager.allocate_stack(t.length)
                     if t.length == util.INT_LEN:
                         tpa.assign(real_attr_ptr, struct_addr)
                         tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
                     else:
                         raise errs.TplCompileError("Unsupported length.", lf)
-                    return real_attr_ptr, t
+                    return real_attr_ptr, t, const
 
         raise errs.TplCompileError("Left side of dot must be a pointer to class. ", lf)
 
@@ -1101,10 +1130,10 @@ class DotExpr(BinaryExpr):
             struct_t = left_t.base
             if isinstance(right_node, NameNode):
                 if isinstance(struct_t, typ.ClassType):
-                    pos, attr_t = struct_t.find_field(right_node.name, lf)
+                    pos, attr_t, class_t, const, perm = struct_t.find_field(right_node.name, lf)
                     return attr_t
                 elif isinstance(struct_t, typ.GenericClassType):
-                    pos, attr_t = struct_t.base.find_field(right_node.name, lf)
+                    pos, attr_t, class_t, const, perm = struct_t.base.find_field(right_node.name, lf)
                     if typ.is_generic(attr_t):
                         return typ.replace_generic_with_real(attr_t, struct_t.generics)
                     return attr_t
@@ -1169,7 +1198,10 @@ class Assignment(BinaryExpr):
         return self.right.evaluated_type(env, manager)
 
     def class_attr_assign(self, dot: DotExpr, env: en.Environment, tpa: tp.TpaOutput):
-        attr_ptr, attr_t = DotExpr.get_dot_attr_and_type(dot.left, dot.right, env, tpa, dot.lf)
+        attr_ptr, attr_t, const = DotExpr.get_dot_attr_and_type(dot.left, dot.right, env, tpa, dot.lf)
+        if const:
+            pass
+            # todo
         res_addr = self.right.compile(env, tpa)
         tpa.ptr_assign(res_addr, attr_t.length, attr_ptr)
         return res_addr
@@ -1194,10 +1226,11 @@ class Assignment(BinaryExpr):
 
 
 class Declaration(BinaryStmt):
-    def __init__(self, level, lf):
+    def __init__(self, level, permission, lf):
         super().__init__(":", lf)
 
         self.level = level
+        self.permission = permission
 
     def get_name(self) -> str:
         return self.get_name_node().name
@@ -1224,6 +1257,12 @@ class Declaration(BinaryStmt):
             raise errs.TplCompileError("Left side of declaration must be a name. ", self.lf)
 
     def __str__(self):
+        perm = ""
+        if self.permission == PRIVATE:
+            perm = "private "
+        elif self.permission == PROTECTED:
+            perm = "protected "
+
         if self.level == VAR_VAR:
             level = "var"
         elif self.level == VAR_CONST:
@@ -1231,7 +1270,7 @@ class Declaration(BinaryStmt):
         else:
             raise Exception("Unexpected error. ")
 
-        return "BE({} {}: {})".format(level, self.left, self.right)
+        return f"BE({perm}{level} {self.left}: {self.right})"
 
 
 class QuickAssignment(BinaryStmt):
@@ -1271,7 +1310,7 @@ class RightArrowExpr(BinaryExpr):
 
 class FunctionDef(Expression):
     def __init__(self, name: Expression, params: Line, rtype: Expression, abstract: bool, const: bool,
-                 body: BlockStmt, lf):
+                 permission: int, body: BlockStmt, lf):
         super().__init__(lf)
 
         self.name = name
@@ -1281,6 +1320,7 @@ class FunctionDef(Expression):
         self.parent_class: typ.ClassType = None
         self.abstract = abstract
         self.const = const
+        self.permission = permission
 
     def get_simple_name(self) -> str:
         if isinstance(self.name, NameNode):
@@ -1319,9 +1359,11 @@ class FunctionDef(Expression):
         if self.parent_class is None:
             if self.abstract:
                 raise errs.TplCompileError("Function cannot be abstract. ", self.lf)
+            if self.permission != PUBLIC:
+                raise errs.TplCompileError("Function cannot be private or protected. ", self.lf)
             return typ.FuncType(param_types, rtype)
         else:
-            return typ.MethodType(param_types, rtype, self.parent_class, self.abstract, self.const)
+            return typ.MethodType(param_types, rtype, self.parent_class, self.abstract, self.const, self.permission)
 
     def is_method(self):
         return self.parent_class is not None
@@ -2483,7 +2525,7 @@ class ClassObject:
             self.class_type.method_rank.extend(mro[1].method_rank)
 
         # the class pointer
-        self.class_type.fields["__class__"] = 0, typ.TYPE_INT
+        self.class_type.fields["__class__"] = 0, typ.TYPE_INT, self.class_type, True, PUBLIC
 
         def eval_declaration(dec: Declaration, cur_field_pos):
             dec_name = dec.get_name()
@@ -2491,7 +2533,7 @@ class ClassObject:
                 raise errs.TplCompileError(
                     f"Name '{dec_name}' already defined in class '{self.class_type.name}'. ", self.lf)
             t = dec.right.definition_type(self.class_env, self.tpa.manager)
-            self.class_type.fields[dec_name] = cur_field_pos, t
+            self.class_type.fields[dec_name] = cur_field_pos, t, self.class_type, dec.level == VAR_CONST, dec.permission
             return t.memory_length()
 
         for line in self.body:
@@ -2555,13 +2597,20 @@ class ClassObject:
                 if method_t in self.class_type.methods[name]:  # overriding
                     m_pos, m_ptr, m_t = self.class_type.methods[name][method_t]
                     # print(f"class {self.class_type.name} overrides method {name} at {m_ptr}, new ptr {method_ptr}")
-                    if name != "__new__" and not method_t.strong_convertible(m_t):
-                        # print(method_t.param_types[0].base)
-                        # print(m_t.param_types[0])
-                        raise errs.TplCompileError(
-                            f"Method '{name}' in class '{self.class_type.name}' "
-                            f"overrides its super method in class '{m_t.defined_class.name}', "
-                            f"but has incompatible parameter or return type. ", method_def.lf)
+                    if name != "__new__":
+                        if not method_t.strong_convertible(m_t):
+                            # print(method_t.param_types[0].base)
+                            # print(m_t.param_types[0])
+                            raise errs.TplCompileError(
+                                f"Method '{name}' in class '{self.class_type.name}' "
+                                f"overrides its super method in class '{m_t.defined_class.name}', "
+                                f"but has incompatible parameter or return type. ", method_def.lf)
+                        if method_t.permission > m_t.permission:
+                            raise errs.TplCompileError(
+                                f"Method '{name}' in class '{self.class_type.name}' "
+                                f"overrides its super method in class '{m_t.defined_class.name}', "
+                                f"but has weaker access. ", method_def.lf)
+
                     if m_t.const:
                         raise errs.TplCompileError(
                             f"Method '{name}' is const, which cannot be overridden. ", method_def.lf
@@ -2614,7 +2663,7 @@ class ClassObject:
                                                self.lf)
                 insert_this = False
         if insert_this:
-            dec = Declaration(VAR_CONST, method.lf)
+            dec = Declaration(VAR_CONST, PUBLIC, method.lf)
             dec.left = NameNode("this", method.lf)
             dec.right = desired_this_t_node
             method.params.parts.insert(0, dec)
@@ -2647,6 +2696,7 @@ class ClassObject:
                                 NameNode("void", self.lf),
                                 False,
                                 False,
+                                PUBLIC,
                                 BlockStmt(self.lf),
                                 self.lf)
             const.parent_class = class_type

@@ -218,18 +218,20 @@ class FunctionPlacer(Type):
 
 
 class MethodType(FuncType):
-    def __init__(self, param_types, rtype, def_class, abstract: bool, const: bool):
+    def __init__(self, param_types, rtype, def_class, abstract: bool, const: bool, permission: int):
         super().__init__(param_types, rtype)
 
         self.defined_class = def_class
         self.abstract = abstract
         self.const = const
+        self.permission = permission
 
     def __str__(self):
         return ("abstract " if self.abstract else "") + "method " + super().__str__()
 
     def copy(self):
-        return MethodType(self.param_types.copy(), self.rtype, self.defined_class, self.abstract, self.const)
+        return MethodType(self.param_types.copy(), self.rtype, self.defined_class,
+                          self.abstract, self.const, self.permission)
 
 
 class NativeFuncType(CallableType):
@@ -257,7 +259,7 @@ class ClassType(Type):
         # methods with same name must have the same id, i.e. overriding methods have the same id
         # note that in each NaiveDict, the key is the type of the most super method, real type is in the values
         self.methods = {}  # name: NaiveDict{func_type: (method_id, func_ptr, func_type)}
-        self.fields = collections.OrderedDict()  # OrderedDict, name: (position, type)
+        self.fields = {}  # name: (position, type, defined_class, const?, permission)
 
         # records mapping for all templates
         # e.g. class A<AT>, class B<BK, BV(Number)>(A<BK>), class D<DT>, class C<CT>(B<CT, Integer>, D<CT>) =>
@@ -290,7 +292,7 @@ class ClassType(Type):
                 return True
         return False
 
-    def find_field(self, name: str, lf) -> (int, Type):
+    def find_field(self, name: str, lf) -> (int, Type, Type, bool, int):
         for mro_t in self.mro:
             if name in mro_t.fields:
                 return mro_t.fields[name]
@@ -512,8 +514,8 @@ def type_eq_no_generic(t1: Type, t2: Type) -> bool:
                 return ptr_t.base
             elif isinstance(ptr_t.base, GenericClassType):
                 return ptr_t.base.base
-            # elif isinstance(ptr_t.base, Generic):
-            #     print(12313213123)
+            elif isinstance(ptr_t.base, Generic):
+                return ptr_t.base.max_t
         return None
 
     t1_base = get_pointer_base_no_generic(t1)

@@ -52,6 +52,7 @@
 * ~~Reflection: getfunc~~ Done
 * ~~Char and byte binary operations~~ Done
 * Iterator for loop
-* Private field
+* ~~Private field~~ Done
 * ~~Native function 'memory_segment'~~ Done
 * Update LineFile to LineFilePos
+* 'const' in class

@@ -1,4 +1,9 @@
-﻿===== VERSION 2049 =====
+﻿===== VERSION 2050 =====
+2021/03/05
+
+* Implemented permission modifier 'private' and 'protected'
+
+===== VERSION 2049 =====
 2021/03/05
 
 * Re-implemented template-generic system

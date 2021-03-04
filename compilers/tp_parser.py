@@ -12,6 +12,7 @@ class Parser:
     def __init__(self, tokens: tl.CollectiveElement):
         self.tokens = tokens
         self.var_level = ast.VAR_VAR
+        self.permission = ast.PUBLIC
         self.abstract = False
 
         self.special_binary = {
@@ -55,7 +56,9 @@ class Parser:
             "instanceof": self.process_instanceof,
             "switch": self.process_switch,
             "case": self.process_case,
-            "default": self.process_default
+            "default": self.process_default,
+            "private": self.process_private,
+            "protected": self.process_protected
         }
 
     def parse(self):
@@ -73,13 +76,22 @@ class Parser:
         self.abstract = True
 
     def process_declare(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
-        builder.add_node(ast.Declaration(self.var_level, lf))
+        builder.add_node(ast.Declaration(self.var_level, self.permission, lf))
+        self.permission = ast.PUBLIC
+
+    def process_private(self, p, i, b, lf):
+        self.permission = ast.PRIVATE
+
+    def process_protected(self, p, i, b, lf):
+        self.permission = ast.PROTECTED
 
     def process_fn(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
         abstract = self.abstract
         self.abstract = False
         const = self.var_level == ast.VAR_CONST
         self.var_level = ast.VAR_VAR
+        permission = self.permission
+        self.permission = ast.PUBLIC
         index += 1
         name_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
         next_ele = parent[index]
@@ -116,7 +128,7 @@ class Parser:
         if abstract and body is not None:
             raise errs.TplSyntaxError("Abstract method must not have body. ", lf)
 
-        builder.add_node(ast.FunctionDef(fn_name, params, rtype, abstract, const, body, lf))
+        builder.add_node(ast.FunctionDef(fn_name, params, rtype, abstract, const, permission, body, lf))
         return index
 
     def process_class(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf):
