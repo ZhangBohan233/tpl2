@@ -515,6 +515,25 @@ class BinaryOperator(BinaryExpr):
         return res_addr
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
+        def convert_addr_to_int(src_t, src_addr):
+            if src_t == typ.TYPE_CHAR:
+                res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+                tpa.convert_char_to_int(res_addr, src_addr)
+                return res_addr
+            elif src_t == typ.TYPE_BYTE:
+                res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+                tpa.convert_byte_to_int(res_addr, src_addr)
+                return res_addr
+            return src_addr
+
+        def convert_addr_to_float(src_t, src_addr):
+            if src_t == typ.TYPE_FLOAT:
+                return src_addr
+            src_addr = convert_addr_to_int(src_t, src_addr)
+            res_addr = tpa.manager.allocate_stack(util.FLOAT_LEN)
+            tpa.convert_int_to_float(res_addr, src_addr)
+            return res_addr
+
         if self.op_type == BIN_ARITH or self.op_type == BIN_LOGICAL:
             lt = self.left.evaluated_type(env, tpa.manager)
             rt = self.right.evaluated_type(env, tpa.manager)
@@ -522,33 +541,20 @@ class BinaryOperator(BinaryExpr):
             right_addr = self.right.compile(env, tpa)
             if isinstance(lt, typ.PrimitiveType):
                 if isinstance(rt, typ.PrimitiveType):
-                    if lt == typ.TYPE_INT:
-                        if rt == typ.TYPE_INT:
-                            # res_addr = tpa.manager.allocate_stack(util.INT_LEN)
-                            int_int_to_int(self.op, left_addr, right_addr, dst_addr, tpa)
+                    if lt.int_like():
+                        if rt.int_like():
+                            left_convert_addr = convert_addr_to_int(lt, left_addr)
+                            right_convert_addr = convert_addr_to_int(rt, right_addr)
+                            int_int_to_int(self.op, left_convert_addr, right_convert_addr, dst_addr, tpa)
                             return
-                        elif rt == typ.TYPE_CHAR:
-                            pass
-                        elif rt == typ.TYPE_BYTE:
-                            pass
                         elif rt == typ.TYPE_FLOAT:
-                            left_f_addr = tpa.manager.allocate_stack(util.FLOAT_LEN)
-                            tpa.convert_int_to_float(left_f_addr, left_addr)
-                            float_float_to_float(self.op, left_f_addr, right_addr, dst_addr, tpa)
+                            left_convert_addr = convert_addr_to_float(lt, left_addr)
+                            float_float_to_float(self.op, left_convert_addr, right_addr, dst_addr, tpa)
                             return
                     elif lt == typ.TYPE_FLOAT:
-                        if rt == typ.TYPE_FLOAT:
-                            float_float_to_float(self.op, left_addr, right_addr, dst_addr, tpa)
-                            return
-                        elif rt == typ.TYPE_INT:
-                            right_f_addr = tpa.manager.allocate_stack(util.FLOAT_LEN)
-                            tpa.convert_int_to_float(right_f_addr, right_addr)
-                            float_float_to_float(self.op, left_addr, right_f_addr, dst_addr, tpa)
-                            return
-                        elif rt == typ.TYPE_CHAR:
-                            pass
-                        elif rt == typ.TYPE_BYTE:
-                            pass
+                        right_convert_addr = convert_addr_to_float(rt, right_addr)
+                        float_float_to_float(self.op, left_addr, right_convert_addr, dst_addr, tpa)
+                        return
             elif isinstance(lt, typ.PointerType) and isinstance(rt, typ.PointerType):
                 if self.op == "==" or self.op == "!=":
                     int_int_to_int(self.op, left_addr, right_addr, dst_addr, tpa)
@@ -577,7 +583,9 @@ class BinaryOperator(BinaryExpr):
             ife.compile_to(env, tpa, dst_addr, dst_len)
             return
 
-        raise errs.TplCompileError(f"Unsupported binary operation {self.op}. ", self.lf)
+        raise errs.TplCompileError(f"Unsupported binary operation {self.op} between "
+                                   f"{self.left.evaluated_type(env, tpa.manager)} and "
+                                   f"{self.right.evaluated_type(env, tpa.manager)}. ", self.lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if self.op_type == BIN_ARITH:
@@ -585,8 +593,8 @@ class BinaryOperator(BinaryExpr):
             rt = self.right.evaluated_type(env, manager)
             if isinstance(lt, typ.PrimitiveType):
                 if isinstance(rt, typ.PrimitiveType):
-                    if lt == typ.TYPE_INT or rt == typ.TYPE_CHAR or rt == typ.TYPE_BYTE:
-                        if rt == typ.TYPE_INT or rt == typ.TYPE_CHAR or rt == typ.TYPE_BYTE:
+                    if lt.int_like():
+                        if rt.int_like():
                             return typ.TYPE_INT
                         elif rt == typ.TYPE_FLOAT:
                             return typ.TYPE_FLOAT
@@ -594,7 +602,9 @@ class BinaryOperator(BinaryExpr):
                         return typ.TYPE_FLOAT
         elif self.op_type == BIN_LOGICAL or self.op_type == BIN_BITWISE or self.op_type == BIN_LAZY:
             return typ.TYPE_INT
-        raise errs.TplCompileError("Value type is not supported by binary operator. ", self.lf)
+        raise errs.TplCompileError(f"Unsupported binary operation {self.op} between "
+                                   f"{self.left.evaluated_type(env, manager)} and "
+                                   f"{self.right.evaluated_type(env, manager)}. ", self.lf)
 
 
 class BinaryOperatorAssignment(BinaryExpr, FakeNode):
@@ -843,6 +853,9 @@ class AsExpr(BinaryExpr):
             elif left_t == typ.TYPE_FLOAT:
                 tpa.convert_float_to_int(dst_addr, left)
                 return
+            elif left_t == typ.TYPE_VOID_PTR:
+                tpa.assign(dst_addr, left)
+                return
         elif right_t == typ.TYPE_CHAR:
             if left_t == typ.TYPE_INT:
                 tpa.convert_int_to_char(dst_addr, left)
@@ -859,7 +872,7 @@ class AsExpr(BinaryExpr):
             tpa.assign(dst_addr, left)
             return
         elif right_t == typ.TYPE_VOID_PTR:
-            if left_t == typ.TYPE_INT:
+            if left_t == typ.TYPE_INT or isinstance(left_t, typ.PointerType):
                 tpa.assign(dst_addr, left)
                 return
 

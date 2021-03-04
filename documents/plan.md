@@ -27,7 +27,7 @@
 * ~~Main arguments~~ Done
 * Pref in file
 * Variable length argument
-* More native call (print)
+* ~~More native call (print)~~ Done
 * ~~Separate pseudo-inst compiler~~ Done
 * ~~Tpa optimizer: load literal~~ Changed to compile_to
 
@@ -50,5 +50,7 @@
 * ~~Function polymorphism~~ Done
 * ~~Call method via Class.method()~~ Done
 * ~~Reflection: getfunc~~ Done
-* Char and byte binary operations
+* ~~Char and byte binary operations~~ Done
 * Iterator for loop
+* Private field
+* Native function 'memory_segment'

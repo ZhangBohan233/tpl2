@@ -81,6 +81,9 @@ class PrimitiveType(Type):
     def type_name(self):
         return self.t_name
 
+    def int_like(self):
+        return self.t_name == "int" or self.t_name == "char" or self.t_name == "byte"
+
     def __eq__(self, other):
         return isinstance(other, PrimitiveType) and other.t_name == self.t_name
 
@@ -549,6 +552,8 @@ def type_distance(left_type, right_real_type):
     :return:
     """
     if isinstance(left_type, PointerType) and isinstance(right_real_type, PointerType):
+        if left_type == TYPE_VOID_PTR:  # param: *void
+            return 0
         if right_real_type == TYPE_VOID_PTR:  # NULL
             return 0
         left = get_class_type(left_type.base)
@@ -641,5 +646,6 @@ NATIVE_FUNCTIONS = {
     "nat_cos": (13, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT)),
     "nat_log": (14, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT)),
     "print_byte": (15, NativeFuncType([TYPE_BYTE], TYPE_VOID)),
-    "println_byte": (16, NativeFuncType([TYPE_BYTE], TYPE_VOID))
+    "println_byte": (16, NativeFuncType([TYPE_BYTE], TYPE_VOID)),
+    "memory_segment": (17, NativeFuncType([TYPE_VOID_PTR], TYPE_INT))
 }

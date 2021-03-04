@@ -1,5 +1,5 @@
 ﻿import lang;
-
+require memory_segment;
 class Parent {
     value: int;
     value2: int = 4;
@@ -24,6 +24,6 @@ class Child(Parent) {
 
 fn main() int {
     x := "asd";
-    println("asd");
-    return new String("xxs").length();
+    println(memory_segment("asd".chars));
+    return "xsa".equals("xsa");
 }

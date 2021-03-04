@@ -1,3 +1,12 @@
+require {
+    print_int, println_int,
+    print_float, println_float,
+    print_char, println_char,
+    print_byte, println_byte,
+    print_str, println_str,
+    memory_segment
+}
+
 const FALSE: int = 0;
 const TRUE: int = 1;
 
@@ -9,7 +18,7 @@ class Object {
     }
 
     fn hash() int {
-        return this.__class__;
+        return this.__class__ * ((this as *void) as int);
     }
 
     fn equals(other: *Object) int {
@@ -17,7 +26,7 @@ class Object {
     }
 
     fn toString() *String {
-        return "Object";
+        return "Object@";
     }
 }
 
@@ -37,7 +46,12 @@ class String {
     }
 
     fn __del__() void {
+        if memory_segment(this.chars) == 3 {
+            return;
+        }
+        del this.chars;
 
+        super.__del__();
     }
 
     fn equals(other: *Object) int {
@@ -86,53 +100,60 @@ class Integer(Number) {
 
 const NULL: *void = 0 as *void;
 
+/*
+Documents for native functions.
+
+#####
+memory_segment(ptr: *void) int;
+
+Returns the memory segment of this pointer is pointed to
+-1: if invalid
+0:  if null
+1:  if in stack
+2:  if in global memory
+3:  if in literal
+4:  if in class headers
+5:  if in function bodies
+6:  if in heap
+*/
+
 fn print(value: int) void {
-    require print_int;
     print_int(value);
 }
 
 fn println(value: int) void {
-    require println_int;
     println_int(value);
 }
 
 fn print(value: float) void {
-    require print_float;
     print_float(value);
 }
 
 fn println(value: float) void {
-    require println_float;
     println_float(value);
 }
 
 fn print(value: char) void {
-    require print_char;
     print_char(value);
 }
 
 fn println(value: char) void {
-    require println_char;
     println_char(value);
 }
 
 fn print(value: byte) void {
-    require print_byte;
     print_byte(value);
 }
 
 fn println(value: byte) void {
-    require println_byte;
     println_byte(value);
 }
 
 fn print(value: *String) void {
-    require print_str;
     print_str(value.chars);
 }
 
 fn println(value: *String) void {
-    require println_str;
     println_str(value.chars);
 }
 

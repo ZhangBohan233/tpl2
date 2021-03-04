@@ -1,4 +1,11 @@
-﻿===== VERSION 2047 =====
+﻿===== VERSION 2048 =====
+2021/03/04
+
+* Implemented native function 'memory_segment'
+* Optimized computations of 'char', 'byte' as binary operand
+* Optimized cast and some type check
+
+===== VERSION 2047 =====
 2021/03/04
 
 * Completely fixed function order problem: traverse all functions before compile .tpa to .tpc

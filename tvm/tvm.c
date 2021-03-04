@@ -251,6 +251,28 @@ void nat_clock() {
     pull_fp
 }
 
+void nat_memory_segment() {
+    push_fp
+    push(PTR_LEN)
+
+    tp_int ptr = bytes_to_int(MEMORY + true_addr(0));
+    tp_int res;
+    if (ptr < 0) res = -1;
+    else if (ptr == 0) res = 0;
+    else if (ptr < stack_end) res = 1;
+    else if (ptr < global_end) res = 2;
+    else if (ptr < literal_end) res = 3;
+    else if (ptr < class_header_end) res = 4;
+    else if (ptr < functions_end) res = 5;
+    else if (ptr < entry_end) res = -1;
+    else if (ptr < MEMORY_SIZE) res = 6;
+    else res = -1;
+
+    nat_return_int(res);
+
+    pull_fp
+}
+
 tp_int _malloc_essential(tp_int asked_len) {
     tp_int real_len = asked_len + INT_LEN;
     tp_int allocate_len =
@@ -489,6 +511,9 @@ void invoke(tp_int func_ptr) {
             break;
         case 16:  // println_byte
             nat_println_byte();
+            break;
+        case 17:  // memory_segment
+            nat_memory_segment();
             break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;
