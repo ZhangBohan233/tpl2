@@ -1,4 +1,10 @@
-﻿===== VERSION 2048 =====
+﻿===== VERSION 2049 =====
+2021/03/05
+
+* Re-implemented template-generic system
+* Added compile time check: type of 'this' in templated class
+
+===== VERSION 2048 =====
 2021/03/04
 
 * Implemented native function 'memory_segment'

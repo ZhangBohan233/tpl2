@@ -208,6 +208,9 @@ class Line(Expression):
     def __repr__(self):
         return "Line"
 
+    def __eq__(self, other):
+        return type(self) == type(other) and self.parts == other.parts
+
 
 class BlockStmt(Statement):
     def __init__(self, lf):
@@ -284,6 +287,9 @@ class NameNode(Expression):
 
     def __repr__(self):
         return f"NameNode({self.name})"
+
+    def __eq__(self, other):
+        return type(self) == type(other) and self.name == other.name
 
 
 class LiteralNode(Expression, ABC):
@@ -435,6 +441,9 @@ class UnaryExpr(Expression, UnaryBuildable, ABC):
     def __init__(self, op: str, lf, operator_at_left=True):
         Expression.__init__(self, lf)
         UnaryBuildable.__init__(self, op, operator_at_left)
+
+    def __eq__(self, other):
+        return type(self) == type(other) and self.op == other.op and self.value == other.value
 
 
 class UnaryStmt(Statement, UnaryBuildable, ABC):
@@ -1370,7 +1379,7 @@ class ClassStmt(Statement):
 
         # superclasses
         direct_sc = []
-        super_generics_list = {}  # dict of lists
+        super_generics_lists = {}  # dict of lists
         if self.extensions is not None:
             for ext in self.extensions:
                 if isinstance(ext, GenericNode):
@@ -1384,7 +1393,7 @@ class ClassStmt(Statement):
                                 sup_gens.append(node.name)
                         else:
                             raise errs.TplCompileError("Generics in superclass must be names. ", self.lf)
-                    super_generics_list[ext.get_name()] = sup_gens
+                    super_generics_lists[t] = sup_gens
                 else:
                     t = ext.evaluated_type(env, tpa.manager)
                 if not isinstance(t, typ.ClassType):
@@ -1398,32 +1407,38 @@ class ClassStmt(Statement):
                     raise errs.TplCompileError(f"Duplicate template name '{tem.simple_name()}' already defined in "
                                                f"superclass '{sc.name}'. ", self.lf)
         # find generics inheritance
-        super_generics_map = {}
-        for sc in direct_sc:
-            sub_map = {}
-            sup_templates = sc.templates
-            if sc.name in super_generics_list:
-                actual_templates: list = super_generics_list[sc.name]
-                for i in range(len(sup_templates)):
-                    sup_tem: typ.Generic = sup_templates[i]
-                    actual_tem = actual_templates[i]
-                    sub_map[sup_tem.simple_name()] = actual_tem
-                super_generics_map[sc] = sub_map
+        # super_generics_map = {}
+        templates_map = {}
+        for dsc in direct_sc:
+            templates_map.update(dsc.templates_map)
+        ClassStmt.create_templates_map(templates, direct_sc, templates_map, super_generics_lists, self.lf)
+        # print(self.name, templates_map)
 
-        for gen in templates:
-            class_env.define_template(gen, self.lf)
-        # print(super_generics_map)
-        for sc_tem_map in super_generics_map.values():
-            for tem_name in sc_tem_map:
-                actual_tem = sc_tem_map[tem_name]
-                if isinstance(actual_tem, str):
-                    index = typ.index_in_generic_list(actual_tem, templates)
-                    class_env.define_template(typ.Generic(tem_name, templates[index].max_t), self.lf)
-                else:
-                    class_env.define_template(typ.Generic(tem_name, actual_tem), self.lf)
+        def get_actual(tem_name):
+            actual = templates_map[tem_name]
+            if isinstance(actual, str):
+                return get_actual(actual)
+            else:
+                return actual
+
+        # print(templates_map)
+        for gen in templates_map:
+            class_env.define_template(typ.Generic(gen, get_actual(gen)), self.lf)
+
+        # for gen in templates:
+        #     class_env.define_template(gen, self.lf)
+
+        # for sc_tem_map in super_generics_map.values():
+        #     for tem_name in sc_tem_map:
+        #         actual_tem = sc_tem_map[tem_name]
+        #         if isinstance(actual_tem, str):
+        #             index = typ.index_in_generic_list(actual_tem, templates)
+        #             class_env.define_template(typ.Generic(tem_name, templates[index].max_t), self.lf)
+        #         else:
+        #             class_env.define_template(typ.Generic(tem_name, actual_tem), self.lf)
         # print(super_generics_map)
         class_type = typ.ClassType(
-            self.name, class_ptr, self.lf.file_name, direct_sc, templates, super_generics_map, self.abstract)
+            self.name, class_ptr, self.lf.file_name, class_env, direct_sc, templates, templates_map, self.abstract)
         mro = self.make_mro(class_type)
         class_type.mro = mro
 
@@ -1431,6 +1446,23 @@ class ClassStmt(Statement):
 
         class_wrapper = ClassObject(class_type, self.body, self.abstract, class_env, tpa, self.lf)
         tpa.manager.add_class(class_wrapper)
+
+    @staticmethod
+    def create_templates_map(self_templates: [typ.Generic], direct_sc, templates_map, super_map, lf):
+        # print(super_map, direct_sc)
+        for st in self_templates:
+            templates_map[st.simple_name()] = st.max_t
+        for sc in direct_sc:
+            if sc in super_map:
+                if len(super_map[sc]) != len(sc.templates):
+                    raise errs.TplCompileError("Unequal generics length. ", lf)
+                actual = super_map[sc]
+                for i in range(len(sc.templates)):
+                    gen = sc.templates[i]
+                    if isinstance(actual[i], typ.Type):
+                        if not actual[i].strong_convertible(gen.max_t):
+                            raise errs.TplCompileError("Cannot convert template. ", lf)
+                    templates_map[gen.simple_name()] = actual[i]
 
     def make_mro(self, class_type: typ.ClassType):
         def lin(ct: typ.ClassType):
@@ -1544,22 +1576,32 @@ class GenericNode(Expression):
                 raise errs.TplCompileError(f"Generics must be pointer type, got {gen_t}", self.lf)
             gen = class_t.templates[i]
             if not gen.max_t.superclass_of(gen_t):
-                raise errs.TplCompileError(f"Template '{gen.name}' requires subclass of '{gen.max_t}', got '{gen_t}'. ",
+                raise errs.TplCompileError(f"Template '{gen.simple_name()}' requires subclass of '{gen.max_t}', "
+                                           f"got '{gen_t}'. ",
                                            self.lf)
             gen_dict[gen.simple_name()] = gen_t
 
-        for sc_tem_map in class_t.super_generics_map.values():
-            for tem_name in sc_tem_map:
-                actual_tem = sc_tem_map[tem_name]
-                if isinstance(actual_tem, str):
-                    gen_dict[tem_name] = gen_dict[actual_tem]
-                else:
-                    gen_dict[tem_name] = actual_tem
-        # print(gen_dict)
-        return typ.GenericClassType(class_t, gen_dict)
+        templates_map = class_t.templates_map
+        full_gen_dict = templates_map.copy()
+        full_gen_dict.update(gen_dict)
+
+        has_remain = True
+        while has_remain:
+            has_remain = False
+            for tem_name in full_gen_dict:
+                actual = full_gen_dict[tem_name]
+                if isinstance(actual, str):
+                    has_remain = True
+                    full_gen_dict[tem_name] = full_gen_dict[actual]
+
+        # print(full_gen_dict)
+        return typ.GenericClassType(class_t, full_gen_dict)
 
     def __str__(self):
         return f"{self.obj}<{self.generics}>"
+
+    def __eq__(self, other):
+        return type(self) == type(other) and self.obj == other.obj and self.generics == other.generics
 
 
 class FunctionCall(Expression):
@@ -2549,22 +2591,32 @@ class ClassObject:
                         )
 
     def check_method_def(self, method: FunctionDef, class_type: typ.ClassType, env, manager):
+        desired_this_t_node = StarExpr(method.lf)
+        name_node = NameNode(class_type.name, method.lf)
+        if len(class_type.templates) > 0:
+            gen_line = Line(method.lf)
+            for gen in class_type.templates:
+                gen_line.parts.append(NameNode(gen.simple_name(), method.lf))
+            gen_node = GenericNode(name_node, gen_line, method.lf)
+            desired_this_t_node.value = gen_node
+        else:
+            desired_this_t_node.value = name_node
+
         insert_this = True
         if len(method.params) > 0:
             first_param = method.params[0]
             if isinstance(first_param, Declaration) and \
                     isinstance(first_param.left, NameNode) and \
                     first_param.left.name == "this":
-                this_t = first_param.right.definition_type(env, manager)
-
-                # if not isinstance(this_t, typ.PointerType) or this_t.base != class_type:
-                #     raise errs.TplCompileError("Parameter 'this' must be *" + class_type.name + ". ", self.lf)
+                if first_param.right != desired_this_t_node:
+                    raise errs.TplCompileError(f"Parameter 'this' must be {desired_this_t_node}, "
+                                               f"got {first_param.right}. ",
+                                               self.lf)
                 insert_this = False
         if insert_this:
             dec = Declaration(VAR_CONST, method.lf)
             dec.left = NameNode("this", method.lf)
-            dec.right = StarExpr(method.lf)
-            dec.right.value = NameNode(class_type.name, method.lf)
+            dec.right = desired_this_t_node
             method.params.parts.insert(0, dec)
 
         if method.get_simple_name() == "__new__":

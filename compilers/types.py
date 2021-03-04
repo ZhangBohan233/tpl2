@@ -238,14 +238,15 @@ class NativeFuncType(CallableType):
 
 
 class ClassType(Type):
-    def __init__(self, name: str, class_ptr: int, file_path: str, direct_sc: list, templates: list,
-                 super_generics_map: dict, abstract: bool):
+    def __init__(self, name: str, class_ptr: int, file_path: str, class_env, direct_sc: list, templates: list,
+                 templates_map: dict, abstract: bool):
         super().__init__(0)
 
         self.name = name
         self.class_ptr = class_ptr
         self.file_path = file_path  # where this class is defined, avoiding conflict struct def'ns in non-export part
         self.name_with_path = util.class_name_with_path(self.name, self.file_path)
+        self.class_env = class_env
         self.abstract = abstract
         self.direct_superclasses = direct_sc
         self.mro: list = None  # Method resolution order, ranked from closest to farthest
@@ -258,9 +259,13 @@ class ClassType(Type):
         self.methods = {}  # name: NaiveDict{func_type: (method_id, func_ptr, func_type)}
         self.fields = collections.OrderedDict()  # OrderedDict, name: (position, type)
 
-        # records mapping for superclass
-        # e.g. class A<K, V>, class B<X>(A<X, Object>) => {A: {"K": "X", "V": Object}}
-        self.super_generics_map = super_generics_map
+        # records mapping for all templates
+        # e.g. class A<AT>, class B<BK, BV(Number)>(A<BK>), class D<DT>, class C<CT>(B<CT, Integer>, D<CT>) =>
+        # in A: {"AT": Object}
+        # in B: {"BK": Object, "BV": Number, "AT": "BK"}
+        # in D: {"DT": Object}
+        # in C: {"CT": Object, "BK": "CT", "BV": Integer, "AT": "BK", "DT": "CT"}
+        self.templates_map = templates_map
 
         self.initializers = []  # nodes that will be executed in __new__
 
@@ -269,6 +274,15 @@ class ClassType(Type):
 
     def full_name(self):
         return self.name_with_path
+
+    def get_actual_template_name(self, template_name):
+        if template_name not in self.templates_map:
+            return None
+        actual_tem = self.templates_map[template_name]
+        if isinstance(actual_tem, str):
+            return self.get_actual_template_name(actual_tem)
+        else:
+            return template_name
 
     def has_field(self, name: str) -> bool:
         for mro_t in self.mro:
@@ -310,6 +324,8 @@ class ClassType(Type):
         """
         method_id, method_ptr, method_t = self._find_method(name, arg_types, lf)
         def_this_t = method_t.param_types[0].base
+        if isinstance(def_this_t, GenericClassType):
+            def_this_t = def_this_t.base
         if def_this_t != self:
             raise errs.TplCompileError(f"Cannot resolve local method {name}{arg_types[1:]}. ", lf)
         return method_id, method_ptr, method_t
@@ -381,34 +397,18 @@ class GenericClassType(GenericType):
         # print("000", self)
         # print("112", left_tar_type)
         # print(self.base.super_generics_map)
-        def compare_generic(left_tar, mro_index=0):
-            if mro_index >= len(self.base.mro):
-                return False
-            this_base = self.base.mro[mro_index]
-            print(this_base, this_base.super_generics_map, left_tar.base)
-            if left_tar.base in this_base.super_generics_map:
-                super_gen = dict_find_key(this_base.super_generics_map[left_tar.base], key)
-                if super_gen is not None:  # class A<T0> {...}  class B<T1>(A<T1>) {...}
-                    if self.generics[key].strong_convertible(left_tar.generics[super_gen]):
-                        return True
-            #     return False
-            # else:
-            return compare_generic(left_tar, mro_index + 1)
-
-        if isinstance(left_tar_type, GenericType):
+        if isinstance(left_tar_type, GenericClassType):
             if self.base.strong_convertible(left_tar_type.base):
                 # if len(self.generics) == len(left_tar_type.generics):
-                for key in self.generics:
-                    if key in left_tar_type.generics:  # same T
+                for key in left_tar_type.generics:
+                    if key in self.generics:  # same class
                         if self.generics[key].strong_convertible(left_tar_type.generics[key]):
                             continue
-                    if not compare_generic(left_tar_type):
-                        return False
-                    # super_gen = dict_find_key(self.base.super_generics_map[left_tar_type.base], key)
-                    # if super_gen is not None:  # class A<T0> {...}  class B<T1>(A<T1>) {...}
-                    #     if self.generics[key].strong_convertible(left_tar_type.generics[super_gen]):
-                    #         continue
-                    # return False
+                    actual_tem_name = self.base.get_actual_template_name(key)
+                    if actual_tem_name is not None:
+                        if self.generics[actual_tem_name].strong_convertible(left_tar_type.generics[key]):
+                            continue
+                    return False
                 return True
         return False
 
@@ -653,6 +653,9 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
     if min_tup is None:
         raise errs.TplCompileError(f"Cannot resolve call: {function_poly_name(name, arg_types, is_method)}. ", lf)
     return min_tup
+
+
+# def find_correspond_tem_name()
 
 
 TYPE_INT = PrimitiveType("int", util.INT_LEN)

@@ -1,23 +1,34 @@
 ﻿import lang;
 
-class A<T> {
+class A<AT> {
+    a: *AT;
+
+    fn __new__(this: *A<AT>) void {
+        super.__new__();
+    }
+}
+
+class B<BK, BV(Number)>(A<BK>) {
+    k: *BK;
+    v: *BV;
+
+    fn __new__(this: *B<BK, BV>) void {
+        super.__new__();
+    }
+}
+
+class D<DT> {
 
 }
 
-class B<K, V>(A<K>) {
-
-}
-
-class Other<T> {
-
-}
-
-class C<T(Number)>(B<T, Object>, Other<T>) {
-
+class C<CT>(B<CT, Integer>, D<CT>) {
+    fn __new__() void {
+        super.__new__();
+    }
 }
 
 fn main() void {
-    cc := new C<Integer>();
-    abc : A<Number> = cc;
-
+    cc := new C<String>();
+    cc.a.length();
+    aa: *A<String> = cc;
 }
