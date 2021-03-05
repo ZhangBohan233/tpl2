@@ -416,11 +416,12 @@ class GenericClassType(GenericType):
 
 
 class Generic(Type):
-    def __init__(self, name: str, max_t: ClassType):
+    def __init__(self, name: str, max_t: ClassType, class_name: str):
         super().__init__(max_t.length)
 
         self._name = name
         self.max_t = max_t
+        self.class_name = class_name  # class full name
 
     def strong_convertible(self, left_tar_type):
         return self.max_t.strong_convertible(left_tar_type)
@@ -431,8 +432,19 @@ class Generic(Type):
     def type_name(self):
         return self.max_t.type_name()
 
+    def full_name(self):
+        return Generic.generic_name(self.class_name, self._name)
+
+    @staticmethod
+    def extract_class_name(full_name: str):
+        return full_name[:full_name.rfind(".")]
+
+    @staticmethod
+    def generic_name(class_name: str, simple_name: str):
+        return class_name + "#" + simple_name
+
     def __eq__(self, other):
-        return isinstance(other, Generic) and self._name == other._name
+        return isinstance(other, Generic) and self._name == other._name and self.class_name == other.class_name
 
     def __str__(self):
         return f"{self._name}: {self.max_t}"

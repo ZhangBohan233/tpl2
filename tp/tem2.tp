@@ -1,27 +1,28 @@
 ﻿import lang;
+import collections;
 
-class A<AT> {
-    a: *AT;
+class A<T> {
+    a: *T;
 
-    fn __new__(this: *A<AT>) void {
+    fn __new__(this: *A<T>) void {
         super.__new__();
     }
 }
 
-class B<BK, BV(Number)>(A<BK>) {
-    k: *BK;
-    v: *BV;
+class B<K, V(Object)>(A<K>) {
+    k: *K;
+    v: *V;
 
-    fn __new__(this: *B<BK, BV>) void {
+    fn __new__(this: *B<K, V>) void {
         super.__new__();
     }
 }
 
-class D<DT> {
+class D<T> {
 
 }
 
-class C<CT>(B<CT, Integer>, D<CT>) {
+class C<T>(B<Integer, T>, D<T>) {
     fn __new__() void {
         super.__new__();
     }
@@ -29,6 +30,8 @@ class C<CT>(B<CT, Integer>, D<CT>) {
 
 fn main() void {
     cc := new C<String>();
-    cc.a.length();
-    aa: *A<String> = cc;
+    //cc.a.length();
+    aa: *A<Number> = cc;
+
+
 }

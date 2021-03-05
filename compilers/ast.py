@@ -278,13 +278,30 @@ class NameNode(Expression):
         return env.get(self.name, self.lf)
 
     def definition_type(self, env: en.Environment, manager: tp.Manager):
-        if env.is_type(self.name, self.lf):
-            return env.get_type(self.name, self.lf)
-        else:
-            raise errs.TplCompileError(f"Name '{self.name}' is not a type. ", self.lf)
+        if env.has_name(self.name):
+            if env.is_type(self.name, self.lf):
+                return env.get_type(self.name, self.lf)
+        else:  # try template
+            try:
+                wc = env.get_working_class()
+                prob_name = typ.Generic.generic_name(wc.full_name(), self.name)
+                if env.is_type(prob_name, self.lf):
+                    return env.get_type(prob_name, self.lf)
+            except errs.TplEnvironmentError:
+                raise errs.TplCompileError(f"Name '{self.name}' not defined. ", self.lf)
+        raise errs.TplCompileError(f"Name '{self.name}' is not a type. ", self.lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager):
-        return env.get_type(self.name, self.lf)
+        if env.has_name(self.name):
+            return env.get_type(self.name, self.lf)
+        else:
+            try:
+                wc = env.get_working_class()
+                prob_name = typ.Generic.generic_name(wc.full_name(), self.name)
+                if env.is_type(prob_name, self.lf):
+                    return env.get_type(prob_name, self.lf)
+            except errs.TplEnvironmentError:
+                raise errs.TplCompileError(f"Name '{self.name}' not defined. ", self.lf)
 
     def __str__(self):
         return self.name
@@ -1397,7 +1414,8 @@ class ClassStmt(Statement):
         """
         class_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
 
-        class_env = en.ClassEnvironment(env, util.class_name_with_path(self.name, self.lf.file_name))
+        class_name_path = util.class_name_with_path(self.name, self.lf.file_name)
+        class_env = en.ClassEnvironment(env)
 
         # templates
         templates = []  # list of templates
@@ -1407,7 +1425,7 @@ class ClassStmt(Statement):
             for part in self.template_nodes:
                 if isinstance(part, NameNode):
                     templates.append(
-                        typ.Generic(part.name, object_t))
+                        typ.Generic(part.name, object_t, class_name_path))
                 elif isinstance(part, FunctionCall):
                     if len(part.args) != 1:
                         raise errs.TplSyntaxError("Invalid syntax. ", self.lf)
@@ -1415,7 +1433,7 @@ class ClassStmt(Statement):
                     if not isinstance(max_t, typ.ClassType):
                         raise errs.TplCompileError(f"Template {part.args[0]} must extends a class. ", self.lf)
                     templates.append(
-                        typ.Generic(part.get_name(), max_t))
+                        typ.Generic(part.get_name(), max_t, class_name_path))
                 else:
                     raise errs.TplSyntaxError("Template must be name or class extension. ", self.lf)
 
@@ -1432,7 +1450,7 @@ class ClassStmt(Statement):
                             if env.has_name(node.name):
                                 sup_gens.append(node.evaluated_type(env, tpa.manager))
                             else:
-                                sup_gens.append(node.name)
+                                sup_gens.append(typ.Generic.generic_name(class_name_path, node.name))
                         else:
                             raise errs.TplCompileError("Generics in superclass must be names. ", self.lf)
                     super_generics_lists[t] = sup_gens
@@ -1465,24 +1483,13 @@ class ClassStmt(Statement):
 
         # print(templates_map)
         for gen in templates_map:
-            class_env.define_template(typ.Generic(gen, get_actual(gen)), self.lf)
+            class_env.define_template(typ.Generic(gen, get_actual(gen), typ.Generic.extract_class_name(gen)), self.lf)
 
-        # for gen in templates:
-        #     class_env.define_template(gen, self.lf)
-
-        # for sc_tem_map in super_generics_map.values():
-        #     for tem_name in sc_tem_map:
-        #         actual_tem = sc_tem_map[tem_name]
-        #         if isinstance(actual_tem, str):
-        #             index = typ.index_in_generic_list(actual_tem, templates)
-        #             class_env.define_template(typ.Generic(tem_name, templates[index].max_t), self.lf)
-        #         else:
-        #             class_env.define_template(typ.Generic(tem_name, actual_tem), self.lf)
-        # print(super_generics_map)
         class_type = typ.ClassType(
             self.name, class_ptr, self.lf.file_name, class_env, direct_sc, templates, templates_map, self.abstract)
         mro = self.make_mro(class_type)
         class_type.mro = mro
+        class_env.class_type = class_type
 
         env.define_const_set(self.name, class_type, class_ptr, self.lf)
 
@@ -1493,7 +1500,7 @@ class ClassStmt(Statement):
     def create_templates_map(self_templates: [typ.Generic], direct_sc, templates_map, super_map, lf):
         # print(super_map, direct_sc)
         for st in self_templates:
-            templates_map[st.simple_name()] = st.max_t
+            templates_map[st.full_name()] = st.max_t
         for sc in direct_sc:
             if sc in super_map:
                 if len(super_map[sc]) != len(sc.templates):
@@ -1504,7 +1511,7 @@ class ClassStmt(Statement):
                     if isinstance(actual[i], typ.Type):
                         if not actual[i].strong_convertible(gen.max_t):
                             raise errs.TplCompileError("Cannot convert template. ", lf)
-                    templates_map[gen.simple_name()] = actual[i]
+                    templates_map[gen.full_name()] = actual[i]
 
     def make_mro(self, class_type: typ.ClassType):
         def lin(ct: typ.ClassType):
@@ -1621,7 +1628,7 @@ class GenericNode(Expression):
                 raise errs.TplCompileError(f"Template '{gen.simple_name()}' requires subclass of '{gen.max_t}', "
                                            f"got '{gen_t}'. ",
                                            self.lf)
-            gen_dict[gen.simple_name()] = gen_t
+            gen_dict[gen.full_name()] = gen_t
 
         templates_map = class_t.templates_map
         full_gen_dict = templates_map.copy()

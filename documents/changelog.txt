@@ -1,4 +1,9 @@
-﻿===== VERSION 2050 =====
+﻿===== VERSION 2051 =====
+2021/03/05
+
+* Updated template-generic system: duplicate name is now allowed
+
+===== VERSION 2050 =====
 2021/03/05
 
 * Implemented permission modifier 'private' and 'protected'

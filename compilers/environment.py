@@ -105,7 +105,7 @@ class Environment:
         return False
 
     def has_name(self, name) -> bool:
-        return self._inner_get(name) is not None
+        return name in typ.PRIMITIVE_TYPES or self._inner_get(name) is not None
 
     def _inner_get(self, name) -> VarEntry:
         if name in self.vars:
@@ -244,11 +244,26 @@ class MainEnvironment(MainAbstractEnvironment):
 
 
 class ClassEnvironment(MainAbstractEnvironment):
-    def __init__(self, outer, class_full_name: str):
+    def __init__(self, outer):
         super().__init__(outer)
 
-        self.full_name = class_full_name
+        self.class_type = None
         self.templates = {}  # name: generic, ConstEntry (-1, Object if not specified)
+
+    def get_working_class(self) -> typ.ClassType:
+        """
+        The internal logic is:
+        class A<T> {    // A.T, working_class = A
+            varA: *T;   // A.T
+        }
+        class B<T>(A<T>) {  // B.T, working_class = B
+            varB: *T;       // B.T
+        }
+        b: B<Integer> = new B<Integer>();
+        b.
+        :return:
+        """
+        return self.class_type
 
     def define_function(self, name: str, func_type: typ.CallableType, fn_ptr: int, lf: tl.LineFile):
         if name in self.vars:
