@@ -3,7 +3,7 @@ bits
 stack_size
 1024
 global_length
-656
+664
 literal
 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 7 0 0 0 0 0 0 0 79 0 98 0 106 0 101 0 99 0 116 0 64 0 3 0 0 0 0 0 0 0 8 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 32 0 0 0 0 0 0 0 77 1 0 0 0 0 0 0 66 0 0 0 0 0 0 0
 classes
@@ -18,8 +18,8 @@ class E:\GitHub\tpl2\lib\collections.tp$AbsList mro $1296 $1288 $1144 methods $1
 class E:\GitHub\tpl2\lib\collections.tp$List mro $1304 $1296 $1288 $1144 methods $1560 $1360 $1368 $1376 $1384 $1568 $1576 $1584 $1592 $1600 $1608
 class E:\GitHub\tpl2\lib\collections.tp$Map mro $1312 $1144 methods $1616 $1360 $1368 $1376 $1384
 class E:\GitHub\tpl2\lib\collections.tp$HashMap mro $1320 $1312 $1144 methods $1624 $1360 $1368 $1376 $1384
-class E:\GitHub\tpl2\tp\private.tp$A mro $1328 $1144 methods $1648 $1360 $1368 $1376 $1384 $1632 $1640
-class E:\GitHub\tpl2\tp\private.tp$B mro $1336 $1328 $1144 methods $1672 $1360 $1368 $1376 $1384 $1632 $1664 $1656
+class E:\GitHub\tpl2\tp\private.tp$A mro $1328 $1144 methods $1632 $1360 $1368 $1376 $1384 $1640 $1648 $1656
+class E:\GitHub\tpl2\tp\private.tp$B mro $1336 $1328 $1144 methods $1680 $1360 $1368 $1376 $1384 $1640 $1648 $1672 $1664
 
 fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__() $1352
     push_fp
@@ -1267,7 +1267,54 @@ fn E:\GitHub\tpl2\lib\collections.tp$HashMap.__new__() $1624
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\private.tp$A.bar() $1632
+fn E:\GitHub\tpl2\tp\private.tp$A.__new__() $1632
+    push_fp
+    push          24
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      24
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load_lit      %0      $8
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $8
+    load          %1      $16
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\private.tp$A.__new__(int) $1640
+    push_fp
+    push          24
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
+    load          %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      24
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\private.tp$A.bar() $1648
     push_fp
     push          24
     load          %0      $0
@@ -1288,7 +1335,7 @@ fn E:\GitHub\tpl2\tp\private.tp$A.bar() $1632
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\private.tp$A.method() $1640
+fn E:\GitHub\tpl2\tp\private.tp$A.method() $1656
     push_fp
     push          16
     load_lit      %0      $86
@@ -1302,18 +1349,7 @@ fn E:\GitHub\tpl2\tp\private.tp$A.method() $1640
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\private.tp$A.__new__() $1648
-    push_fp
-    push          8
-    aload_sp      %0      $0
-    load          %1      $0
-    store_abs     %0      %1
-    call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\private.tp$B.foo() $1656
+fn E:\GitHub\tpl2\tp\private.tp$B.foo() $1664
     push_fp
     push          24
     load          %0      $0
@@ -1331,7 +1367,7 @@ fn E:\GitHub\tpl2\tp\private.tp$B.foo() $1656
     load          %1      $16
     store_abs     %0      %1
     load          %0      $0
-    iload         %1      6
+    iload         %1      7
     iload         %2      0
     get_method    %0      %1      %2
     aload_sp      %1      $0
@@ -1342,7 +1378,7 @@ fn E:\GitHub\tpl2\tp\private.tp$B.foo() $1656
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\private.tp$B.method() $1664
+fn E:\GitHub\tpl2\tp\private.tp$B.method() $1672
     push_fp
     push          16
     load_lit      %0      $62
@@ -1356,7 +1392,7 @@ fn E:\GitHub\tpl2\tp\private.tp$B.method() $1664
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\private.tp$B.__new__() $1672
+fn E:\GitHub\tpl2\tp\private.tp$B.__new__() $1680
     push_fp
     push          8
     aload_sp      %0      $0
@@ -1388,7 +1424,7 @@ fn E:\GitHub\tpl2\tp\private.tp$main() $1344
     store_abs     %0      %1
     call_fn       E:\GitHub\tpl2\tp\private.tp$B.__new__()
     load          %0      $0
-    iload         %1      6
+    iload         %1      7
     iload         %2      0
     get_method    %0      %1      %2
     aload_sp      %1      $0
@@ -2485,7 +2521,54 @@ fn E:\GitHub\tpl2\lib\collections.tp$HashMap.__new__() $1624
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\private.tp$A.bar() $1632
+fn E:\GitHub\tpl2\tp\private.tp$A.__new__() $1632
+    push_fp
+    push          24
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
+    load          %0      $0
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      24
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load_lit      %0      $8
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $8
+    load          %1      $16
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\private.tp$A.__new__(int) $1640
+    push_fp
+    push          24
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
+    load          %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      24
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\private.tp$A.bar() $1648
     push_fp
     push          24
     load          %0      $0
@@ -2506,7 +2589,7 @@ fn E:\GitHub\tpl2\tp\private.tp$A.bar() $1632
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\private.tp$A.method() $1640
+fn E:\GitHub\tpl2\tp\private.tp$A.method() $1656
     push_fp
     push          16
     load_lit      %0      $86
@@ -2520,18 +2603,7 @@ fn E:\GitHub\tpl2\tp\private.tp$A.method() $1640
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\private.tp$A.__new__() $1648
-    push_fp
-    push          8
-    aload_sp      %0      $0
-    load          %1      $0
-    store_abs     %0      %1
-    call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
-    pull_fp
-    ret
-    stop
-
-fn E:\GitHub\tpl2\tp\private.tp$B.foo() $1656
+fn E:\GitHub\tpl2\tp\private.tp$B.foo() $1664
     push_fp
     push          24
     load          %0      $0
@@ -2549,7 +2621,7 @@ fn E:\GitHub\tpl2\tp\private.tp$B.foo() $1656
     load          %1      $16
     store_abs     %0      %1
     load          %0      $0
-    iload         %1      6
+    iload         %1      7
     iload         %2      0
     get_method    %0      %1      %2
     aload_sp      %1      $0
@@ -2560,7 +2632,7 @@ fn E:\GitHub\tpl2\tp\private.tp$B.foo() $1656
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\private.tp$B.method() $1664
+fn E:\GitHub\tpl2\tp\private.tp$B.method() $1672
     push_fp
     push          16
     load_lit      %0      $62
@@ -2574,7 +2646,7 @@ fn E:\GitHub\tpl2\tp\private.tp$B.method() $1664
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\private.tp$B.__new__() $1672
+fn E:\GitHub\tpl2\tp\private.tp$B.__new__() $1680
     push_fp
     push          8
     aload_sp      %0      $0

@@ -282,26 +282,23 @@ class NameNode(Expression):
             if env.is_type(self.name, self.lf):
                 return env.get_type(self.name, self.lf)
         else:  # try template
-            try:
-                wc = env.get_working_class()
+            wc = env.get_working_class()
+            if wc is not None:
                 prob_name = typ.Generic.generic_name(wc.full_name(), self.name)
                 if env.is_type(prob_name, self.lf):
                     return env.get_type(prob_name, self.lf)
-            except errs.TplEnvironmentError:
-                raise errs.TplCompileError(f"Name '{self.name}' not defined. ", self.lf)
         raise errs.TplCompileError(f"Name '{self.name}' is not a type. ", self.lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager):
         if env.has_name(self.name):
             return env.get_type(self.name, self.lf)
         else:
-            try:
-                wc = env.get_working_class()
+            wc = env.get_working_class()
+            if wc is not None:
                 prob_name = typ.Generic.generic_name(wc.full_name(), self.name)
                 if env.is_type(prob_name, self.lf):
                     return env.get_type(prob_name, self.lf)
-            except errs.TplEnvironmentError:
-                raise errs.TplCompileError(f"Name '{self.name}' not defined. ", self.lf)
+        raise errs.TplCompileError(f"Name '{self.name}' not defined. ", self.lf)
 
     def __str__(self):
         return self.name
@@ -1086,9 +1083,8 @@ class DotExpr(BinaryExpr):
     @staticmethod
     def check_permission(class_t: typ.ClassType, perm, env, lf):
         if perm != PUBLIC:
-            try:
-                wc = env.get_working_class()
-            except errs.TplEnvironmentError:
+            wc = env.get_working_class()
+            if wc is None:
                 raise errs.TplCompileError("Cannot access private or protected field outside class. ",
                                            lf)
             if perm == PRIVATE:
@@ -1217,8 +1213,11 @@ class Assignment(BinaryExpr):
     def class_attr_assign(self, dot: DotExpr, env: en.Environment, tpa: tp.TpaOutput):
         attr_ptr, attr_t, const = DotExpr.get_dot_attr_and_type(dot.left, dot.right, env, tpa, dot.lf)
         if const:
-            pass
-            # todo
+            wf = env.get_working_function()
+            if not isinstance(wf, typ.MethodType):
+                raise errs.TplCompileError(f"Cannot assign constant variable {dot.right}. ", dot.lf)
+            if not wf.constructor:
+                raise errs.TplCompileError(f"Cannot assign constant variable {dot.right}. ", dot.lf)
         res_addr = self.right.compile(env, tpa)
         tpa.ptr_assign(res_addr, attr_t.length, attr_ptr)
         return res_addr
@@ -1380,7 +1379,8 @@ class FunctionDef(Expression):
                 raise errs.TplCompileError("Function cannot be private or protected. ", self.lf)
             return typ.FuncType(param_types, rtype)
         else:
-            return typ.MethodType(param_types, rtype, self.parent_class, self.abstract, self.const, self.permission)
+            return typ.MethodType(param_types, rtype, self.parent_class, self.get_simple_name() == "__new__",
+                                  self.abstract, self.const, self.permission)
 
     def is_method(self):
         return self.parent_class is not None
@@ -2466,9 +2466,9 @@ class FunctionObject:
 
     def compile(self):
         if self.parent_class is None:
-            scope = en.FunctionEnvironment(self.def_env, self.poly_name, self.func_type.rtype)
+            scope = en.FunctionEnvironment(self.def_env, self.poly_name, self.func_type)
         else:
-            scope = en.MethodEnvironment(self.def_env, self.poly_name, self.func_type.rtype, self.parent_class)
+            scope = en.MethodEnvironment(self.def_env, self.poly_name, self.func_type, self.parent_class)
         self.tpa.manager.push_stack()
 
         body_out = tp.TpaOutput(self.tpa.manager)
@@ -2576,7 +2576,7 @@ class ClassObject:
         method_id = len(self.class_type.method_rank)  # id of method in this class
         for method_def in method_defs:
             # check method params and content
-            self.check_method_def(method_def, self.class_type, self.class_env, self.tpa.manager)
+            self.check_method_def(method_def, self.class_type)
 
             method_def.compile(self.class_env, self.tpa)
             name = method_def.get_simple_name()
@@ -2646,7 +2646,7 @@ class ClassObject:
                             self.lf
                         )
 
-    def check_method_def(self, method: FunctionDef, class_type: typ.ClassType, env, manager):
+    def check_method_def(self, method: FunctionDef, class_type: typ.ClassType):
         desired_this_t_node = StarExpr(method.lf)
         name_node = NameNode(class_type.name, method.lf)
         if len(class_type.templates) > 0:

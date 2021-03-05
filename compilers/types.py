@@ -218,10 +218,12 @@ class FunctionPlacer(Type):
 
 
 class MethodType(FuncType):
-    def __init__(self, param_types, rtype, def_class, abstract: bool, const: bool, permission: int):
+    def __init__(self, param_types, rtype, def_class,
+                 is_constructor: bool, abstract: bool, const: bool, permission: int):
         super().__init__(param_types, rtype)
 
         self.defined_class = def_class
+        self.constructor = is_constructor
         self.abstract = abstract
         self.const = const
         self.permission = permission
@@ -230,7 +232,7 @@ class MethodType(FuncType):
         return ("abstract " if self.abstract else "") + "method " + super().__str__()
 
     def copy(self):
-        return MethodType(self.param_types.copy(), self.rtype, self.defined_class,
+        return MethodType(self.param_types.copy(), self.rtype, self.defined_class, self.constructor,
                           self.abstract, self.const, self.permission)
 
 

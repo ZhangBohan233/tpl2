@@ -1,4 +1,9 @@
-﻿===== VERSION 2051 =====
+﻿===== VERSION 2052 =====
+2021/03/05
+
+* A simple version of const attributes
+
+===== VERSION 2051 =====
 2021/03/05
 
 * Updated template-generic system: duplicate name is now allowed

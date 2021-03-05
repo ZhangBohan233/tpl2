@@ -156,7 +156,10 @@ class Environment:
         raise errs.TplEnvironmentError("Fallthrough outside switch-case")
 
     def get_working_class(self) -> typ.ClassType:
-        raise errs.TplEnvironmentError("Not in class")
+        return None
+
+    def get_working_function(self) -> typ.FuncType:
+        return None
 
 
 class SubAbstractEnvironment(Environment):
@@ -177,6 +180,9 @@ class SubAbstractEnvironment(Environment):
 
     def get_working_class(self) -> typ.ClassType:
         return self.outer.get_working_class()
+
+    def get_working_function(self) -> typ.FuncType:
+        return self.outer.get_working_function()
 
 
 class MainAbstractEnvironment(Environment):
@@ -200,21 +206,24 @@ class GlobalEnvironment(MainAbstractEnvironment):
 
 
 class FunctionEnvironment(MainAbstractEnvironment):
-    def __init__(self, outer, name: str, rtype: typ.Type):
+    def __init__(self, outer, name: str, func_type: typ.FuncType):
         super().__init__(outer)
 
         self.name = name
-        self.rtype = rtype
+        self.func_type = func_type
 
     def validate_rtype(self, actual_rtype: typ.Type, lf: tl.LineFile):
-        if not actual_rtype.convertible_to(self.rtype, lf):
+        if not actual_rtype.convertible_to(self.func_type.rtype, lf):
             raise errs.TplCompileError("Function '{}' has declared return type '{}', got actual return type '{}'. "
-                                       .format(self.name, self.rtype, actual_rtype), lf)
+                                       .format(self.name, self.func_type.rtype, actual_rtype), lf)
+
+    def get_working_function(self) -> typ.FuncType:
+        return self.func_type
 
 
 class MethodEnvironment(FunctionEnvironment):
-    def __init__(self, outer, name: str, rtype: typ.Type, defined_class: typ.ClassType):
-        super().__init__(outer, name, rtype)
+    def __init__(self, outer, name: str, func_type: typ.FuncType, defined_class: typ.ClassType):
+        super().__init__(outer, name, func_type)
 
         self.defined_class = defined_class  # class where this method is defined
 
