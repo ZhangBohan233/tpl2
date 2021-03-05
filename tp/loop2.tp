@@ -1,5 +1,7 @@
-﻿import collections;
+﻿import lang;
+import collections;
 
 fn main() void {
-
+    lst := new List<Integer>();
+    lst.append(new Integer(3));
 }

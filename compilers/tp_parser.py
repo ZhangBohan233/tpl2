@@ -21,7 +21,8 @@ class Parser:
             "->": ast.RightArrowExpr,
             "as": ast.AsExpr,
             ".": ast.DotExpr,
-            ":=": ast.QuickAssignment
+            ":=": ast.QuickAssignment,
+            "in": ast.InStmt
         }
 
         self.special_unary = {

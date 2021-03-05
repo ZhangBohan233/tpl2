@@ -11,7 +11,7 @@ OTHERS = {"=", "->", ":=", "++", "--"}
 
 RESERVED = {"abstract", "as", "break", "case", "class", "cond", "const", "continue", "del", "do", "else",
             "export", "exportmacro", "fallthrough", "fn", "for",
-            "if", "import", "instanceof", "macro", "new", "private", "protected",
+            "if", "import", "in", "instanceof", "macro", "new", "private", "protected",
             "require", "return", "super", "switch", "then",
             "this", "var", "while", "yield"}
 

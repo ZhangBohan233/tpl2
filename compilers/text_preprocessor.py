@@ -184,6 +184,8 @@ class FileTextPreprocessor:
             lexer = tkn.FileTokenizer(file, self.pref["import_lang"])
             tokens = lexer.tokenize()
 
+            self.included_files[file] = None
+
             module_macros = MacroEnv()
             txt_p = FileTextPreprocessor(tokens, self.pref, self.included_files, module_macros)
             processed_tks = txt_p.preprocess()

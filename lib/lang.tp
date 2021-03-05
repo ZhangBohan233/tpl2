@@ -102,10 +102,16 @@ abstract class Number {
     }
 
     abstract fn intValue() int;
+
+    abstract fn floatValue() float;
+
+    abstract fn charValue() char;
+
+    abstract fn byteValue() byte;
 }
 
 class Integer(Number) {
-    const value: int;
+    private const value: int;
 
     fn __new__(value: int) void {
         super.__new__();
@@ -115,6 +121,111 @@ class Integer(Number) {
 
     @Override
     fn intValue() int {
+        return this.value;
+    }
+
+    @Override
+    fn floatValue() float {
+        return this.value as float;
+    }
+
+    @Override
+    fn charValue() char {
+        return this.value as char;
+    }
+
+    @Override
+    fn byteValue() byte {
+        return this.value as byte;
+    }
+}
+
+class Float(Number) {
+    private const value: float;
+
+    fn __new__(value: float) void {
+        super.__new__();
+
+        this.value = value;
+    }
+
+    @Override
+    fn intValue() int {
+        return this.value as int;
+    }
+
+    @Override
+    fn floatValue() float {
+        return this.value;
+    }
+
+    @Override
+    fn charValue() char {
+        return this.value as int as char;
+    }
+
+    @Override
+    fn byteValue() byte {
+        return this.value as int as byte;
+    }
+}
+
+class Char(Number) {
+    private const value: char;
+
+    fn __new__(value: char) void {
+        super.__new__();
+
+        this.value = value;
+    }
+
+    @Override
+    fn intValue() int {
+        return this.value as int;
+    }
+
+    @Override
+    fn floatValue() float {
+        return this.value as int as float;
+    }
+
+    @Override
+    fn charValue() char {
+        return this.value;
+    }
+
+    @Override
+    fn byteValue() byte {
+        return this.value as int as byte;
+    }
+}
+
+class Byte(Number) {
+    private const value: byte;
+
+    fn __new__(value: byte) void {
+        super.__new__();
+
+        this.value = value;
+    }
+
+    @Override
+    fn intValue() int {
+        return this.value as int;
+    }
+
+    @Override
+    fn floatValue() float {
+        return this.value as int as float;
+    }
+
+    @Override
+    fn charValue() char {
+        return this.value as int as char;
+    }
+
+    @Override
+    fn byteValue() byte {
         return this.value;
     }
 }

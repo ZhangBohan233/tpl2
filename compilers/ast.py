@@ -922,6 +922,14 @@ class AsExpr(BinaryExpr):
         return self.right.definition_type(env, manager)
 
 
+class InStmt(BinaryStmt):
+    def __init__(self, lfp):
+        super().__init__("in", lfp)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        pass
+
+
 class DollarExpr(BinaryExpr):
     def __init__(self, lf):
         super().__init__("$", lf)
@@ -1116,9 +1124,15 @@ class DotExpr(BinaryExpr):
                     pos, t, class_t, const, perm = struct_t.find_field(right_node.name, lf)
                     DotExpr.check_permission(class_t, perm, env, lf)
 
-                    real_attr_ptr = tpa.manager.allocate_stack(t.length)
+                    real_attr_ptr = tpa.manager.allocate_stack(t.length)  # todo: length
                     if t.length == util.INT_LEN:
                         tpa.assign(real_attr_ptr, struct_addr)
+                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
+                    elif t.length == util.CHAR_LEN:
+                        tpa.assign_char(real_attr_ptr, struct_addr)
+                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
+                    elif t.length == 1:
+                        tpa.assign_byte(real_attr_ptr, struct_addr)
                         tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
                     else:
                         raise errs.TplCompileError("Unsupported length. ", lf)
@@ -1129,9 +1143,16 @@ class DotExpr(BinaryExpr):
                     if isinstance(t, str):
                         t = struct_t.generics[t]
                     DotExpr.check_permission(class_t, perm, env, lf)
+
                     real_attr_ptr = tpa.manager.allocate_stack(t.length)
                     if t.length == util.INT_LEN:
                         tpa.assign(real_attr_ptr, struct_addr)
+                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
+                    elif t.length == util.CHAR_LEN:
+                        tpa.assign_char(real_attr_ptr, struct_addr)
+                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
+                    elif t.length == 1:
+                        tpa.assign_byte(real_attr_ptr, struct_addr)
                         tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
                     else:
                         raise errs.TplCompileError("Unsupported length.", lf)

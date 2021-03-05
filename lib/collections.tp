@@ -1,7 +1,5 @@
 ﻿import lang;
 
-
-
 abstract class Iterator<T> {
     abstract fn hasNext() boolean;
 
