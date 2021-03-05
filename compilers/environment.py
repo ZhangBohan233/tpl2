@@ -1,7 +1,6 @@
 import compilers.errors as errs
 import compilers.tokens_lib as tl
 import compilers.types as typ
-import compilers.util as util
 
 
 class VarEntry:
@@ -32,74 +31,74 @@ class Environment:
 
         self.vars: dict[str: VarEntry] = {}
 
-    def define_var(self, name: str, type_: typ.Type, lf: tl.LineFile):
+    def define_var(self, name: str, type_: typ.Type, lfp: tl.LineFilePos):
         if self._inner_get(name) is not None:
-            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
+            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lfp)
         entry = VarEntry(type_, -1, False)
         self.vars[name] = entry
 
-    def define_const(self, name: str, type_: typ.Type, lf: tl.LineFile):
+    def define_const(self, name: str, type_: typ.Type, lfp: tl.LineFilePos):
         if self._inner_get(name) is not None:
-            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
+            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lfp)
         entry = VarEntry(type_, -1, True)
         self.vars[name] = entry
 
-    def define_var_set(self, name: str, type_: typ.Type, addr: int, lf: tl.LineFile):
+    def define_var_set(self, name: str, type_: typ.Type, addr: int, lfp: tl.LineFilePos):
         if self._inner_get(name) is not None:
-            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
+            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lfp)
         entry = VarEntry(type_, addr, False)
         self.vars[name] = entry
 
-    def define_const_set(self, name: str, type_: typ.Type, addr: int, lf: tl.LineFile):
+    def define_const_set(self, name: str, type_: typ.Type, addr: int, lfp: tl.LineFilePos):
         if self._inner_get(name) is not None:
-            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
+            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lfp)
         entry = VarEntry(type_, addr, True)
         self.vars[name] = entry
 
-    def define_function(self, name: str, func_type: typ.CallableType, fn_ptr: int, lf: tl.LineFile):
+    def define_function(self, name: str, func_type: typ.CallableType, fn_ptr: int, lfp: tl.LineFilePos):
         old_entry = self._inner_get(name)
         if old_entry is not None:
             if isinstance(old_entry, FunctionEntry):
                 old_entry.placer.add_poly(func_type, fn_ptr)
                 return
-            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
+            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lfp)
         placer = typ.FunctionPlacer(func_type, fn_ptr)
         entry = FunctionEntry(placer, const=True, named=True)
         self.vars[name] = entry
 
-    def is_const(self, name: str, lf) -> bool:
+    def is_const(self, name: str, lfp) -> bool:
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lfp)
         return entry.const
 
-    def get_type(self, name, lf) -> typ.Type:
+    def get_type(self, name, lfp) -> typ.Type:
         if name in typ.PRIMITIVE_TYPES:
             return typ.PRIMITIVE_TYPES[name]
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lfp)
         return entry.type
 
-    def get(self, name, lf) -> int:
+    def get(self, name, lfp) -> int:
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lfp)
         return entry.addr
 
-    def is_type(self, name, lf) -> bool:
+    def is_type(self, name, lfp) -> bool:
         if name in typ.PRIMITIVE_TYPES:
             return True
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lfp)
         return (isinstance(entry.type, typ.ClassType) or
                 isinstance(entry.type, typ.Generic))
 
-    def is_named_function(self, name: str, lf) -> bool:
+    def is_named_function(self, name: str, lfp) -> bool:
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lf)
+            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lfp)
         if isinstance(entry, FunctionEntry):
             return entry.named
         return False
@@ -119,32 +118,32 @@ class Environment:
     def is_global(cls):
         return False
 
-    def set_exports(self, exports, lf):
+    def set_exports(self, exports, lfp):
         pass  # do nothing
 
-    def vars_subset(self, names: dict, lf) -> dict:
+    def vars_subset(self, names: dict, lfp) -> dict:
         """
         :param names: dict of {real name in scope: export name}
-        :param lf:
+        :param lfp:
         :return:
         """
         sub = {}
         for name, export_name in names.items():
             entry = self._inner_get(name)
             if entry is None:
-                raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lf)
+                raise errs.TplEnvironmentError("Name '{}' is not defined in this scope. ".format(name), lfp)
             sub[export_name] = entry
         return sub
 
-    def import_vars(self, module_exports: dict, lf):
+    def import_vars(self, module_exports: dict, lfp):
         for name, ve in module_exports.items():
             if self._inner_get(name) is None:
                 self.vars[name] = ve
             else:
-                raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
+                raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lfp)
 
-    def validate_rtype(self, actual_rtype: typ.Type, lf: tl.LineFile):
-        raise errs.TplEnvironmentError("Return outside function. ", lf)
+    def validate_rtype(self, actual_rtype: typ.Type, lfp: tl.LineFilePos):
+        raise errs.TplEnvironmentError("Return outside function. ", lfp)
 
     def break_label(self) -> str:
         raise NotImplementedError()
@@ -166,8 +165,8 @@ class SubAbstractEnvironment(Environment):
     def __init__(self, outer):
         super().__init__(outer)
 
-    def validate_rtype(self, actual_rtype: typ.Type, lf: tl.LineFile):
-        self.outer.validate_rtype(actual_rtype, lf)
+    def validate_rtype(self, actual_rtype: typ.Type, lfp: tl.LineFilePos):
+        self.outer.validate_rtype(actual_rtype, lfp)
 
     def break_label(self) -> str:
         return self.outer.break_label()
@@ -212,10 +211,10 @@ class FunctionEnvironment(MainAbstractEnvironment):
         self.name = name
         self.func_type = func_type
 
-    def validate_rtype(self, actual_rtype: typ.Type, lf: tl.LineFile):
-        if not actual_rtype.convertible_to(self.func_type.rtype, lf):
+    def validate_rtype(self, actual_rtype: typ.Type, lfp: tl.LineFilePos):
+        if not actual_rtype.convertible_to(self.func_type.rtype, lfp):
             raise errs.TplCompileError("Function '{}' has declared return type '{}', got actual return type '{}'. "
-                                       .format(self.name, self.func_type.rtype, actual_rtype), lf)
+                                       .format(self.name, self.func_type.rtype, actual_rtype), lfp)
 
     def get_working_function(self) -> typ.FuncType:
         return self.func_type
@@ -237,17 +236,18 @@ class ModuleEnvironment(MainAbstractEnvironment):
 
         self.exports = None
 
-    def set_exports(self, exports: dict, lf):
+    def set_exports(self, exports: dict, lfp):
         if self.exports is None:
             self.exports = exports
         else:
-            raise errs.TplEnvironmentError("Multiple exports in one module. ", lf)
+            raise errs.TplEnvironmentError("Multiple exports in one module. ", lfp)
 
 
 class MainEnvironment(MainAbstractEnvironment):
     """
     The environment containing the entry function.
     """
+
     def __init__(self, outer: GlobalEnvironment):
         super().__init__(outer)
 
@@ -274,13 +274,13 @@ class ClassEnvironment(MainAbstractEnvironment):
         """
         return self.class_type
 
-    def define_function(self, name: str, func_type: typ.CallableType, fn_ptr: int, lf: tl.LineFile):
+    def define_function(self, name: str, func_type: typ.CallableType, fn_ptr: int, lfp: tl.LineFilePos):
         if name in self.vars:
             old_entry = self.vars[name]
             if isinstance(old_entry, FunctionEntry):
                 old_entry.placer.add_poly(func_type, fn_ptr)
                 return
-            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lf)
+            raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lfp)
         placer = typ.FunctionPlacer(func_type, fn_ptr)
         entry = FunctionEntry(placer, const=True, named=True)
         self.vars[name] = entry
@@ -290,9 +290,9 @@ class ClassEnvironment(MainAbstractEnvironment):
             return self.templates[name]
         return super()._inner_get(name)
 
-    def define_template(self, gen: typ.Generic, lf: tl.LineFile):
+    def define_template(self, gen: typ.Generic, lfp: tl.LineFilePos):
         if gen.simple_name() in self.templates:
-            raise errs.TplEnvironmentError(f"Template '{gen.simple_name()}' already defined. ", lf)
+            raise errs.TplEnvironmentError(f"Template '{gen.simple_name()}' already defined. ", lfp)
         self.templates[gen.simple_name()] = VarEntry(gen, -1, True)
 
 

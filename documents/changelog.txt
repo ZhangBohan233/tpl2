@@ -1,4 +1,9 @@
-﻿===== VERSION 2053 =====
+﻿===== VERSION 2054 =====
+2021/03/06
+
+* Updated 'LineFile' to 'LineFilePos'
+
+===== VERSION 2053 =====
 2021/03/05
 
 * Implemented library function 'arraycopy' and native invoke 'mem_copy'

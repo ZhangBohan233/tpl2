@@ -65,8 +65,8 @@ CLASS_ID = Counter()
 
 
 class Node:
-    def __init__(self, lf):
-        self.lf: tl.LineFile = lf
+    def __init__(self, lfp):
+        self.lfp: tl.LineFilePos = lfp
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         """
@@ -90,7 +90,7 @@ class Node:
         :param manager:
         :return:
         """
-        raise errs.TplTypeError("Name '" + self.__class__.__name__ + "' is not a type. ", self.lf)
+        raise errs.TplTypeError("Name '" + self.__class__.__name__ + "' is not a type. ", self.lfp)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         """
@@ -133,10 +133,10 @@ class FakeNode(Node):
         super().__init__(lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        raise errs.NotCompileAbleError("Fake node does not compile. ", self.lf)
+        raise errs.NotCompileAbleError("Fake node does not compile. ", self.lfp)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        raise errs.NotCompileAbleError("Fake node does not compile. ", self.lf)
+        raise errs.NotCompileAbleError("Fake node does not compile. ", self.lfp)
 
 
 class FakeLiteral(FakeNode):
@@ -179,7 +179,7 @@ class Statement(Node, ABC):
         super().__init__(lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        raise errs.TplTypeError(f"Statements {self} do not evaluate a type. ", self.lf)
+        raise errs.TplTypeError(f"Statements {self} do not evaluate a type. ", self.lfp)
 
 
 class Line(Expression):
@@ -275,30 +275,30 @@ class NameNode(Expression):
         self.name = name
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        return env.get(self.name, self.lf)
+        return env.get(self.name, self.lfp)
 
     def definition_type(self, env: en.Environment, manager: tp.Manager):
         if env.has_name(self.name):
-            if env.is_type(self.name, self.lf):
-                return env.get_type(self.name, self.lf)
+            if env.is_type(self.name, self.lfp):
+                return env.get_type(self.name, self.lfp)
         else:  # try template
             wc = env.get_working_class()
             if wc is not None:
                 prob_name = typ.Generic.generic_name(wc.full_name(), self.name)
-                if env.is_type(prob_name, self.lf):
-                    return env.get_type(prob_name, self.lf)
-        raise errs.TplCompileError(f"Name '{self.name}' is not a type. ", self.lf)
+                if env.is_type(prob_name, self.lfp):
+                    return env.get_type(prob_name, self.lfp)
+        raise errs.TplCompileError(f"Name '{self.name}' is not a type. ", self.lfp)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager):
         if env.has_name(self.name):
-            return env.get_type(self.name, self.lf)
+            return env.get_type(self.name, self.lfp)
         else:
             wc = env.get_working_class()
             if wc is not None:
                 prob_name = typ.Generic.generic_name(wc.full_name(), self.name)
-                if env.is_type(prob_name, self.lf):
-                    return env.get_type(prob_name, self.lf)
-        raise errs.TplCompileError(f"Name '{self.name}' not defined. ", self.lf)
+                if env.is_type(prob_name, self.lfp):
+                    return env.get_type(prob_name, self.lfp)
+        raise errs.TplCompileError(f"Name '{self.name}' not defined. ", self.lfp)
 
     def __str__(self):
         return self.name
@@ -498,24 +498,24 @@ class UnaryOperator(UnaryExpr):
                     if self.op == "neg":
                         tpa.unary_arith("negi", value, res_addr)
                     else:
-                        raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lf)
+                        raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lfp)
                     return res_addr
                 elif vt == typ.TYPE_FLOAT:
                     res_addr = tpa.manager.allocate_stack(util.FLOAT_LEN)
                     if self.op == "neg":
                         tpa.unary_arith("negf", value, res_addr)
                     else:
-                        raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lf)
+                        raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lfp)
                     return res_addr
         elif self.op_type == UNA_LOGICAL:
             if isinstance(vt, typ.PrimitiveType):
                 res_addr = tpa.manager.allocate_stack(vt.length)
                 if self.op == "not":
                     if vt.t_name != "int":
-                        raise errs.TplCompileError("Operator 'not' must take an int as value. ", self.lf)
+                        raise errs.TplCompileError("Operator 'not' must take an int as value. ", self.lfp)
                     tpa.unary_arith("not", value, res_addr)
                 else:
-                    raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lf)
+                    raise errs.TplCompileError("Unexpected unary operator '{}'. ".format(self.op), self.lfp)
                 return res_addr
         raise errs.TplCompileError(f"Unsupported unary operator '{self.op}'")
 
@@ -526,7 +526,7 @@ class UnaryOperator(UnaryExpr):
                 return vt
         elif self.op_type == UNA_LOGICAL:
             return typ.TYPE_INT
-        raise errs.TplCompileError("Value type is not supported by unary operator. ", self.lf)
+        raise errs.TplCompileError("Value type is not supported by unary operator. ", self.lfp)
 
 
 class BinaryOperator(BinaryExpr):
@@ -598,21 +598,21 @@ class BinaryOperator(BinaryExpr):
             # x and y: if x then y else 0
             # x or y: if x then 1 else y
             if self.op == "and":
-                ife = IfExpr(self.left, self.right, IntLiteral(util.ZERO_POS, self.lf), self.lf)
+                ife = IfExpr(self.left, self.right, IntLiteral(util.ZERO_POS, self.lfp), self.lfp)
             elif self.op == "or":
-                ife = IfExpr(self.left, IntLiteral(util.ONE_POS, self.lf), self.right, self.lf)
+                ife = IfExpr(self.left, IntLiteral(util.ONE_POS, self.lfp), self.right, self.lfp)
             else:
-                raise errs.TplCompileError("Unexpected lazy operator. ", self.lf)
+                raise errs.TplCompileError("Unexpected lazy operator. ", self.lfp)
 
-            if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lf):
-                raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lf)
+            if not ife.evaluated_type(env, tpa.manager).convertible_to(typ.TYPE_INT, self.lfp):
+                raise errs.TplCompileError("Cannot convert {} to {}. ".format(ife, typ.TYPE_INT), self.lfp)
 
             ife.compile_to(env, tpa, dst_addr, dst_len)
             return
 
         raise errs.TplCompileError(f"Unsupported binary operation {self.op} between "
                                    f"{self.left.evaluated_type(env, tpa.manager)} and "
-                                   f"{self.right.evaluated_type(env, tpa.manager)}. ", self.lf)
+                                   f"{self.right.evaluated_type(env, tpa.manager)}. ", self.lfp)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if self.op_type == BIN_ARITH:
@@ -631,7 +631,7 @@ class BinaryOperator(BinaryExpr):
             return typ.TYPE_INT
         raise errs.TplCompileError(f"Unsupported binary operation {self.op} between "
                                    f"{self.left.evaluated_type(env, manager)} and "
-                                   f"{self.right.evaluated_type(env, manager)}. ", self.lf)
+                                   f"{self.right.evaluated_type(env, manager)}. ", self.lfp)
 
 
 class BinaryOperatorAssignment(BinaryExpr, FakeNode):
@@ -652,9 +652,9 @@ class InstanceOfExpr(BinaryExpr):
         return dst_addr
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
-        class_node = DotExpr(self.lf)
+        class_node = DotExpr(self.lfp)
         class_node.left = self.left
-        class_node.right = NameNode("__class__", self.lf)
+        class_node.right = NameNode("__class__", self.lfp)
 
         right_t = self.right.evaluated_type(env, tpa.manager)
         if not isinstance(right_t, typ.ClassType):
@@ -677,10 +677,10 @@ class ReturnStmt(UnaryStmt):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.value, Nothing):  # 'return;'
-            env.validate_rtype(typ.TYPE_VOID, self.lf)
+            env.validate_rtype(typ.TYPE_VOID, self.lfp)
         else:
             rtype = self.value.evaluated_type(env, tpa.manager)
-            env.validate_rtype(rtype, self.lf)
+            env.validate_rtype(rtype, self.lfp)
             value_addr = self.value.compile(env, tpa)
             if rtype.length == util.INT_LEN:
                 tpa.return_value(value_addr)
@@ -689,7 +689,7 @@ class ReturnStmt(UnaryStmt):
             elif rtype.length == 1:
                 tpa.return_byte_value(value_addr)
             else:
-                raise errs.TplCompileError("Unexpected value length. ", self.lf)
+                raise errs.TplCompileError("Unexpected value length. ", self.lfp)
         tpa.return_func()
 
     def return_check(self):
@@ -712,7 +712,7 @@ class StarExpr(UnaryExpr):
         if isinstance(vt, typ.PointerType):
             return vt.base
         else:
-            raise errs.TplCompileError("Cannot unpack non-pointer type. ", self.lf)
+            raise errs.TplCompileError("Cannot unpack non-pointer type. ", self.lfp)
 
     def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         vt = self.value.definition_type(env, manager)
@@ -749,12 +749,12 @@ class NewExpr(UnaryExpr):
         t = self.evaluated_type(env, tpa.manager)
         malloc_t = self._malloc_type(env, tpa.manager)
 
-        malloc = NameNode("malloc", self.lf)
-        req = RequireStmt(malloc, self.lf)
+        malloc = NameNode("malloc", self.lfp)
+        req = RequireStmt(malloc, self.lfp)
         req.compile(env, tpa)
         malloc_size = tpa.manager.allocate_stack(util.INT_LEN)
         tpa.assign_i(malloc_size, malloc_t.memory_length())
-        FunctionCall.call(malloc, [(malloc_size, util.INT_LEN)], env, tpa, dst_addr, self.lf)
+        FunctionCall.call(malloc, [(malloc_size, util.INT_LEN)], env, tpa, dst_addr, self.lfp)
 
         if (isinstance(self.value, FunctionCall) and
                 isinstance(t, typ.PointerType)):
@@ -765,7 +765,7 @@ class NewExpr(UnaryExpr):
                 self.compile_generic_class_init(t.base, env, tpa, dst_addr)
                 return
 
-        raise errs.TplCompileError("Cannot initial class without call. ", self.lf)
+        raise errs.TplCompileError("Cannot initial class without call. ", self.lfp)
 
     def compile_generic_class_init(self, gen_t: typ.GenericClassType, env: en.Environment,
                                    tpa: tp.TpaOutput, inst_ptr_addr):
@@ -776,14 +776,14 @@ class NewExpr(UnaryExpr):
         self.value: FunctionCall
 
         if class_t.abstract:
-            raise errs.TplCompileError(f"Abstract class '{class_t.name_with_path}' is not initialisable. ", self.lf)
+            raise errs.TplCompileError(f"Abstract class '{class_t.name_with_path}' is not initialisable. ", self.lfp)
         tpa.i_ptr_assign(class_t.class_ptr, util.PTR_LEN, inst_ptr_addr)  # assign __class__
 
         const_args = self.value.arg_types(env, tpa.manager)
         const_args.insert(0, None)  # insert a positional arg of 'this'
 
         constructor_id, constructor_ptr, constructor_t = \
-            class_t.find_local_method("__new__", const_args, self.lf)
+            class_t.find_local_method("__new__", const_args, self.lfp)
 
         ea = self.value.evaluate_args(constructor_t, env, tpa, True)
         ea.insert(0, (inst_ptr_addr, util.PTR_LEN))
@@ -792,13 +792,13 @@ class NewExpr(UnaryExpr):
             ea,
             tpa,
             0,
-            self.lf,
+            self.lfp,
             constructor_t)
 
     def compile_heap_arr_init(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr, dst_len: int):
         self.value: IndexingExpr
         args = [self.value.get_atomic_node()] + self.value.flatten_args(env, tpa.manager, True)
-        FunctionCall(NameNode("array", self.lf), Line(self.lf, *args), self.lf).compile_to(env, tpa, dst_addr, dst_len)
+        FunctionCall(NameNode("array", self.lfp), Line(self.lfp, *args), self.lfp).compile_to(env, tpa, dst_addr, dst_len)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if isinstance(self.value, IndexingExpr):
@@ -820,14 +820,14 @@ class DelStmt(UnaryStmt):
         super().__init__("del", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        free = NameNode("free", self.lf)
-        req = RequireStmt(free, self.lf)
+        free = NameNode("free", self.lfp)
+        req = RequireStmt(free, self.lfp)
         req.compile(env, tpa)
 
         val_t = self.value.evaluated_type(env, tpa.manager)
         self.instance_del(val_t, env, tpa)
 
-        fc = FunctionCall(free, Line(self.lf, self.value), self.value)
+        fc = FunctionCall(free, Line(self.lfp, self.value), self.value)
         fc.compile(env, tpa)
 
     def instance_del(self, val_t, env, tpa):
@@ -910,7 +910,7 @@ class AsExpr(BinaryExpr):
                 tpa.assign(dst_addr, left)
                 return
 
-        raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
+        raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lfp)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         dst_t = self.evaluated_type(env, tpa.manager)
@@ -937,7 +937,7 @@ class DollarExpr(BinaryExpr):
         struct_t = self.left.evaluated_type(env, manager)
 
         raise errs.TplCompileError("Left side of dollar must be a struct, got " + type(struct_t).__name__ + ". ",
-                                   self.lf)
+                                   self.lfp)
 
     def get_attr_ptr_and_type(self, env: en.Environment, tpa: tp.TpaOutput) -> (int, typ.Type):
         left_t = self.left.evaluated_type(env, tpa.manager)
@@ -945,7 +945,7 @@ class DollarExpr(BinaryExpr):
             pass
 
         raise errs.TplCompileError("Left side of dollar must be a struct, got " + type(left_t).__name__ + ". ",
-                                   self.lf)
+                                   self.lfp)
 
 
 class DotExpr(BinaryExpr):
@@ -960,7 +960,7 @@ class DotExpr(BinaryExpr):
         super().__init__(".", lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        return DotExpr.compile_dot(self.left, self.right, env, tpa, self.lf)
+        return DotExpr.compile_dot(self.left, self.right, env, tpa, self.lfp)
 
     @staticmethod
     def compile_super(right_node, env: en.Environment, tpa: tp.TpaOutput, lf):
@@ -1051,7 +1051,7 @@ class DotExpr(BinaryExpr):
         raise errs.TplCompileError("Cannot make method call. ", lf)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        return DotExpr.dot_right_t(self.left, self.right, env, manager, self.lf)
+        return DotExpr.dot_right_t(self.left, self.right, env, manager, self.lfp)
 
     @staticmethod
     def array_attributes(left_node, env: en.Environment, tpa: tp.TpaOutput, name: str, lf):
@@ -1190,26 +1190,26 @@ class Assignment(BinaryExpr):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         right_t = self.right.evaluated_type(env, tpa.manager)
         if isinstance(self.left, NameNode):
-            if env.is_const(self.left.name, self.lf):
-                raise errs.TplEnvironmentError("Cannot assign constant '{}'. ".format(self.left.name), self.lf)
+            if env.is_const(self.left.name, self.lfp):
+                raise errs.TplEnvironmentError("Cannot assign constant '{}'. ".format(self.left.name), self.lfp)
             left_t = self.left.evaluated_type(env, tpa.manager)
-            right_t.check_convertibility(left_t, self.lf)
+            right_t.check_convertibility(left_t, self.lfp)
             left_addr = self.left.compile(env, tpa)
         elif isinstance(self.left, Declaration):
             left_t = self.left.right.definition_type(env, tpa.manager)
-            right_t.check_convertibility(left_t, self.lf)
+            right_t.check_convertibility(left_t, self.lfp)
             left_addr = self.left.compile(env, tpa)
         elif isinstance(self.left, StarExpr):
-            right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lf)
+            right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
             return self.ptr_assign(self.left, env, tpa)
         elif isinstance(self.left, DollarExpr) or isinstance(self.left, DotExpr):
-            right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lf)
+            right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
             return self.class_attr_assign(self.left, env, tpa)
         elif isinstance(self.left, IndexingExpr):
-            right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lf)
-            return self.array_index_assign(self.left, self.right, env, tpa, self.lf)
+            right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
+            return self.array_index_assign(self.left, self.right, env, tpa, self.lfp)
         else:
-            raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.left.__class__.__name__), self.lf)
+            raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.left.__class__.__name__), self.lfp)
 
         self.right.compile_to(env, tpa, left_addr, left_t.memory_length())
         return left_addr
@@ -1218,13 +1218,13 @@ class Assignment(BinaryExpr):
         return self.right.evaluated_type(env, manager)
 
     def class_attr_assign(self, dot: DotExpr, env: en.Environment, tpa: tp.TpaOutput):
-        attr_ptr, attr_t, const = DotExpr.get_dot_attr_and_type(dot.left, dot.right, env, tpa, dot.lf)
+        attr_ptr, attr_t, const = DotExpr.get_dot_attr_and_type(dot.left, dot.right, env, tpa, dot.lfp)
         if const:
             wf = env.get_working_function()
             if not isinstance(wf, typ.MethodType):
-                raise errs.TplCompileError(f"Cannot assign constant variable {dot.right}. ", dot.lf)
+                raise errs.TplCompileError(f"Cannot assign constant variable {dot.right}. ", dot.lfp)
             if not wf.constructor:
-                raise errs.TplCompileError(f"Cannot assign constant variable {dot.right}. ", dot.lf)
+                raise errs.TplCompileError(f"Cannot assign constant variable {dot.right}. ", dot.lfp)
         res_addr = self.right.compile(env, tpa)
         tpa.ptr_assign(res_addr, attr_t.length, attr_ptr)
         return res_addr
@@ -1262,7 +1262,7 @@ class Declaration(BinaryStmt):
         if isinstance(self.left, NameNode):
             return self.left
         else:
-            raise errs.TplCompileError("Left side of declaration must be a name. ", self.lf)
+            raise errs.TplCompileError("Left side of declaration must be a name. ", self.lfp)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         right_t = self.right.definition_type(env, tpa.manager)
@@ -1270,14 +1270,14 @@ class Declaration(BinaryStmt):
             rel_addr = tpa.manager.allocate_stack(right_t.memory_length())
             # print(right_t)
             if self.level == VAR_CONST:
-                env.define_const_set(self.left.name, right_t, rel_addr, self.lf)
+                env.define_const_set(self.left.name, right_t, rel_addr, self.lfp)
             elif self.level == VAR_VAR:
-                env.define_var_set(self.left.name, right_t, rel_addr, self.lf)
+                env.define_var_set(self.left.name, right_t, rel_addr, self.lfp)
             else:
-                raise errs.TplCompileError("Unexpected var level. ", self.lf)
+                raise errs.TplCompileError("Unexpected var level. ", self.lfp)
             return rel_addr
         else:
-            raise errs.TplCompileError("Left side of declaration must be a name. ", self.lf)
+            raise errs.TplCompileError("Left side of declaration must be a name. ", self.lfp)
 
     def __str__(self):
         perm = ""
@@ -1303,10 +1303,10 @@ class QuickAssignment(BinaryStmt):
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         t = self.right.evaluated_type(env, tpa.manager)
         if not isinstance(self.left, NameNode):
-            raise errs.TplCompileError("Left side of ':=' must be name. ", self.lf)
+            raise errs.TplCompileError("Left side of ':=' must be name. ", self.lfp)
 
         res_addr = tpa.manager.allocate_stack(t.memory_length())
-        env.define_var_set(self.left.name, t, res_addr, self.lf)
+        env.define_var_set(self.left.name, t, res_addr, self.lfp)
 
         self.right.compile_to(env, tpa, res_addr, t.memory_length())
 
@@ -1349,7 +1349,7 @@ class FunctionDef(Expression):
         if isinstance(self.name, NameNode):
             return self.name.name
         else:
-            raise errs.TplCompileError("Not a named function. ", self.lf)
+            raise errs.TplCompileError("Not a named function. ", self.lfp)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.name, NameNode):
@@ -1363,10 +1363,10 @@ class FunctionDef(Expression):
 
         func_type = self.evaluated_type(env, tpa.manager)
         poly_name = typ.function_poly_name(simple_name, func_type.param_types, self.is_method())
-        fo = FunctionObject(env, tpa, fn_ptr, self.parent_class, poly_name, self.params, func_type, self.body, self.lf)
-        env.define_function(simple_name, func_type, fn_ptr, self.lf)
+        fo = FunctionObject(env, tpa, fn_ptr, self.parent_class, poly_name, self.params, func_type, self.body, self.lfp)
+        env.define_function(simple_name, func_type, fn_ptr, self.lfp)
 
-        tpa.manager.map_function(poly_name, self.lf.file_name, fo)
+        tpa.manager.map_function(poly_name, self.lfp.get_file(), fo)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.FuncType:
         rtype = self.rtype.definition_type(env, manager)
@@ -1377,13 +1377,13 @@ class FunctionDef(Expression):
                 pt = param.right.definition_type(env, manager)
                 param_types.append(pt)
             else:
-                raise errs.TplCompileError("Invalid parameter. ", self.lf)
+                raise errs.TplCompileError("Invalid parameter. ", self.lfp)
 
         if self.parent_class is None:
             if self.abstract:
-                raise errs.TplCompileError("Function cannot be abstract. ", self.lf)
+                raise errs.TplCompileError("Function cannot be abstract. ", self.lfp)
             if self.permission != PUBLIC:
-                raise errs.TplCompileError("Function cannot be private or protected. ", self.lf)
+                raise errs.TplCompileError("Function cannot be private or protected. ", self.lfp)
             return typ.FuncType(param_types, rtype)
         else:
             return typ.MethodType(param_types, rtype, self.parent_class, self.get_simple_name() == "__new__",
@@ -1397,8 +1397,8 @@ class FunctionDef(Expression):
 
 
 class ClassStmt(Statement):
-    def __init__(self, name: str, extensions: Line, templates: Line, abstract: bool, body: BlockStmt, lf):
-        super().__init__(lf)
+    def __init__(self, name: str, extensions: Line, templates: Line, abstract: bool, body: BlockStmt, lfp):
+        super().__init__(lfp)
 
         self.name = name
         # self.class_id = CLASS_ID.increment()
@@ -1406,7 +1406,7 @@ class ClassStmt(Statement):
         if extensions is not None:
             self.extensions = extensions
         elif name != "Object":
-            self.extensions = Line(lf, NameNode("Object", lf))
+            self.extensions = Line(lfp, NameNode("Object", lfp))
         self.template_nodes = templates
         self.body = body
         self.abstract = abstract
@@ -1421,13 +1421,13 @@ class ClassStmt(Statement):
         """
         class_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
 
-        class_name_path = util.class_name_with_path(self.name, self.lf.file_name)
+        class_name_path = util.class_name_with_path(self.name, self.lfp.get_file())
         class_env = en.ClassEnvironment(env)
 
         # templates
         templates = []  # list of templates
         if self.template_nodes is not None:
-            object_t = env.get_type("Object", self.lf)
+            object_t = env.get_type("Object", self.lfp)
             assert isinstance(object_t, typ.ClassType)
             for part in self.template_nodes:
                 if isinstance(part, NameNode):
@@ -1435,14 +1435,14 @@ class ClassStmt(Statement):
                         typ.Generic(part.name, object_t, class_name_path))
                 elif isinstance(part, FunctionCall):
                     if len(part.args) != 1:
-                        raise errs.TplSyntaxError("Invalid syntax. ", self.lf)
+                        raise errs.TplSyntaxError("Invalid syntax. ", self.lfp)
                     max_t = part.args[0].evaluated_type(env, tpa.manager)
                     if not isinstance(max_t, typ.ClassType):
-                        raise errs.TplCompileError(f"Template {part.args[0]} must extends a class. ", self.lf)
+                        raise errs.TplCompileError(f"Template {part.args[0]} must extends a class. ", self.lfp)
                     templates.append(
                         typ.Generic(part.get_name(), max_t, class_name_path))
                 else:
-                    raise errs.TplSyntaxError("Template must be name or class extension. ", self.lf)
+                    raise errs.TplSyntaxError("Template must be name or class extension. ", self.lfp)
 
         # superclasses
         direct_sc = []
@@ -1459,12 +1459,12 @@ class ClassStmt(Statement):
                             else:
                                 sup_gens.append(typ.Generic.generic_name(class_name_path, node.name))
                         else:
-                            raise errs.TplCompileError("Generics in superclass must be names. ", self.lf)
+                            raise errs.TplCompileError("Generics in superclass must be names. ", self.lfp)
                     super_generics_lists[t] = sup_gens
                 else:
                     t = ext.evaluated_type(env, tpa.manager)
                 if not isinstance(t, typ.ClassType):
-                    raise errs.TplCompileError("Class can only extend classes. ", self.lf)
+                    raise errs.TplCompileError("Class can only extend classes. ", self.lfp)
                 direct_sc.append(t)
 
         # check for duplicate templates
@@ -1472,13 +1472,13 @@ class ClassStmt(Statement):
             for sc in direct_sc:
                 if tem in sc.templates:
                     raise errs.TplCompileError(f"Duplicate template name '{tem.simple_name()}' already defined in "
-                                               f"superclass '{sc.name}'. ", self.lf)
+                                               f"superclass '{sc.name}'. ", self.lfp)
         # find generics inheritance
         # super_generics_map = {}
         templates_map = {}
         for dsc in direct_sc:
             templates_map.update(dsc.templates_map)
-        ClassStmt.create_templates_map(templates, direct_sc, templates_map, super_generics_lists, self.lf)
+        ClassStmt.create_templates_map(templates, direct_sc, templates_map, super_generics_lists, self.lfp)
         # print(self.name, templates_map)
 
         def get_actual(tem_name):
@@ -1490,17 +1490,17 @@ class ClassStmt(Statement):
 
         # print(templates_map)
         for gen in templates_map:
-            class_env.define_template(typ.Generic(gen, get_actual(gen), typ.Generic.extract_class_name(gen)), self.lf)
+            class_env.define_template(typ.Generic(gen, get_actual(gen), typ.Generic.extract_class_name(gen)), self.lfp)
 
         class_type = typ.ClassType(
-            self.name, class_ptr, self.lf.file_name, class_env, direct_sc, templates, templates_map, self.abstract)
+            self.name, class_ptr, self.lfp.get_file(), class_env, direct_sc, templates, templates_map, self.abstract)
         mro = self.make_mro(class_type)
         class_type.mro = mro
         class_env.class_type = class_type
 
-        env.define_const_set(self.name, class_type, class_ptr, self.lf)
+        env.define_const_set(self.name, class_type, class_ptr, self.lfp)
 
-        class_wrapper = ClassObject(class_type, self.body, self.abstract, class_env, tpa, self.lf)
+        class_wrapper = ClassObject(class_type, self.body, self.abstract, class_env, tpa, self.lfp)
         tpa.manager.add_class(class_wrapper)
 
     @staticmethod
@@ -1532,7 +1532,7 @@ class ClassStmt(Statement):
             head_index = 0
             while len(lst) > 0:
                 if head_index == len(lst):
-                    raise errs.TplCompileError("Inconsistent mro. ", self.lf)
+                    raise errs.TplCompileError("Inconsistent mro. ", self.lfp)
                 found = False
                 head = lst[head_index][0]
                 for i in range(len(lst)):
@@ -1573,7 +1573,7 @@ class SuperExpr(Statement):
         super().__init__(lf)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        raise errs.TplCompileError("'super' itself is not a statement. ", self.lf)
+        raise errs.TplCompileError("'super' itself is not a statement. ", self.lfp)
 
     def __str__(self):
         return "super"
@@ -1586,7 +1586,7 @@ class FunctionTypeExpr(Expression):
         self.param_line = param_line
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        raise errs.NotCompileAbleError(lf=self.lf)
+        raise errs.NotCompileAbleError(lf=self.lfp)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         pass
@@ -1606,7 +1606,7 @@ class GenericNode(Expression):
         if isinstance(self.obj, NameNode):
             return self.obj.name
         else:
-            raise errs.TplCompileError("Not a named generics. ", self.lf)
+            raise errs.TplCompileError("Not a named generics. ", self.lfp)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         return self.obj.compile(env, tpa)
@@ -1617,7 +1617,7 @@ class GenericNode(Expression):
     def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         class_t = self.obj.definition_type(env, manager)
         if not isinstance(class_t, typ.ClassType):
-            raise errs.TplCompileError("Not a class type.", self.lf)
+            raise errs.TplCompileError("Not a class type.", self.lfp)
 
         if len(class_t.templates) != len(self.generics):
             raise errs.TplCompileError(f"Generic class {class_t.name} requires {len(class_t.templates)} generics, "
@@ -1629,12 +1629,12 @@ class GenericNode(Expression):
             if not (isinstance(gen_t, typ.ClassType) or
                     isinstance(gen_t, typ.ArrayType) or
                     isinstance(gen_t, typ.Generic)):
-                raise errs.TplCompileError(f"Generics must be pointer type, got {gen_t}", self.lf)
+                raise errs.TplCompileError(f"Generics must be pointer type, got {gen_t}", self.lfp)
             gen = class_t.templates[i]
             if not gen.max_t.superclass_of(gen_t):
                 raise errs.TplCompileError(f"Template '{gen.simple_name()}' requires subclass of '{gen.max_t}', "
                                            f"got '{gen_t}'. ",
-                                           self.lf)
+                                           self.lfp)
             gen_dict[gen.full_name()] = gen_t
 
         templates_map = class_t.templates_map
@@ -1671,7 +1671,7 @@ class FunctionCall(Expression):
         if isinstance(self.call_obj, NameNode):
             return self.call_obj.name
         else:
-            raise errs.TplCompileError("Not a named function call. ", self.lf)
+            raise errs.TplCompileError("Not a named function call. ", self.lfp)
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         placer = self.call_obj.evaluated_type(env, tpa.manager)
@@ -1690,11 +1690,11 @@ class FunctionCall(Expression):
 
         arg_types = self.arg_types(env, tpa.manager)
         if isinstance(placer, typ.FunctionPlacer):  # function defined by 'fn'
-            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, self.lf)
+            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, self.lfp)
         elif isinstance(placer, typ.CallableType):  # function get by 'getfunc'
             func_type = placer
         else:
-            raise errs.TplCompileError(f"Node '{self.call_obj}' not callable because it has type {placer}. ", self.lf)
+            raise errs.TplCompileError(f"Node '{self.call_obj}' not callable because it has type {placer}. ", self.lfp)
 
         rtn_addr = tpa.manager.allocate_stack(func_type.rtype.memory_length())
         self.compile_to(env, tpa, rtn_addr, func_type.rtype.memory_length())
@@ -1715,15 +1715,15 @@ class FunctionCall(Expression):
 
         arg_types = self.arg_types(env, tpa.manager)
         if isinstance(placer, typ.FunctionPlacer):  # function defined by 'fn'
-            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, self.lf)
+            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, self.lfp)
         elif isinstance(placer, typ.CallableType):  # function get by 'getfunc'
             func_type = placer
             func_ptr = self.call_obj.compile(env, tpa)
         else:
-            raise errs.TplCompileError(f"Node '{self.call_obj}' not callable because it has type {placer}. ", self.lf)
+            raise errs.TplCompileError(f"Node '{self.call_obj}' not callable because it has type {placer}. ", self.lfp)
 
         evaluated_args = self.evaluate_args(func_type, env, tpa)
-        FunctionCall.call(self.call_obj, evaluated_args, env, tpa, dst_addr, self.lf, func_type, func_ptr)
+        FunctionCall.call(self.call_obj, evaluated_args, env, tpa, dst_addr, self.lfp, func_type, func_ptr)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         placer = self.call_obj.evaluated_type(env, manager)
@@ -1736,11 +1736,11 @@ class FunctionCall(Expression):
 
         arg_types = self.arg_types(env, manager)
         if isinstance(placer, typ.FunctionPlacer):  # function defined by 'fn'
-            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, self.lf)
+            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, self.lfp)
         elif isinstance(placer, typ.CallableType):  # function get by 'getfunc'
             func_type = placer
         else:
-            raise errs.TplCompileError(f"Node '{self.call_obj}' not callable because it has type {placer}. ", self.lf)
+            raise errs.TplCompileError(f"Node '{self.call_obj}' not callable because it has type {placer}. ", self.lfp)
 
         return func_type.rtype
 
@@ -1800,15 +1800,15 @@ class FunctionCall(Expression):
         if len(func_type.param_types) != len(self.args) + diff:
             raise errs.TplCompileError(
                 f"Function expects {len(func_type.param_types)} params, got {len(self.args) + diff} arguments. ",
-                self.lf)
+                self.lfp)
         for i in range(len(func_type.param_types)):
             if i == 0 and is_method:
                 continue
             param_t = func_type.param_types[i]
             arg_t: typ.Type = self.args[i - diff].evaluated_type(env, tpa.manager)
-            if not arg_t.convertible_to(param_t, self.lf):
+            if not arg_t.convertible_to(param_t, self.lfp):
                 raise errs.TplCompileError("Argument type does not match param type. "
-                                           "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lf)
+                                           "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lfp)
             arg_addr = self.args[i - diff].compile(env, tpa)
             evaluated_args.append((arg_addr, arg_t.length))
         return evaluated_args
@@ -1852,18 +1852,18 @@ class RequireStmt(Statement):
             name = node.name
             if name in typ.NATIVE_FUNCTIONS:
                 if env.has_name(name):
-                    placer = env.get_type(name, node.lf)
+                    placer = env.get_type(name, node.lfp)
                     if not (isinstance(placer, typ.FunctionPlacer) and
                             isinstance(placer.get_only()[0], typ.NativeFuncType)):
                         raise errs.TplCompileError(
-                            f"Cannot require name '{name}': name already defined in this scope. ", node.lf)
+                            f"Cannot require name '{name}': name already defined in this scope. ", node.lfp)
                 else:
                     func_id, func_type = typ.NATIVE_FUNCTIONS[name]
                     fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
                     tpa.require_name(name, fn_ptr)
-                    env.define_function(name, func_type, fn_ptr, node.lf)
+                    env.define_function(name, func_type, fn_ptr, node.lfp)
             else:
-                raise errs.TplCompileError("Cannot require '" + name + "'. ", node.lf)
+                raise errs.TplCompileError("Cannot require '" + name + "'. ", node.lfp)
 
     def __str__(self):
         return "require " + str(self.body)
@@ -1926,7 +1926,7 @@ class IfExpr(Expression):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if self.condition is None or self.then_expr is None or self.else_expr is None:
-            raise errs.TplCompileError("Incomplete if-expr. ", self.lf)
+            raise errs.TplCompileError("Incomplete if-expr. ", self.lfp)
         res_t = self.evaluated_type(env, tpa.manager)
         res_addr = tpa.manager.allocate_stack(res_t.memory_length())
         self.compile_to(env, tpa, res_addr, res_t.memory_length())
@@ -1958,9 +1958,9 @@ class IfExpr(Expression):
         else_t = self.else_expr.evaluated_type(env, manager)
         if not (then_t.strong_convertible(else_t) and else_t.strong_convertible(then_t)):
             if not (then_t.weak_convertible(else_t) and else_t.weak_convertible(then_t)):
-                raise errs.TplCompileError("Two branches of if-expression must have compatible type. ", self.lf)
+                raise errs.TplCompileError("Two branches of if-expression must have compatible type. ", self.lfp)
             else:
-                print("Warning: converting between '{}' and '{}'. {}".format(then_t, else_t, self.lf))
+                print("Warning: converting between '{}' and '{}'. {}".format(then_t, else_t, self.lfp))
         return then_t
 
     def __str__(self):
@@ -2087,12 +2087,12 @@ class ExportStmt(Statement):
                         exported_names[part.left.name] = part.right.name
                         continue
 
-                raise errs.TplCompileError("Export statements must be name or 'as' expression. ", self.lf)
-        exported_entries = env.vars_subset(exported_names, self.lf)
+                raise errs.TplCompileError("Export statements must be name or 'as' expression. ", self.lfp)
+        exported_entries = env.vars_subset(exported_names, self.lfp)
         if isinstance(env, en.ModuleEnvironment):
-            env.set_exports(exported_entries, self.lf)
+            env.set_exports(exported_entries, self.lfp)
         else:
-            raise errs.TplCompileError("Export must directly under a file. ", self.lf)
+            raise errs.TplCompileError("Export must directly under a file. ", self.lfp)
 
     def __str__(self):
         return "export {}".format(self.block)
@@ -2109,7 +2109,7 @@ class ImportStmt(Statement):
         module_env = en.ModuleEnvironment(env)
         self.tree.compile(module_env, tpa)
         if module_env.exports is not None:
-            env.import_vars(module_env.exports, self.lf)
+            env.import_vars(module_env.exports, self.lfp)
 
     def __str__(self):
         return "import {}: {}".format(self.file, self.tree)
@@ -2138,7 +2138,7 @@ class IndexingExpr(Expression):
         if isinstance(obj_t, typ.ArrayType):
             return obj_t.ele_type
         else:
-            raise errs.TplCompileError("Only array type supports indexing. ", self.lf)
+            raise errs.TplCompileError("Only array type supports indexing. ", self.lfp)
 
     def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         base = self.indexing_obj.definition_type(env, manager)
@@ -2150,7 +2150,7 @@ class IndexingExpr(Expression):
         if isinstance(self.indexing_obj, IndexingExpr):
             return self.indexing_obj.is_array_initialization(env)
         elif isinstance(self.indexing_obj, NameNode):
-            return env.is_type(self.indexing_obj.name, self.lf)
+            return env.is_type(self.indexing_obj.name, self.lfp)
         else:
             return False
 
@@ -2182,9 +2182,9 @@ class IndexingExpr(Expression):
         while isinstance(node, IndexingExpr):
             if len(node.args) == 0:
                 if neg_one_ifn:
-                    args.insert(0, IntLiteral(util.NEG_ONE_POS, self.lf))
+                    args.insert(0, IntLiteral(util.NEG_ONE_POS, self.lfp))
                 else:
-                    raise errs.TplCompileError("Array arg must contain exactly one value. ", self.lf)
+                    raise errs.TplCompileError("Array arg must contain exactly one value. ", self.lfp)
             else:
                 args.insert(0, node._get_index_node(env, manager))
             node = node.indexing_obj
@@ -2202,17 +2202,17 @@ class IndexingExpr(Expression):
     def _get_index_node(self, env, manager) -> Node:
         if len(self.args) != 1:
             raise errs.TplCompileError("Array initialization or indexing must contain exactly one int element. ",
-                                       self.lf)
+                                       self.lfp)
         arg: Node = self.args[0]
         if arg.evaluated_type(env, manager) != typ.TYPE_INT:
             raise errs.TplCompileError("Array initialization or indexing must contain exactly one int element. ",
-                                       self.lf)
+                                       self.lfp)
         return arg
 
     def get_index_literal(self, env, manager: tp.Manager):
         node = self._get_index_node(env, manager)
         if not isinstance(node, IntLiteral):
-            raise errs.TplCompileError("Array type declaration must be an int literal. ", self.lf)
+            raise errs.TplCompileError("Array type declaration must be an int literal. ", self.lfp)
         return util.bytes_to_int(manager.literal[node.lit_pos: node.lit_pos + util.INT_LEN])
 
     def __str__(self):
@@ -2225,7 +2225,7 @@ class PreIncDecOperator(UnaryExpr):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.value, PreIncDecOperator) or isinstance(self.value, PostIncDecOperator):
-            raise errs.TplCompileError("Expression not assignable. ", self.lf)
+            raise errs.TplCompileError("Expression not assignable. ", self.lfp)
         if isinstance(self.value, DollarExpr) or isinstance(self.value, DotExpr) or isinstance(self.value,
                                                                                                IndexingExpr):
             return self.compile_non_suitable(env, tpa)
@@ -2239,13 +2239,13 @@ class PreIncDecOperator(UnaryExpr):
         elif vt == typ.TYPE_FLOAT:
             pass
         else:
-            raise errs.TplCompileError(f"Cannot apply '{self.op}' to type '{vt}'. ", self.lf)
+            raise errs.TplCompileError(f"Cannot apply '{self.op}' to type '{vt}'. ", self.lfp)
 
     def compile_non_suitable(self, env: en.Environment, tpa: tp.TpaOutput):
         # replace ++expr by expr = expr + 1
-        ass = Assignment(self.lf)
-        one = IntLiteral(util.ONE_POS, self.lf)
-        opn = BinaryOperator("+" if self.op == "++" else "-", BIN_ARITH, self.lf)
+        ass = Assignment(self.lfp)
+        one = IntLiteral(util.ONE_POS, self.lfp)
+        opn = BinaryOperator("+" if self.op == "++" else "-", BIN_ARITH, self.lfp)
         opn.left = self.value
         opn.right = one
         ass.left = self.value
@@ -2267,7 +2267,7 @@ class PostIncDecOperator(UnaryExpr):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.value, PreIncDecOperator) or isinstance(self.value, PostIncDecOperator):
-            raise errs.TplCompileError("Expression not assignable. ", self.lf)
+            raise errs.TplCompileError("Expression not assignable. ", self.lfp)
         if isinstance(self.value, DollarExpr) or isinstance(self.value, DotExpr) or isinstance(self.value,
                                                                                                IndexingExpr):
             return self.compile_attr_op(env, tpa)
@@ -2283,15 +2283,15 @@ class PostIncDecOperator(UnaryExpr):
         elif vt == typ.TYPE_FLOAT:
             pass
         else:
-            raise errs.TplCompileError(f"Cannot apply '{self.op}' to type '{vt}'. ", self.lf)
+            raise errs.TplCompileError(f"Cannot apply '{self.op}' to type '{vt}'. ", self.lfp)
 
     def compile_attr_op(self, env: en.Environment, tpa: tp.TpaOutput):
         # replace a.x by a.x = a.x + 1
         v = self.value.compile(env, tpa)
 
-        ass = Assignment(self.lf)
-        one = IntLiteral(util.ONE_POS, self.lf)
-        opn = BinaryOperator("+" if self.op == "++" else "-", BIN_ARITH, self.lf)
+        ass = Assignment(self.lfp)
+        one = IntLiteral(util.ONE_POS, self.lfp)
+        opn = BinaryOperator("+" if self.op == "++" else "-", BIN_ARITH, self.lfp)
         opn.left = self.value
         opn.right = one
         ass.left = self.value
@@ -2449,7 +2449,7 @@ class SwitchExpr(Expression):
         for case in self.cases:
             case: CaseExpr
             nt = case.body.evaluated_type(env, manager)
-            nt.check_convertibility(t, case.lf)
+            nt.check_convertibility(t, case.lfp)
             t = nt
 
         return t
@@ -2496,7 +2496,7 @@ class FunctionObject:
                     raise errs.TplCompileError(f"Function '{self.poly_name}' missing a return statement. ", self.lf)
 
             # compiling
-            body_out.add_function(self.poly_name, self.lf.file_name, self.fn_ptr, self.parent_class)
+            body_out.add_function(self.poly_name, self.lf.get_file(), self.fn_ptr, self.parent_class)
             push_index = body_out.add_indefinite_push()
             self.body.compile(scope, body_out)
 
@@ -2516,13 +2516,13 @@ class FunctionObject:
 
 class ClassObject:
     def __init__(self, class_type: typ.ClassType, body, abstract: bool,
-                 class_env: en.ClassEnvironment, tpa, lf):
+                 class_env: en.ClassEnvironment, tpa, lfp):
         self.class_type = class_type
         self.body = body
         self.abstract = abstract
         self.class_env = class_env
         self.tpa = tpa
-        self.lf = lf
+        self.lfp = lfp
 
         self.local_method_full_names = []
 
@@ -2545,7 +2545,7 @@ class ClassObject:
             dec_name = dec.get_name()
             if self.class_type.has_field(dec_name):
                 raise errs.TplCompileError(
-                    f"Name '{dec_name}' already defined in class '{self.class_type.name}'. ", self.lf)
+                    f"Name '{dec_name}' already defined in class '{self.class_type.name}'. ", self.lfp)
             t = dec.right.definition_type(self.class_env, self.tpa.manager)
             self.class_type.fields[dec_name] = cur_field_pos, t, self.class_type, dec.level == VAR_CONST, dec.permission
             return t.memory_length()
@@ -2558,9 +2558,9 @@ class ClassObject:
                 elif isinstance(part, Assignment):
                     if isinstance(part.left, Declaration):
                         pos += eval_declaration(part.left, pos)
-                        ass = Assignment(part.lf)
-                        this_dot = DotExpr(part.lf)
-                        this_dot.left = NameNode("this", part.lf)
+                        ass = Assignment(part.lfp)
+                        this_dot = DotExpr(part.lfp)
+                        this_dot.left = NameNode("this", part.lfp)
                         this_dot.right = part.left.get_name_node()
                         ass.left = this_dot
                         ass.right = part.right
@@ -2572,7 +2572,7 @@ class ClassObject:
                     continue
 
                 raise errs.TplCompileError(
-                    f"Class body should only contain attributes and methods, but got a '{part}'. ", self.lf)
+                    f"Class body should only contain attributes and methods, but got a '{part}'. ", self.lfp)
 
         self.class_type.length = pos
 
@@ -2588,7 +2588,7 @@ class ClassObject:
             method_def.compile(self.class_env, self.tpa)
             name = method_def.get_simple_name()
 
-            placer: typ.FunctionPlacer = self.class_env.get_type(name, self.lf)
+            placer: typ.FunctionPlacer = self.class_env.get_type(name, self.lfp)
             method_t = method_def.evaluated_type(self.class_env, self.tpa.manager)
             method_ptr = placer.poly[method_t]
 
@@ -2600,11 +2600,11 @@ class ClassObject:
                 ))
 
             if not isinstance(method_t, typ.MethodType):
-                raise errs.TplCompileError("Unexpected method. ", self.lf)
+                raise errs.TplCompileError("Unexpected method. ", self.lfp)
 
             if not self.abstract and method_t.abstract:
                 raise errs.TplCompileError(
-                    f"Class '{self.class_type.name}' is not abstract, but has abstract method '{name}'. ", method_def.lf
+                    f"Class '{self.class_type.name}' is not abstract, but has abstract method '{name}'. ", method_def.lfp
                 )
 
             if name in self.class_type.methods:
@@ -2618,16 +2618,16 @@ class ClassObject:
                             raise errs.TplCompileError(
                                 f"Method '{name}' in class '{self.class_type.name}' "
                                 f"overrides its super method in class '{m_t.defined_class.name}', "
-                                f"but has incompatible parameter or return type. ", method_def.lf)
+                                f"but has incompatible parameter or return type. ", method_def.lfp)
                         if method_t.permission > m_t.permission:
                             raise errs.TplCompileError(
                                 f"Method '{name}' in class '{self.class_type.name}' "
                                 f"overrides its super method in class '{m_t.defined_class.name}', "
-                                f"but has weaker access. ", method_def.lf)
+                                f"but has weaker access. ", method_def.lfp)
 
                     if m_t.const:
                         raise errs.TplCompileError(
-                            f"Method '{name}' is const, which cannot be overridden. ", method_def.lf
+                            f"Method '{name}' is const, which cannot be overridden. ", method_def.lfp
                         )
                     self.class_type.methods[name][method_t] = m_pos, method_ptr, method_t
                 else:  # polymorphism
@@ -2650,17 +2650,17 @@ class ClassObject:
                         raise errs.TplCompileError(
                             f"Class '{self.class_type.name}' "
                             f"does not override all abstract methods of its superclasses. ",
-                            self.lf
+                            self.lfp
                         )
 
     def check_method_def(self, method: FunctionDef, class_type: typ.ClassType):
-        desired_this_t_node = StarExpr(method.lf)
-        name_node = NameNode(class_type.name, method.lf)
+        desired_this_t_node = StarExpr(method.lfp)
+        name_node = NameNode(class_type.name, method.lfp)
         if len(class_type.templates) > 0:
-            gen_line = Line(method.lf)
+            gen_line = Line(method.lfp)
             for gen in class_type.templates:
-                gen_line.parts.append(NameNode(gen.simple_name(), method.lf))
-            gen_node = GenericNode(name_node, gen_line, method.lf)
+                gen_line.parts.append(NameNode(gen.simple_name(), method.lfp))
+            gen_node = GenericNode(name_node, gen_line, method.lfp)
             desired_this_t_node.value = gen_node
         else:
             desired_this_t_node.value = name_node
@@ -2674,11 +2674,11 @@ class ClassObject:
                 if first_param.right != desired_this_t_node:
                     raise errs.TplCompileError(f"Parameter 'this' must be {desired_this_t_node}, "
                                                f"got {first_param.right}. ",
-                                               self.lf)
+                                               self.lfp)
                 insert_this = False
         if insert_this:
-            dec = Declaration(VAR_CONST, PUBLIC, method.lf)
-            dec.left = NameNode("this", method.lf)
+            dec = Declaration(VAR_CONST, PUBLIC, method.lfp)
+            dec.left = NameNode("this", method.lfp)
             dec.right = desired_this_t_node
             method.params.parts.insert(0, dec)
 
@@ -2695,24 +2695,24 @@ class ClassObject:
                             first_stmt.right.call_obj.name == "__new__":
                         insert_super = False
                 if insert_super:
-                    dot = DotExpr(method.lf)
-                    dot.left = SuperExpr(method.lf)
-                    dot.right = FunctionCall(NameNode("__new__", method.lf), Line(method.lf), method.lf)
-                    method.body.lines.insert(0, Line(method.lf, dot))
+                    dot = DotExpr(method.lfp)
+                    dot.left = SuperExpr(method.lfp)
+                    dot.right = FunctionCall(NameNode("__new__", method.lfp), Line(method.lfp), method.lfp)
+                    method.body.lines.insert(0, Line(method.lfp, dot))
             initializer_index = 0 if class_type.name == "Object" else 1
             method.body.insert_at(initializer_index, class_type.initializers)
 
     def add_constructor_if_none(self, method_defs: [FunctionDef], class_type: typ.ClassType):
         no_constructor = len(list(filter(lambda fd: fd.get_simple_name() == "__new__", method_defs))) == 0
         if no_constructor:
-            const = FunctionDef(NameNode("__new__", self.lf),
-                                Line(self.lf),
-                                NameNode("void", self.lf),
+            const = FunctionDef(NameNode("__new__", self.lfp),
+                                Line(self.lfp),
+                                NameNode("void", self.lfp),
                                 False,
                                 False,
                                 PUBLIC,
-                                BlockStmt(self.lf),
-                                self.lf)
+                                BlockStmt(self.lfp),
+                                self.lfp)
             const.parent_class = class_type
             method_defs.append(const)
 
@@ -2832,7 +2832,7 @@ def array_attribute_types(attr_name: str, lf):
 
 def validate_arg_count(args: Line, expected_arg_count):
     if len(args) != expected_arg_count:
-        raise errs.TplCompileError("Arity mismatch for compile time function. ", args.lf)
+        raise errs.TplCompileError("Arity mismatch for compile time function. ", args.lfp)
 
 
 def ctf_sizeof(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
@@ -2861,12 +2861,12 @@ def ctf_cprint(args: Line, env: en.Environment, tpa: tp.TpaOutput):
     arg: Node = args[0]
     et = arg.evaluated_type(env, tpa.manager)
     if et in PRINT_FUNCTIONS:
-        name_node = NameNode(PRINT_FUNCTIONS[et], args.lf)
+        name_node = NameNode(PRINT_FUNCTIONS[et], args.lfp)
         RequireStmt.require(name_node, env, tpa)
-        call = FunctionCall(name_node, args, args.lf)
+        call = FunctionCall(name_node, args, args.lfp)
         return call.compile(env, tpa)
     else:
-        raise errs.TplCompileError("Unexpected argument type of 'cprint'. ", args.lf)
+        raise errs.TplCompileError("Unexpected argument type of 'cprint'. ", args.lfp)
 
 
 def ctf_cprintln(args: Line, env: en.Environment, tpa: tp.TpaOutput):
@@ -2874,17 +2874,17 @@ def ctf_cprintln(args: Line, env: en.Environment, tpa: tp.TpaOutput):
     arg: Node = args[0]
     et = arg.evaluated_type(env, tpa.manager)
     if et in PRINTLN_FUNCTIONS:
-        name_node = NameNode(PRINTLN_FUNCTIONS[et], args.lf)
+        name_node = NameNode(PRINTLN_FUNCTIONS[et], args.lfp)
         RequireStmt.require(name_node, env, tpa)
-        call = FunctionCall(name_node, args, args.lf)
+        call = FunctionCall(name_node, args, args.lfp)
         return call.compile(env, tpa)
     else:
-        raise errs.TplCompileError("Unexpected argument type of 'cprint'. ", args.lf)
+        raise errs.TplCompileError("Unexpected argument type of 'cprint'. ", args.lfp)
 
 
 def ctf_array(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
     if len(args) < 2:
-        raise errs.TplCompileError("Function 'array' requires at least 2 arguments: element type, dimension. ", args.lf)
+        raise errs.TplCompileError("Function 'array' requires at least 2 arguments: element type, dimension. ", args.lfp)
     dim = [len(args) - 1]
     arr_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
     create_array_rec(arr_ptr, typ.TYPE_INT, dim, 0, env, tpa)
@@ -2894,20 +2894,20 @@ def ctf_array(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
         arg = args[i]  # reverse dimension array like in 'IndexingExpr'
         arg_t = arg.evaluated_type(env, tpa.manager)
         if arg_t != typ.TYPE_INT:
-            raise errs.TplCompileError(f"Expected argument type 'int', got '{arg_t}'. ", arg.lf)
+            raise errs.TplCompileError(f"Expected argument type 'int', got '{arg_t}'. ", arg.lfp)
         tpa.i_binary_arith("addi", arr_ptr, i * util.INT_LEN, arith_addr)  # (i - 1) * INT_LEN + INT_LEN
         arg_addr = arg.compile(env, tpa)
         tpa.ptr_assign(arg_addr, arg_t.memory_length(), arith_addr)
 
-    sizeof_name = NameNode("sizeof", args.lf)
-    sizeof_call = FunctionCall(sizeof_name, Line(args.lf, args[0]), args.lf)
+    sizeof_name = NameNode("sizeof", args.lfp)
+    sizeof_call = FunctionCall(sizeof_name, Line(args.lfp, args[0]), args.lfp)
     sizeof_res = sizeof_call.compile(env, tpa)
 
-    fn_name = NameNode("heap_array", args.lf)
-    req = RequireStmt(fn_name, args.lf)
+    fn_name = NameNode("heap_array", args.lfp)
+    req = RequireStmt(fn_name, args.lfp)
     req.compile(env, tpa)
     FunctionCall.call(fn_name, [(sizeof_res, util.INT_LEN), (arr_ptr, util.PTR_LEN)],
-                      env, tpa, dst_addr, args.lf)
+                      env, tpa, dst_addr, args.lfp)
 
 
 class SpecialCtf:
@@ -2929,12 +2929,12 @@ class CtfGetFunc(SpecialCtf):
         if len(self.args) > 0:
             func_node = self.args[0]
             if isinstance(func_node, NameNode):
-                placer = env.get_type(func_node.name, self.args.lf)
+                placer = env.get_type(func_node.name, self.args.lfp)
                 if isinstance(placer, typ.FunctionPlacer):
                     arg_types = []
                     for i in range(1, len(self.args)):
                         arg_types.append(self.args[i].evaluated_type(env, manager))
-                    t, addr = placer.get_type_and_ptr_call(arg_types, self.args.lf)
+                    t, addr = placer.get_type_and_ptr_call(arg_types, self.args.lfp)
                     return t, addr
             elif isinstance(func_node, DotExpr) and isinstance(func_node.right, NameNode):
                 class_t = func_node.left.evaluated_type(env, manager)
@@ -2942,9 +2942,9 @@ class CtfGetFunc(SpecialCtf):
                     arg_types = [None]
                     for i in range(1, len(self.args)):
                         arg_types.append(self.args[i].evaluated_type(env, manager))
-                    method_id, method_ptr, method_t = class_t.find_method(func_node.right.name, arg_types, self.args.lf)
+                    method_id, method_ptr, method_t = class_t.find_method(func_node.right.name, arg_types, self.args.lfp)
                     return method_t, method_ptr
-        raise errs.TplCompileError(f"Cannot make call {self}. ", self.args.lf)
+        raise errs.TplCompileError(f"Cannot make call {self}. ", self.args.lfp)
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
         t, ptr = self.get_func(env, tpa.manager)

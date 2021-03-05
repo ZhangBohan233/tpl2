@@ -82,7 +82,7 @@ class AstBuilder:
             if isinstance(expr, ast.UnaryBuildable):
                 if expr.operator_at_left:
                     if expr.nullable() and len(self.stack) <= index + 1:
-                        value = ast.Nothing(expr.lf)
+                        value = ast.Nothing(expr.lfp)
                     else:
                         value = self.stack.pop(index + 1)
                 else:

@@ -419,11 +419,11 @@ class Parser:
         builder.finish_part()
         line = builder.get_line()
         if len(line.parts) != 1:
-            raise errs.TplParseError("Line should only contain 1 part. ", lst.lf)
+            raise errs.TplParseError("Line should only contain 1 part. ", lst.lfp)
         return line.parts[0]
 
     def parse_as_builder(self, lst: tl.CollectiveElement) -> ab.AstBuilder:
-        builder = ab.AstBuilder(lst.lf)
+        builder = ab.AstBuilder(lst.lfp)
         i = 0
         while i < len(lst):
             i = self.parse_one(lst, i, builder)
@@ -495,7 +495,7 @@ class Parser:
                 raise Exception("Unexpected error. ")
         elif isinstance(ele, tl.CollectiveElement):
             if ele.is_bracket():
-                lf = ele.lf
+                lf = ele.lfp
                 if index > 0:
                     prob_call_obj = parent[index - 1]
                     if tl.is_arrow_bracket(prob_call_obj):
@@ -510,7 +510,7 @@ class Parser:
                 parenthesis = self.parse_as_part(ele)
                 builder.add_node(parenthesis)
             elif ele.is_sqr_bracket():
-                lf = ele.lf
+                lf = ele.lfp
                 if index > 0:
                     prob_call_obj = parent[index - 1]
                     if is_call_obj(prob_call_obj):
@@ -520,7 +520,7 @@ class Parser:
                         builder.add_node(call)
                         return index + 1
             elif ele.is_arrow_bracket():
-                lf = ele.lf
+                lf = ele.lfp
                 if index > 0:
                     prob_call_obj = parent[index - 1]
                     if is_call_obj(prob_call_obj):

@@ -134,12 +134,12 @@ class FileTextPreprocessor:
                         index += 1
                         args = parent[index]
                         if not tl.is_bracket(args):
-                            raise errs.TplSyntaxError("Invalid macro syntax. ", args.lf)
+                            raise errs.TplSyntaxError("Invalid macro syntax. ", args.lfp)
 
                         arg_list = list_ify_macro_arg(args)
 
                         if len(arg_list) != len(macro.params):
-                            raise errs.TplSyntaxError("Macro syntax arity mismatch. ", args.lf)
+                            raise errs.TplSyntaxError("Macro syntax arity mismatch. ", args.lfp)
 
                         body_with_arg = tl.CollectiveElement(tl.CE_BRACE, lf, None)
                         for body_ele in macro.body:
@@ -162,7 +162,7 @@ class FileTextPreprocessor:
             res = self.process_block(ele, result_parent)
             result_parent.append(res)
         else:
-            raise errs.TplError("Unexpected element. ", parent.lf)
+            raise errs.TplError("Unexpected element. ", parent.lfp)
 
         return index + 1
 
@@ -197,7 +197,7 @@ class FileTextPreprocessor:
             result_parent.append(processed_tks)
 
     def process_block(self, block: tl.CollectiveElement, result_parent: tl.CollectiveElement) -> tl.CollectiveElement:
-        result = tl.CollectiveElement(block.ce_type, block.lf, result_parent)
+        result = tl.CollectiveElement(block.ce_type, block.lfp, result_parent)
         i = 0
         while i < len(block):
             i = self.process_one(block, i, result)
@@ -206,11 +206,11 @@ class FileTextPreprocessor:
 
 def list_ify_macro_arg(args: tl.CollectiveElement) -> list:
     res = []
-    cur = tl.CollectiveElement(tl.CE_BRACE, args.lf, None)
+    cur = tl.CollectiveElement(tl.CE_BRACE, args.lfp, None)
     for arg in args:
         if tl.identifier_of(arg, ","):
             res.append(cur)
-            cur = tl.CollectiveElement(tl.CE_BRACE, args.lf, None)
+            cur = tl.CollectiveElement(tl.CE_BRACE, args.lfp, None)
         else:
             cur.append(arg)
     res.append(cur)

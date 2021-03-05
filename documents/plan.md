@@ -54,6 +54,6 @@
 * Iterator for loop
 * ~~Private field~~ Done
 * ~~Native function 'memory_segment'~~ Done
-* Update LineFile to LineFilePos
+* ~~Update LineFile to LineFilePos~~ Done
 * ~~'const' in class~~ Partial Done
 * Auto import lang
