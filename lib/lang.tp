@@ -4,7 +4,8 @@ require {
     print_char, println_char,
     print_byte, println_byte,
     print_str, println_str,
-    memory_segment
+    mem_segment,
+    mem_copy
 }
 
 /*
@@ -51,12 +52,19 @@ class String {
     }
 
     fn __del__() void {
-        if memory_segment(this.chars) == 3 {
+        if mem_segment(this.chars) == 3 {  // literal
             return;
         }
         del this.chars;
 
         super.__del__();
+    }
+
+    fn concat(other: *String) *String {
+        newChars: char[] = new char[this.length() + other.length()];
+        arraycopy(this.chars, 0, newChars, 0, this.length());
+        arraycopy(other.chars, 0, newChars, this.length(), other.length());
+        return new String(newChars);
     }
 
     fn equals(other: *Object) boolean {
@@ -115,7 +123,7 @@ class Integer(Number) {
 Documents for native functions.
 
 #####
-memory_segment(ptr: *void) int;
+mem_segment(ptr: *void) int;
 
 Returns the memory segment of this pointer is pointed to
 -1: if invalid
@@ -126,6 +134,9 @@ Returns the memory segment of this pointer is pointed to
 4:  if in class headers
 5:  if in function bodies
 6:  if in heap
+
+#####
+mem_copy(src: *void, srcIndexBytes: int, dst: *void, dstIndexBytes: int, lengthBytes: int) void;
 */
 
 fn print(value: int) void {
@@ -176,10 +187,34 @@ fn println(value: *Object) void {
     println(value.toString());
 }
 
+fn arraycopy(src: int[], srcIndex: int, dst: int[], dstIndex: int, length: int) void {
+    unitLength := sizeof(int);
+    mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
+}
+
+fn arraycopy(src: float[], srcIndex: int, dst: float[], dstIndex: int, length: int) void {
+    unitLength := sizeof(float);
+    mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
+}
+
+fn arraycopy(src: char[], srcIndex: int, dst: char[], dstIndex: int, length: int) void {
+    unitLength := sizeof(char);
+    mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
+}
+
+fn arraycopy(src: byte[], srcIndex: int, dst: byte[], dstIndex: int, length: int) void {
+    mem_copy(src as *void, srcIndex, dst as *void, dstIndex, length);
+}
+
+fn arraycopy(src: Object[], srcIndex: int, dst: Object[], dstIndex: int, length: int) void {
+    unitLength := sizeof(*void);
+    mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
+}
+
 exportmacro {
     boolean
 }
 
 export {
-    FALSE, TRUE, NULL, Object, String, Number, Integer, print, println
+    FALSE, TRUE, NULL, Object, String, Number, Integer, print, println, arraycopy
 }

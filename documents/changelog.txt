@@ -1,4 +1,12 @@
-﻿===== VERSION 2052 =====
+﻿===== VERSION 2053 =====
+2021/03/05
+
+* Implemented library function 'arraycopy' and native invoke 'mem_copy'
+* Implemented String.concat
+* Bug fixes:
+    * Error when generic array as argument
+
+===== VERSION 2052 =====
 2021/03/05
 
 * A simple version of const attributes

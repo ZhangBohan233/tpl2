@@ -2,7 +2,7 @@
 
 ## Class and inheritance
 
-### ISSUE C01
+### ~~ISSUE C01~~ FIXED
 Cannot override when the declared type is the parent class
 ```
 class A {
@@ -23,3 +23,8 @@ fn main() int {
     ...
 }
 ```
+
+## Macro
+
+### ISSUE M01
+exportmacro does not work

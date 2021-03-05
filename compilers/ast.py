@@ -902,6 +902,13 @@ class AsExpr(BinaryExpr):
             if left_t == typ.TYPE_INT or isinstance(left_t, typ.PointerType):
                 tpa.assign(dst_addr, left)
                 return
+            elif isinstance(left_t, typ.ArrayType):
+                tpa.assign(dst_addr, left)
+                return
+        elif isinstance(right_t, typ.ArrayType):
+            if left_t == typ.TYPE_VOID_PTR:
+                tpa.assign(dst_addr, left)
+                return
 
         raise errs.TplCompileError(f"Cannot cast '{left_t}' to '{right_t}'. ", self.lf)
 
@@ -2830,7 +2837,7 @@ def validate_arg_count(args: Line, expected_arg_count):
 
 def ctf_sizeof(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int):
     validate_arg_count(args, 1)
-    t = args[0].evaluated_type(env, tpa.manager)
+    t = args[0].definition_type(env, tpa.manager)
     tpa.assign_i(dst_addr, t.memory_length())
 
 

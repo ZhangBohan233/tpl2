@@ -29,7 +29,7 @@ char *ERR_MSG = "";
 #define push_fp call_stack[++call_p] = fp; fp = sp;
 #define pull_fp sp = fp; fp = call_stack[call_p--];
 
-#define MEMORY_SIZE 16384
+#define MEMORY_SIZE 32768
 #define RECURSION_LIMIT 1000
 #define CLASS_FIXED_HEADER (INT_LEN * 2)
 
@@ -251,7 +251,7 @@ void nat_clock() {
     pull_fp
 }
 
-void nat_memory_segment() {
+void nat_mem_segment() {
     push_fp
     push(PTR_LEN)
 
@@ -269,6 +269,31 @@ void nat_memory_segment() {
     else res = -1;
 
     nat_return_int(res);
+
+    pull_fp
+}
+
+void nat_mem_copy() {
+    push_fp
+    push(INT_LEN * 5)
+
+    tp_int src = bytes_to_int(MEMORY + true_addr(0));
+    tp_int src_index = bytes_to_int(MEMORY + true_addr(INT_LEN));
+    tp_int dst = bytes_to_int(MEMORY + true_addr(INT_LEN * 2));
+    tp_int dst_index = bytes_to_int(MEMORY + true_addr(INT_LEN * 3));
+    tp_int length = bytes_to_int(MEMORY + true_addr(INT_LEN * 4));
+//    printf("%lld %lld %lld %lld %lld\n", src, src_index, dst, dst_index, length);
+
+//    tp_int dst_length = bytes_to_int(MEMORY + true_addr(dst));
+//    if (dst_index + length > dst_length) {
+//        ERR_MSG = "mem_copy index out of bound.";
+//        ERROR_CODE = ERR_NATIVE_INVOKE;
+//        return;
+//    }
+
+    memmove(MEMORY + true_addr(dst + dst_index) + INT_LEN,  // last 'INT_LEN' is the array length recorder
+            MEMORY + true_addr(src + src_index) + INT_LEN,
+            length);
 
     pull_fp
 }
@@ -512,8 +537,11 @@ void invoke(tp_int func_ptr) {
         case 16:  // println_byte
             nat_println_byte();
             break;
-        case 17:  // memory_segment
-            nat_memory_segment();
+        case 17:  // mem_segment
+            nat_mem_segment();
+            break;
+        case 18:  // mem_copy
+            nat_mem_copy();
             break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;

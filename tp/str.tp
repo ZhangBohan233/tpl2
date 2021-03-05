@@ -1,29 +1,25 @@
 ﻿import lang;
-require memory_segment;
-class Parent {
-    value: int;
-    value2: int = 4;
+import collections;
 
-    // 'this: *Parent' is inserted automatically before 'val: int'
-    fn __new__(val: int) void {
-        // 'super.__new__()' is inserted automatically here, calling Object.__new__
-        this.value = val;
-    }
-
-    // polymorphic constructor
-    fn __new__() void {
-        this.__new__(42);
-    }
+fn tt(arr: Object[]) void {
+    println(arr.length);
 }
 
-class Child(Parent) {
-    fn __new__(this: *Child) void {
-        super.__new__();
+class A<T> {
+    arr: T[];
+
+    fn test() void {
+        //this.arr = new T[3];
+        tt(this.arr);
     }
 }
 
 fn main() int {
-    x := "asd";
-    println(memory_segment("asd".chars));
-    return "xsa".equals("xsa");
+    //x := "asd";
+    //added := x.concat("fgh");
+    //println(added);
+    //return sizeof(*void);
+
+
+    return 0;
 }

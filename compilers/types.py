@@ -461,8 +461,15 @@ class ArrayType(Type):
     def strong_convertible(self, left_tar_type):
         if left_tar_type == TYPE_VOID_PTR:
             return True
-        else:
-            return super().strong_convertible(left_tar_type)
+        elif isinstance(self.ele_type, PointerType) and isinstance(self.ele_type.base, Generic):
+            if isinstance(left_tar_type, ArrayType) and isinstance(left_tar_type.ele_type, PointerType):
+                if isinstance(left_tar_type.ele_type.base, Generic):
+                    if self.ele_type.base.max_t == left_tar_type.ele_type.base.max_t:
+                        return True
+                else:
+                    if self.ele_type.base.max_t == left_tar_type.ele_type.base:
+                        return True
+        return super().strong_convertible(left_tar_type)
 
     def type_name(self):
         return self.ele_type.type_name() + "[]"
@@ -641,7 +648,6 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
     for i in range(len(poly)):
         # fn_t = poly.keys[i]
         tup = poly.values[i]
-        # print(name, fn_t)
         fn_t: CallableType = get_type_func(poly, i)
         if len(arg_types) == len(fn_t.param_types):
             sum_dt = 0
@@ -649,6 +655,9 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
             for j in range(param_begin, len(arg_types)):
                 arg = arg_types[j]
                 param = fn_t.param_types[j]
+                # print(arg, type(arg))
+                # if isinstance(arg, PointerType) and isinstance(arg.base, Generic):
+                #     print("zsda")
                 if arg.strong_convertible(param):
                     # print(arg, param, type_distance(arg, param))
                     sum_dt += type_distance(param, arg)
@@ -703,5 +712,6 @@ NATIVE_FUNCTIONS = {
     "nat_log": (14, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT)),
     "print_byte": (15, NativeFuncType([TYPE_BYTE], TYPE_VOID)),
     "println_byte": (16, NativeFuncType([TYPE_BYTE], TYPE_VOID)),
-    "memory_segment": (17, NativeFuncType([TYPE_VOID_PTR], TYPE_INT))
+    "mem_segment": (17, NativeFuncType([TYPE_VOID_PTR], TYPE_INT)),
+    "mem_copy": (18, NativeFuncType([TYPE_VOID_PTR, TYPE_INT, TYPE_VOID_PTR, TYPE_INT, TYPE_INT], TYPE_VOID))
 }

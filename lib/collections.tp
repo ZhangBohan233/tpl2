@@ -39,7 +39,7 @@ class List<T>(AbsList<T>) {
     fn append(value: *T) void {
         this.array[this.size++] = value;
 
-        this._checkSize();
+        this.checkSize();
     }
 
     @Override
@@ -47,25 +47,23 @@ class List<T>(AbsList<T>) {
         return this.array[index];
     }
 
-    fn _checkSize() void {
+    protected fn checkSize() void {
         if this.size == this.array.length {
-            this._expand();
+            this.expand();
         }
         if this.size < this.array.length / 4 {
-            this._collapse();
+            this.collapse();
         }
     }
 
-    fn _expand() void {
+    private fn expand() void {
         arr := new T[this.array.length * 2];
-        for i := 0; i < this.size; i++ {
-            arr[i] = this.array[i];
-        }
+        arraycopy(this.array, 0, arr, 0, this.size);
         del this.array;
         this.array = arr;
     }
 
-    fn _collapse() void {
+    private fn collapse() void {
 
     }
 }

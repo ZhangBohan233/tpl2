@@ -55,4 +55,5 @@
 * ~~Private field~~ Done
 * ~~Native function 'memory_segment'~~ Done
 * Update LineFile to LineFilePos
-* 'const' in class
+* ~~'const' in class~~ Partial Done
+* Auto import lang
