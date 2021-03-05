@@ -4,7 +4,7 @@ import compilers.ast_builder as ab
 import compilers.errors as errs
 
 
-def process_empty(p, i, b, lf):
+def process_empty(p, i, b, lfp):
     pass
 
 
@@ -72,20 +72,20 @@ class Parser:
     #
     # Note: do not return the index of the next
 
-    def process_abstract(self, p, i, b, lf):
+    def process_abstract(self, p, i, b, lfp):
         self.abstract = True
 
-    def process_declare(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
-        builder.add_node(ast.Declaration(self.var_level, self.permission, lf))
+    def process_declare(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
+        builder.add_node(ast.Declaration(self.var_level, self.permission, lfp))
         self.permission = ast.PUBLIC
 
-    def process_private(self, p, i, b, lf):
+    def process_private(self, p, i, b, lfp):
         self.permission = ast.PRIVATE
 
-    def process_protected(self, p, i, b, lf):
+    def process_protected(self, p, i, b, lfp):
         self.permission = ast.PROTECTED
 
-    def process_fn(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+    def process_fn(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
         abstract = self.abstract
         self.abstract = False
         const = self.var_level == ast.VAR_CONST
@@ -93,7 +93,7 @@ class Parser:
         permission = self.permission
         self.permission = ast.PUBLIC
         index += 1
-        name_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        name_list = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
         next_ele = parent[index]
         while not tl.is_bracket(next_ele):
             name_list.append(next_ele)
@@ -108,11 +108,11 @@ class Parser:
         params = self.parse_as_line(param_list)
         prob_arrow = parent[index + 1]
         if tl.identifier_of(prob_arrow, "->"):
-            builder.add_node(ast.FunctionTypeExpr(params, lf))
+            builder.add_node(ast.FunctionTypeExpr(params, lfp))
             return index
 
         index += 1
-        rtype_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        rtype_list = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
         while not (tl.is_brace(parent[index]) or tl.identifier_of(parent[index], ";")):
             rtype_list.append(parent[index])
             index += 1
@@ -124,14 +124,14 @@ class Parser:
             body = self.parse_as_block(body_list)
 
         if not abstract and body is None:
-            raise errs.TplSyntaxError("Non-abstract method must have body. ", lf)
+            raise errs.TplSyntaxError("Non-abstract method must have body. ", lfp)
         if abstract and body is not None:
-            raise errs.TplSyntaxError("Abstract method must not have body. ", lf)
+            raise errs.TplSyntaxError("Abstract method must not have body. ", lfp)
 
-        builder.add_node(ast.FunctionDef(fn_name, params, rtype, abstract, const, permission, body, lf))
+        builder.add_node(ast.FunctionDef(fn_name, params, rtype, abstract, const, permission, body, lfp))
         return index
 
-    def process_class(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf):
+    def process_class(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp):
         abstract = self.abstract
         self.abstract = False
         index += 1
@@ -149,34 +149,34 @@ class Parser:
             index += 1
             next_ele = parent[index]
         body = self.parse_as_block(next_ele)
-        class_stmt = ast.ClassStmt(name, extensions, templates, abstract, body, lf)
+        class_stmt = ast.ClassStmt(name, extensions, templates, abstract, body, lfp)
         builder.add_node(class_stmt)
         return index
 
-    def process_eol(self, p, i, builder: ab.AstBuilder, lf):
+    def process_eol(self, p, i, builder: ab.AstBuilder, lfp):
         builder.finish_part()
         builder.finish_line()
         self.var_level = ast.VAR_VAR
 
-    def process_comma(self, p, i, builder: ab.AstBuilder, lf):
+    def process_comma(self, p, i, builder: ab.AstBuilder, lfp):
         builder.finish_part()
 
-    def process_var(self, p, i, b, lf):
+    def process_var(self, p, i, b, lfp):
         self.var_level = ast.VAR_VAR
 
-    def process_const(self, p, i, b, lf):
+    def process_const(self, p, i, b, lfp):
         self.var_level = ast.VAR_CONST
 
-    def process_if_stmt(self, parent: tl.CollectiveElement, index, builder, lf):
+    def process_if_stmt(self, parent: tl.CollectiveElement, index, builder, lfp):
         index += 1
-        condition_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        condition_list = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
         item = parent[index]
         while not (isinstance(item, tl.CollectiveElement) and item.is_brace()):
             condition_list.append(item)
             index += 1
             item = parent[index]
             if tl.identifier_of(item, "then"):  # is a if-expr instead of if-stmt
-                return self.process_if_expr(condition_list, parent, index, builder, lf)
+                return self.process_if_expr(condition_list, parent, index, builder, lfp)
         cond = self.parse_as_part(condition_list)
         body = self.parse_as_block(item)
         if index + 1 < len(parent) and tl.identifier_of(parent[index + 1], "else"):
@@ -184,35 +184,35 @@ class Parser:
             else_block = self.parse_as_block(parent[index])
         else:
             else_block = None
-        ifs = ast.IfStmt(cond, body, else_block, lf)
+        ifs = ast.IfStmt(cond, body, else_block, lfp)
         builder.add_node(ifs)
         return index
 
     def process_if_expr(self, cond_list: tl.CollectiveElement,
-                        parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+                        parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
         cond = self.parse_as_part(cond_list)
         index += 1
-        then_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        then_list = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
         while not tl.identifier_of(parent[index], "else"):
             then_list.append(parent[index])
             index += 1
         then_expr = self.parse_as_part(then_list)
         index += 1
-        else_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        else_list = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
         while index < len(parent) and not tl.identifier_of(parent[index], ";"):
             else_list.append(parent[index])
             index += 1
         else_expr = self.parse_as_part(else_list)
-        ife = ast.IfExpr(cond, then_expr, else_expr, lf)
+        ife = ast.IfExpr(cond, then_expr, else_expr, lfp)
         builder.add_node(ife)
         if index < len(parent):  # last loop terminated by a ';', add an eol
-            self.process_eol(parent, index, builder, lf)
+            self.process_eol(parent, index, builder, lfp)
         return index
 
-    def process_while_stmt(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+    def process_while_stmt(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
         index += 1
         item = parent[index]
-        cond_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        cond_list = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
         while not (isinstance(item, tl.CollectiveElement) and item.is_brace()):
             cond_list.append(item)
             index += 1
@@ -220,14 +220,14 @@ class Parser:
 
         cond = self.parse_as_part(cond_list)
         body = self.parse_as_block(item)
-        builder.add_node(ast.WhileStmt(cond, body, lf))
+        builder.add_node(ast.WhileStmt(cond, body, lfp))
 
         return index
 
-    def process_for_stmt(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+    def process_for_stmt(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
         index += 1
         item = parent[index]
-        cond_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        cond_list = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
         while not (isinstance(item, tl.CollectiveElement) and item.is_brace()):
             cond_list.append(item)
             index += 1
@@ -235,67 +235,67 @@ class Parser:
 
         cond = self.parse_as_block(cond_list)
         body = self.parse_as_block(item)
-        builder.add_node(ast.ForStmt(cond, body, lf))
+        builder.add_node(ast.ForStmt(cond, body, lfp))
 
         return index
 
-    def process_break(self, p, i, builder: ab.AstBuilder, lf):
-        builder.add_node(ast.BreakStmt(lf))
+    def process_break(self, p, i, builder: ab.AstBuilder, lfp):
+        builder.add_node(ast.BreakStmt(lfp))
 
-    def process_continue(self, p, i, builder: ab.AstBuilder, lf):
-        builder.add_node(ast.ContinueStmt(lf))
+    def process_continue(self, p, i, builder: ab.AstBuilder, lfp):
+        builder.add_node(ast.ContinueStmt(lfp))
 
-    def process_fallthrough(self, p, i, builder: ab.AstBuilder, lf):
-        builder.add_node(ast.FallthroughStmt(lf))
+    def process_fallthrough(self, p, i, builder: ab.AstBuilder, lfp):
+        builder.add_node(ast.FallthroughStmt(lfp))
 
-    def process_require(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+    def process_require(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
         index += 1
         item = parent[index]
         if isinstance(item, tl.CollectiveElement):
             content = self.parse_as_block(item)
         else:
-            bracket = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+            bracket = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
             bracket.append(item)
             index += 1
             while not tl.identifier_of(parent[index], ";"):
                 bracket.append(parent[index])
                 index += 1
             content = self.parse_as_part(bracket)
-        builder.add_node(ast.RequireStmt(content, lf))
-        self.process_eol(parent, index, builder, lf)
+        builder.add_node(ast.RequireStmt(content, lfp))
+        self.process_eol(parent, index, builder, lfp)
         return index
 
-    def process_import(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+    def process_import(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
         file_atom: tl.AtomicElement = parent[index + 1]
         file_tk: tl.StrToken = file_atom.atom
         includes: tl.CollectiveElement = parent[index + 2]
         included_block = self.parse_as_block(includes)
-        builder.add_node(ast.ImportStmt(file_tk.value, included_block, lf))
+        builder.add_node(ast.ImportStmt(file_tk.value, included_block, lfp))
 
         return index + 2
 
-    def process_export(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
+    def process_export(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
         index += 1
         ele = parent[index]
         if tl.is_brace(ele):
             block = self.parse_as_block(ele)
-            builder.add_node(ast.ExportStmt(block, lf))
+            builder.add_node(ast.ExportStmt(block, lfp))
         elif isinstance(ele, tl.AtomicElement) and isinstance(ele.atom, tl.IdToken):
-            block = ast.BlockStmt(lf)
-            line = ast.Line(lf)
-            line.parts.append(ast.NameNode(ele.atom.identifier, lf))
+            block = ast.BlockStmt(lfp)
+            line = ast.Line(lfp)
+            line.parts.append(ast.NameNode(ele.atom.identifier, lfp))
             block.lines.append(line)
-            builder.add_node(ast.ExportStmt(block, lf))
+            builder.add_node(ast.ExportStmt(block, lfp))
         else:
-            raise errs.TplCompileError("Invalid export. ", lf)
+            raise errs.TplCompileError("Invalid export. ", lfp)
 
         return index
 
-    def process_super(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lf: tl.LineFile):
-        builder.add_node(ast.SuperExpr(lf))
+    def process_super(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
+        builder.add_node(ast.SuperExpr(lfp))
 
     def _process_inc_dec_operator(self, op, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
-                                  lf: tl.LineFile):
+                                  lfp: tl.LineFilePos):
         if index == 0:  # e.g.  ++i;
             post = False
         elif index == len(parent) - 1:
@@ -306,34 +306,34 @@ class Parser:
             elif is_call_obj(parent[index + 1]):
                 post = False
             else:
-                raise errs.TplParseError(f"Invalid syntax with {op}. ", lf)
+                raise errs.TplParseError(f"Invalid syntax with {op}. ", lfp)
         if post:
-            builder.add_node(ast.PostIncDecOperator(op, lf))
+            builder.add_node(ast.PostIncDecOperator(op, lfp))
         else:
-            builder.add_node(ast.PreIncDecOperator(op, lf))
+            builder.add_node(ast.PreIncDecOperator(op, lfp))
 
     def process_inc_operator(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
-                             lf: tl.LineFile):
-        return self._process_inc_dec_operator("++", parent, index, builder, lf)
+                             lfp: tl.LineFilePos):
+        return self._process_inc_dec_operator("++", parent, index, builder, lfp)
 
     def process_dec_operator(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
-                             lf: tl.LineFile):
-        return self._process_inc_dec_operator("--", parent, index, builder, lf)
+                             lfp: tl.LineFilePos):
+        return self._process_inc_dec_operator("--", parent, index, builder, lfp)
 
     def process_annotation(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
-                           lf: tl.LineFile):
+                           lfp: tl.LineFilePos):
         index += 1
         ele = parent[index]
         return index
 
     def process_instanceof(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
-                           lf: tl.LineFile):
-        builder.add_node(ast.InstanceOfExpr(lf))
+                           lfp: tl.LineFilePos):
+        builder.add_node(ast.InstanceOfExpr(lfp))
 
     def process_switch(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
-                       lf: tl.LineFile):
+                       lfp: tl.LineFilePos):
         index += 1
-        cond_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        cond_list = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
         ele = parent[index]
         while not tl.is_brace(ele):
             cond_list.append(ele)
@@ -342,15 +342,15 @@ class Parser:
         cond = self.parse_as_part(cond_list)
         body_block = self.parse_as_block(ele)
 
-        res = ab.parse_switch(cond, body_block, lf)
+        res = ab.parse_switch(cond, body_block, lfp)
         builder.add_node(res)
 
         return index
 
     def process_case(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
-                     lf: tl.LineFile):
+                     lfp: tl.LineFilePos):
         index += 1
-        cond_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+        cond_list = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
         ele = parent[index]
         while not (tl.is_brace(ele) or tl.identifier_of(ele, "->")):
             cond_list.append(ele)
@@ -362,40 +362,40 @@ class Parser:
             ele = parent[index]
             if tl.is_brace(ele):
                 body_block = self.parse_as_block(ele)
-                builder.add_node(ast.CaseExpr(body_block, lf, cond))
+                builder.add_node(ast.CaseExpr(body_block, lfp, cond))
             else:
-                body_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+                body_list = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
                 while not tl.identifier_of(ele, ";"):
                     body_list.append(ele)
                     index += 1
                     ele = parent[index]
-                builder.add_node(ast.CaseExpr(self.parse_as_part(body_list), lf, cond))
+                builder.add_node(ast.CaseExpr(self.parse_as_part(body_list), lfp, cond))
         else:  # case stmt
             body_block = self.parse_as_block(ele)
-            builder.add_node(ast.CaseStmt(body_block, lf, cond))
+            builder.add_node(ast.CaseStmt(body_block, lfp, cond))
 
         return index
 
     def process_default(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,
-                        lf: tl.LineFile):
+                        lfp: tl.LineFilePos):
         index += 1
         ele = parent[index]
         if tl.is_brace(ele):
-            builder.add_node(ast.CaseStmt(self.parse_as_block(ele), lf))
+            builder.add_node(ast.CaseStmt(self.parse_as_block(ele), lfp))
         elif tl.identifier_of(ele, "->"):
             index += 1
             ele = parent[index]
             if tl.is_brace(ele):
-                builder.add_node(ast.CaseExpr(self.parse_as_block(ele), lf))
+                builder.add_node(ast.CaseExpr(self.parse_as_block(ele), lfp))
             else:
-                body_list = tl.CollectiveElement(tl.CE_BRACKET, lf, None)
+                body_list = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
                 while not tl.identifier_of(ele, ";"):
                     body_list.append(ele)
                     index += 1
                     ele = parent[index]
-                builder.add_node(ast.CaseExpr(self.parse_as_part(body_list), lf))
+                builder.add_node(ast.CaseExpr(self.parse_as_part(body_list), lfp))
         else:
-            raise errs.TplParseError("Invalid syntax of 'default'. ", lf)
+            raise errs.TplParseError("Invalid syntax of 'default'. ", lfp)
 
         return index
 
@@ -433,69 +433,69 @@ class Parser:
         ele: tl.Element = parent[index]
         if isinstance(ele, tl.AtomicElement):
             token = ele.atom
-            lf = token.lf
+            lfp = token.lfp
             if isinstance(token, tl.IntToken):
-                builder.add_node(ast.FakeIntLit(token.value, lf))
+                builder.add_node(ast.FakeIntLit(token.value, lfp))
             elif isinstance(token, tl.FloatToken):
-                builder.add_node(ast.FakeFloatLit(token.value, lf))
+                builder.add_node(ast.FakeFloatLit(token.value, lfp))
             elif isinstance(token, tl.CharToken):
-                builder.add_node(ast.FakeCharLit(token.char, lf))
+                builder.add_node(ast.FakeCharLit(token.char, lfp))
             elif isinstance(token, tl.ByteToken):
-                builder.add_node(ast.FakeByteLit(token.value, lf))
+                builder.add_node(ast.FakeByteLit(token.value, lfp))
             elif isinstance(token, tl.StrToken):
-                builder.add_node(ast.FakeStrLit(token.value, lf))
+                builder.add_node(ast.FakeStrLit(token.value, lfp))
             elif isinstance(token, tl.IdToken):
                 symbol = token.identifier
                 if symbol == "-":
                     if index < 1 or is_unary(parent[index - 1]):
-                        builder.add_node(ast.UnaryOperator("neg", ast.UNA_ARITH, lf))
+                        builder.add_node(ast.UnaryOperator("neg", ast.UNA_ARITH, lfp))
                     else:
-                        builder.add_node(ast.BinaryOperator("-", ast.BIN_ARITH, lf))
+                        builder.add_node(ast.BinaryOperator("-", ast.BIN_ARITH, lfp))
                 elif symbol == "*":
                     if index < 1 or is_unary(parent[index - 1]):
-                        builder.add_node(ast.StarExpr(lf))
+                        builder.add_node(ast.StarExpr(lfp))
                     else:
-                        builder.add_node(ast.BinaryOperator("*", ast.BIN_ARITH, lf))
+                        builder.add_node(ast.BinaryOperator("*", ast.BIN_ARITH, lfp))
                 elif symbol == "&":
                     if index < 1 or is_unary(parent[index - 1]):
-                        builder.add_node(ast.AddrExpr(lf))
+                        builder.add_node(ast.AddrExpr(lfp))
                     else:
-                        builder.add_node(ast.BinaryOperator("&", ast.BIN_BITWISE, lf))
+                        builder.add_node(ast.BinaryOperator("&", ast.BIN_BITWISE, lfp))
                 elif symbol in tl.ARITH_BINARY:
-                    builder.add_node(ast.BinaryOperator(symbol, ast.BIN_ARITH, lf))
+                    builder.add_node(ast.BinaryOperator(symbol, ast.BIN_ARITH, lfp))
                 elif symbol in tl.LOGICAL_BINARY:
-                    builder.add_node(ast.BinaryOperator(symbol, ast.BIN_LOGICAL, lf))
+                    builder.add_node(ast.BinaryOperator(symbol, ast.BIN_LOGICAL, lfp))
                 elif symbol in tl.BITWISE_BINARY:
-                    builder.add_node(ast.BinaryOperator(symbol, ast.BIN_BITWISE, lf))
+                    builder.add_node(ast.BinaryOperator(symbol, ast.BIN_BITWISE, lfp))
                 elif symbol in tl.LAZY_BINARY:
-                    builder.add_node(ast.BinaryOperator(symbol, ast.BIN_LAZY, lf))
+                    builder.add_node(ast.BinaryOperator(symbol, ast.BIN_LAZY, lfp))
                 elif symbol in tl.ARITH_UNARY:
-                    builder.add_node(ast.UnaryOperator(symbol, ast.UNA_ARITH, lf))
+                    builder.add_node(ast.UnaryOperator(symbol, ast.UNA_ARITH, lfp))
                 elif symbol in tl.LOGICAL_UNARY:
-                    builder.add_node(ast.UnaryOperator(symbol, ast.UNA_LOGICAL, lf))
+                    builder.add_node(ast.UnaryOperator(symbol, ast.UNA_LOGICAL, lfp))
                 elif symbol in tl.ARITH_BINARY_ASS:
-                    builder.add_node(ast.BinaryOperatorAssignment(symbol, ast.BIN_ARITH, lf))
+                    builder.add_node(ast.BinaryOperatorAssignment(symbol, ast.BIN_ARITH, lfp))
                 elif symbol in tl.BITWISE_BINARY_ASS:
-                    builder.add_node(ast.BinaryOperatorAssignment(symbol, ast.BIN_BITWISE, lf))
+                    builder.add_node(ast.BinaryOperatorAssignment(symbol, ast.BIN_BITWISE, lfp))
                 elif symbol in self.special_binary:
                     node_class = self.special_binary[symbol]
-                    builder.add_node(node_class(lf))
+                    builder.add_node(node_class(lfp))
                 elif symbol in self.special_unary:
                     node_class = self.special_unary[symbol]
-                    builder.add_node(node_class(lf))
+                    builder.add_node(node_class(lfp))
                 elif symbol in self.symbol_lib:
                     ftn = self.symbol_lib[symbol]
-                    res = ftn(parent, index, builder, lf)
+                    res = ftn(parent, index, builder, lfp)
                     if res:
                         index = res
                 else:
-                    builder.add_node(ast.NameNode(symbol, lf))
+                    builder.add_node(ast.NameNode(symbol, lfp))
 
             else:
                 raise Exception("Unexpected error. ")
         elif isinstance(ele, tl.CollectiveElement):
             if ele.is_bracket():
-                lf = ele.lfp
+                lfp = ele.lfp
                 if index > 0:
                     prob_call_obj = parent[index - 1]
                     if tl.is_arrow_bracket(prob_call_obj):
@@ -504,29 +504,29 @@ class Parser:
                     if is_call_obj(prob_call_obj):
                         args = self.parse_as_line(ele)
                         call_obj = builder.remove_last()
-                        call = ast.FunctionCall(call_obj, args, lf)
+                        call = ast.FunctionCall(call_obj, args, lfp)
                         builder.add_node(call)
                         return index + 1
                 parenthesis = self.parse_as_part(ele)
                 builder.add_node(parenthesis)
             elif ele.is_sqr_bracket():
-                lf = ele.lfp
+                lfp = ele.lfp
                 if index > 0:
                     prob_call_obj = parent[index - 1]
                     if is_call_obj(prob_call_obj):
                         args = self.parse_as_line(ele)
                         call_obj = builder.remove_last()
-                        call = ast.IndexingExpr(call_obj, args, lf)
+                        call = ast.IndexingExpr(call_obj, args, lfp)
                         builder.add_node(call)
                         return index + 1
             elif ele.is_arrow_bracket():
-                lf = ele.lfp
+                lfp = ele.lfp
                 if index > 0:
                     prob_call_obj = parent[index - 1]
                     if is_call_obj(prob_call_obj):
                         args = self.parse_as_line(ele)
                         call_obj = builder.remove_last()
-                        call = ast.GenericNode(call_obj, args, lf)
+                        call = ast.GenericNode(call_obj, args, lfp)
                         builder.add_node(call)
                         return index + 1
         else:

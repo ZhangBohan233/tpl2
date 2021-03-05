@@ -1,7 +1,9 @@
 ﻿import lang;
 
+
+
 abstract class Iterator<T> {
-    abstract fn hasNext() int;
+    abstract fn hasNext() boolean;
 
     abstract fn next() *T;
 }

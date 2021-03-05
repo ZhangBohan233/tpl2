@@ -1,4 +1,9 @@
-﻿===== VERSION 2054 =====
+﻿===== VERSION 2055 =====
+2021/03/06
+
+* Fixed macro exporting bug
+
+===== VERSION 2054 =====
 2021/03/06
 
 * Updated 'LineFile' to 'LineFilePos'

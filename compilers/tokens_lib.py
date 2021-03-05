@@ -82,16 +82,16 @@ LF_COMPILER = LineFilePos("Compiler")
 
 
 class Token:
-    def __init__(self, lf):
-        self.lf: LineFilePos = lf
+    def __init__(self, lfp):
+        self.lfp: LineFilePos = lfp
 
     def __repr__(self):
         return self.__str__()
 
 
 class CharToken(Token):
-    def __init__(self, char: str, lf):
-        super().__init__(lf)
+    def __init__(self, char: str, lfp):
+        super().__init__(lfp)
 
         self.char = char
 
@@ -100,8 +100,8 @@ class CharToken(Token):
 
 
 class IntToken(Token):
-    def __init__(self, v: str, lf):
-        super().__init__(lf)
+    def __init__(self, v: str, lfp):
+        super().__init__(lfp)
 
         self.value = int(v)
 
@@ -110,8 +110,8 @@ class IntToken(Token):
 
 
 class ByteToken(Token):
-    def __init__(self, v: str, lf):
-        super().__init__(lf)
+    def __init__(self, v: str, lfp):
+        super().__init__(lfp)
 
         self.value = int(v)
 
@@ -120,8 +120,8 @@ class ByteToken(Token):
 
 
 class FloatToken(Token):
-    def __init__(self, v: str, lf):
-        super().__init__(lf)
+    def __init__(self, v: str, lfp):
+        super().__init__(lfp)
 
         self.value = float(v)
 
@@ -130,8 +130,8 @@ class FloatToken(Token):
 
 
 class IdToken(Token):
-    def __init__(self, v: str, lf):
-        super().__init__(lf)
+    def __init__(self, v: str, lfp):
+        super().__init__(lfp)
 
         self.identifier = v
 
@@ -140,8 +140,8 @@ class IdToken(Token):
 
 
 class StrToken(Token):
-    def __init__(self, v: str, lf):
-        super().__init__(lf)
+    def __init__(self, v: str, lfp):
+        super().__init__(lfp)
 
         self.value = v
 

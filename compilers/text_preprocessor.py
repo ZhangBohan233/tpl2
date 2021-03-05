@@ -62,11 +62,11 @@ def get_name_list(lst: tl.CollectiveElement) -> list:
 
 class FileTextPreprocessor:
     def __init__(self, tokens: tl.CollectiveElement, pref: dict,
-                 included_files: set = None, macros: MacroEnv = None):
+                 included_files: {} = None, macros: MacroEnv = None):
         self.root = tokens
 
         self.pref = pref  # should contain "tpc_path", "main_dir", "import_lang"
-        self.included_files = included_files if included_files is not None else set()
+        self.included_files = included_files if included_files is not None else {}
         self.macros = macros if macros is not None else MacroEnv()
 
     def preprocess(self) -> tl.CollectiveElement:
@@ -77,7 +77,7 @@ class FileTextPreprocessor:
         if isinstance(ele, tl.AtomicElement):
             if isinstance(ele.atom, tl.IdToken):
                 symbol = ele.atom.identifier
-                lf = ele.atom.lf
+                lf = ele.atom.lfp
                 if symbol == "macro":
                     index += 1
                     name_ele = parent[index]
@@ -181,7 +181,6 @@ class FileTextPreprocessor:
             raise errs.TplTokenizeError(f"File '{file}' does not exist. ", lf)
 
         if file not in self.included_files:
-            self.included_files.add(file)
             lexer = tkn.FileTokenizer(file, self.pref["import_lang"])
             tokens = lexer.tokenize()
 
@@ -189,12 +188,16 @@ class FileTextPreprocessor:
             txt_p = FileTextPreprocessor(tokens, self.pref, self.included_files, module_macros)
             processed_tks = txt_p.preprocess()
 
-            for en in module_macros.export_names:
-                self.macros.add_macro(en, module_macros.get_macro(en), lf)
+            self.included_files[file] = module_macros
 
             result_parent.append(tl.AtomicElement(tl.IdToken("import", lf), result_parent))
             result_parent.append(tl.AtomicElement(tl.StrToken(file, lf), result_parent))
             result_parent.append(processed_tks)
+
+        module_macros = self.included_files[file]
+        # print(file, module_macros.export_names)
+        for en in module_macros.export_names:
+            self.macros.add_macro(en, module_macros.get_macro(en), lf)
 
     def process_block(self, block: tl.CollectiveElement, result_parent: tl.CollectiveElement) -> tl.CollectiveElement:
         result = tl.CollectiveElement(block.ce_type, block.lfp, result_parent)

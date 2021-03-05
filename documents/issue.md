@@ -26,5 +26,5 @@ fn main() int {
 
 ## Macro
 
-### ISSUE M01
+### ~~ISSUE M01~~ FIXED
 exportmacro does not work

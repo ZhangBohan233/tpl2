@@ -1,6 +1,5 @@
 import os
 import compilers.errors as errs
-import compilers.util as util
 import compilers.tokens_lib as tl
 
 
@@ -53,32 +52,32 @@ class FileTokenizer:
         if isinstance(tk, tl.IdToken):
             symbol = tk.identifier
             if symbol == "(":
-                return tl.CollectiveElement(tl.CE_BRACKET, tk.lf, cur_active)
+                return tl.CollectiveElement(tl.CE_BRACKET, tk.lfp, cur_active)
             if symbol == "[":
-                return tl.CollectiveElement(tl.CE_SQR_BRACKET, tk.lf, cur_active)
+                return tl.CollectiveElement(tl.CE_SQR_BRACKET, tk.lfp, cur_active)
             if symbol == "{":
-                return tl.CollectiveElement(tl.CE_BRACE, tk.lf, cur_active)
+                return tl.CollectiveElement(tl.CE_BRACE, tk.lfp, cur_active)
             if symbol == ")":
                 if cur_active.ce_type == tl.CE_BRACKET:
                     cur_active.parent.append(cur_active)
                     return cur_active.parent
                 else:
-                    raise errs.TplSyntaxError("Parenthesis does not close. ", tk.lf)
+                    raise errs.TplSyntaxError("Parenthesis does not close. ", tk.lfp)
             if symbol == "]":
                 if cur_active.ce_type == tl.CE_SQR_BRACKET:
                     cur_active.parent.append(cur_active)
                     return cur_active.parent
                 else:
-                    raise errs.TplSyntaxError("Parenthesis does not close. ", tk.lf)
+                    raise errs.TplSyntaxError("Parenthesis does not close. ", tk.lfp)
             if symbol == "}":
                 if cur_active.ce_type == tl.CE_BRACE:
                     cur_active.parent.append(cur_active)
                     return cur_active.parent
                 else:
-                    raise errs.TplSyntaxError("Parenthesis does not close. ", tk.lf)
+                    raise errs.TplSyntaxError("Parenthesis does not close. ", tk.lfp)
             if symbol == "<":
                 if has_closing_arrow(self.tokens, index):
-                    return tl.CollectiveElement(tl.CE_ARROW_BRACKET, tk.lf, cur_active)
+                    return tl.CollectiveElement(tl.CE_ARROW_BRACKET, tk.lfp, cur_active)
             if symbol == ">":
                 if tl.is_arrow_bracket(cur_active):
                     cur_active.parent.append(cur_active)
