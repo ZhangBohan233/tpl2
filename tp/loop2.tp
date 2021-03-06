@@ -2,10 +2,20 @@
 import collections;
 
 fn main() int {
-    lst := new List<Char>();
+    lst := new List<Byte>();
     for i := 0; i < 20; i++ {
-        lst.append(new Char((i + 97) as char));
+        lst.append(new Byte((i - 10) as byte));
     }
-    println(lst);
+    for b: *Byte in lst {
+        println(b);
+    }
+    a := new int[3];
+    for i := 0; i < a.length; i++ {
+        ele: int = a[i];
+        println(ele);
+    }
+    for ele: int in a {
+        println(ele);
+    }
     return lst.size();
 }

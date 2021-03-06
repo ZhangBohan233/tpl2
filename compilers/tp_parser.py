@@ -236,7 +236,12 @@ class Parser:
 
         cond = self.parse_as_block(cond_list)
         body = self.parse_as_block(item)
-        builder.add_node(ast.ForStmt(cond, body, lfp))
+        if len(cond) == 3:
+            builder.add_node(ast.ForStmt(cond[0], cond[1], cond[2], body, lfp))
+        elif len(cond) == 1 and len(cond[0]) == 1 and isinstance(cond[0][0], ast.InStmt):
+            builder.add_node(ast.ForEachStmt(cond[0][0], body, lfp))
+        else:
+            raise errs.TplCompileError("For loop title must contains 3 parts. ", lfp)
 
         return index
 

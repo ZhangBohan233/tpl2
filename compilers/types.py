@@ -67,8 +67,8 @@ class Type:
         else:
             return False
 
-    def check_convertibility(self, left_tar_type, lf) -> None:
-        if not self.convertible_to(left_tar_type, lf):
+    def check_convertibility(self, left_tar_type, lf, normal=True, weak=True) -> None:
+        if not self.convertible_to(left_tar_type, lf, normal=normal, weak=weak):
             raise errs.TplCompileError(f"Cannot convert '{self}' to '{left_tar_type}'. ", lf)
 
     def type_name(self):
@@ -571,7 +571,31 @@ def replace_generic_with_real(t: Type, real_generics: dict, lfp) -> Type:
             util.print_warning("Unchecked call.", lfp)
             return t.max_t
     else:
-        raise errs.TplCompileError("Unexpected error.")
+        raise errs.TplCompileError("Unexpected error. ", lfp)
+
+
+def is_generic_type(t: Type) -> bool:
+    if isinstance(t, PointerType):
+        return is_generic_type(t.base)
+    return isinstance(t, GenericClassType)
+
+
+def replace_callee_generic_class(t: Type, caller_class_t: GenericClassType, lfp) -> Type:
+    if isinstance(t, PointerType):
+        return PointerType(replace_callee_generic_class(t.base, caller_class_t, lfp))
+    elif isinstance(t, GenericClassType):
+        new_generics = {}
+        for key in t.generics:
+            value = t.generics[key]
+            if is_generic(value):
+                replaced = replace_generic_with_real(value, caller_class_t.generics, lfp)
+            else:
+                replaced = value
+            new_generics[key] = replaced
+
+        return GenericClassType(t.base, new_generics)
+    else:
+        raise errs.TplCompileError("Unexpected error. ", lfp)
 
 
 def index_in_generic_list(name: str, generics: list) -> int:

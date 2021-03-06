@@ -1190,8 +1190,10 @@ class DotExpr(BinaryExpr):
                     name = right_node.get_name()
                     pos, ptr, t = struct_t.base.find_method(name, arg_types, lf)
                     t: typ.MethodType
-                    if typ.is_generic(t.rtype):
+                    if typ.is_generic(t.rtype):  # rtype such as *T;
                         return typ.replace_generic_with_real(t.rtype, struct_t.generics, lf)
+                    if typ.is_generic_type(t.rtype):
+                        return typ.replace_callee_generic_class(t.rtype, struct_t, lf)
                     return t.rtype
         elif isinstance(left_t, typ.ArrayType) and isinstance(right_node, NameNode):
             return array_attribute_types(right_node.name, lf)
@@ -1504,6 +1506,8 @@ class ClassStmt(Statement):
         # print(self.name, templates_map)
 
         def get_actual(tem_name):
+            if tem_name not in templates_map:
+                raise errs.TplCompileError(f"Unexpected template: {tem_name}", self.lfp)
             actual = templates_map[tem_name]
             if isinstance(actual, str):
                 return get_actual(actual)
@@ -2020,17 +2024,75 @@ class WhileStmt(Statement):
         return "while {} {}".format(self.condition, self.body)
 
 
+class ForEachStmt(Statement):
+    def __init__(self, title: InStmt, body: BlockStmt, lfp):
+        super().__init__(lfp)
+
+        self.title = title
+        self.body = body
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        if not isinstance(self.title.left, Declaration):
+            raise errs.TplCompileError("Left side of 'in' must be declaration. ", self.lfp)
+        if not isinstance(self.title.right, Expression):
+            raise errs.TplCompileError("Right side of 'in' must be expression. ", self.lfp)
+
+        rt = self.title.right.evaluated_type(env, tpa.manager)
+        if isinstance(rt, typ.PointerType):
+            itr_name = ForEachStmt.iter_name(env)
+
+            init = QuickAssignment(self.lfp)
+            init.left = NameNode(itr_name, self.lfp)
+            init.right = DotExpr(self.lfp)
+            init.right.left = self.title.right
+            init.right.right = FunctionCall(NameNode("iter", self.lfp), Line(self.lfp), self.lfp)
+
+            cond = DotExpr(self.lfp)
+            cond.left = NameNode(itr_name, self.lfp)
+            cond.right = FunctionCall(NameNode("hasNext", self.lfp), Line(self.lfp), self.lfp)
+
+            step = Line(self.lfp)
+
+            assignment = Assignment(self.lfp)
+            assignment.left = self.title.left
+            assignment.right = DotExpr(self.lfp)
+            assignment.right.left = NameNode(itr_name, self.lfp)
+            assignment.right.right = FunctionCall(NameNode("next", self.lfp), Line(self.lfp), self.lfp)
+
+            self.body.lines.insert(0, assignment)
+
+            for_stmt = ForStmt(init, cond, step, self.body, self.lfp)
+            return for_stmt.compile(env, tpa)
+        elif isinstance(rt, typ.ArrayType):
+            itr_name = ForEachStmt.iter_name(env)
+            return
+
+        raise errs.TplCompileError(f"Type {rt} is not iterable. ", self.lfp)
+
+    @staticmethod
+    def iter_name(env):
+        itr_count = 0
+        itr_name = f"itr#{itr_count}"
+        while env.has_name(itr_name):
+            itr_count += 1
+            itr_name = f"itr#{itr_count}"
+        return itr_name
+
+    def return_check(self):
+        return self.body.return_check()
+
+    def __str__(self):
+        return f"for {self.title} {self.body}"
+
+
 class ForStmt(Statement):
-    def __init__(self, title: BlockStmt, body: BlockStmt, lf):
-        super().__init__(lf)
+    def __init__(self, init, cond, step, body: BlockStmt, lfp):
+        super().__init__(lfp)
 
         self.body = body
-        if len(title) == 3:
-            self.init: Node = title[0]
-            self.cond: Expression = title[1]
-            self.step: Node = title[2]
-        else:
-            raise errs.TplCompileError("For loop title must contains 3 parts. ", lf)
+        self.init: Node = init
+        self.cond: Expression = cond
+        self.step: Node = step
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         loop_title_label = tpa.manager.label_manager.loop_title_label()
@@ -2612,9 +2674,14 @@ class ClassObject:
             method_def.compile(self.class_env, self.tpa)
             name = method_def.get_simple_name()
 
-            placer: typ.FunctionPlacer = self.class_env.get_type(name, self.lfp)
+            placer = self.class_env.get_type(name, self.lfp)
+            assert isinstance(placer, typ.FunctionPlacer)
             method_t = method_def.evaluated_type(self.class_env, self.tpa.manager)
-            method_ptr = placer.poly[method_t]
+            try:
+                method_ptr = placer.poly[method_t]
+            except IndexError:
+                raise errs.TplCompileError(
+                    f"Cannot resolve call: {typ.function_poly_name(name, method_t.param_types, True)}. ")
 
             self.local_method_full_names.append(
                 util.name_with_path(

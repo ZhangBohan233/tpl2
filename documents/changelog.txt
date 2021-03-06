@@ -1,4 +1,12 @@
-﻿===== VERSION 2056 =====
+﻿===== VERSION 2057 =====
+2021/03/07
+
+* Bug fixes:
+    * Fixed generic class creation in generic class
+* Implemented iterable and iterator
+* Implemented for each loop for iterable classes
+
+===== VERSION 2056 =====
 2021/03/06
 
 * Fixed conversion between generic types and normal types

@@ -309,6 +309,10 @@ Returns the memory segment of this pointer is pointed to
 mem_copy(src: *void, srcIndexBytes: int, dst: *void, dstIndexBytes: int, lengthBytes: int) void;
 */
 
+fn println() void {
+    println("");
+}
+
 fn print(value: int) void {
     print_int(value);
 }
