@@ -27,23 +27,6 @@ class ArrayIterator<T>(Iterator<T>) {
     }
 }
 
-class IntArrayIterator {
-    private array: int[];
-    index: int = 0;
-
-    fn __new__(array: int[]) void {
-        this.array = array;
-    }
-
-    fn hasNext() boolean {
-        return this.index < this.array.length;
-    }
-
-    fn next() int {
-        return this.array[this.index++];
-    }
-}
-
 abstract class Collection<T>(Iterable<T>) {
     abstract fn size() int;
 }

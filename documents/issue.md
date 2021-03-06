@@ -24,7 +24,17 @@ fn main() int {
 }
 ```
 
+## Array
+
+### ISSUE A01
+Heap array creation does not check valid argument.
+
+E.g.
+```
+array := int[];  // should throw error but not
+```
+
 ## Macro
 
 ### ~~ISSUE M01~~ FIXED
-exportmacro does not work
+`exportmacro does` not work

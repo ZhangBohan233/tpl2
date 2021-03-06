@@ -553,12 +553,16 @@ def is_object_ptr(t: Type) -> bool:
 def is_generic(t: Type) -> bool:
     if isinstance(t, PointerType):
         return is_generic(t.base)
+    elif isinstance(t, ArrayType):
+        return is_generic(t.ele_type)
     return isinstance(t, Generic)
 
 
 def replace_generic_with_real(t: Type, real_generics: dict, lfp) -> Type:
     if isinstance(t, PointerType):
         return PointerType(replace_generic_with_real(t.base, real_generics, lfp))
+    elif isinstance(t, ArrayType):
+        return ArrayType(replace_generic_with_real(t.ele_type, real_generics, lfp))
     elif isinstance(t, Generic):
         # print(t.simple_name(), real_generics)
         if real_generics is not None and t.full_name() in real_generics:
@@ -577,12 +581,16 @@ def replace_generic_with_real(t: Type, real_generics: dict, lfp) -> Type:
 def is_generic_type(t: Type) -> bool:
     if isinstance(t, PointerType):
         return is_generic_type(t.base)
+    elif isinstance(t, ArrayType):
+        return is_generic_type(t.ele_type)
     return isinstance(t, GenericClassType)
 
 
 def replace_callee_generic_class(t: Type, caller_class_t: GenericClassType, lfp) -> Type:
     if isinstance(t, PointerType):
         return PointerType(replace_callee_generic_class(t.base, caller_class_t, lfp))
+    elif isinstance(t, ArrayType):
+        return ArrayType(replace_callee_generic_class(t.ele_type, caller_class_t, lfp))
     elif isinstance(t, GenericClassType):
         new_generics = {}
         for key in t.generics:

@@ -457,9 +457,6 @@ class BinaryBuildable(Buildable):
     def fulfilled(self):
         return self.left is not None and self.right is not None
 
-    def __str__(self):
-        return "BE({} {} {})".format(self.left, self.op, self.right)
-
 
 class UnaryExpr(Expression, UnaryBuildable, ABC):
     def __init__(self, op: str, lf, operator_at_left=True):
@@ -481,11 +478,17 @@ class BinaryExpr(Expression, BinaryBuildable, ABC):
         Expression.__init__(self, lf)
         BinaryBuildable.__init__(self, op)
 
+    def __str__(self):
+        return "BE({} {} {})".format(self.left, self.op, self.right)
+
 
 class BinaryStmt(Statement, BinaryBuildable, ABC):
     def __init__(self, op: str, lf):
         Statement.__init__(self, lf)
         BinaryBuildable.__init__(self, op)
+
+    def __str__(self):
+        return "BS({} {} {})".format(self.left, self.op, self.right)
 
 
 class UnaryOperator(UnaryExpr):
@@ -804,7 +807,6 @@ class NewExpr(UnaryExpr):
     def compile_heap_arr_init(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr, dst_len: int):
         self.value: IndexingExpr
         args = [self.value.get_atomic_node()] + self.value.flatten_args(env, tpa.manager, True)
-        # print(args)
         FunctionCall(NameNode("heaparray", self.lfp),
                      Line(self.lfp, *args),
                      self.lfp).compile_to(env, tpa, dst_addr, dst_len)
@@ -2065,7 +2067,29 @@ class ForEachStmt(Statement):
             return for_stmt.compile(env, tpa)
         elif isinstance(rt, typ.ArrayType):
             itr_name = ForEachStmt.iter_name(env)
-            return
+            init = QuickAssignment(self.lfp)
+            init.left = NameNode(itr_name, self.lfp)
+            init.right = IntLiteral(util.ZERO_POS, self.lfp)
+
+            cond = BinaryOperator("<", BIN_LOGICAL, self.lfp)
+            cond.left = NameNode(itr_name, self.lfp)
+            cond.right = DotExpr(self.lfp)
+            cond.right.left = self.title.right
+            cond.right.right = NameNode("length", self.lfp)
+
+            step = PostIncDecOperator("++", self.lfp)
+            step.value = NameNode(itr_name, self.lfp)
+
+            assignment = Assignment(self.lfp)
+            assignment.left = self.title.left
+            assignment.right = IndexingExpr(self.title.right,
+                                            Line(self.lfp, NameNode(itr_name, self.lfp)),
+                                            self.lfp)
+
+            self.body.lines.insert(0, assignment)
+
+            for_stmt = ForStmt(init, cond, step, self.body, self.lfp)
+            return for_stmt.compile(env, tpa)
 
         raise errs.TplCompileError(f"Type {rt} is not iterable. ", self.lfp)
 
@@ -2886,7 +2910,7 @@ def array_creation(node, env: en.Environment, tpa: tp.TpaOutput) -> int:
         node = node.indexing_obj
 
     if dimensions[0] == -1:
-        raise errs.TplCompileError("Outermost array must have a declared size. ", node.lf)
+        raise errs.TplCompileError("Outermost array must have a declared size. ", node.lfp)
 
     root_t = node.evaluated_type(env, tpa.manager)
     create_array_rec(res_addr, root_t, dimensions, 0, env, tpa)

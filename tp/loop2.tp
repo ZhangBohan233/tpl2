@@ -11,11 +11,18 @@ fn main() int {
     }
     a := new int[3];
     for i := 0; i < a.length; i++ {
-        ele: int = a[i];
-        println(ele);
+        a[i] = i + 1;
     }
     for ele: int in a {
         println(ele);
     }
+    arr: Char[] = new Char[10];
+    for i := 0; i < 10; i++ {
+        arr[i] = new Char((i + 98) as char);
+    }
+    for c: *Char in arr {
+        println(c);
+    }
+
     return lst.size();
 }
