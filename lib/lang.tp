@@ -1,59 +1,429 @@
+require {
+    print_int, println_int,
+    print_float, println_float,
+    print_char, println_char,
+    print_byte, println_byte,
+    print_str, println_str,
+    mem_segment,
+    mem_copy
+}
+
+/*
+Macro constants
+*/
+macro boolean {int}
 const FALSE: int = 0;
 const TRUE: int = 1;
+const NULL: *void = 0 as *void;
 
 class Object {
-    fn __new__(this: *Object) void {
+    fn __new__() void {
     }
 
-    fn __del__(this: *Object) void {
+    fn __del__() void {
     }
 
-    fn hash(this: *Object) int {
-        return this.__class__;
+    fn hash() int {
+        return this.__class__ * ((this as *void) as int);
     }
 
-    fn equals(this: *Object, other: *Object) int {
+    fn equals(other: *Object) boolean {
         return this == other;
+    }
+
+    fn toString() *String {
+        return "Object@";
     }
 }
 
 class String {
-    const array: char[];
+    private const chars: char[];
 
-    fn __new__(this: *String) void {
+    fn __new__(chars: char[]) void {
         super.__new__();
+
+        this.chars = chars;
     }
 
-    fn __del__(this: *String) void {
+    fn __new__(other: *String) void {
+        super.__new__();
 
+        this.chars = other.chars;
+    }
+
+    fn __del__() void {
+        if mem_segment(this.chars) == 3 {  // literal
+            return;
+        }
+        del this.chars;
+
+        super.__del__();
+    }
+
+    fn concat(other: *String) *String {
+        newChars: char[] = new char[this.length() + other.length()];
+        arraycopy(this.chars, 0, newChars, 0, this.length());
+        arraycopy(other.chars, 0, newChars, this.length(), other.length());
+        return new String(newChars);
+    }
+
+    fn equals(other: *Object) boolean {
+        if not (other instanceof String) {
+            return FALSE;
+        }
+        os := other as *String;
+        if this.length() != os.length() {
+            return FALSE;
+        }
+        for i := 0; i < this.chars.length; i++ {
+            if this.chars[i] != os.chars[i] {
+                return FALSE;
+            }
+        }
+        return TRUE;
+    }
+
+    fn length() int {
+        return this.chars.length;
+    }
+
+    /*
+    This string as the deliminator.
+    */
+    fn join(array: String[]) *String {
+        totalLength := 0;
+        thisLength := this.length();
+        for i := 0; i < array.length; i++ {
+            totalLength += array[i].length();
+        }
+        if totalLength > 0 {
+            totalLength += thisLength * (array.length - 1);
+        }
+        totalArray := new char[totalLength];
+        index := 0;
+        for i := 0; i < array.length; i++ {
+            chars := array[i].chars;
+            arraycopy(chars, 0, totalArray, index, chars.length);
+            index += chars.length;
+            if index < totalLength {
+                arraycopy(this.chars, 0, totalArray, index, thisLength);
+                index += thisLength;
+            }
+        }
+        return new String(totalArray);
+    }
+
+    fn print() void {
+        print_str(this.chars);
+    }
+
+    fn println() void {
+        println_str(this.chars);
     }
 }
 
 abstract class Number {
-    fn __new__(this: *Number) void {
+    fn __new__() void {
         super.__new__();
     }
 
-    abstract fn intValue(this: *Number) int;
+    abstract fn intValue() int;
+
+    abstract fn floatValue() float;
+
+    abstract fn charValue() char;
+
+    abstract fn byteValue() byte;
 }
 
 class Integer(Number) {
-    const value: int;
+    private const value: int;
 
-    fn __new__(this: *Integer, value: int) void {
+    fn __new__(value: int) void {
         super.__new__();
 
         this.value = value;
     }
 
     @Override
-    fn intValue(this: *Integer) int {
+    fn intValue() int {
         return this.value;
+    }
+
+    @Override
+    fn floatValue() float {
+        return this.value as float;
+    }
+
+    @Override
+    fn charValue() char {
+        return this.value as char;
+    }
+
+    @Override
+    fn byteValue() byte {
+        return this.value as byte;
+    }
+
+    @Override
+    fn toString() *String {
+        return intToString(this.value);
     }
 }
 
-const NULL: *void = 0 as *void;
+class Float(Number) {
+    private const value: float;
+
+    fn __new__(value: float) void {
+        super.__new__();
+
+        this.value = value;
+    }
+
+    @Override
+    fn intValue() int {
+        return this.value as int;
+    }
+
+    @Override
+    fn floatValue() float {
+        return this.value;
+    }
+
+    @Override
+    fn charValue() char {
+        return this.value as int as char;
+    }
+
+    @Override
+    fn byteValue() byte {
+        return this.value as int as byte;
+    }
+
+    @Override
+    fn toString() *String {
+        iv: int = this.value as int;
+        dv := this.value - iv;
+        dv = if dv < 0 then -dv else dv;
+        front := intToString(iv as int);
+        count := 0;
+        while count < 6 and dv != dv as int {
+            dv *= 10;
+            count++;
+        }
+        back := intToString(dv as int);
+
+        return front.concat(".").concat(back);
+    }
+}
+
+class Char(Number) {
+    private const value: char;
+
+    fn __new__(value: char) void {
+        super.__new__();
+
+        this.value = value;
+    }
+
+    @Override
+    fn intValue() int {
+        return this.value as int;
+    }
+
+    @Override
+    fn floatValue() float {
+        return this.value as int as float;
+    }
+
+    @Override
+    fn charValue() char {
+        return this.value;
+    }
+
+    @Override
+    fn byteValue() byte {
+        return this.value as int as byte;
+    }
+
+    @Override
+    fn toString() *String {
+        array := new char[1];
+        array[0] = this.value;
+        return new String(array);
+    }
+}
+
+class Byte(Number) {
+    private const value: byte;
+
+    fn __new__(value: byte) void {
+        super.__new__();
+
+        this.value = value;
+    }
+
+    @Override
+    fn intValue() int {
+        return this.value as int;
+    }
+
+    @Override
+    fn floatValue() float {
+        return this.value as int as float;
+    }
+
+    @Override
+    fn charValue() char {
+        return this.value as int as char;
+    }
+
+    @Override
+    fn byteValue() byte {
+        return this.value;
+    }
+
+    @Override
+    fn toString() *String {
+        return intToString(this.value as int).concat("b");
+    }
+}
+
+/*
+Documents for native functions.
+
+#####
+mem_segment(ptr: *void) int;
+
+Returns the memory segment of this pointer is pointed to
+-1: if invalid
+0:  if null
+1:  if in stack
+2:  if in global memory
+3:  if in literal
+4:  if in class headers
+5:  if in function bodies
+6:  if in heap
+
+#####
+mem_copy(src: *void, srcIndexBytes: int, dst: *void, dstIndexBytes: int, lengthBytes: int) void;
+*/
+
+fn println() void {
+    println("");
+}
+
+fn print(value: int) void {
+    print_int(value);
+}
+
+fn println(value: int) void {
+    println_int(value);
+}
+
+fn print(value: float) void {
+    print_float(value);
+}
+
+fn println(value: float) void {
+    println_float(value);
+}
+
+fn print(value: char) void {
+    print_char(value);
+}
+
+fn println(value: char) void {
+    println_char(value);
+}
+
+fn print(value: byte) void {
+    print_byte(value);
+}
+
+fn println(value: byte) void {
+    println_byte(value);
+}
+
+fn print(value: *String) void {
+    value.print();
+}
+
+fn println(value: *String) void {
+    value.println();
+}
+
+fn print(value: *Object) void {
+    print(value.toString());
+}
+
+fn println(value: *Object) void {
+    println(value.toString());
+}
+
+fn intToString(value: int) *String {
+    if value == 0 {
+        return "0";
+    }
+    sign := if value < 0 then -1 else 1;
+    absValue := value * sign;
+    begin := if sign == 1 then 0 else 1;
+
+    rem := absValue;
+    digits := 0;  // digits count in decimal
+    mul := 1;
+    while rem != 0 {
+        rem /= 10;
+        mul *= 10;
+        digits++;
+    }
+    mul /= 10;
+    array := new char[digits + begin];
+    if sign == -1 {
+        array[0] = '-';
+    }
+    rem = absValue;
+    for i := begin; i < digits + begin; i++ {
+        cur := rem / mul;
+        rem -= cur * mul;
+        array[i] = (cur + 48) as char;
+        mul /= 10;
+    }
+
+    return new String(array);
+}
+
+fn arraycopy(src: int[], srcIndex: int, dst: int[], dstIndex: int, length: int) void {
+    unitLength := sizeof(int);
+    mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
+}
+
+fn arraycopy(src: float[], srcIndex: int, dst: float[], dstIndex: int, length: int) void {
+    unitLength := sizeof(float);
+    mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
+}
+
+fn arraycopy(src: char[], srcIndex: int, dst: char[], dstIndex: int, length: int) void {
+    unitLength := sizeof(char);
+    mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
+}
+
+fn arraycopy(src: byte[], srcIndex: int, dst: byte[], dstIndex: int, length: int) void {
+    mem_copy(src as *void, srcIndex, dst as *void, dstIndex, length);
+}
+
+fn arraycopy(src: Object[], srcIndex: int, dst: Object[], dstIndex: int, length: int) void {
+    unitLength := sizeof(*void);
+    mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
+}
+
+exportmacro {
+    boolean
+}
 
 export {
-    FALSE, TRUE, NULL, Object, Number, Integer
+    FALSE, TRUE, NULL,
+    Object, String,
+    Number, Integer, Float, Char, Byte,
+    print, println, arraycopy
 }

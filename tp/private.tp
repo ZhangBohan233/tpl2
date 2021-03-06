@@ -1,0 +1,41 @@
+﻿import lang;
+import collections;
+
+class A {
+    private a: int;
+    protected b: int;
+    const c: int;
+
+    fn __new__() void {
+        this.c = 1;
+    }
+
+    fn __new__(val: int) void {
+        this.c = val;
+    }
+
+    fn bar() void {
+        this.a = 32;
+    }
+
+    protected fn method() void {
+        println(333);
+    }
+}
+
+class B(A) {
+    fn foo() void {
+        this.b = 66;
+        this.method();
+    }
+
+    fn method() void {
+        println(4);
+    }
+}
+
+fn main() void {
+    aa := new B();
+    //aa.b = 33;
+    aa.method();
+}

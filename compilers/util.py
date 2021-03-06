@@ -3,7 +3,7 @@ import struct
 
 
 VM_BITS = 64
-STACK_SIZE = 1024
+STACK_SIZE = 2048
 INT_LEN = VM_BITS >> 3
 FLOAT_LEN = VM_BITS >> 3
 CHAR_LEN = 2
@@ -137,3 +137,7 @@ def class_name_with_path(class_name: str, file: str):
 
 def template_full_name(template_name, defined_place: str):
     return defined_place + "." + template_name
+
+
+def print_warning(msg: str, lfp=""):
+    print(f"Warning: {msg} {lfp}", file=sys.stderr)

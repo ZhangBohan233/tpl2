@@ -29,7 +29,7 @@ char *ERR_MSG = "";
 #define push_fp call_stack[++call_p] = fp; fp = sp;
 #define pull_fp sp = fp; fp = call_stack[call_p--];
 
-#define MEMORY_SIZE 16384
+#define MEMORY_SIZE 65536
 #define RECURSION_LIMIT 1000
 #define CLASS_FIXED_HEADER (INT_LEN * 2)
 
@@ -193,6 +193,26 @@ void nat_println_float() {
     pull_fp
 }
 
+void nat_print_byte() {
+    push_fp
+    push(1)
+
+    tp_byte arg = MEMORY[true_addr(0)];
+    printf("%db", arg);
+
+    pull_fp
+}
+
+void nat_println_byte() {
+    push_fp
+    push(1)
+
+    tp_byte arg = MEMORY[true_addr(0)];
+    printf("%db\n", arg);
+
+    pull_fp
+}
+
 void nat_print_str() {
     push_fp
     push(PTR_LEN)
@@ -227,6 +247,53 @@ void nat_clock() {
 
     tp_int t = get_time();
     nat_return_int(t);
+
+    pull_fp
+}
+
+void nat_mem_segment() {
+    push_fp
+    push(PTR_LEN)
+
+    tp_int ptr = bytes_to_int(MEMORY + true_addr(0));
+    tp_int res;
+    if (ptr < 0) res = -1;
+    else if (ptr == 0) res = 0;
+    else if (ptr < stack_end) res = 1;
+    else if (ptr < global_end) res = 2;
+    else if (ptr < literal_end) res = 3;
+    else if (ptr < class_header_end) res = 4;
+    else if (ptr < functions_end) res = 5;
+    else if (ptr < entry_end) res = -1;
+    else if (ptr < MEMORY_SIZE) res = 6;
+    else res = -1;
+
+    nat_return_int(res);
+
+    pull_fp
+}
+
+void nat_mem_copy() {
+    push_fp
+    push(INT_LEN * 5)
+
+    tp_int src = bytes_to_int(MEMORY + true_addr(0));
+    tp_int src_index = bytes_to_int(MEMORY + true_addr(INT_LEN));
+    tp_int dst = bytes_to_int(MEMORY + true_addr(INT_LEN * 2));
+    tp_int dst_index = bytes_to_int(MEMORY + true_addr(INT_LEN * 3));
+    tp_int length = bytes_to_int(MEMORY + true_addr(INT_LEN * 4));
+//    printf("%lld %lld %lld %lld %lld\n", src, src_index, dst, dst_index, length);
+
+//    tp_int dst_length = bytes_to_int(MEMORY + true_addr(dst));
+//    if (dst_index + length > dst_length) {
+//        ERR_MSG = "mem_copy index out of bound.";
+//        ERROR_CODE = ERR_NATIVE_INVOKE;
+//        return;
+//    }
+
+    memmove(MEMORY + true_addr(dst + dst_index) + INT_LEN,  // last 'INT_LEN' is the array length recorder
+            MEMORY + true_addr(src + src_index) + INT_LEN,
+            length);
 
     pull_fp
 }
@@ -463,6 +530,18 @@ void invoke(tp_int func_ptr) {
             break;
         case 14:  // nat_log
             nat_log();
+            break;
+        case 15:  // print_byte
+            nat_print_byte();
+            break;
+        case 16:  // println_byte
+            nat_println_byte();
+            break;
+        case 17:  // mem_segment
+            nat_mem_segment();
+            break;
+        case 18:  // mem_copy
+            nat_mem_copy();
             break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;

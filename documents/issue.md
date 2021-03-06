@@ -2,7 +2,7 @@
 
 ## Class and inheritance
 
-### ISSUE C01
+### ~~ISSUE C01~~ FIXED
 Cannot override when the declared type is the parent class
 ```
 class A {
@@ -23,3 +23,18 @@ fn main() int {
     ...
 }
 ```
+
+## Array
+
+### ISSUE A01
+Heap array creation does not check valid argument.
+
+E.g.
+```
+array := int[];  // should throw error but not
+```
+
+## Macro
+
+### ~~ISSUE M01~~ FIXED
+`exportmacro does` not work

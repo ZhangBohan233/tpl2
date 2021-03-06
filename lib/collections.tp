@@ -1,73 +1,131 @@
-﻿import lang
+﻿import lang;
 
-abstract class Collection<ColT> {
-    abstract fn size(this: *Collection) int;
+abstract class Iterator<T> {
+    abstract fn hasNext() boolean;
+
+    abstract fn next() *T;
 }
 
-abstract class AbsList<AbsListT>(Collection<AbsListT>) {
-    abstract fn append(this: *AbsList<AbsListT>, value: *AbsListT) void;
-
-    abstract fn get(this: *AbsList<AbsListT>, index: int) *AbsListT;
+abstract class Iterable<T> {
+    abstract fn iter() *Iterator<T>;
 }
 
-class List<ListT>(AbsList<ListT>) {
-    array: ListT[];
+class ArrayIterator<T>(Iterator<T>) {
+    private array: T[];
+    index: int = 0;
+
+    fn __new__(array: T[]) void {
+        this.array = array;
+    }
+
+    fn hasNext() boolean {
+        return this.index < this.array.length;
+    }
+
+    fn next() *T {
+        return this.array[this.index++];
+    }
+}
+
+abstract class Collection<T>(Iterable<T>) {
+    abstract fn size() int;
+}
+
+abstract class AbsList<T>(Collection<T>) {
+    abstract fn append(value: *T) void;
+
+    abstract fn get(index: int) *T;
+}
+
+class ListIterator<T>(Iterator<T>) {
+    private lst: *List<T>;
+    index: int = 0;
+
+    fn __new__(lst: *List<T>) void {
+        this.lst = lst;
+    }
+
+    fn hasNext() boolean {
+        return this.index < this.lst.size();
+    }
+
+    fn next() *T {
+        return this.lst.get(this.index++);
+    }
+}
+
+class List<T>(AbsList<T>) {
+    private array: T[];
     size: int;
 
-    fn __new__(this: *List<ListT>) void {
+    fn __new__() void {
         super.__new__();
 
-        this.array = new ListT[8];
+        this.array = new T[8];
+    }
+
+    fn iter() *ListIterator<T> {
+        return new ListIterator<T>(this);
     }
 
     @Override
-    fn size(this: *List) int {
+    fn size() int {
         return this.size;
     }
 
     @Override
-    fn append(this: *List<ListT>, value: *ListT) void {
+    fn append(value: *T) void {
         this.array[this.size++] = value;
 
-        this._checkSize();
+        this.checkSize();
     }
 
     @Override
-    fn get(this: *List<ListT>, index: int) *ListT {
+    fn get(index: int) *T {
         return this.array[index];
     }
 
-    fn _checkSize(this: *List<ListT>) void {
+    @Override
+    fn toString() *String {
+        strArr := new String[this.size];
+        for i := 0; i < this.size; i++ {
+            strArr[i] = this.get(i).toString();
+        }
+        joint := ", ".join(strArr);
+        return "[".concat(joint).concat("]");
+    }
+
+    protected fn checkSize() void {
         if this.size == this.array.length {
-            this._expand();
+            this.expand();
         }
         if this.size < this.array.length / 4 {
-            this._collapse();
+            this.collapse();
         }
     }
 
-    fn _expand(this: *List<ListT>) void {
-        arr := new ListT[this.array.length * 2];
-        for i := 0; i < this.size; i++ {
-            arr[i] = this.array[i];
-        }
+    private fn expand() void {
+        arr := new T[this.array.length * 2];
+        arraycopy(this.array, 0, arr, 0, this.size);
         del this.array;
         this.array = arr;
     }
 
-    fn _collapse(this: *List<ListT>) void {
+    private fn collapse() void {
 
     }
 }
 
-abstract class Map<MapK, MapV> {
+abstract class Map<K, V> {
 
 }
 
-class HashMap<HashK, HashV>(Map<HashK, HashV>) {
+class HashMap<K, V>(Map<K, V>) {
 
 }
 
 export {
-    Map, HashMap, AbsList, List
+    Iterator, ListIterator, ArrayIterator,
+    AbsList, List,
+    Map, HashMap,
 }

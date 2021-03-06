@@ -1,4 +1,103 @@
-﻿===== VERSION 2042 =====
+﻿===== VERSION 2058 =====
+2021/03/07
+
+* Implemented for-each for arrays
+* Bug fixes:
+    * Fixed conversion of T[] error
+
+===== VERSION 2057 =====
+2021/03/07
+
+* Bug fixes:
+    * Fixed generic class creation in generic class
+* Implemented iterable and iterator
+* Implemented for-each loop for iterable classes
+
+===== VERSION 2056 =====
+2021/03/06
+
+* Fixed conversion between generic types and normal types
+* Renamed compile time function 'array' to 'heaparray'
+* Implemented 'toString' methods in all classes in 'lang'
+* Fixed generics name bug
+* String.join
+
+===== VERSION 2055 =====
+2021/03/06
+
+* Fixed macro exporting bug
+
+===== VERSION 2054 =====
+2021/03/06
+
+* Updated 'LineFile' to 'LineFilePos'
+
+===== VERSION 2053 =====
+2021/03/05
+
+* Implemented library function 'arraycopy' and native invoke 'mem_copy'
+* Implemented String.concat
+* Bug fixes:
+    * Error when generic array as argument
+
+===== VERSION 2052 =====
+2021/03/05
+
+* A simple version of const attributes
+
+===== VERSION 2051 =====
+2021/03/05
+
+* Updated template-generic system: duplicate name is now allowed
+
+===== VERSION 2050 =====
+2021/03/05
+
+* Implemented permission modifier 'private' and 'protected'
+
+===== VERSION 2049 =====
+2021/03/05
+
+* Re-implemented template-generic system
+* Added compile time check: type of 'this' in templated class
+
+===== VERSION 2048 =====
+2021/03/04
+
+* Implemented native function 'memory_segment'
+* Optimized computations of 'char', 'byte' as binary operand
+* Optimized cast and some type check
+
+===== VERSION 2047 =====
+2021/03/04
+
+* Completely fixed function order problem: traverse all functions before compile .tpa to .tpc
+* Implemented native function 'print_byte' and 'println_byte'
+* Fixed bug that byte argument error
+* Implemented library function 'print' and 'println'
+* Implemented type 'String' as the default evaluation of double quotes
+
+===== VERSION 2046 =====
+2021/03/04
+
+* Compiler code optimization and bugs fix
+
+===== VERSION 2045 =====
+2021/03/04
+
+* Modified the environment structure: MainEnvironment
+
+===== VERSION 2044 =====
+2021/03/04
+
+* Assignments in class body are now permitted
+
+===== VERSION 2043 =====
+2021/03/02
+
+* Lazy class body evaluation
+
+===== VERSION 2042 =====
 2021/03/02
 
 * Automatically inserts param 'this' to methods, if they do not have

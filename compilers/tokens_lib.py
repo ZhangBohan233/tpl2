@@ -11,7 +11,8 @@ OTHERS = {"=", "->", ":=", "++", "--"}
 
 RESERVED = {"abstract", "as", "break", "case", "class", "cond", "const", "continue", "del", "do", "else",
             "export", "exportmacro", "fallthrough", "fn", "for",
-            "if", "import", "instanceof", "macro", "new", "require", "return", "super", "switch", "then",
+            "if", "import", "in", "instanceof", "macro", "new", "private", "protected",
+            "require", "return", "super", "switch", "then",
             "this", "var", "while", "yield"}
 
 ALL_BINARY = set.union(
@@ -47,22 +48,50 @@ class LineFile:
         return "In file '" + self.file_name + "', at line " + str(self.line) + "."
 
 
-LF_TOKENIZER = LineFile("Tokenizer", 0)
-LF_PARSER = LineFile("Parser", 0)
-LF_COMPILER = LineFile("Compiler", 0)
+class LineFilePos:
+    def __init__(self, lf_msg, pos: int = 0):
+        self.line_file: LineFile = lf_msg if isinstance(lf_msg, LineFile) else None
+        self.msg: str = lf_msg if isinstance(lf_msg, str) else None
+        self.pos = pos
+
+    def get_file(self):
+        return self.line_file.file_name
+
+    def get_line(self):
+        return self.line_file.line
+
+    def get_pos(self):
+        return self.pos
+
+    def is_real(self):
+        return self.msg is None
+
+    def __str__(self):
+        if self.is_real():
+            return f"In file '{self.get_file()}', at line {self.get_line()}:{self.get_pos()}."
+        else:
+            return f"In {self.msg}."
+
+    def __repr__(self):
+        return self.__str__()
+
+
+LF_TOKENIZER = LineFilePos("Tokenizer")
+LF_PARSER = LineFilePos("Parser")
+LF_COMPILER = LineFilePos("Compiler")
 
 
 class Token:
-    def __init__(self, lf):
-        self.lf: LineFile = lf
+    def __init__(self, lfp):
+        self.lfp: LineFilePos = lfp
 
     def __repr__(self):
         return self.__str__()
 
 
 class CharToken(Token):
-    def __init__(self, char: str, lf):
-        super().__init__(lf)
+    def __init__(self, char: str, lfp):
+        super().__init__(lfp)
 
         self.char = char
 
@@ -71,8 +100,8 @@ class CharToken(Token):
 
 
 class IntToken(Token):
-    def __init__(self, v: str, lf):
-        super().__init__(lf)
+    def __init__(self, v: str, lfp):
+        super().__init__(lfp)
 
         self.value = int(v)
 
@@ -81,8 +110,8 @@ class IntToken(Token):
 
 
 class ByteToken(Token):
-    def __init__(self, v: str, lf):
-        super().__init__(lf)
+    def __init__(self, v: str, lfp):
+        super().__init__(lfp)
 
         self.value = int(v)
 
@@ -91,8 +120,8 @@ class ByteToken(Token):
 
 
 class FloatToken(Token):
-    def __init__(self, v: str, lf):
-        super().__init__(lf)
+    def __init__(self, v: str, lfp):
+        super().__init__(lfp)
 
         self.value = float(v)
 
@@ -101,8 +130,8 @@ class FloatToken(Token):
 
 
 class IdToken(Token):
-    def __init__(self, v: str, lf):
-        super().__init__(lf)
+    def __init__(self, v: str, lfp):
+        super().__init__(lfp)
 
         self.identifier = v
 
@@ -111,8 +140,8 @@ class IdToken(Token):
 
 
 class StrToken(Token):
-    def __init__(self, v: str, lf):
-        super().__init__(lf)
+    def __init__(self, v: str, lfp):
+        super().__init__(lfp)
 
         self.value = v
 
@@ -145,11 +174,11 @@ class AtomicElement(Element):
 
 
 class CollectiveElement(Element):
-    def __init__(self, ce_type: int, lf: LineFile, parent):
+    def __init__(self, ce_type: int, lfp: LineFilePos, parent):
         super().__init__(parent)
 
         self.ce_type = ce_type
-        self.lf = lf
+        self.lfp = lfp
         self.children = []
 
     def __getitem__(self, item):

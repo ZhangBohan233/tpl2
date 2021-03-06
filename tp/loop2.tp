@@ -1,0 +1,28 @@
+﻿import lang;
+import collections;
+
+fn main() int {
+    lst := new List<Byte>();
+    for i := 0; i < 20; i++ {
+        lst.append(new Byte((i - 10) as byte));
+    }
+    for b: *Byte in lst {
+        println(b);
+    }
+    a := new int[3];
+    for i := 0; i < a.length; i++ {
+        a[i] = i + 1;
+    }
+    for ele: int in a {
+        println(ele);
+    }
+    arr: Char[] = new Char[10];
+    for i := 0; i < 10; i++ {
+        arr[i] = new Char((i + 98) as char);
+    }
+    for c: *Char in arr {
+        println(c);
+    }
+
+    return lst.size();
+}

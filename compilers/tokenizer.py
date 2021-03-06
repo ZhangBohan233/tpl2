@@ -1,6 +1,5 @@
 import os
 import compilers.errors as errs
-import compilers.util as util
 import compilers.tokens_lib as tl
 
 
@@ -53,32 +52,32 @@ class FileTokenizer:
         if isinstance(tk, tl.IdToken):
             symbol = tk.identifier
             if symbol == "(":
-                return tl.CollectiveElement(tl.CE_BRACKET, tk.lf, cur_active)
+                return tl.CollectiveElement(tl.CE_BRACKET, tk.lfp, cur_active)
             if symbol == "[":
-                return tl.CollectiveElement(tl.CE_SQR_BRACKET, tk.lf, cur_active)
+                return tl.CollectiveElement(tl.CE_SQR_BRACKET, tk.lfp, cur_active)
             if symbol == "{":
-                return tl.CollectiveElement(tl.CE_BRACE, tk.lf, cur_active)
+                return tl.CollectiveElement(tl.CE_BRACE, tk.lfp, cur_active)
             if symbol == ")":
                 if cur_active.ce_type == tl.CE_BRACKET:
                     cur_active.parent.append(cur_active)
                     return cur_active.parent
                 else:
-                    raise errs.TplSyntaxError("Parenthesis does not close. ", tk.lf)
+                    raise errs.TplSyntaxError("Parenthesis does not close. ", tk.lfp)
             if symbol == "]":
                 if cur_active.ce_type == tl.CE_SQR_BRACKET:
                     cur_active.parent.append(cur_active)
                     return cur_active.parent
                 else:
-                    raise errs.TplSyntaxError("Parenthesis does not close. ", tk.lf)
+                    raise errs.TplSyntaxError("Parenthesis does not close. ", tk.lfp)
             if symbol == "}":
                 if cur_active.ce_type == tl.CE_BRACE:
                     cur_active.parent.append(cur_active)
                     return cur_active.parent
                 else:
-                    raise errs.TplSyntaxError("Parenthesis does not close. ", tk.lf)
+                    raise errs.TplSyntaxError("Parenthesis does not close. ", tk.lfp)
             if symbol == "<":
                 if has_closing_arrow(self.tokens, index):
-                    return tl.CollectiveElement(tl.CE_ARROW_BRACKET, tk.lf, cur_active)
+                    return tl.CollectiveElement(tl.CE_ARROW_BRACKET, tk.lfp, cur_active)
             if symbol == ">":
                 if tl.is_arrow_bracket(cur_active):
                     cur_active.parent.append(cur_active)
@@ -87,12 +86,13 @@ class FileTokenizer:
         cur_active.append(tl.AtomicElement(tk, cur_active))
         return cur_active
 
-    def proceed_line(self, content: str, lf):
+    def proceed_line(self, content: str, lf: tl.LineFile):
         in_str = False
         length = len(content)
         literal = ""
         non_literal = ""
         i = 0
+        part_start_pos = 0
         while i < length:
             ch = content[i]
             if self.in_doc:
@@ -104,8 +104,9 @@ class FileTokenizer:
                 if in_str:
                     if ch == '"':
                         in_str = False
-                        self.tokens.append(tl.StrToken(literal, lf))
+                        self.tokens.append(tl.StrToken(literal, tl.LineFilePos(lf, part_start_pos)))
                         literal = ""
+                        part_start_pos = i
                     else:
                         literal += ch
                 else:
@@ -116,68 +117,78 @@ class FileTokenizer:
                     elif i < length - 1 and ch == '/' and content[i + 1] == '/':
                         # enter comment, end of this line
                         if len(non_literal) > 2:
-                            self.line_tokenize(non_literal[0:len(non_literal) - 2], lf)
+                            self.line_tokenize(non_literal[0:len(non_literal) - 2], lf, part_start_pos)
                             non_literal = ""
+                            part_start_pos = i
                         break
                     elif ch == '"':
                         # enter string literal
                         in_str = True
-                        self.line_tokenize(non_literal, lf)
+                        self.line_tokenize(non_literal, lf, part_start_pos)
                         non_literal = ""
+                        part_start_pos = i
                     elif ch == '\'':
                         # enter char literal
                         if i < length - 2 and content[i + 2] == '\'':
                             # normal char
-                            self.line_tokenize(non_literal, lf)
+                            self.line_tokenize(non_literal, lf, part_start_pos)
                             non_literal = ""
-                            self.tokens.append(tl.CharToken(content[i + 1], lf))
+                            part_start_pos = i
+                            self.tokens.append(tl.CharToken(content[i + 1], tl.LineFilePos(lf, part_start_pos)))
                             i += 2
                         elif i < length - 3 and content[i + 3] == '\'' and content[i + 1] == '\\':
                             # escape char
-                            self.line_tokenize(non_literal, lf)
+                            self.line_tokenize(non_literal, lf, part_start_pos)
                             non_literal = ""
+                            part_start_pos = i
                             escaped = content[i + 2]
                             if escaped == '\\':
-                                self.tokens.append(tl.CharToken('\\', lf))
+                                self.tokens.append(tl.CharToken('\\', tl.LineFilePos(lf, part_start_pos)))
                             elif escaped in ESCAPES:
-                                self.tokens.append(tl.CharToken(ESCAPES[escaped], lf))
+                                self.tokens.append(tl.CharToken(ESCAPES[escaped], tl.LineFilePos(lf, part_start_pos)))
                             else:
-                                raise errs.TplSyntaxError("Invalid escape '\\" + escaped + "'. ", lf)
+                                raise errs.TplSyntaxError("Invalid escape '\\" + escaped + "'. ",
+                                                          tl.LineFilePos(lf, part_start_pos))
                             i += 3
                         else:
-                            raise errs.TplSyntaxError("Char literal must contain exactly one symbol. ", lf)
+                            raise errs.TplSyntaxError("Char literal must contain exactly one symbol. ",
+                                                      tl.LineFilePos(lf, part_start_pos))
                     else:
                         non_literal += ch
             i += 1
 
         if len(non_literal) > 0:
-            self.line_tokenize(non_literal, lf)
+            self.line_tokenize(non_literal, lf, part_start_pos)
 
-    def line_tokenize(self, content: str, lf):
+    def line_tokenize(self, content: str, lf: tl.LineFile, part_start_pos: int):
         lst = normalize_line(content)
         length = len(lst)
         i = 0
+        pos = part_start_pos
         while i < length:
             s = lst[i]
             if is_int(s):
                 if i < length - 2 and lst[i + 1] == "." and is_int(lst[i + 2]):
-                    self.tokens.append(tl.FloatToken(s + "." + lst[i + 2], lf))
+                    self.tokens.append(tl.FloatToken(s + "." + lst[i + 2], tl.LineFilePos(lf, pos)))
                     i += 2
                 elif i < length - 1 and lst[i + 1] == "b":
-                    self.tokens.append(tl.ByteToken(s, lf))  # 1b
+                    self.tokens.append(tl.ByteToken(s, tl.LineFilePos(lf, pos)))  # 1b
                     i += 1
                 elif i < length - 1 and lst[i + 1] == "f":
-                    self.tokens.append(tl.FloatToken(s, lf))  # situation like 1f (== 1.0)
+                    self.tokens.append(tl.FloatToken(s, tl.LineFilePos(lf, pos)))  # situation like 1f (== 1.0)
                     i += 1
                 else:
-                    self.tokens.append(tl.IntToken(s, lf))
+                    self.tokens.append(tl.IntToken(s, tl.LineFilePos(lf, pos)))
             # elif s == "\n":
             #     self.tokens.append(tl.IdToken(s, lf))
             elif s.isidentifier():
-                self.tokens.append(tl.IdToken(s, lf))
+                self.tokens.append(tl.IdToken(s, tl.LineFilePos(lf, pos)))
             elif s in tl.ALL:
-                self.tokens.append(tl.IdToken(s, lf))
+                self.tokens.append(tl.IdToken(s, tl.LineFilePos(lf, pos)))
+            elif len(s.strip()) > 0:
+                raise errs.TplSyntaxError(f"Unexpected token '{s.strip()}'. ", tl.LineFilePos(lf, pos))
             i += 1
+            pos += len(s)
 
 
 NOT_INT = 0

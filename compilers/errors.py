@@ -1,21 +1,21 @@
 class TpaError(Exception):
-    def __init__(self, msg="", lf=None):
+    def __init__(self, msg="", lfp=None):
         super().__init__(msg)
 
-        self.lf = lf
+        self.lfp = lfp
 
     def __str__(self):
-        return super().__str__() + (str(self.lf) if self.lf else "")
+        return super().__str__() + (str(self.lfp) if self.lfp else "")
 
 
 class TplError(Exception):
-    def __init__(self, msg="", lf=None):
+    def __init__(self, msg="", lfp=None):
         super().__init__(msg)
 
-        self.lf = lf
+        self.lfp = lfp
 
     def __str__(self):
-        return super().__str__() + (str(self.lf) if self.lf else "")
+        return super().__str__() + (str(self.lfp) if self.lfp else "")
 
 
 class TplTokenizeError(TplError):

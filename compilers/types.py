@@ -1,5 +1,3 @@
-import collections
-
 import compilers.util as util
 import compilers.errors as errs
 
@@ -9,7 +7,20 @@ class Type:
         self.length = length
 
     def memory_length(self):
+        """
+        Returns the memory occupation of this type.
+
+        :return:
+        """
         return self.length
+
+    def stack_length(self):
+        """
+        Returns the same of self.memory_length(), except for array types.
+
+        :return:
+        """
+        return self.memory_length()
 
     def strong_convertible(self, left_tar_type):
         """
@@ -31,7 +42,10 @@ class Type:
         """
         return self.strong_convertible(left_tar_type)
 
-    def convertible_to(self, left_tar_type, lf):
+    def normal_convertible(self, left_tar_type):
+        return self.strong_convertible(left_tar_type)
+
+    def convertible_to(self, left_tar_type, lf, normal=True, weak=True):
         """
         Returns True if strong_convertible or weak_convertible returns True.
 
@@ -39,18 +53,22 @@ class Type:
 
         :param left_tar_type
         :param lf
+        :param normal whether 'normal_convertible' is counted as True
+        :param weak whether 'weak_convertible' is counted as True
         :return:
         """
         if self.strong_convertible(left_tar_type):
             return True
-        elif self.weak_convertible(left_tar_type):
-            print("Warning: implicit conversion from {} to {}. {}".format(self, left_tar_type, lf))
+        elif normal and self.normal_convertible(left_tar_type):
+            return True
+        elif normal and weak and self.weak_convertible(left_tar_type):
+            util.print_warning(f"implicit conversion from {self} to {left_tar_type}.", lf)
             return True
         else:
             return False
 
-    def check_convertibility(self, left_tar_type, lf) -> None:
-        if not self.convertible_to(left_tar_type, lf):
+    def check_convertibility(self, left_tar_type, lf, normal=True, weak=True) -> None:
+        if not self.convertible_to(left_tar_type, lf, normal=normal, weak=weak):
             raise errs.TplCompileError(f"Cannot convert '{self}' to '{left_tar_type}'. ", lf)
 
     def type_name(self):
@@ -81,6 +99,9 @@ class PrimitiveType(Type):
     def type_name(self):
         return self.t_name
 
+    def int_like(self):
+        return self.t_name == "int" or self.t_name == "char" or self.t_name == "byte"
+
     def __eq__(self, other):
         return isinstance(other, PrimitiveType) and other.t_name == self.t_name
 
@@ -106,6 +127,14 @@ class PointerType(Type):
             return self.base.strong_convertible(left_tar_type.base)
         else:
             return super().strong_convertible(left_tar_type)
+
+    def normal_convertible(self, left_tar_type):
+        if self.strong_convertible(left_tar_type):
+            return True
+        elif isinstance(left_tar_type, PointerType):
+            return self.base.normal_convertible(left_tar_type.base)
+        else:
+            return super().normal_convertible(left_tar_type)
 
     def weak_convertible(self, left_tar_type):
         if isinstance(left_tar_type, PrimitiveType) and left_tar_type.t_name == "int":
@@ -183,6 +212,42 @@ class FuncType(CallableType):
                     return True
         return False
 
+    def normal_convertible(self, left_tar_type):
+        if self.strong_convertible(left_tar_type):
+            return True
+        if isinstance(left_tar_type, FuncType):
+            if len(self.param_types) == len(left_tar_type.param_types):
+                if self.rtype.normal_convertible(left_tar_type.rtype):
+                    for i in range(len(self.param_types)):
+                        if not self.param_types[i].normal_convertible(left_tar_type.param_types[i]):
+                            return False
+                    return True
+        return False
+
+
+class MethodType(FuncType):
+    def __init__(self, param_types, rtype, def_class,
+                 is_constructor: bool, abstract: bool, const: bool, permission: int):
+        super().__init__(param_types, rtype)
+
+        self.defined_class = def_class
+        self.constructor = is_constructor
+        self.abstract = abstract
+        self.const = const
+        self.permission = permission
+
+    def __str__(self):
+        return ("abstract " if self.abstract else "") + "method " + super().__str__()
+
+    def copy(self):
+        return MethodType(self.param_types.copy(), self.rtype, self.defined_class, self.constructor,
+                          self.abstract, self.const, self.permission)
+
+
+class NativeFuncType(CallableType):
+    def __init__(self, param_types, rtype):
+        super().__init__(param_types, rtype)
+
 
 class FunctionPlacer(Type):
     def __init__(self, first_t: CallableType, first_addr: int):
@@ -214,50 +279,37 @@ class FunctionPlacer(Type):
         return "FunctionPlacer:" + str(self.poly)
 
 
-class MethodType(FuncType):
-    def __init__(self, param_types, rtype, def_class, abstract: bool, const: bool):
-        super().__init__(param_types, rtype)
-
-        self.defined_class = def_class
-        self.abstract = abstract
-        self.const = const
-
-    def __str__(self):
-        return ("abstract " if self.abstract else "") + "method " + super().__str__()
-
-    def copy(self):
-        return MethodType(self.param_types.copy(), self.rtype, self.defined_class, self.abstract, self.const)
-
-
-class NativeFuncType(CallableType):
-    def __init__(self, param_types, rtype):
-        super().__init__(param_types, rtype)
-
-
 class ClassType(Type):
-    def __init__(self, name: str, class_ptr: int, file_path: str, direct_sc: list, templates: list,
-                 super_generics_map: dict, abstract: bool):
+    def __init__(self, name: str, class_ptr: int, file_path: str, class_env, direct_sc: list, templates: list,
+                 templates_map: dict, abstract: bool):
         super().__init__(0)
 
         self.name = name
         self.class_ptr = class_ptr
         self.file_path = file_path  # where this class is defined, avoiding conflict struct def'ns in non-export part
         self.name_with_path = util.class_name_with_path(self.name, self.file_path)
+        self.class_env = class_env
         self.abstract = abstract
         self.direct_superclasses = direct_sc
         self.mro: list = None  # Method resolution order, ranked from closest to farthest
-        self.templates = templates  # list of Generic
+        self.templates = templates  # list of self templates
         self.method_rank = []  # keep track of all method names in order | (name, method_t)
 
         # this dict records all callable methods in this class, including methods in its superclass
         # methods with same name must have the same id, i.e. overriding methods have the same id
         # note that in each NaiveDict, the key is the type of the most super method, real type is in the values
         self.methods = {}  # name: NaiveDict{func_type: (method_id, func_ptr, func_type)}
-        self.fields = collections.OrderedDict()  # OrderedDict, name: (position, type)
+        self.fields = {}  # name: (position, type, defined_class, const?, permission)
 
-        # records mapping for superclass
-        # e.g. class A<K, V>, class B<X>(A<X, Object>) => {A: {"K": "X", "V": Object}}
-        self.super_generics_map = super_generics_map
+        # records mapping for all templates
+        # e.g. class A<AT>, class B<BK, BV(Number)>(A<BK>), class D<DT>, class C<CT>(B<CT, Integer>, D<CT>) =>
+        # in A: {"AT": Object}
+        # in B: {"BK": Object, "BV": Number, "AT": "BK"}
+        # in D: {"DT": Object}
+        # in C: {"CT": Object, "BK": "CT", "BV": Integer, "AT": "BK", "DT": "CT"}
+        self.templates_map = templates_map
+
+        self.initializers = []  # nodes that will be executed in __new__
 
     def type_name(self):
         return self.name
@@ -265,24 +317,39 @@ class ClassType(Type):
     def full_name(self):
         return self.name_with_path
 
+    def get_actual_template_name(self, template_name):
+        if template_name not in self.templates_map:
+            return None
+        actual_tem = self.templates_map[template_name]
+        if isinstance(actual_tem, str):
+            return self.get_actual_template_name(actual_tem)
+        else:
+            return template_name
+
     def has_field(self, name: str) -> bool:
         for mro_t in self.mro:
             if name in mro_t.fields:
                 return True
         return False
 
-    def find_field(self, name: str, lf) -> (int, Type):
+    def find_field(self, name: str, lf) -> (int, Type, Type, bool, int):
         for mro_t in self.mro:
             if name in mro_t.fields:
                 return mro_t.fields[name]
         raise errs.TplCompileError(f"Class {self.name} does not have field '{name}'. ", lf)
 
-    def find_method(self, name: str, arg_types: list, lf) -> (int, int, MethodType):
+    def _find_method(self, name, arg_types, lf):
         if name in self.methods:
             poly: util.NaiveDict = self.methods[name]
             return find_closet_func(poly, arg_types, name, True, lambda poly_d, i: poly_d.values[i][2], lf)[1]
 
         raise errs.TplCompileError(f"Class {self.name} does not have method '{name}'. ", lf)
+
+    def find_method(self, name: str, arg_types: list, lf) -> (int, int, MethodType):
+        if name == "__new__":
+            return self.find_local_method(name, arg_types, lf)
+        else:
+            return self._find_method(name, arg_types, lf)
 
     def find_local_method(self, name: str, arg_types: list, lf) -> (int, int, MethodType):
         """
@@ -297,8 +364,10 @@ class ClassType(Type):
         :param lf:
         :return:
         """
-        method_id, method_ptr, method_t = self.find_method(name, arg_types, lf)
+        method_id, method_ptr, method_t = self._find_method(name, arg_types, lf)
         def_this_t = method_t.param_types[0].base
+        if isinstance(def_this_t, GenericClassType):
+            def_this_t = def_this_t.base
         if def_this_t != self:
             raise errs.TplCompileError(f"Cannot resolve local method {name}{arg_types[1:]}. ", lf)
         return method_id, method_ptr, method_t
@@ -320,6 +389,14 @@ class ClassType(Type):
                 return True
         else:
             return super().strong_convertible(left_tar_type)
+
+    def normal_convertible(self, left_tar_type):
+        if self.strong_convertible(left_tar_type):
+            return True
+        elif isinstance(left_tar_type, GenericClassType):
+            if self.strong_convertible(left_tar_type.base) or self.normal_convertible(left_tar_type.base):
+                return True
+        return super().normal_convertible(left_tar_type)
 
     def superclass_of(self, child_t: Type):
         if isinstance(child_t, ClassType):
@@ -358,25 +435,6 @@ class GenericType(Type):
     def __str__(self):
         return f"Gen{self.base}<{self.generics}>"
 
-    def strong_convertible(self, left_tar_type):
-        # print("000", self)
-        # print("112", left_tar_type)
-        # print(self.base.super_generics_map)
-        if isinstance(left_tar_type, GenericType):
-            if self.base.strong_convertible(left_tar_type.base):
-                # if len(self.generics) == len(left_tar_type.generics):
-                for key in self.generics:
-                    if key in left_tar_type.generics:  # same T
-                        if self.generics[key].strong_convertible(left_tar_type.generics[key]):
-                            continue
-                    super_gen = dict_find_key(self.base.super_generics_map[left_tar_type.base], key)
-                    if super_gen is not None:  # class A<T0> {...}  class B<T1>(A<T1>) {...}
-                        if self.generics[key].strong_convertible(left_tar_type.generics[super_gen]):
-                            continue
-                    return False
-                return True
-        return False
-
 
 class GenericClassType(GenericType):
     def __init__(self, base: ClassType, generic: dict):
@@ -385,13 +443,42 @@ class GenericClassType(GenericType):
     def type_name(self):
         return self.base.type_name()
 
+    def strong_convertible(self, left_tar_type):
+        # print("000", self)
+        # print("112", left_tar_type)
+        # print(self.base.super_generics_map)
+        if isinstance(left_tar_type, GenericClassType):
+            if self.base.strong_convertible(left_tar_type.base):
+                # if len(self.generics) == len(left_tar_type.generics):
+                for key in left_tar_type.generics:
+                    if key in self.generics:  # same class
+                        if self.generics[key].strong_convertible(left_tar_type.generics[key]):
+                            continue
+                    actual_tem_name = self.base.get_actual_template_name(key)
+                    if actual_tem_name is not None:
+                        if self.generics[actual_tem_name].strong_convertible(left_tar_type.generics[key]):
+                            continue
+                    return False
+                return True
+        return False
+
+    def normal_convertible(self, left_tar_type):
+        if self.strong_convertible(left_tar_type):
+            return True
+        if isinstance(left_tar_type, ClassType):
+            if self.base.strong_convertible(left_tar_type) or self.base.normal_convertible(left_tar_type):
+                return True
+        return False
+
 
 class Generic(Type):
-    def __init__(self, name: str, max_t: ClassType):
-        super().__init__(max_t.length)
+    def __init__(self, name: str, max_t: ClassType, class_name: str):
+        super().__init__(util.PTR_LEN)
 
+        # print(name, class_name)
         self._name = name
         self.max_t = max_t
+        self.class_name = class_name  # class full name
 
     def strong_convertible(self, left_tar_type):
         return self.max_t.strong_convertible(left_tar_type)
@@ -402,14 +489,32 @@ class Generic(Type):
     def type_name(self):
         return self.max_t.type_name()
 
+    def full_name(self):
+        return Generic.generic_name(self.class_name, self._name)
+
+    @staticmethod
+    def extract_class_name(full_name: str):
+        return full_name[:full_name.rfind("#")]
+
+    @staticmethod
+    def simple_gen_name(full_name: str):
+        return full_name[full_name.rfind("#") + 1:]
+
+    @staticmethod
+    def generic_name(class_name: str, simple_name: str):
+        return class_name + "#" + simple_name
+
     def __eq__(self, other):
-        return isinstance(other, Generic) and self._name == other._name
+        return isinstance(other, Generic) and self._name == other._name and self.class_name == other.class_name
 
     def __str__(self):
         return f"{self._name}: {self.max_t}"
 
 
 class ArrayType(Type):
+    """
+    This class actually represents the array pointer type.
+    """
     def __init__(self, ele_type: Type):
         super().__init__(util.PTR_LEN)
 
@@ -418,8 +523,15 @@ class ArrayType(Type):
     def strong_convertible(self, left_tar_type):
         if left_tar_type == TYPE_VOID_PTR:
             return True
-        else:
-            return super().strong_convertible(left_tar_type)
+        elif isinstance(self.ele_type, PointerType) and isinstance(self.ele_type.base, Generic):
+            if isinstance(left_tar_type, ArrayType) and isinstance(left_tar_type.ele_type, PointerType):
+                if isinstance(left_tar_type.ele_type.base, Generic):
+                    if self.ele_type.base.max_t == left_tar_type.ele_type.base.max_t:
+                        return True
+                else:
+                    if self.ele_type.base.max_t == left_tar_type.ele_type.base:
+                        return True
+        return super().strong_convertible(left_tar_type)
 
     def type_name(self):
         return self.ele_type.type_name() + "[]"
@@ -441,16 +553,57 @@ def is_object_ptr(t: Type) -> bool:
 def is_generic(t: Type) -> bool:
     if isinstance(t, PointerType):
         return is_generic(t.base)
+    elif isinstance(t, ArrayType):
+        return is_generic(t.ele_type)
     return isinstance(t, Generic)
 
 
-def replace_generic_with_real(t: Type, real_generics: dict) -> Type:
+def replace_generic_with_real(t: Type, real_generics: dict, lfp) -> Type:
     if isinstance(t, PointerType):
-        return PointerType(replace_generic_with_real(t.base, real_generics))
+        return PointerType(replace_generic_with_real(t.base, real_generics, lfp))
+    elif isinstance(t, ArrayType):
+        return ArrayType(replace_generic_with_real(t.ele_type, real_generics, lfp))
     elif isinstance(t, Generic):
-        return real_generics[t.simple_name()]
+        # print(t.simple_name(), real_generics)
+        if real_generics is not None and t.full_name() in real_generics:
+            return real_generics[t.full_name()]
+        else:
+            # situations in, e.g,
+            # lst: *List = new List<Integer>();
+            # lst.append(new Integer(42));
+            # lst.get(0);
+            util.print_warning("Unchecked call.", lfp)
+            return t.max_t
     else:
-        raise errs.TplCompileError("Unexpected error.")
+        raise errs.TplCompileError("Unexpected error. ", lfp)
+
+
+def is_generic_type(t: Type) -> bool:
+    if isinstance(t, PointerType):
+        return is_generic_type(t.base)
+    elif isinstance(t, ArrayType):
+        return is_generic_type(t.ele_type)
+    return isinstance(t, GenericClassType)
+
+
+def replace_callee_generic_class(t: Type, caller_class_t: GenericClassType, lfp) -> Type:
+    if isinstance(t, PointerType):
+        return PointerType(replace_callee_generic_class(t.base, caller_class_t, lfp))
+    elif isinstance(t, ArrayType):
+        return ArrayType(replace_callee_generic_class(t.ele_type, caller_class_t, lfp))
+    elif isinstance(t, GenericClassType):
+        new_generics = {}
+        for key in t.generics:
+            value = t.generics[key]
+            if is_generic(value):
+                replaced = replace_generic_with_real(value, caller_class_t.generics, lfp)
+            else:
+                replaced = value
+            new_generics[key] = replaced
+
+        return GenericClassType(t.base, new_generics)
+    else:
+        raise errs.TplCompileError("Unexpected error. ", lfp)
 
 
 def index_in_generic_list(name: str, generics: list) -> int:
@@ -475,10 +628,31 @@ def function_poly_name(simple_name: str, params_t: list, method: bool) -> str:
     return simple_name + "(" + ",".join(res) + ")"
 
 
+def type_eq_no_generic(t1: Type, t2: Type) -> bool:
+    if t1 == t2:
+        return True
+
+    def get_pointer_base_no_generic(ptr_t):
+        if isinstance(ptr_t, PointerType):
+            if isinstance(ptr_t.base, ClassType):
+                return ptr_t.base
+            elif isinstance(ptr_t.base, GenericClassType):
+                return ptr_t.base.base
+            elif isinstance(ptr_t.base, Generic):
+                return ptr_t.base.max_t
+        return None
+
+    t1_base = get_pointer_base_no_generic(t1)
+    t2_base = get_pointer_base_no_generic(t2)
+    if t1_base is None or t2_base is None:
+        return False
+    return t1_base == t2_base
+
+
 def params_eq(ft1: FuncType, ft2: FuncType) -> bool:
     if len(ft1.param_types) == len(ft2.param_types):
         for i in range(len(ft1.param_types)):
-            if ft1.param_types[i] != ft2.param_types[i]:
+            if not type_eq_no_generic(ft1.param_types[i], ft2.param_types[i]):
                 return False
         return True
     return False
@@ -487,7 +661,7 @@ def params_eq(ft1: FuncType, ft2: FuncType) -> bool:
 def params_eq_methods(ft1: MethodType, ft2: MethodType) -> bool:
     if len(ft1.param_types) == len(ft2.param_types):
         for i in range(1, len(ft1.param_types)):
-            if ft1.param_types[i] != ft2.param_types[i]:
+            if not type_eq_no_generic(ft1.param_types[i], ft2.param_types[i]):
                 return False
         return True
     return False
@@ -496,7 +670,7 @@ def params_eq_methods(ft1: MethodType, ft2: MethodType) -> bool:
 def func_eq_params(ft: FuncType, param_types: list) -> bool:
     if len(ft.param_types) == len(param_types):
         for i in range(len(param_types)):
-            if ft.param_types[i] != param_types[i]:
+            if not type_eq_no_generic(ft.param_types[i], param_types[i]):
                 return False
         return True
     return False
@@ -541,6 +715,8 @@ def type_distance(left_type, right_real_type):
     :return:
     """
     if isinstance(left_type, PointerType) and isinstance(right_real_type, PointerType):
+        if left_type == TYPE_VOID_PTR:  # param: *void
+            return 0
         if right_real_type == TYPE_VOID_PTR:  # NULL
             return 0
         left = get_class_type(left_type.base)
@@ -575,7 +751,6 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
     for i in range(len(poly)):
         # fn_t = poly.keys[i]
         tup = poly.values[i]
-        # print(name, fn_t)
         fn_t: CallableType = get_type_func(poly, i)
         if len(arg_types) == len(fn_t.param_types):
             sum_dt = 0
@@ -583,8 +758,11 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
             for j in range(param_begin, len(arg_types)):
                 arg = arg_types[j]
                 param = fn_t.param_types[j]
-                if arg.strong_convertible(param):
-                    # print(arg, param, type_distance(arg, param))
+                # print(arg, type(arg), param, lf)
+                # if isinstance(arg, PointerType) and isinstance(arg.base, Generic):
+                #     print("zsda")
+                if arg.convertible_to(param, lf, weak=False):
+                    # print(arg, param, lf, type_distance(param, arg))
                     sum_dt += type_distance(param, arg)
                 else:
                     match = False
@@ -603,6 +781,9 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
     if min_tup is None:
         raise errs.TplCompileError(f"Cannot resolve call: {function_poly_name(name, arg_types, is_method)}. ", lf)
     return min_tup
+
+
+# def find_correspond_tem_name()
 
 
 TYPE_INT = PrimitiveType("int", util.INT_LEN)
@@ -631,5 +812,9 @@ NATIVE_FUNCTIONS = {
     "free": (11, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID)),
     "heap_array": (12, NativeFuncType([TYPE_INT, ArrayType(TYPE_INT)], TYPE_VOID_PTR)),
     "nat_cos": (13, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT)),
-    "nat_log": (14, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT))
+    "nat_log": (14, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT)),
+    "print_byte": (15, NativeFuncType([TYPE_BYTE], TYPE_VOID)),
+    "println_byte": (16, NativeFuncType([TYPE_BYTE], TYPE_VOID)),
+    "mem_segment": (17, NativeFuncType([TYPE_VOID_PTR], TYPE_INT)),
+    "mem_copy": (18, NativeFuncType([TYPE_VOID_PTR, TYPE_INT, TYPE_VOID_PTR, TYPE_INT, TYPE_INT], TYPE_VOID))
 }

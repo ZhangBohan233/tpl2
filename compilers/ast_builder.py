@@ -10,7 +10,7 @@ PRECEDENCES = {
     ">>=": 3, ">>>=": 3, "<<=": 3, "&=": 3, "|=": 3, "^=": 3,
     ">": 25, "<": 25, ">=": 25, "<=": 25, "==": 20, "!=": 20, "instanceof": 25,
     "and": 6, "or": 5,
-    ".": 500, "$": 500, "->": 4, ":": 3, "=": 1, ":=": 1, "::": 5,
+    ".": 500, "$": 500, "->": 4, ":": 3, "=": 1, ":=": 1, "::": 5, "in": 2,  # 'in' lower than ':'
     "neg": 200, "not": 200,
     "++": 300, "--": 300,
     "star": 200, "addr": 200, "as": 150, "new": 550, "del": 1,
@@ -82,7 +82,7 @@ class AstBuilder:
             if isinstance(expr, ast.UnaryBuildable):
                 if expr.operator_at_left:
                     if expr.nullable() and len(self.stack) <= index + 1:
-                        value = ast.Nothing(expr.lf)
+                        value = ast.Nothing(expr.lfp)
                     else:
                         value = self.stack.pop(index + 1)
                 else:

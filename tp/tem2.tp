@@ -1,0 +1,42 @@
+﻿import lang;
+
+class A<T> {
+    a: *T;
+
+    fn __new__(this: *A<T>) void {
+        super.__new__();
+    }
+}
+
+class B<K, V(Object)>(A<K>) {
+    k: *K;
+    v: *V;
+
+    fn __new__(this: *B<K, V>) void {
+        super.__new__();
+    }
+}
+
+class D<T> {
+
+}
+
+class C<T>(B<Integer, T>, D<T>) {
+    fn __new__() void {
+        super.__new__();
+    }
+
+    fn get() *E<T> {
+        return new E<T>();
+    }
+}
+
+class E<X> {
+    val: *X;
+}
+
+fn main() void {
+    cc := new C<String>();
+    //cc.a.length();
+    e: *E<String> = cc.get();
+}
