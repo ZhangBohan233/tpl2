@@ -29,7 +29,7 @@ char *ERR_MSG = "";
 #define push_fp call_stack[++call_p] = fp; fp = sp;
 #define pull_fp sp = fp; fp = call_stack[call_p--];
 
-#define MEMORY_SIZE 32768
+#define MEMORY_SIZE 65536
 #define RECURSION_LIMIT 1000
 #define CLASS_FIXED_HEADER (INT_LEN * 2)
 

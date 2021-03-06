@@ -1,7 +1,11 @@
 ﻿import lang;
 import collections;
 
-fn main() void {
-    lst := new List<Integer>();
-    lst.append(new Integer(3));
+fn main() int {
+    lst := new List<Char>();
+    for i := 0; i < 20; i++ {
+        lst.append(new Char((i + 97) as char));
+    }
+    println(lst);
+    return lst.size();
 }

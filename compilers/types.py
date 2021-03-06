@@ -1,5 +1,3 @@
-import collections
-
 import compilers.util as util
 import compilers.errors as errs
 
@@ -9,7 +7,20 @@ class Type:
         self.length = length
 
     def memory_length(self):
+        """
+        Returns the memory occupation of this type.
+
+        :return:
+        """
         return self.length
+
+    def stack_length(self):
+        """
+        Returns the same of self.memory_length(), except for array types.
+
+        :return:
+        """
+        return self.memory_length()
 
     def strong_convertible(self, left_tar_type):
         """
@@ -31,7 +42,10 @@ class Type:
         """
         return self.strong_convertible(left_tar_type)
 
-    def convertible_to(self, left_tar_type, lf):
+    def normal_convertible(self, left_tar_type):
+        return self.strong_convertible(left_tar_type)
+
+    def convertible_to(self, left_tar_type, lf, normal=True, weak=True):
         """
         Returns True if strong_convertible or weak_convertible returns True.
 
@@ -39,12 +53,16 @@ class Type:
 
         :param left_tar_type
         :param lf
+        :param normal whether 'normal_convertible' is counted as True
+        :param weak whether 'weak_convertible' is counted as True
         :return:
         """
         if self.strong_convertible(left_tar_type):
             return True
-        elif self.weak_convertible(left_tar_type):
-            print("Warning: implicit conversion from {} to {}. {}".format(self, left_tar_type, lf))
+        elif normal and self.normal_convertible(left_tar_type):
+            return True
+        elif normal and weak and self.weak_convertible(left_tar_type):
+            util.print_warning(f"implicit conversion from {self} to {left_tar_type}.", lf)
             return True
         else:
             return False
@@ -109,6 +127,14 @@ class PointerType(Type):
             return self.base.strong_convertible(left_tar_type.base)
         else:
             return super().strong_convertible(left_tar_type)
+
+    def normal_convertible(self, left_tar_type):
+        if self.strong_convertible(left_tar_type):
+            return True
+        elif isinstance(left_tar_type, PointerType):
+            return self.base.normal_convertible(left_tar_type.base)
+        else:
+            return super().normal_convertible(left_tar_type)
 
     def weak_convertible(self, left_tar_type):
         if isinstance(left_tar_type, PrimitiveType) and left_tar_type.t_name == "int":
@@ -186,6 +212,42 @@ class FuncType(CallableType):
                     return True
         return False
 
+    def normal_convertible(self, left_tar_type):
+        if self.strong_convertible(left_tar_type):
+            return True
+        if isinstance(left_tar_type, FuncType):
+            if len(self.param_types) == len(left_tar_type.param_types):
+                if self.rtype.normal_convertible(left_tar_type.rtype):
+                    for i in range(len(self.param_types)):
+                        if not self.param_types[i].normal_convertible(left_tar_type.param_types[i]):
+                            return False
+                    return True
+        return False
+
+
+class MethodType(FuncType):
+    def __init__(self, param_types, rtype, def_class,
+                 is_constructor: bool, abstract: bool, const: bool, permission: int):
+        super().__init__(param_types, rtype)
+
+        self.defined_class = def_class
+        self.constructor = is_constructor
+        self.abstract = abstract
+        self.const = const
+        self.permission = permission
+
+    def __str__(self):
+        return ("abstract " if self.abstract else "") + "method " + super().__str__()
+
+    def copy(self):
+        return MethodType(self.param_types.copy(), self.rtype, self.defined_class, self.constructor,
+                          self.abstract, self.const, self.permission)
+
+
+class NativeFuncType(CallableType):
+    def __init__(self, param_types, rtype):
+        super().__init__(param_types, rtype)
+
 
 class FunctionPlacer(Type):
     def __init__(self, first_t: CallableType, first_addr: int):
@@ -215,30 +277,6 @@ class FunctionPlacer(Type):
 
     def __str__(self):
         return "FunctionPlacer:" + str(self.poly)
-
-
-class MethodType(FuncType):
-    def __init__(self, param_types, rtype, def_class,
-                 is_constructor: bool, abstract: bool, const: bool, permission: int):
-        super().__init__(param_types, rtype)
-
-        self.defined_class = def_class
-        self.constructor = is_constructor
-        self.abstract = abstract
-        self.const = const
-        self.permission = permission
-
-    def __str__(self):
-        return ("abstract " if self.abstract else "") + "method " + super().__str__()
-
-    def copy(self):
-        return MethodType(self.param_types.copy(), self.rtype, self.defined_class, self.constructor,
-                          self.abstract, self.const, self.permission)
-
-
-class NativeFuncType(CallableType):
-    def __init__(self, param_types, rtype):
-        super().__init__(param_types, rtype)
 
 
 class ClassType(Type):
@@ -352,6 +390,14 @@ class ClassType(Type):
         else:
             return super().strong_convertible(left_tar_type)
 
+    def normal_convertible(self, left_tar_type):
+        if self.strong_convertible(left_tar_type):
+            return True
+        elif isinstance(left_tar_type, GenericClassType):
+            if self.strong_convertible(left_tar_type.base) or self.normal_convertible(left_tar_type.base):
+                return True
+        return super().normal_convertible(left_tar_type)
+
     def superclass_of(self, child_t: Type):
         if isinstance(child_t, ClassType):
             real_t = child_t
@@ -416,11 +462,20 @@ class GenericClassType(GenericType):
                 return True
         return False
 
+    def normal_convertible(self, left_tar_type):
+        if self.strong_convertible(left_tar_type):
+            return True
+        if isinstance(left_tar_type, ClassType):
+            if self.base.strong_convertible(left_tar_type) or self.base.normal_convertible(left_tar_type):
+                return True
+        return False
+
 
 class Generic(Type):
     def __init__(self, name: str, max_t: ClassType, class_name: str):
-        super().__init__(max_t.length)
+        super().__init__(util.PTR_LEN)
 
+        # print(name, class_name)
         self._name = name
         self.max_t = max_t
         self.class_name = class_name  # class full name
@@ -439,7 +494,11 @@ class Generic(Type):
 
     @staticmethod
     def extract_class_name(full_name: str):
-        return full_name[:full_name.rfind(".")]
+        return full_name[:full_name.rfind("#")]
+
+    @staticmethod
+    def simple_gen_name(full_name: str):
+        return full_name[full_name.rfind("#") + 1:]
 
     @staticmethod
     def generic_name(class_name: str, simple_name: str):
@@ -453,6 +512,9 @@ class Generic(Type):
 
 
 class ArrayType(Type):
+    """
+    This class actually represents the array pointer type.
+    """
     def __init__(self, ele_type: Type):
         super().__init__(util.PTR_LEN)
 
@@ -494,11 +556,20 @@ def is_generic(t: Type) -> bool:
     return isinstance(t, Generic)
 
 
-def replace_generic_with_real(t: Type, real_generics: dict) -> Type:
+def replace_generic_with_real(t: Type, real_generics: dict, lfp) -> Type:
     if isinstance(t, PointerType):
-        return PointerType(replace_generic_with_real(t.base, real_generics))
+        return PointerType(replace_generic_with_real(t.base, real_generics, lfp))
     elif isinstance(t, Generic):
-        return real_generics[t.simple_name()]
+        # print(t.simple_name(), real_generics)
+        if real_generics is not None and t.full_name() in real_generics:
+            return real_generics[t.full_name()]
+        else:
+            # situations in, e.g,
+            # lst: *List = new List<Integer>();
+            # lst.append(new Integer(42));
+            # lst.get(0);
+            util.print_warning("Unchecked call.", lfp)
+            return t.max_t
     else:
         raise errs.TplCompileError("Unexpected error.")
 
@@ -655,11 +726,11 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
             for j in range(param_begin, len(arg_types)):
                 arg = arg_types[j]
                 param = fn_t.param_types[j]
-                # print(arg, type(arg))
+                # print(arg, type(arg), param, lf)
                 # if isinstance(arg, PointerType) and isinstance(arg.base, Generic):
                 #     print("zsda")
-                if arg.strong_convertible(param):
-                    # print(arg, param, type_distance(arg, param))
+                if arg.convertible_to(param, lf, weak=False):
+                    # print(arg, param, lf, type_distance(param, arg))
                     sum_dt += type_distance(param, arg)
                 else:
                     match = False

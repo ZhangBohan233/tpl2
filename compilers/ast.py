@@ -110,6 +110,12 @@ class Node:
         """
         return False
 
+    def __str__(self):
+        return "Node" + str(type(self))
+
+    def __repr__(self):
+        return self.__str__()
+
 
 # Expression returns a thing while Statement returns nothing
 
@@ -798,7 +804,10 @@ class NewExpr(UnaryExpr):
     def compile_heap_arr_init(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr, dst_len: int):
         self.value: IndexingExpr
         args = [self.value.get_atomic_node()] + self.value.flatten_args(env, tpa.manager, True)
-        FunctionCall(NameNode("array", self.lfp), Line(self.lfp, *args), self.lfp).compile_to(env, tpa, dst_addr, dst_len)
+        # print(args)
+        FunctionCall(NameNode("heaparray", self.lfp),
+                     Line(self.lfp, *args),
+                     self.lfp).compile_to(env, tpa, dst_addr, dst_len)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if isinstance(self.value, IndexingExpr):
@@ -1010,7 +1019,7 @@ class DotExpr(BinaryExpr):
             for i in range(len(t.param_types)):
                 pt = t.param_types[i]
                 if typ.is_generic(pt):
-                    t.param_types[i] = typ.replace_generic_with_real(pt, generics)
+                    t.param_types[i] = typ.replace_generic_with_real(pt, generics, lf)
             res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
             ea = right.evaluate_args(t, env, tpa, is_method=True)
             ea.insert(0, (ins_ptr_addr, util.PTR_LEN))
@@ -1020,6 +1029,9 @@ class DotExpr(BinaryExpr):
         # print(class_offset)
         if isinstance(class_ptr_t, typ.PointerType):
             class_t = class_ptr_t.base
+            if isinstance(class_t, typ.Generic):
+                class_t = class_t.max_t
+
             if isinstance(class_t, typ.ClassType):
                 return inner_call(class_t, right_node, None)
             elif isinstance(class_t, typ.GenericClassType):
@@ -1124,18 +1136,11 @@ class DotExpr(BinaryExpr):
                     pos, t, class_t, const, perm = struct_t.find_field(right_node.name, lf)
                     DotExpr.check_permission(class_t, perm, env, lf)
 
-                    real_attr_ptr = tpa.manager.allocate_stack(t.length)  # todo: length
-                    if t.length == util.INT_LEN:
-                        tpa.assign(real_attr_ptr, struct_addr)
-                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
-                    elif t.length == util.CHAR_LEN:
-                        tpa.assign_char(real_attr_ptr, struct_addr)
-                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
-                    elif t.length == 1:
-                        tpa.assign_byte(real_attr_ptr, struct_addr)
-                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
-                    else:
-                        raise errs.TplCompileError("Unsupported length. ", lf)
+                    real_attr_ptr = tpa.manager.allocate_stack(util.INT_LEN)
+
+                    tpa.assign(real_attr_ptr, struct_addr)
+                    tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
+
                     return real_attr_ptr, t, const
                 elif isinstance(struct_t, typ.GenericClassType):
                     struct_addr = left_node.compile(env, tpa)
@@ -1144,18 +1149,11 @@ class DotExpr(BinaryExpr):
                         t = struct_t.generics[t]
                     DotExpr.check_permission(class_t, perm, env, lf)
 
-                    real_attr_ptr = tpa.manager.allocate_stack(t.length)
-                    if t.length == util.INT_LEN:
-                        tpa.assign(real_attr_ptr, struct_addr)
-                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
-                    elif t.length == util.CHAR_LEN:
-                        tpa.assign_char(real_attr_ptr, struct_addr)
-                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
-                    elif t.length == 1:
-                        tpa.assign_byte(real_attr_ptr, struct_addr)
-                        tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
-                    else:
-                        raise errs.TplCompileError("Unsupported length.", lf)
+                    real_attr_ptr = tpa.manager.allocate_stack(util.INT_LEN)
+
+                    tpa.assign(real_attr_ptr, struct_addr)
+                    tpa.i_binary_arith("addi", real_attr_ptr, pos, real_attr_ptr)
+
                     return real_attr_ptr, t, const
 
         raise errs.TplCompileError("Left side of dot must be a pointer to class. ", lf)
@@ -1169,6 +1167,9 @@ class DotExpr(BinaryExpr):
         left_t = left_node.evaluated_type(env, manager)
         if isinstance(left_t, typ.PointerType):
             struct_t = left_t.base
+            if isinstance(struct_t, typ.Generic):
+                struct_t = struct_t.max_t
+
             if isinstance(right_node, NameNode):
                 if isinstance(struct_t, typ.ClassType):
                     pos, attr_t, class_t, const, perm = struct_t.find_field(right_node.name, lf)
@@ -1176,7 +1177,7 @@ class DotExpr(BinaryExpr):
                 elif isinstance(struct_t, typ.GenericClassType):
                     pos, attr_t, class_t, const, perm = struct_t.base.find_field(right_node.name, lf)
                     if typ.is_generic(attr_t):
-                        return typ.replace_generic_with_real(attr_t, struct_t.generics)
+                        return typ.replace_generic_with_real(attr_t, struct_t.generics, lf)
                     return attr_t
             elif isinstance(right_node, FunctionCall):
                 arg_types = right_node.arg_types(env, manager)
@@ -1190,7 +1191,7 @@ class DotExpr(BinaryExpr):
                     pos, ptr, t = struct_t.base.find_method(name, arg_types, lf)
                     t: typ.MethodType
                     if typ.is_generic(t.rtype):
-                        return typ.replace_generic_with_real(t.rtype, struct_t.generics)
+                        return typ.replace_generic_with_real(t.rtype, struct_t.generics, lf)
                     return t.rtype
         elif isinstance(left_t, typ.ArrayType) and isinstance(right_node, NameNode):
             return array_attribute_types(right_node.name, lf)
@@ -1511,7 +1512,9 @@ class ClassStmt(Statement):
 
         # print(templates_map)
         for gen in templates_map:
-            class_env.define_template(typ.Generic(gen, get_actual(gen), typ.Generic.extract_class_name(gen)), self.lfp)
+            class_env.define_template(typ.Generic(typ.Generic.simple_gen_name(gen),
+                                                  get_actual(gen),
+                                                  typ.Generic.extract_class_name(gen)), self.lfp)
 
         class_type = typ.ClassType(
             self.name, class_ptr, self.lfp.get_file(), class_env, direct_sc, templates, templates_map, self.abstract)
@@ -2633,9 +2636,9 @@ class ClassObject:
                     m_pos, m_ptr, m_t = self.class_type.methods[name][method_t]
                     # print(f"class {self.class_type.name} overrides method {name} at {m_ptr}, new ptr {method_ptr}")
                     if name != "__new__":
-                        if not method_t.strong_convertible(m_t):
-                            # print(method_t.param_types[0].base)
-                            # print(m_t.param_types[0])
+                        if not method_t.convertible_to(m_t, method_def.lfp, weak=False):
+                            print(method_t.param_types[0])
+                            print(m_t.param_types[0])
                             raise errs.TplCompileError(
                                 f"Method '{name}' in class '{self.class_type.name}' "
                                 f"overrides its super method in class '{m_t.defined_class.name}', "
@@ -2905,7 +2908,8 @@ def ctf_cprintln(args: Line, env: en.Environment, tpa: tp.TpaOutput):
 
 def ctf_array(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
     if len(args) < 2:
-        raise errs.TplCompileError("Function 'array' requires at least 2 arguments: element type, dimension. ", args.lfp)
+        raise errs.TplCompileError("Function 'heaparray' requires at least 2 arguments: element type, dimension. ",
+                                   args.lfp)
     dim = [len(args) - 1]
     arr_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
     create_array_rec(arr_ptr, typ.TYPE_INT, dim, 0, env, tpa)
@@ -2983,7 +2987,7 @@ COMPILE_TIME_FUNCTIONS = {
     typ.CompileTimeFunctionType("sizeof", typ.TYPE_INT): ctf_sizeof,
     typ.CompileTimeFunctionType("cprint", typ.TYPE_VOID): ctf_cprint,
     typ.CompileTimeFunctionType("cprintln", typ.TYPE_VOID): ctf_cprintln,
-    typ.CompileTimeFunctionType("array", typ.TYPE_VOID_PTR): ctf_array,
+    typ.CompileTimeFunctionType("heaparray", typ.TYPE_VOID_PTR): ctf_array,
     typ.SpecialCtfType("getfunc"): CtfGetFunc
 }
 

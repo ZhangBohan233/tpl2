@@ -1,4 +1,13 @@
-﻿===== VERSION 2055 =====
+﻿===== VERSION 2056 =====
+2021/03/06
+
+* Fixed conversion between generic types and normal types
+* Renamed compile time function 'array' to 'heaparray'
+* Implemented 'toString' methods in all classes in 'lang'
+* Fixed generics name bug
+* String.join
+
+===== VERSION 2055 =====
 2021/03/06
 
 * Fixed macro exporting bug

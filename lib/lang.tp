@@ -87,6 +87,32 @@ class String {
         return this.chars.length;
     }
 
+    /*
+    This string as the deliminator.
+    */
+    fn join(array: String[]) *String {
+        totalLength := 0;
+        thisLength := this.length();
+        for i := 0; i < array.length; i++ {
+            totalLength += array[i].length();
+        }
+        if totalLength > 0 {
+            totalLength += thisLength * (array.length - 1);
+        }
+        totalArray := new char[totalLength];
+        index := 0;
+        for i := 0; i < array.length; i++ {
+            chars := array[i].chars;
+            arraycopy(chars, 0, totalArray, index, chars.length);
+            index += chars.length;
+            if index < totalLength {
+                arraycopy(this.chars, 0, totalArray, index, thisLength);
+                index += thisLength;
+            }
+        }
+        return new String(totalArray);
+    }
+
     fn print() void {
         print_str(this.chars);
     }
@@ -138,6 +164,11 @@ class Integer(Number) {
     fn byteValue() byte {
         return this.value as byte;
     }
+
+    @Override
+    fn toString() *String {
+        return intToString(this.value);
+    }
 }
 
 class Float(Number) {
@@ -167,6 +198,22 @@ class Float(Number) {
     @Override
     fn byteValue() byte {
         return this.value as int as byte;
+    }
+
+    @Override
+    fn toString() *String {
+        iv: int = this.value as int;
+        dv := this.value - iv;
+        dv = if dv < 0 then -dv else dv;
+        front := intToString(iv as int);
+        count := 0;
+        while count < 6 and dv != dv as int {
+            dv *= 10;
+            count++;
+        }
+        back := intToString(dv as int);
+
+        return front.concat(".").concat(back);
     }
 }
 
@@ -198,6 +245,13 @@ class Char(Number) {
     fn byteValue() byte {
         return this.value as int as byte;
     }
+
+    @Override
+    fn toString() *String {
+        array := new char[1];
+        array[0] = this.value;
+        return new String(array);
+    }
 }
 
 class Byte(Number) {
@@ -227,6 +281,11 @@ class Byte(Number) {
     @Override
     fn byteValue() byte {
         return this.value;
+    }
+
+    @Override
+    fn toString() *String {
+        return intToString(this.value as int).concat("b");
     }
 }
 
@@ -298,6 +357,38 @@ fn println(value: *Object) void {
     println(value.toString());
 }
 
+fn intToString(value: int) *String {
+    if value == 0 {
+        return "0";
+    }
+    sign := if value < 0 then -1 else 1;
+    absValue := value * sign;
+    begin := if sign == 1 then 0 else 1;
+
+    rem := absValue;
+    digits := 0;  // digits count in decimal
+    mul := 1;
+    while rem != 0 {
+        rem /= 10;
+        mul *= 10;
+        digits++;
+    }
+    mul /= 10;
+    array := new char[digits + begin];
+    if sign == -1 {
+        array[0] = '-';
+    }
+    rem = absValue;
+    for i := begin; i < digits + begin; i++ {
+        cur := rem / mul;
+        rem -= cur * mul;
+        array[i] = (cur + 48) as char;
+        mul /= 10;
+    }
+
+    return new String(array);
+}
+
 fn arraycopy(src: int[], srcIndex: int, dst: int[], dstIndex: int, length: int) void {
     unitLength := sizeof(int);
     mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
@@ -327,5 +418,8 @@ exportmacro {
 }
 
 export {
-    FALSE, TRUE, NULL, Object, String, Number, Integer, print, println, arraycopy
+    FALSE, TRUE, NULL,
+    Object, String,
+    Number, Integer, Float, Char, Byte,
+    print, println, arraycopy
 }

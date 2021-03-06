@@ -47,6 +47,16 @@ class List<T>(AbsList<T>) {
         return this.array[index];
     }
 
+    @Override
+    fn toString() *String {
+        strArr := new String[this.size];
+        for i := 0; i < this.size; i++ {
+            strArr[i] = this.get(i).toString();
+        }
+        joint := ", ".join(strArr);
+        return "[".concat(joint).concat("]");
+    }
+
     protected fn checkSize() void {
         if this.size == this.array.length {
             this.expand();
