@@ -275,10 +275,11 @@ class BlockStmt(Statement):
 
 
 class NameNode(Expression):
-    def __init__(self, name: str, lf):
+    def __init__(self, name: str, lf, first_call=True):
         super().__init__(lf)
 
         self.name = name
+        self.first_call = first_call
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         return env.get(self.name, self.lfp)
@@ -304,7 +305,7 @@ class NameNode(Expression):
                 prob_name = typ.Generic.generic_name(wc.full_name(), self.name)
                 if env.is_type(prob_name, self.lfp):
                     return env.get_type(prob_name, self.lfp)
-        raise errs.TplCompileError(f"Name '{self.name}' not defined. ", self.lfp)
+        raise errs.TplCompileError(f"Name '{self.name}' is not defined. ", self.lfp)
 
     def __str__(self):
         return self.name
@@ -1732,9 +1733,14 @@ class FunctionCall(Expression):
             call_compile_time_function(placer, self.args, env, tpa, dst_addr)
             return dst_addr
 
+        try:
+            name = self.get_name()
+        except errs.TplCompileError:
+            name = "fn"
+
         arg_types = self.arg_types(env, tpa.manager)
         if isinstance(placer, typ.FunctionPlacer):  # function defined by 'fn'
-            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, self.lfp)
+            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, name, self.lfp)
         elif isinstance(placer, typ.CallableType):  # function get by 'getfunc'
             func_type = placer
         else:
@@ -1757,9 +1763,14 @@ class FunctionCall(Expression):
             call_compile_time_function(placer, self.args, env, tpa, dst_addr)
             return
 
+        try:
+            name = self.get_name()
+        except errs.TplCompileError:
+            name = "fn"
+
         arg_types = self.arg_types(env, tpa.manager)
         if isinstance(placer, typ.FunctionPlacer):  # function defined by 'fn'
-            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, self.lfp)
+            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, name, self.lfp)
         elif isinstance(placer, typ.CallableType):  # function get by 'getfunc'
             func_type = placer
             func_ptr = self.call_obj.compile(env, tpa)
@@ -1778,9 +1789,14 @@ class FunctionCall(Expression):
         if isinstance(placer, typ.CompileTimeFunctionType):
             return placer.rtype
 
+        try:
+            name = self.get_name()
+        except errs.TplCompileError:
+            name = "fn"
+
         arg_types = self.arg_types(env, manager)
         if isinstance(placer, typ.FunctionPlacer):  # function defined by 'fn'
-            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, self.lfp)
+            func_type, func_ptr = placer.get_type_and_ptr_call(arg_types, name, self.lfp)
         elif isinstance(placer, typ.CallableType):  # function get by 'getfunc'
             func_type = placer
         else:
@@ -2742,12 +2758,14 @@ class ClassObject:
                     f"Class '{self.class_type.name}' is not abstract, but has abstract method '{name}'. ", method_def.lfp
                 )
 
+            overriding = False
             if name in self.class_type.methods:
-                if method_t in self.class_type.methods[name]:  # overriding
-                    ClassObject.check_annotations(method_def, is_overriding=True)
+                if method_t in self.class_type.methods[name]:  # in overriding format
                     m_pos, m_ptr, m_t = self.class_type.methods[name][method_t]
                     # print(f"class {self.class_type.name} overrides method {name} at {m_ptr}, new ptr {method_ptr}")
                     if name != "__new__":
+                        overriding = True
+
                         if not method_t.convertible_to(m_t, method_def.lfp, weak=False):
                             # print(method_t.param_types[0])
                             # print(m_t.param_types[0])
@@ -2755,6 +2773,13 @@ class ClassObject:
                                 f"Method '{name}' in class '{self.class_type.name}' "
                                 f"overrides its super method in class '{m_t.defined_class.name}', "
                                 f"but has incompatible parameter or return type. ", method_def.lfp)
+                        if m_t.permission == PRIVATE:
+                            # private methods are effectively const
+                            # because when calling a private method, the only method you want to call is the
+                            # one in the local class
+                            raise errs.TplCompileError(
+                                f"Method in class '{m_t.defined_class.name}' is private, "
+                                f"which cannot be overridden. ", method_def.lfp)
                         if method_t.permission > m_t.permission:
                             raise errs.TplCompileError(
                                 f"Method '{name}' in class '{self.class_type.name}' "
@@ -2767,18 +2792,18 @@ class ClassObject:
                         )
                     self.class_type.methods[name][method_t] = m_pos, method_ptr, method_t
                 else:  # polymorphism, same name but not override
-                    ClassObject.check_annotations(method_def, is_overriding=False)
                     poly: util.NaiveDict = self.class_type.methods[name]
                     self.class_type.method_rank.append((name, method_t))
                     poly[method_t] = method_id, method_ptr, method_t
                     method_id += 1
             else:
-                ClassObject.check_annotations(method_def, is_overriding=False)
                 self.class_type.method_rank.append((name, method_t))
                 poly = util.NaiveDict(typ.params_eq_methods)
                 poly[method_t] = method_id, method_ptr, method_t
                 self.class_type.methods[name] = poly
                 method_id += 1
+
+            ClassObject.check_annotations(method_def, is_overriding=overriding)
 
         # # check if all abstract methods are overridden
         not_implemented = []
@@ -3087,7 +3112,7 @@ class CtfGetFunc(SpecialCtf):
                     arg_types = []
                     for i in range(1, len(self.args)):
                         arg_types.append(self.args[i].evaluated_type(env, manager))
-                    t, addr = placer.get_type_and_ptr_call(arg_types, self.args.lfp)
+                    t, addr = placer.get_type_and_ptr_call(arg_types, "getfunc", self.args.lfp)
                     return t, addr
             elif isinstance(func_node, DotExpr) and isinstance(func_node.right, NameNode):
                 class_t = func_node.left.evaluated_type(env, manager)

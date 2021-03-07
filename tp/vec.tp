@@ -1,7 +1,10 @@
-﻿
+﻿import lang;
+import collections;
 
 fn main() int {
+    lst := new List<Integer>();
+    //lst.append(new Integer(33));
+    lst.remove(0);
 
-
-    return 0;
+    return lst.size();
 }

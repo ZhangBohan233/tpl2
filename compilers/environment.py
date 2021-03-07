@@ -91,7 +91,7 @@ class Environment:
             return True
         entry = self._inner_get(name)
         if entry is None:
-            raise errs.TplEnvironmentError(f"Name '{name}' is not defined in this scope. ", lfp)
+            return False
         return (isinstance(entry.type, typ.ClassType) or
                 isinstance(entry.type, typ.Generic))
 

@@ -58,3 +58,6 @@
 * ~~'const' in class~~ Partial Done
 * Auto import lang
 * Interruption 'exit'
+* Print error, input
+* Method names in .tpa
+* Heap memory optimization

@@ -266,8 +266,8 @@ class FunctionPlacer(Type):
     def get_only(self):
         return self.poly.get_only()
 
-    def get_type_and_ptr_call(self, arg_types: list, lf) -> (CallableType, int):
-        return find_closet_func(self.poly, arg_types, "fn", False, lambda poly_d, i: poly_d.keys[i], lf)
+    def get_type_and_ptr_call(self, arg_types: list, name: str, lf) -> (CallableType, int):
+        return find_closet_func(self.poly, arg_types, name, False, lambda poly_d, i: poly_d.keys[i], lf)
 
     def get_type_and_ptr_def(self, param_types: list, lf) -> (CallableType, int):
         t_addr = self.poly.get_entry_by(param_types, func_eq_params)

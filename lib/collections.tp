@@ -24,6 +24,13 @@ abstract class AbsList<T>(Collection<T>) {
     abstract fn get(index: int) *T;
 
     abstract fn remove(index: int) *T;
+
+    protected fn checkIndex(index: int) void {
+        if index < 0 or index >= this.size() {
+            println("Index out of bound.");
+            exit(1);
+        }
+    }
 }
 
 class ListIterator<T>(Iterator<T>) {
@@ -44,8 +51,8 @@ class ListIterator<T>(Iterator<T>) {
 }
 
 class List<T>(AbsList<T>) {
-    private array: T[];
-    size: int;
+    protected array: T[];
+    protected size: int = 0;
 
     fn __new__() void {
         super.__new__();
@@ -71,12 +78,21 @@ class List<T>(AbsList<T>) {
 
     @Override
     fn get(index: int) *T {
+        this.checkIndex(index);
+
         return this.array[index];
     }
 
     @Override
     fn remove(index: int) *T {
-        return NULL;
+        obj: *T = this.get(index);
+
+        for i := index + 1; i < this.size; ++i {
+            this.array[i - 1] = this.array[i];
+        }
+        this.size--;
+        this.checkSize();
+        return obj;
     }
 
     @Override
@@ -98,10 +114,6 @@ class List<T>(AbsList<T>) {
         }
     }
 
-    private fn checkIndex(index: int) void {
-        exit(1);
-    }
-
     private fn expand() void {
         arr := new T[this.array.length * 2];
         arraycopy(this.array, 0, arr, 0, this.size);
@@ -110,16 +122,73 @@ class List<T>(AbsList<T>) {
     }
 
     private fn collapse() void {
-
+        arr := new T[this.array.length / 2];
+        arraycopy(this.array, 0, arr, 0, this.size);
+        del this.array;
+        this.array = arr;
     }
 }
 
-abstract class Map<K, V> {
+class LinkedIterator<T>(Iterator<T>) {
+    node: *LinkedNode;
+
+    fn __new__(head: *LinkedNode<T>) void {
+        this.node = head;
+    }
+
+    fn hasNext() boolean {
+        return this.node != NULL;
+    }
+
+    fn next() *T {
+        value: *T = this.node.value;
+        this.node = this.node.next;
+        return value;
+    }
+}
+
+class LinkedNode<T> {
+    value: *T;
+    next: *LinkedNode<T>;
+    prev: *LinkedNode<T>;
+}
+
+class LinkedList<T>(AbsList<T>) {
+    head: *LinkedNode<T> = NULL;
+    tail: *LinkedNode<T> = NULL;
+    size: int = 0;
+
+    fn iter() *LinkedIterator<T> {
+        return NULL;
+    }
+
+    fn append(value: *T) void {
+
+    }
+
+    fn get(index: int) *T {
+        this.checkIndex(index);
+        return NULL;
+    }
+
+    fn remove(index: int) *T {
+        this.checkIndex(index);
+        return NULL;
+    }
+
+    fn size() int {
+        return this.size;
+    }
+}
+
+abstract class Map<K, V>(Iterable<K>) {
 
 }
 
 class HashMap<K, V>(Map<K, V>) {
-
+    fn iter() *Iterator<K> {
+        return NULL;
+    }
 }
 
 export {

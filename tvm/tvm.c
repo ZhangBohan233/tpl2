@@ -298,6 +298,15 @@ void nat_mem_copy() {
     pull_fp
 }
 
+void nat_exit() {
+    push_fp
+    push(INT_LEN)
+
+    ERROR_CODE = bytes_to_int(MEMORY + true_addr(0));
+
+    pull_fp
+}
+
 tp_int _malloc_essential(tp_int asked_len) {
     tp_int real_len = asked_len + INT_LEN;
     tp_int allocate_len =
@@ -542,6 +551,9 @@ void invoke(tp_int func_ptr) {
             break;
         case 18:  // mem_copy
             nat_mem_copy();
+            break;
+        case 19:  // exit
+            nat_exit();
             break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;
@@ -1037,7 +1049,7 @@ void print_error(int error_code) {
             fprintf(stderr, "\nUnexpected instruction");
             break;
         default:
-            fprintf(stderr, "\nSomething wrong: ");
+            fprintf(stderr, "\nError: ");
             break;
     }
     fprintf(stderr, "%s\n", ERR_MSG);

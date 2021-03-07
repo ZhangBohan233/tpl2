@@ -1,4 +1,10 @@
-﻿===== VERSION 2059 =====
+﻿===== VERSION 2060 =====
+2021/03/08
+
+* Implemented native invoke 'exit(int)'
+* Added private method override check
+
+===== VERSION 2059 =====
 2021/03/07
 
 * Implemented annotation @Override

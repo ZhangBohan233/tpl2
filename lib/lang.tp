@@ -306,7 +306,7 @@ Returns the memory segment of this pointer is pointed to
 6:  if in heap
 
 #####
-mem_copy(src: *void, srcIndexBytes: int, dst: *void, dstIndexBytes: int, lengthBytes: int) void;
+mem_copy(src: *void, srcIndexInBytes: int, dst: *void, dstIndexInBytes: int, lengthInBytes: int) void;
 */
 
 fn println() void {
