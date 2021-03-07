@@ -42,7 +42,7 @@
 * ~~const method~~ Done
 * ~~Generic array~~ Done
 * ~~Destructor~~ Done
-* Annotations
+* ~~Annotations~~ Done
 
 #### Phase 4
 * ~~Auto detect super call~~ Done
@@ -51,9 +51,10 @@
 * ~~Call method via Class.method()~~ Done
 * ~~Reflection: getfunc~~ Done
 * ~~Char and byte binary operations~~ Done
-* Iterator for loop
+* ~~Iterator for loop~~ Done
 * ~~Private field~~ Done
 * ~~Native function 'memory_segment'~~ Done
 * ~~Update LineFile to LineFilePos~~ Done
 * ~~'const' in class~~ Partial Done
 * Auto import lang
+* Interruption 'exit'

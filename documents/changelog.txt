@@ -1,4 +1,9 @@
-﻿===== VERSION 2058 =====
+﻿===== VERSION 2059 =====
+2021/03/07
+
+* Implemented annotation @Override
+
+===== VERSION 2058 =====
 2021/03/07
 
 * Implemented for-each for arrays

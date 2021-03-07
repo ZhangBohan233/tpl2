@@ -418,6 +418,19 @@ class CharArrayLiteral(LiteralNode):
         return "CharArray@" + str(self.lit_pos)
 
 
+class AnnotationNode(Statement):
+    def __init__(self, text: str, lfp):
+        super().__init__(lfp)
+
+        self.text = text
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        raise errs.TplCompileError(f"Annotation {self.lfp} is not allowed. ")
+
+    def __str__(self):
+        return "@" + self.text
+
+
 class Buildable:
     def __init__(self, op: str):
         self.op = op
@@ -1370,6 +1383,7 @@ class FunctionDef(Expression):
         self.abstract = abstract
         self.const = const
         self.permission = permission
+        self.annotations = []
 
     def get_simple_name(self) -> str:
         if isinstance(self.name, NameNode):
@@ -2077,7 +2091,7 @@ class ForEachStmt(Statement):
             cond.right.left = self.title.right
             cond.right.right = NameNode("length", self.lfp)
 
-            step = PostIncDecOperator("++", self.lfp)
+            step = PreIncDecOperator("++", self.lfp)
             step.value = NameNode(itr_name, self.lfp)
 
             assignment = Assignment(self.lfp)
@@ -2660,6 +2674,7 @@ class ClassObject:
             self.class_type.fields[dec_name] = cur_field_pos, t, self.class_type, dec.level == VAR_CONST, dec.permission
             return t.memory_length()
 
+        active_ann = []
         for line in self.body:
             for part in line:
                 if isinstance(part, Declaration):
@@ -2678,7 +2693,12 @@ class ClassObject:
                         continue
                 elif isinstance(part, FunctionDef):
                     part.parent_class = self.class_type
+                    part.annotations.extend(active_ann)
+                    active_ann.clear()
                     method_defs.append(part)
+                    continue
+                elif isinstance(part, AnnotationNode):
+                    active_ann.append(part)
                     continue
 
                 raise errs.TplCompileError(
@@ -2724,12 +2744,13 @@ class ClassObject:
 
             if name in self.class_type.methods:
                 if method_t in self.class_type.methods[name]:  # overriding
+                    ClassObject.check_annotations(method_def, is_overriding=True)
                     m_pos, m_ptr, m_t = self.class_type.methods[name][method_t]
                     # print(f"class {self.class_type.name} overrides method {name} at {m_ptr}, new ptr {method_ptr}")
                     if name != "__new__":
                         if not method_t.convertible_to(m_t, method_def.lfp, weak=False):
-                            print(method_t.param_types[0])
-                            print(m_t.param_types[0])
+                            # print(method_t.param_types[0])
+                            # print(m_t.param_types[0])
                             raise errs.TplCompileError(
                                 f"Method '{name}' in class '{self.class_type.name}' "
                                 f"overrides its super method in class '{m_t.defined_class.name}', "
@@ -2745,12 +2766,14 @@ class ClassObject:
                             f"Method '{name}' is const, which cannot be overridden. ", method_def.lfp
                         )
                     self.class_type.methods[name][method_t] = m_pos, method_ptr, method_t
-                else:  # polymorphism
+                else:  # polymorphism, same name but not override
+                    ClassObject.check_annotations(method_def, is_overriding=False)
                     poly: util.NaiveDict = self.class_type.methods[name]
                     self.class_type.method_rank.append((name, method_t))
                     poly[method_t] = method_id, method_ptr, method_t
                     method_id += 1
             else:
+                ClassObject.check_annotations(method_def, is_overriding=False)
                 self.class_type.method_rank.append((name, method_t))
                 poly = util.NaiveDict(typ.params_eq_methods)
                 poly[method_t] = method_id, method_ptr, method_t
@@ -2758,15 +2781,29 @@ class ClassObject:
                 method_id += 1
 
         # # check if all abstract methods are overridden
+        not_implemented = []
         if not self.abstract:
-            for poly in self.class_type.methods.values():
+            for name in self.class_type.methods:
+                poly = self.class_type.methods[name]
                 for method_id, method_ptr, method_t in poly.values:
                     if method_t.abstract:
-                        raise errs.TplCompileError(
-                            f"Class '{self.class_type.name}' "
-                            f"does not override all abstract methods of its superclasses. ",
-                            self.lfp
-                        )
+                        not_implemented.append(name)
+        if len(not_implemented) > 0:
+            raise errs.TplCompileError(
+                f"Class '{self.class_type.name}' "
+                f"does not override abstract method(s) {not_implemented} of its superclasses. ",
+                self.lfp
+            )
+
+    @staticmethod
+    def check_annotations(method_def: FunctionDef, is_overriding: bool):
+        for annotation in method_def.annotations:
+            if annotation.text == "Override":
+                if not is_overriding:
+                    raise errs.TplCompileError(
+                        f"Method '{method_def.get_simple_name()}' in class '{method_def.parent_class.full_name()}' "
+                        f"is annotated "
+                        f"as 'Override', but it has no super method. ", annotation.lfp)
 
     def check_method_def(self, method: FunctionDef, class_type: typ.ClassType):
         desired_this_t_node = StarExpr(method.lfp)

@@ -330,6 +330,10 @@ class Parser:
                            lfp: tl.LineFilePos):
         index += 1
         ele = parent[index]
+        if isinstance(ele, tl.AtomicElement) and isinstance(ele.atom, tl.IdToken):
+            builder.add_node(ast.AnnotationNode(ele.atom.identifier, lfp))
+        else:
+            raise errs.TplSyntaxError("Invalid annotation. ", lfp)
         return index
 
     def process_instanceof(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder,

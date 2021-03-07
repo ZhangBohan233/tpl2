@@ -1,5 +1,9 @@
 ﻿import lang;
 
+require {
+    exit
+}
+
 abstract class Iterator<T> {
     abstract fn hasNext() boolean;
 
@@ -10,23 +14,6 @@ abstract class Iterable<T> {
     abstract fn iter() *Iterator<T>;
 }
 
-class ArrayIterator<T>(Iterator<T>) {
-    private array: T[];
-    index: int = 0;
-
-    fn __new__(array: T[]) void {
-        this.array = array;
-    }
-
-    fn hasNext() boolean {
-        return this.index < this.array.length;
-    }
-
-    fn next() *T {
-        return this.array[this.index++];
-    }
-}
-
 abstract class Collection<T>(Iterable<T>) {
     abstract fn size() int;
 }
@@ -35,6 +22,8 @@ abstract class AbsList<T>(Collection<T>) {
     abstract fn append(value: *T) void;
 
     abstract fn get(index: int) *T;
+
+    abstract fn remove(index: int) *T;
 }
 
 class ListIterator<T>(Iterator<T>) {
@@ -86,6 +75,11 @@ class List<T>(AbsList<T>) {
     }
 
     @Override
+    fn remove(index: int) *T {
+        return NULL;
+    }
+
+    @Override
     fn toString() *String {
         strArr := new String[this.size];
         for i := 0; i < this.size; i++ {
@@ -102,6 +96,10 @@ class List<T>(AbsList<T>) {
         if this.size < this.array.length / 4 {
             this.collapse();
         }
+    }
+
+    private fn checkIndex(index: int) void {
+        exit(1);
     }
 
     private fn expand() void {
@@ -125,7 +123,7 @@ class HashMap<K, V>(Map<K, V>) {
 }
 
 export {
-    Iterator, ListIterator, ArrayIterator,
+    Iterator, ListIterator,
     AbsList, List,
     Map, HashMap,
 }

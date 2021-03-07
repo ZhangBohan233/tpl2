@@ -75,7 +75,7 @@ class String {
         if this.length() != os.length() {
             return FALSE;
         }
-        for i := 0; i < this.chars.length; i++ {
+        for i := 0; i < this.chars.length; ++i {
             if this.chars[i] != os.chars[i] {
                 return FALSE;
             }
@@ -93,7 +93,7 @@ class String {
     fn join(array: String[]) *String {
         totalLength := 0;
         thisLength := this.length();
-        for i := 0; i < array.length; i++ {
+        for i := 0; i < array.length; ++i {
             totalLength += array[i].length();
         }
         if totalLength > 0 {
@@ -101,7 +101,7 @@ class String {
         }
         totalArray := new char[totalLength];
         index := 0;
-        for i := 0; i < array.length; i++ {
+        for i := 0; i < array.length; ++i {
             chars := array[i].chars;
             arraycopy(chars, 0, totalArray, index, chars.length);
             index += chars.length;
@@ -383,7 +383,7 @@ fn intToString(value: int) *String {
         array[0] = '-';
     }
     rem = absValue;
-    for i := begin; i < digits + begin; i++ {
+    for i := begin; i < digits + begin; ++i {
         cur := rem / mul;
         rem -= cur * mul;
         array[i] = (cur + 48) as char;

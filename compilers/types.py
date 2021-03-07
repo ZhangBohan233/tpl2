@@ -816,5 +816,6 @@ NATIVE_FUNCTIONS = {
     "print_byte": (15, NativeFuncType([TYPE_BYTE], TYPE_VOID)),
     "println_byte": (16, NativeFuncType([TYPE_BYTE], TYPE_VOID)),
     "mem_segment": (17, NativeFuncType([TYPE_VOID_PTR], TYPE_INT)),
-    "mem_copy": (18, NativeFuncType([TYPE_VOID_PTR, TYPE_INT, TYPE_VOID_PTR, TYPE_INT, TYPE_INT], TYPE_VOID))
+    "mem_copy": (18, NativeFuncType([TYPE_VOID_PTR, TYPE_INT, TYPE_VOID_PTR, TYPE_INT, TYPE_INT], TYPE_VOID)),
+    "exit": (19, NativeFuncType([TYPE_INT], TYPE_VOID))
 }
