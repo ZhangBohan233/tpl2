@@ -275,11 +275,10 @@ class BlockStmt(Statement):
 
 
 class NameNode(Expression):
-    def __init__(self, name: str, lf, first_call=True):
+    def __init__(self, name: str, lf):
         super().__init__(lf)
 
         self.name = name
-        self.first_call = first_call
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         return env.get(self.name, self.lfp)
@@ -1244,7 +1243,7 @@ class Assignment(BinaryExpr):
             return self.ptr_assign(self.left, env, tpa)
         elif isinstance(self.left, DollarExpr) or isinstance(self.left, DotExpr):
             right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
-            return self.class_attr_assign(self.left, env, tpa)
+            return self.class_attr_assign(self.left.left, self.left.right, env, tpa)
         elif isinstance(self.left, IndexingExpr):
             right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
             return self.array_index_assign(self.left, self.right, env, tpa, self.lfp)
@@ -1257,14 +1256,14 @@ class Assignment(BinaryExpr):
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return self.right.evaluated_type(env, manager)
 
-    def class_attr_assign(self, dot: DotExpr, env: en.Environment, tpa: tp.TpaOutput):
-        attr_ptr, attr_t, const = DotExpr.get_dot_attr_and_type(dot.left, dot.right, env, tpa, dot.lfp)
+    def class_attr_assign(self, left, right, env: en.Environment, tpa: tp.TpaOutput):
+        attr_ptr, attr_t, const = DotExpr.get_dot_attr_and_type(left, right, env, tpa, self.lfp)
         if const:
             wf = env.get_working_function()
             if not isinstance(wf, typ.MethodType):
-                raise errs.TplCompileError(f"Cannot assign constant variable {dot.right}. ", dot.lfp)
+                raise errs.TplCompileError(f"Cannot assign constant variable {right}. ", self.lfp)
             if not wf.constructor:
-                raise errs.TplCompileError(f"Cannot assign constant variable {dot.right}. ", dot.lfp)
+                raise errs.TplCompileError(f"Cannot assign constant variable {right}. ", self.lfp)
         res_addr = self.right.compile(env, tpa)
         tpa.ptr_assign(res_addr, attr_t.length, attr_ptr)
         return res_addr

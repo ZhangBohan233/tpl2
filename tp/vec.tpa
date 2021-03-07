@@ -5,7 +5,7 @@ stack_size
 global_length
 1088
 literal
-0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 7 0 0 0 0 0 0 0 79 0 98 0 106 0 101 0 99 0 116 0 64 0 3 0 0 0 0 0 0 0 10 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 46 0 1 0 0 0 0 0 0 0 98 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 48 0 45 0 48 0 0 0 0 0 0 0 19 0 0 0 0 0 0 0 73 0 110 0 100 0 101 0 120 0 32 0 111 0 117 0 116 0 32 0 111 0 102 0 32 0 98 0 111 0 117 0 110 0 100 0 46 0 8 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 44 0 32 0 1 0 0 0 0 0 0 0 91 0 1 0 0 0 0 0 0 0 93 0 4 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 7 0 0 0 0 0 0 0 79 0 98 0 106 0 101 0 99 0 116 0 64 0 3 0 0 0 0 0 0 0 10 0 0 0 0 0 0 0 6 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 46 0 1 0 0 0 0 0 0 0 98 0 0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 48 0 45 0 48 0 0 0 0 0 0 0 19 0 0 0 0 0 0 0 73 0 110 0 100 0 101 0 120 0 32 0 111 0 117 0 116 0 32 0 111 0 102 0 32 0 98 0 111 0 117 0 110 0 100 0 46 0 8 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 44 0 32 0 1 0 0 0 0 0 0 0 91 0 1 0 0 0 0 0 0 0 93 0 4 0 0 0 0 0 0 0 2 0 0 0 0 0 0 0 33 0 0 0 0 0 0 0
 classes
 class E:\GitHub\tpl2\lib\lang.tp$Object mro $2176 methods $2488 $2496 $2504 $2512 $2520
 class E:\GitHub\tpl2\lib\lang.tp$String mro $2184 $2176 methods $2488 $2544 $2504 $2560 $2520 $2528 $2536 $2552 $2568 $2576 $2584 $2592
@@ -4234,7 +4234,7 @@ fn E:\GitHub\tpl2\lib\collections.tp$HashMap.__new__() $3128
 
 fn E:\GitHub\tpl2\tp\vec.tp$main() $2480
     push_fp
-    push          48
+    push          72
     require       malloc  $8      %0      %1
     iload         %0      $24
     iload         %1      $16
@@ -4252,8 +4252,41 @@ fn E:\GitHub\tpl2\tp\vec.tp$main() $2480
     load          %1      $0
     store_abs     %0      %1
     call_fn       E:\GitHub\tpl2\lib\collections.tp$List.__new__()
-    load_lit      %0      $0
+    iload         %0      $16
     iload         %1      $32
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $32
+    store_abs     %0      %1
+    iload         %0      24
+    set_ret       %0
+    invoke        $8
+    load          %0      $24
+    iload         %1      2200
+    store_abs     %0      %1
+    load_lit      %0      $220
+    iload         %1      $40
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $24
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $40
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\lang.tp$Integer.__new__(int)
+    load          %0      $0
+    iload         %1      7
+    iload         %2      0
+    get_method    %0      %1      %2
+    aload_sp      %1      $0
+    load          %2      $0
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $24
+    store_abs     %1      %2
+    call_reg      %0
+    load_lit      %0      $0
+    iload         %1      $56
     store         %1      %0
     load          %0      $0
     iload         %1      9
@@ -4263,9 +4296,9 @@ fn E:\GitHub\tpl2\tp\vec.tp$main() $2480
     load          %2      $0
     store_abs     %1      %2
     aload_sp      %1      $8
-    load          %2      $32
+    load          %2      $56
     store_abs     %1      %2
-    iload         %1      24
+    iload         %1      48
     set_ret       %1
     call_reg      %0
     load          %0      $0
@@ -4275,10 +4308,10 @@ fn E:\GitHub\tpl2\tp\vec.tp$main() $2480
     aload_sp      %1      $0
     load          %2      $0
     store_abs     %1      %2
-    iload         %1      40
+    iload         %1      64
     set_ret       %1
     call_reg      %0
-    load          %0      $40
+    load          %0      $64
     put_ret       %0
     pull_fp
     ret

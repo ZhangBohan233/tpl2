@@ -333,17 +333,24 @@ class ClassType(Type):
         return False
 
     def find_field(self, name: str, lf) -> (int, Type, Type, bool, int):
+        """
+        Returns (field_pos, type, defined_class, const, permission)
+
+        :param name:
+        :param lf:
+        :return:
+        """
         for mro_t in self.mro:
             if name in mro_t.fields:
                 return mro_t.fields[name]
-        raise errs.TplCompileError(f"Class {self.name} does not have field '{name}'. ", lf)
+        raise errs.TplEnvironmentError(f"Class {self.name} does not have field '{name}'. ", lf)
 
     def _find_method(self, name, arg_types, lf):
         if name in self.methods:
             poly: util.NaiveDict = self.methods[name]
             return find_closet_func(poly, arg_types, name, True, lambda poly_d, i: poly_d.values[i][2], lf)[1]
 
-        raise errs.TplCompileError(f"Class {self.name} does not have method '{name}'. ", lf)
+        raise errs.TplEnvironmentError(f"Class {self.name} does not have method '{name}'. ", lf)
 
     def find_method(self, name: str, arg_types: list, lf) -> (int, int, MethodType):
         if name == "__new__":
@@ -369,7 +376,7 @@ class ClassType(Type):
         if isinstance(def_this_t, GenericClassType):
             def_this_t = def_this_t.base
         if def_this_t != self:
-            raise errs.TplCompileError(f"Cannot resolve local method {name}{arg_types[1:]}. ", lf)
+            raise errs.TplEnvironmentError(f"Cannot resolve local method {name}{arg_types[1:]}. ", lf)
         return method_id, method_ptr, method_t
 
     def strong_convertible(self, left_tar_type):
