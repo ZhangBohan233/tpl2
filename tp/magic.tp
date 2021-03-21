@@ -17,6 +17,7 @@ fn main() void {
     a := new A<Integer>();
     a[0] = new Integer(77);
     a[1] = new Integer(66);
-    println(a[0] + a[1].intValue());
+    println(a[0] + a[1]);
     println("asd" + "efg");
+    println(34 % 7.7);
 }

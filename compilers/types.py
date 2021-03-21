@@ -225,6 +225,11 @@ class FuncType(CallableType):
         return False
 
 
+class LambdaType(FuncType):
+    def __init__(self, param_types, rtype):
+        super().__init__(param_types, rtype)
+
+
 class MethodType(FuncType):
     def __init__(self, param_types, rtype, def_class,
                  is_constructor: bool, abstract: bool, const: bool, permission: int):

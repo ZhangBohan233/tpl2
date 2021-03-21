@@ -1,4 +1,10 @@
-﻿===== VERSION 2068 =====
+﻿===== VERSION 2069 =====
+2021/03/22
+
+* Implemented lambda expression
+* Implemented inner function: experimental!
+
+===== VERSION 2068 =====
 2021/03/18
 
 * Implemented magic methods for '+,-,*,/,%'

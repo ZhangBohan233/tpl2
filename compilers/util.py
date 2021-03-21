@@ -3,7 +3,7 @@ import struct
 
 
 VM_BITS = 64
-STACK_SIZE = 2048
+STACK_SIZE = 512
 INT_LEN = VM_BITS // 8
 FLOAT_LEN = VM_BITS // 8
 CHAR_LEN = 2

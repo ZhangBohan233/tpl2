@@ -1,0 +1,20 @@
+﻿//import lang;
+//import functions;
+
+fn foo(y: int) int {
+    fn neg1(x: int) int {
+        return -x;
+    }
+    return neg1(y);
+}
+
+fn main() int {
+    add: fn(int, int) -> int = lambda(a: int, b: int) a + b;
+    sub: fn(int, int) -> int = lambda(a: int, b: int) a - b;
+
+    fn neg(x: int) int {
+        return x;
+    }
+
+    return add(3, 4) + foo(1);
+}

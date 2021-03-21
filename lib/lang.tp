@@ -150,16 +150,44 @@ class Integer(Number) {
         this.value = value;
     }
 
-    fn __add__(other: int) *Integer {
-        return new Integer(this.value + other);
-    }
-
     fn __add__(other: *Number) *Number {
         return new Integer(this.value + other.intValue());
     }
 
     fn __add__(other: *Float) *Float {
         return new Float(this.value + other.floatValue());
+    }
+
+    fn __sub__(other: *Number) *Number {
+        return new Integer(this.value - other.intValue());
+    }
+
+    fn __sub__(other: *Float) *Float {
+        return new Float(this.value - other.floatValue());
+    }
+
+    fn __mul__(other: *Number) *Number {
+        return new Integer(this.value * other.intValue());
+    }
+
+    fn __mul__(other: *Float) *Float {
+        return new Float(this.value * other.floatValue());
+    }
+
+    fn __div__(other: *Number) *Number {
+        return new Integer(this.value / other.intValue());
+    }
+
+    fn __div__(other: *Float) *Float {
+        return new Float(this.value / other.floatValue());
+    }
+
+    fn __mod__(other: *Number) *Number {
+        return new Integer(this.value % other.intValue());
+    }
+
+    fn __mod__(other: *Float) *Float {
+        return new Float(this.value % other.floatValue());
     }
 
     @Override

@@ -38,6 +38,7 @@ class Parser:
             ";": self.process_eol,
             "abstract": self.process_abstract,
             "fn": self.process_fn,
+            "lambda": self.process_lambda,
             "class": self.process_class,
             "var": self.process_var,
             "const": self.process_const,
@@ -85,6 +86,23 @@ class Parser:
 
     def process_protected(self, p, i, b, lfp):
         self.permission = ast.PROTECTED
+
+    def process_lambda(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
+        index += 1
+        params_bracket = parent[index]
+        if not tl.is_bracket(params_bracket):
+            raise errs.TplSyntaxError("Invalid syntax for lambda expression. ", lfp)
+        params = self.parse_as_line(params_bracket)
+        body_bracket = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
+        index += 1
+        next_tk = parent[index]
+        while not tl.identifier_of(next_tk, ";"):
+            body_bracket.append(next_tk)
+            index += 1
+            next_tk = parent[index]
+        body = self.parse_as_part(body_bracket)
+        builder.add_node(ast.LambdaExpr(params, body, lfp))
+        return index
 
     def process_fn(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
         abstract = self.abstract

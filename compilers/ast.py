@@ -61,7 +61,7 @@ class SpaceCounter(Counter):
 
 
 SPACES = SpaceCounter()
-CLASS_ID = Counter()
+LAMBDA_COUNTER = Counter()
 
 
 class Node:
@@ -119,6 +119,14 @@ class Node:
 
 # Expression returns a thing while Statement returns nothing
 
+class Statement(Node, ABC):
+    def __init__(self, lf):
+        super().__init__(lf)
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        raise errs.TplTypeError(f"Statements {self} do not evaluate a type. ", self.lfp)
+
+
 class Expression(Node, ABC):
     def __init__(self, lf):
         super().__init__(lf)
@@ -130,8 +138,10 @@ class Expression(Node, ABC):
             tpa.assign(dst_addr, res)
         elif et.memory_length() == util.CHAR_LEN:
             tpa.assign_char(dst_addr, res)
+        elif et.memory_length() == 1:
+            tpa.assign_byte(dst_addr, res)
         else:
-            pass
+            raise errs.TplCompileError("Unexpected memory length. ", self.lfp)
 
 
 class FakeNode(Node):
@@ -178,14 +188,6 @@ class FakeByteLit(FakeLiteral):
 class FakeStrLit(FakeLiteral):
     def __init__(self, value, lf):
         super().__init__(value, lf)
-
-
-class Statement(Node, ABC):
-    def __init__(self, lf):
-        super().__init__(lf)
-
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        raise errs.TplTypeError(f"Statements {self} do not evaluate a type. ", self.lfp)
 
 
 class Line(Expression):
@@ -1415,6 +1417,51 @@ class RightArrowExpr(BinaryExpr):
             return ft
 
 
+class LambdaExpr(Expression):
+    def __init__(self, params: Line, body: Expression, lfp):
+        super().__init__(lfp)
+
+        self.params = params
+        self.body = ReturnStmt(lfp)
+        self.body.value = body
+        self.lambda_id = LAMBDA_COUNTER.increment()
+
+    def lambda_name(self):
+        return "lambda#" + str(self.lambda_id)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        simple_name = self.lambda_name()
+        fn_ptr = tpa.manager.allocate_global(util.PTR_LEN)
+
+        func_type = self.evaluated_type(env, tpa.manager)
+        poly_name = typ.function_poly_name(simple_name,
+                                           func_type.param_types,
+                                           False)
+        fo = FunctionObject(env, tpa, fn_ptr, None, poly_name, self.params, func_type, self.body, self.lfp,
+                            is_lambda=True)
+        env.define_function(simple_name, func_type, fn_ptr, self.lfp)
+
+        tpa.manager.map_function(poly_name, self.lfp.get_file(), fo)
+
+        # res_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
+        # tpa.assign(res_ptr, fn_ptr)
+        # return res_ptr
+        return fn_ptr
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.LambdaType:
+        fn_env = en.FunctionEnvironment(env, f"lambda {self.lfp}", None)
+        param_types = []
+        for pn in self.params:
+            if isinstance(pn, Declaration):
+                pt = pn.right.definition_type(env, manager)
+                fn_env.define_const(pn.get_name(), pt, self.lfp)
+                param_types.append(pt)
+            else:
+                raise errs.TplCompileError("Invalid parameter. ", self.lfp)
+        rtype = self.body.value.evaluated_type(fn_env, manager)
+        return typ.LambdaType(param_types, rtype)
+
+
 class FunctionDef(Expression):
     def __init__(self, name: Expression, params: Line, rtype: Expression, abstract: bool, const: bool,
                  permission: int, body: BlockStmt, lf):
@@ -1461,8 +1508,7 @@ class FunctionDef(Expression):
             raise errs.TplCompileError("Unexpected function name. ")
 
     def compile_as(self, simple_name: str, env: en.Environment, tpa: tp.TpaOutput):
-        # rtype = self.rtype.definition_type(env, tpa.manager)
-        fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
+        fn_ptr = tpa.manager.allocate_global(util.PTR_LEN)
 
         func_type = self.evaluated_type(env, tpa.manager)
         poly_name = self.get_simple_poly_name(env, tpa.manager)
@@ -2695,7 +2741,7 @@ class SwitchExpr(Expression):
 
 class FunctionObject:
     def __init__(self, def_env: en.Environment, tpa, fn_ptr, parent_class, poly_name, params, func_type: typ.FuncType,
-                 body, lf):
+                 body, lfp, is_lambda=False):
         self.parent_class = parent_class
         self.fn_ptr = fn_ptr
         self.def_env = def_env
@@ -2704,7 +2750,8 @@ class FunctionObject:
         self.func_type = func_type
         self.params = params
         self.body = body
-        self.lf = lf
+        self.lfp = lfp
+        self.is_lambda = is_lambda
 
     def compile(self):
         if self.parent_class is None:
@@ -2724,16 +2771,17 @@ class FunctionObject:
                 param.compile(scope, body_out)
 
         if self.body is None:  # abstract function
-            body_out.add_function(self.poly_name, self.lf.get_file(), self.fn_ptr, self.parent_class, abstract=True)
+            body_out.add_function(self.poly_name, self.lfp.get_file(), self.fn_ptr, self.parent_class, abstract=True)
         else:
-            # check return
-            complete_return = self.body.return_check()
-            if not complete_return:
-                if not self.func_type.rtype.is_void():
-                    raise errs.TplCompileError(f"Function '{self.poly_name}' missing a return statement. ", self.lf)
+            if not self.is_lambda:
+                # check return
+                complete_return = self.body.return_check()
+                if not complete_return:
+                    if not self.func_type.rtype.is_void():
+                        raise errs.TplCompileError(f"Function '{self.poly_name}' missing a return statement. ", self.lf)
 
             # compiling
-            body_out.add_function(self.poly_name, self.lf.get_file(), self.fn_ptr, self.parent_class)
+            body_out.add_function(self.poly_name, self.lfp.get_file(), self.fn_ptr, self.parent_class)
             push_index = body_out.add_indefinite_push()
             self.body.compile(scope, body_out)
 

@@ -1,0 +1,124 @@
+bits
+64
+stack_size
+512
+global_length
+48
+literal
+0 0 0 0 0 0 0 0 1 0 0 0 0 0 0 0 255 255 255 255 255 255 255 255 3 0 0 0 0 0 0 0 4 0 0 0 0 0 0 0
+classes
+
+fn E:\GitHub\tpl2\tp\ftns.tp$foo(int) $512
+    push_fp
+    push          16
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    iload         %0      8
+    set_ret       %0
+    call          $528
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\ftns.tp$main() $520
+    push_fp
+    push          64
+    load          %0      $536
+    iload         %1      $0
+    store         %1      %0
+    load          %0      $544
+    iload         %1      $8
+    store         %1      %0
+    load_lit      %0      $24
+    iload         %1      $32
+    store         %1      %0
+    load_lit      %0      $32
+    iload         %1      $40
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $32
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $40
+    store_abs     %0      %1
+    iload         %0      24
+    set_ret       %0
+    call          $0
+    load_lit      %0      $8
+    iload         %1      $56
+    store         %1      %0
+    aload_sp      %0      $0
+    load          %1      $56
+    store_abs     %0      %1
+    iload         %0      48
+    set_ret       %0
+    call          $512
+    load          %0      $24
+    load          %1      $48
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\ftns.tp$neg1(int) $528
+    push_fp
+    push          16
+    load          %0      $0
+    negi          %0
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\ftns.tp$lambda#0(int,int) $536
+    push_fp
+    push          24
+    load          %0      $0
+    load          %1      $8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\ftns.tp$lambda#1(int,int) $544
+    push_fp
+    push          24
+    load          %0      $0
+    load          %1      $8
+    subi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\ftns.tp$neg(int) $552
+    push_fp
+    push          8
+    load          %0      $0
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    aload         %0      $1
+    set_ret       %0
+    call_fn       E:\GitHub\tpl2\tp\ftns.tp$main()
+    exit

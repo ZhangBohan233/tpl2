@@ -117,6 +117,11 @@ class Manager:
         self.class_func_order = []
         self.label_manager = LabelManager()
 
+    def allocate_global(self, length):
+        addr = self.gp
+        self.gp += length
+        return addr
+
     def allocate_stack(self, length):
         if len(self.blocks) == 0:
             addr = self.gp
@@ -586,7 +591,7 @@ class TpaOutput:
 
         merged = ["bits", str(util.VM_BITS),
                   "stack_size", str(util.STACK_SIZE),
-                  "global_length", str(self.manager.global_length()),
+                  "global_length", "",
                   "literal", "",
                   "classes"]
 
@@ -645,6 +650,7 @@ class TpaOutput:
             self.manager.literal[str_pos + util.PTR_LEN: str_pos + util.PTR_LEN * 2] = \
                 util.int_to_bytes(str_addr + util.PTR_LEN * 2)
 
+        merged[merged.index("global_length") + 1] = str(self.manager.global_length())
         literal_str = " ".join([str(int(b)) for b in self.manager.literal])
         merged[merged.index("literal") + 1] = literal_str
 

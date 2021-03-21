@@ -64,3 +64,4 @@
 * ~~String literal management~~ Done
 * Array element record in runtime
 * Template function
+* Inner function rename
