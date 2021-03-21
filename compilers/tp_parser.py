@@ -133,6 +133,9 @@ class Parser:
         return index
 
     def process_class(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp):
+        if index > 0 and tl.identifier_of(parent[index - 1], "."):
+            builder.add_node(ast.NameNode("class", lfp))
+            return None
         abstract = self.abstract
         self.abstract = False
         index += 1
@@ -555,7 +558,9 @@ def is_unary(leading_ele: tl.Element) -> bool:
         token = leading_ele.atom
         if isinstance(token, tl.IdToken):
             symbol = token.identifier
-            if symbol in UNARY_LEADING:
+            if symbol == "class":  # special case, 'this.class'
+                return False
+            elif symbol in UNARY_LEADING:
                 return True
             else:
                 return symbol in tl.ALL_BINARY or symbol in tl.RESERVED

@@ -1,25 +1,11 @@
 ﻿import lang;
-import collections;
-
-fn tt(arr: Object[]) void {
-    println(arr.length);
-}
-
-class A<T> {
-    arr: T[];
-
-    fn test() void {
-        //this.arr = new T[3];
-        tt(this.arr);
-    }
-}
 
 fn main() int {
-    //x := "asd";
-    //added := x.concat("fgh");
-    //println(added);
-    //return sizeof(*void);
-
-
-    return 0;
+    x := "abc";
+    b: *String = "efg";
+    println("abc" == x);
+    c := x.concat(b);
+    println(c);
+    del c;
+    return b.length();
 }

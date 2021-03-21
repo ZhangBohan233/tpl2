@@ -11,15 +11,17 @@ MAIN_FN_ERR_MSG = "Main function should be one of\n" + \
 
 
 class Compiler:
-    def __init__(self, root: ast.BlockStmt, literals: bytes, main_file_path: str, optimize_level: int):
+    def __init__(self, root: ast.BlockStmt, literals: bytes, str_lit_pos: dict,
+                 main_file_path: str, optimize_level: int):
         self.root = root
         self.literals = literals
+        self.str_lit_pos = str_lit_pos
         self.main_path = main_file_path
 
         ast.set_optimize_level(optimize_level)
 
     def compile(self) -> str:
-        manager = prod.Manager(self.literals)
+        manager = prod.Manager(self.literals, self.str_lit_pos)
         out = prod.TpaOutput(manager, is_global=True)
         ge = en.GlobalEnvironment()
         _init_compile_time_functions(ge)

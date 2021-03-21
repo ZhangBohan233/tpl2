@@ -4,14 +4,16 @@ import struct
 
 VM_BITS = 64
 STACK_SIZE = 2048
-INT_LEN = VM_BITS >> 3
-FLOAT_LEN = VM_BITS >> 3
+INT_LEN = VM_BITS // 8
+FLOAT_LEN = VM_BITS // 8
 CHAR_LEN = 2
 PTR_LEN = INT_LEN
 
 ZERO_POS = 0
 ONE_POS = INT_LEN
 NEG_ONE_POS = INT_LEN + INT_LEN
+
+STRING_HEADER_LEN = PTR_LEN * 2
 
 float_pack = "d" if FLOAT_LEN == 8 else "f"
 

@@ -1,7 +1,16 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "tvm/tvm.h"
 
+
+/*
+ * Flags:
+ *
+ * -e, --exit:       print exit value
+ * -m, --mem:        print stack, global, literal, heap memory
+ * -fm, --full-mem:  print all memory
+ */
 
 int main(int argc, char **argv) {
     if (argc < 2) {
@@ -18,17 +27,14 @@ int main(int argc, char **argv) {
     for (int i = 1; i < argc; i++) {
         char *arg = argv[i];
         if (arg[0] == '-') {
-            switch (arg[1]) {
-                case 'e':
-                    p_exit = 1;
-                    break;
-                case 'm':
-                    p_memory = 1;
-                    break;
-                default:
-                    printf("Unknown flag: -%c", arg[1]);
-                    break;
-            }
+            if (strcmp(arg, "-e") == 0 || strcmp(arg, "--exit") == 0)
+                p_exit = 1;
+            else if (strcmp(arg, "-m") == 0 || strcmp(arg, "--mem") == 0)
+                p_memory = 1;
+            else if (strcmp(arg, "-fm") == 0 || strcmp(arg, "--full_mem") == 0)
+                p_memory = 2;
+            else
+                printf("Unknown flag: -%c", arg[1]);
         } else {
             file_name = arg;
             vm_args_begin = i;

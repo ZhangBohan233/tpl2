@@ -7,7 +7,7 @@
 
 #include "util.h"
 
-#define MEM_BLOCK 16
+#define MEM_BLOCK (VM_BITS / 2)
 
 typedef struct LinkedNode {
     tp_int addr;
@@ -16,8 +16,10 @@ typedef struct LinkedNode {
 
 LinkedNode *ava_pool;
 LinkedNode *available;
+//LinkedNode *fragment_pool;
+//LinkedNode *fragments;
 
-LinkedNode *build_ava_link(tp_int lower, tp_int upper);
+LinkedNode *build_link(tp_int lower, tp_int upper, LinkedNode **pool);
 
 tp_int malloc_link(tp_int block_count);
 

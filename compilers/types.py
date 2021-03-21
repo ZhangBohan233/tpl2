@@ -267,7 +267,11 @@ class FunctionPlacer(Type):
         return self.poly.get_only()
 
     def get_type_and_ptr_call(self, arg_types: list, name: str, lf) -> (CallableType, int):
-        return find_closet_func(self.poly, arg_types, name, False, lambda poly_d, i: poly_d.keys[i], lf)
+        try:
+            return find_closet_func(self.poly, arg_types, name, False, lambda poly_d, i: poly_d.keys[i], lf)
+        except errs.TplCompileError as e:
+            print(name, self.poly)
+            raise e
 
     def get_type_and_ptr_def(self, param_types: list, lf) -> (CallableType, int):
         t_addr = self.poly.get_entry_by(param_types, func_eq_params)
@@ -291,14 +295,17 @@ class ClassType(Type):
         self.class_env = class_env
         self.abstract = abstract
         self.direct_superclasses = direct_sc
-        self.mro: list = None  # Method resolution order, ranked from closest to farthest
+        self.mro: [ClassType] = None  # Method resolution order, ranked from closest to farthest
         self.templates = templates  # list of self templates
-        self.method_rank = []  # keep track of all method names in order | (name, method_t)
+
+        # keep track of all method names in order | (name, method_t)
+        # note that method_t in this list is not reliable, use methods[name][method_t][...] instead
+        self.method_rank = []
 
         # this dict records all callable methods in this class, including methods in its superclass
         # methods with same name must have the same id, i.e. overriding methods have the same id
         # note that in each NaiveDict, the key is the type of the most super method, real type is in the values
-        self.methods = {}  # name: NaiveDict{func_type: (method_id, func_ptr, func_type)}
+        self.methods: {str: util.NaiveDict} = {}  # name: NaiveDict{func_type: (method_id, func_ptr, func_type)}
         self.fields = {}  # name: (position, type, defined_class, const?, permission)
 
         # records mapping for all templates
@@ -353,6 +360,14 @@ class ClassType(Type):
         raise errs.TplEnvironmentError(f"Class {self.name} does not have method '{name}'. ", lf)
 
     def find_method(self, name: str, arg_types: list, lf) -> (int, int, MethodType):
+        """
+        Returns method_id, method_ptr, method_type
+
+        :param name:
+        :param arg_types: list of arg type, please insert None at index 0 to represent 'this', if it is not included.
+        :param lf:
+        :return:
+        """
         if name == "__new__":
             return self.find_local_method(name, arg_types, lf)
         else:
@@ -475,6 +490,9 @@ class GenericClassType(GenericType):
         if isinstance(left_tar_type, ClassType):
             if self.base.strong_convertible(left_tar_type) or self.base.normal_convertible(left_tar_type):
                 return True
+        if isinstance(left_tar_type, Generic):
+            if self.base.strong_convertible(left_tar_type.max_t) or self.base.normal_convertible(left_tar_type.max_t):
+                return True
         return False
 
 
@@ -530,14 +548,16 @@ class ArrayType(Type):
     def strong_convertible(self, left_tar_type):
         if left_tar_type == TYPE_VOID_PTR:
             return True
-        elif isinstance(self.ele_type, PointerType) and isinstance(self.ele_type.base, Generic):
-            if isinstance(left_tar_type, ArrayType) and isinstance(left_tar_type.ele_type, PointerType):
-                if isinstance(left_tar_type.ele_type.base, Generic):
-                    if self.ele_type.base.max_t == left_tar_type.ele_type.base.max_t:
-                        return True
-                else:
-                    if self.ele_type.base.max_t == left_tar_type.ele_type.base:
-                        return True
+        elif isinstance(left_tar_type, ArrayType):
+            return self.ele_type.strong_convertible(left_tar_type.ele_type)
+        # elif isinstance(self.ele_type, PointerType) and isinstance(self.ele_type.base, Generic):
+        #     if isinstance(left_tar_type, ArrayType) and isinstance(left_tar_type.ele_type, PointerType):
+        #         if isinstance(left_tar_type.ele_type.base, Generic):
+        #             if self.ele_type.base.max_t == left_tar_type.ele_type.base.max_t:
+        #                 return True
+        #         else:
+        #             if self.ele_type.base.max_t == left_tar_type.ele_type.base:
+        #                 return True
         return super().strong_convertible(left_tar_type)
 
     def type_name(self):
@@ -555,6 +575,15 @@ class ArrayType(Type):
 
 def is_object_ptr(t: Type) -> bool:
     return isinstance(t, PointerType) and isinstance(t.base, (ClassType, GenericClassType))
+
+
+def replace_generics_if(t: Type, caller_class_t, lfp) -> Type:
+    if isinstance(caller_class_t, GenericClassType):
+        if is_generic(t):
+            return replace_generic_with_real(t, caller_class_t.generics, lfp)
+        if is_generic_type(t):
+            return replace_callee_generic_class(t, caller_class_t, lfp)
+    return t
 
 
 def is_generic(t: Type) -> bool:
@@ -765,7 +794,7 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
             for j in range(param_begin, len(arg_types)):
                 arg = arg_types[j]
                 param = fn_t.param_types[j]
-                # print(arg, type(arg), param, lf)
+                # print(arg, "=====", param, lf)
                 # if isinstance(arg, PointerType) and isinstance(arg.base, Generic):
                 #     print("zsda")
                 if arg.convertible_to(param, lf, weak=False):

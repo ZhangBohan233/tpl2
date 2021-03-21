@@ -23,13 +23,32 @@ abstract class AbsList<T>(Collection<T>) {
 
     abstract fn get(index: int) *T;
 
+    abstract fn set(index: int, value: *T) void;
+
     abstract fn remove(index: int) *T;
+
+    fn toArray() T[] {
+        length := this.size();
+        array := new T[this.size()];
+        for i := 0; i < length; ++i {
+            array[i] = this.get(i);
+        }
+        return array;
+    }
 
     protected fn checkIndex(index: int) void {
         if index < 0 or index >= this.size() {
             println("Index out of bound.");
             exit(1);
         }
+    }
+
+    fn __get__(index: int) *T {
+        return this.get(index);
+    }
+
+    fn __set__(index: int, value: *T) void {
+        this.set(index, value);
     }
 }
 
@@ -81,6 +100,13 @@ class List<T>(AbsList<T>) {
         this.checkIndex(index);
 
         return this.array[index];
+    }
+
+    @Override
+    fn set(index: int, value: *T) void {
+        this.checkIndex(index);
+
+        this.array[index] = value;
     }
 
     @Override
@@ -169,6 +195,10 @@ class LinkedList<T>(AbsList<T>) {
     fn get(index: int) *T {
         this.checkIndex(index);
         return NULL;
+    }
+
+    fn set(index: int, value: *T) void {
+
     }
 
     fn remove(index: int) *T {

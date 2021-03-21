@@ -5,7 +5,8 @@ require {
     print_byte, println_byte,
     print_str, println_str,
     mem_segment,
-    mem_copy
+    mem_copy,
+    exit
 }
 
 /*
@@ -24,7 +25,7 @@ class Object {
     }
 
     fn hash() int {
-        return this.__class__ * ((this as *void) as int);
+        return this.class * ((this as *void) as int);
     }
 
     fn equals(other: *Object) boolean {
@@ -42,22 +43,26 @@ class String {
     fn __new__(chars: char[]) void {
         super.__new__();
 
-        this.chars = chars;
+        this.chars = new char[chars.length];
+        arraycopy(chars, 0, this.chars, 0, chars.length);
     }
 
     fn __new__(other: *String) void {
-        super.__new__();
-
-        this.chars = other.chars;
+        this.__new__(other.chars);
     }
 
     fn __del__() void {
-        if mem_segment(this.chars) == 3 {  // literal
-            return;
+        if mem_segment(this) == 3 {  // literal
+            println("Cannot delete literal string.");
+            exit(1);
         }
         del this.chars;
 
         super.__del__();
+    }
+
+    fn __add__(other: *String) *String {
+        return this.concat(other);
     }
 
     fn concat(other: *String) *String {
@@ -145,6 +150,18 @@ class Integer(Number) {
         this.value = value;
     }
 
+    fn __add__(other: int) *Integer {
+        return new Integer(this.value + other);
+    }
+
+    fn __add__(other: *Number) *Number {
+        return new Integer(this.value + other.intValue());
+    }
+
+    fn __add__(other: *Float) *Float {
+        return new Float(this.value + other.floatValue());
+    }
+
     @Override
     fn intValue() int {
         return this.value;
@@ -202,18 +219,7 @@ class Float(Number) {
 
     @Override
     fn toString() *String {
-        iv: int = this.value as int;
-        dv := this.value - iv;
-        dv = if dv < 0 then -dv else dv;
-        front := intToString(iv as int);
-        count := 0;
-        while count < 6 and dv != dv as int {
-            dv *= 10;
-            count++;
-        }
-        back := intToString(dv as int);
-
-        return front.concat(".").concat(back);
+        return floatToString(this.value);
     }
 }
 
@@ -361,6 +367,14 @@ fn println(value: *Object) void {
     println(value.toString());
 }
 
+fn print(value: Object[]) void {
+    print("Array");
+}
+
+fn println(value: Object[]) void {
+    println("Array");
+}
+
 fn intToString(value: int) *String {
     if value == 0 {
         return "0";
@@ -389,8 +403,25 @@ fn intToString(value: int) *String {
         array[i] = (cur + 48) as char;
         mul /= 10;
     }
-
     return new String(array);
+}
+
+fn floatToString(value: float) *String {
+    iv: int = value as int;
+    dv := value - iv;
+    dv = if dv < 0 then -dv else dv;
+    front := intToString(iv as int);
+    count := 0;
+    while count < 6 and dv != dv as int {
+        dv *= 10;
+        count++;
+    }
+    back := intToString(dv as int);
+    s1 := front.concat(".");
+    del front;
+    s2 := s1.concat(back);
+    del s1;
+    return s2;
 }
 
 fn arraycopy(src: int[], srcIndex: int, dst: int[], dstIndex: int, length: int) void {
@@ -417,6 +448,10 @@ fn arraycopy(src: Object[], srcIndex: int, dst: Object[], dstIndex: int, length:
     mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
 }
 
+fn vmBitsCount() int {
+    return sizeof(int) << 3;
+}
+
 exportmacro {
     boolean
 }
@@ -425,5 +460,6 @@ export {
     FALSE, TRUE, NULL,
     Object, String,
     Number, Integer, Float, Char, Byte,
-    print, println, arraycopy
+    print, println, arraycopy, vmBitsCount,
+    intToString, floatToString
 }

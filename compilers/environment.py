@@ -258,6 +258,7 @@ class ClassEnvironment(MainAbstractEnvironment):
 
         self.class_type = None
         self.templates = {}  # name: generic, ConstEntry (-1, Object if not specified)
+        self.temp_methods = {}
 
     def get_working_class(self) -> typ.ClassType:
         """
@@ -275,15 +276,21 @@ class ClassEnvironment(MainAbstractEnvironment):
         return self.class_type
 
     def define_function(self, name: str, func_type: typ.CallableType, fn_ptr: int, lfp: tl.LineFilePos):
-        if name in self.vars:
-            old_entry = self.vars[name]
+        if name in self.temp_methods:
+            old_entry = self.temp_methods[name]
             if isinstance(old_entry, FunctionEntry):
                 old_entry.placer.add_poly(func_type, fn_ptr)
                 return
             raise errs.TplEnvironmentError("Name '{}' already defined. ".format(name), lfp)
+        # print(name)
         placer = typ.FunctionPlacer(func_type, fn_ptr)
         entry = FunctionEntry(placer, const=True, named=True)
-        self.vars[name] = entry
+        self.temp_methods[name] = entry
+
+    def get_method_type(self, name, lfp):
+        if name in self.temp_methods:
+            return self.temp_methods[name].type
+        raise errs.TplEnvironmentError("Method '{}' already defined. ".format(name), lfp)
 
     def _inner_get(self, name) -> VarEntry:
         if name in self.templates:

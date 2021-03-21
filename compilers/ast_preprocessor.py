@@ -14,8 +14,8 @@ class AstPreprocessor:
         self.byte_literals = {}
         self.str_literals = {}
 
-    def preprocess(self):
-        return self.process_node(self.root), self.literal_bytes
+    def preprocess(self) -> (ast.Node, bytearray, dict):
+        return self.process_node(self.root), self.literal_bytes, self.str_literals
 
     def process_node(self, node: ast.Node) -> ast.Node:
         if isinstance(node, ast.FakeIntLit):
@@ -55,14 +55,15 @@ class AstPreprocessor:
                 pos = self.str_literals[node.value]
             else:
                 pos = len(self.literal_bytes)
-                self.literal_bytes.extend(util.string_to_bytes(node.value))
+                str_bytes = util.empty_bytes(util.STRING_HEADER_LEN) + util.string_to_bytes(node.value)
+                self.literal_bytes.extend(str_bytes)
                 self.str_literals[node.value] = pos
-            sl = ast.CharArrayLiteral(pos, node.lfp)
-            creation = ast.NewExpr(node.lfp)
-            creation.value = ast.FunctionCall(ast.NameNode("String", node.lfp),
-                                              ast.Line(node.lfp, sl),
-                                              node.lfp)
-            return creation
+            # sl = ast.StringLiteral(pos, node.lfp)
+            # creation = ast.NewExpr(node.lfp)
+            # creation.value = ast.FunctionCall(ast.NameNode("String", node.lfp),
+            #                                   ast.Line(node.lfp, sl),
+            #                                   node.lfp)
+            return ast.StringLiteral(pos, node.lfp)
         elif isinstance(node, ast.BinaryOperatorAssignment):
             left = self.process_node(node.left)
             right = self.process_node(node.right)
@@ -81,11 +82,6 @@ class AstPreprocessor:
                 new_dot.left = left
                 new_dot.right = right.indexing_obj
                 return ast.IndexingExpr(new_dot, right.args, node.lfp)
-            # elif isinstance(right, ast.FunctionCall):
-            #     new_dot = ast.DotExpr(node.lf)
-            #     new_dot.left = left
-            #     new_dot.right = right.call_obj
-            #     return ast.FunctionCall(new_dot, right.args, node.lf)
 
             node.left = left
             node.right = right

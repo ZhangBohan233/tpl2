@@ -29,7 +29,7 @@ char *ERR_MSG = "";
 #define push_fp call_stack[++call_p] = fp; fp = sp;
 #define pull_fp sp = fp; fp = call_stack[call_p--];
 
-#define MEMORY_SIZE 65536
+#define MEMORY_SIZE 131072
 #define RECURSION_LIMIT 1000
 #define CLASS_FIXED_HEADER (INT_LEN * 2)
 
@@ -38,9 +38,10 @@ char *ERR_MSG = "";
 tp_int stack_end;
 tp_int literal_end;
 tp_int global_end;
+tp_int class_header_end;
 tp_int functions_end;
 tp_int entry_end;
-tp_int class_header_end;
+tp_int heap_start;  // there might be small gaps between entry_end and heap_start, due to alignment
 
 unsigned char MEMORY[MEMORY_SIZE];
 
@@ -103,7 +104,11 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
     functions_end = entry_end - entry_len;
     pc = functions_end;
 
-    available = build_ava_link(entry_end, MEMORY_SIZE);
+    heap_start = entry_end;
+    while (heap_start % INT_LEN != 0) heap_start++;
+
+    available = build_link(heap_start, MEMORY_SIZE, &ava_pool);
+//    fragments = build_link(heap_start, MEMORY_SIZE, &fragment_pool);
 
     return 0;
 }
@@ -949,6 +954,10 @@ void tvm_mainloop() {
                 regs[reg1].int_value = 0;
             FOUND_CLASS:
                 break;
+            case 85:  // exitv  %reg1
+                reg1 = MEMORY[pc++];
+                ERROR_CODE = bytes_to_int(MEMORY + true_addr(regs[reg1].int_value));
+                break;
             default:
                 fprintf(stderr, "%d: ", instruction);
                 ERROR_CODE = ERR_INSTRUCTION;
@@ -991,7 +1000,7 @@ tp_int tvm_set_args() {
     return arr_ptr;
 }
 
-void print_memory() {
+void print_memory(int level) {
     //printf("mmm %lld\n", bytes_to_int(MEMORY + 1510));
     int i = 0;
     printf("Stack ");
@@ -1011,23 +1020,26 @@ void print_memory() {
         printf("%d ", MEMORY[i]);
     }
 
-    tp_printf("\nClass header %d: ", literal_end)
-    for (; i < class_header_end; ++i) {
-        printf("%d ", MEMORY[i]);
+    if (level == 2) {
+        tp_printf("\nClass header %d: ", literal_end)
+        for (; i < class_header_end; ++i) {
+            printf("%d ", MEMORY[i]);
+        }
+
+        tp_printf("\nFunctions %d: ", class_header_end)
+        for (; i < functions_end; i++) {
+            printf("%d ", MEMORY[i]);
+        }
+
+        tp_printf("\nEntry %d: ", functions_end)
+        for (; i < entry_end; i++) {
+            printf("%d ", MEMORY[i]);
+        }
+        tp_printf("\nEntry end %d", entry_end)
     }
 
-    tp_printf("\nFunctions %d: ", class_header_end)
-    for (; i < functions_end; i++) {
-        printf("%d ", MEMORY[i]);
-    }
-
-    tp_printf("\nEntry %d: ", functions_end)
-    for (; i < entry_end; i++) {
-        printf("%d ", MEMORY[i]);
-    }
-
-    tp_printf("\nHeap %d: ", entry_end)
-    for (; i < entry_end + 128; i++) {
+    tp_printf("\nHeap %d: ", heap_start)
+    for (i = heap_start; i < heap_start + 128; i++) {
         printf("%d ", MEMORY[i]);
         if ((i - entry_end) % INT_LEN == 7) printf("| ");
     }
@@ -1071,6 +1083,7 @@ void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_a
 
     if (tvm_load(codes, read)) exit(ERR_VM_OPT);
 //    tvm_set_args(vm_argc, vm_argv);
+//    printf("Load success\n");
 
     tvm_mainloop();
 
@@ -1081,7 +1094,7 @@ void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_a
         print_error(ERROR_CODE);
     }
 
-    if (p_memory) print_memory();
+    if (p_memory) print_memory(p_memory);
     if (p_exit) tp_printf("Trash program finished with exit code %d\n", bytes_to_int(MEMORY + main_rtn_ptr))
 
     tvm_shutdown();

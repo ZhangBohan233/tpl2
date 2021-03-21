@@ -1,0 +1,26 @@
+﻿import lang;
+
+fn toPrimitiveArray(array: Integer[]) int[] {
+    res := new int[array.length];
+    for i := 0; i < res.length; ++i {
+        res[i] = array[i].intValue();
+    }
+    return res;
+}
+
+fn arrayToString(array: int[]) *String {
+    strArray := new String[array.length];
+    for i := 0; i < array.length; ++i {
+        strArray[i] = intToString(array[i]);
+    }
+    joint := ", ".join(strArray);
+    s1 := "[".concat(joint);
+    del joint;
+    res := s1.concat("]");
+    del s1;
+    return res;
+}
+
+export {
+    toPrimitiveArray, arrayToString
+}

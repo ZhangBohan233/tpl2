@@ -1,4 +1,47 @@
-﻿===== VERSION 2060 =====
+﻿===== VERSION 2068 =====
+2021/03/18
+
+* Implemented magic methods for '+,-,*,/,%'
+
+===== VERSION 2067 =====
+2021/03/18
+
+* Implemented magic methods '__get__' and '__set__'
+
+===== VERSION 2066 =====
+2021/03/18
+
+* Fixed bugs in generic class
+
+===== VERSION 2065 =====
+2021/03/14
+
+* Bug fixes:
+    * Fixed bug that some methods are actually accessible directly, which shadows global functions
+
+===== VERSION 2064 =====
+2021/03/12
+
+* Changed the memory location of string literal: moved to literal section
+* Bug fixes: __del__ was never called
+
+===== VERSION 2063 =====
+2021/03/12
+
+* Added library lib/util.tp
+* Added functions in lib/math.tp
+
+===== VERSION 2062 =====
+2021/03/12
+
+* Fixed 32 bits VM heap memory bug
+
+===== VERSION 2061 =====
+2021/03/11
+
+* Changed format of tpa: readable class
+
+===== VERSION 2060 =====
 2021/03/08
 
 * Implemented native invoke 'exit(int)'
