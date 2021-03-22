@@ -12,7 +12,7 @@
 // To modify VM bits, modify all of the following
 //
 
-#define VM_BITS 64
+#define VM_BITS 32
 
 #if VM_BITS == 32
     #define INT_LEN 4

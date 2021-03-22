@@ -2,8 +2,8 @@ import sys
 import struct
 
 
-VM_BITS = 64
-STACK_SIZE = 512
+VM_BITS = 32
+STACK_SIZE = 2048
 INT_LEN = VM_BITS // 8
 FLOAT_LEN = VM_BITS // 8
 CHAR_LEN = 2

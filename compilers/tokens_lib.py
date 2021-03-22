@@ -11,7 +11,7 @@ OTHERS = {"=", "->", ":=", "++", "--"}
 
 RESERVED = {"abstract", "as", "break", "case", "class", "cond", "const", "continue", "del", "do", "else",
             "export", "exportmacro", "fallthrough", "fn", "for",
-            "if", "import", "in", "instanceof", "macro", "new", "private", "protected",
+            "if", "import", "in", "inline", "instanceof", "lambda", "macro", "new", "private", "protected",
             "require", "return", "super", "switch", "then",
             "this", "var", "while", "yield"}
 
@@ -89,7 +89,12 @@ class Token:
         return self.__str__()
 
 
-class CharToken(Token):
+class LitToken(Token):
+    def __init__(self, lfp):
+        super().__init__(lfp)
+
+
+class CharToken(LitToken):
     def __init__(self, char: str, lfp):
         super().__init__(lfp)
 
@@ -99,7 +104,7 @@ class CharToken(Token):
         return "Id{" + self.char + "}"
 
 
-class IntToken(Token):
+class IntToken(LitToken):
     def __init__(self, v: str, lfp):
         super().__init__(lfp)
 
@@ -109,7 +114,7 @@ class IntToken(Token):
         return "Int{" + str(self.value) + "}"
 
 
-class ByteToken(Token):
+class ByteToken(LitToken):
     def __init__(self, v: str, lfp):
         super().__init__(lfp)
 
@@ -119,7 +124,7 @@ class ByteToken(Token):
         return "Byte{" + str(self.value) + "}"
 
 
-class FloatToken(Token):
+class FloatToken(LitToken):
     def __init__(self, v: str, lfp):
         super().__init__(lfp)
 
@@ -139,7 +144,7 @@ class IdToken(Token):
         return "Id{" + self.identifier + "}"
 
 
-class StrToken(Token):
+class StrToken(LitToken):
     def __init__(self, v: str, lfp):
         super().__init__(lfp)
 

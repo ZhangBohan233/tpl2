@@ -156,10 +156,6 @@ class Manager:
         self.functions_map[full_name] = function_object
         self.class_func_order.append((full_name, 0))
 
-    def get_function(self, poly_name: str, file_path, parent_class):
-        full_name = util.name_with_path(poly_name, file_path, parent_class)
-        return self.functions_map[full_name]
-
     def add_class(self, class_object):
         ct = class_object.class_type
         full_name = util.class_name_with_path(ct.name, ct.file_path)

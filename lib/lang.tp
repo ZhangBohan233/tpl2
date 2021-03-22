@@ -1,3 +1,7 @@
+/*
+Builtin library for most object oriented features of tpl.
+*/
+
 require {
     print_int, println_int,
     print_float, println_float,
@@ -65,6 +69,10 @@ class String {
         return this.concat(other);
     }
 
+    fn __mul__(n: int) *String {
+        return this.repeat(n);
+    }
+
     fn concat(other: *String) *String {
         newChars: char[] = new char[this.length() + other.length()];
         arraycopy(this.chars, 0, newChars, 0, this.length());
@@ -88,7 +96,7 @@ class String {
         return TRUE;
     }
 
-    fn length() int {
+    inline fn length() int {
         return this.chars.length;
     }
 
@@ -125,6 +133,20 @@ class String {
     fn println() void {
         println_str(this.chars);
     }
+
+    fn repeat(n: int) *String {
+        if n < 0 {
+            println("Negative repeat times.");
+            exit(1);
+        }
+        resLen := this.length() * n;
+        resArr := new char[resLen];
+        for i := 0; i < n; ++i {
+            index := i * this.length();
+            arraycopy(this.chars, 0, resArr, index, this.length());
+        }
+        return new String(resArr);
+    }
 }
 
 abstract class Number {
@@ -139,9 +161,56 @@ abstract class Number {
     abstract fn charValue() char;
 
     abstract fn byteValue() byte;
+
+    fn __add__(other: *IntLike) *Integer {
+        return new Integer(this.intValue() + other.intValue());
+    }
+
+    fn __add__(other: *Float) *Float {
+        return new Float(this.floatValue() + other.floatValue());
+    }
+
+    fn __sub__(other: *IntLike) *Number {
+        return new Integer(this.intValue() - other.intValue());
+    }
+
+    fn __sub__(other: *Float) *Float {
+        return new Float(this.floatValue() - other.floatValue());
+    }
+
+    fn __mul__(other: *IntLike) *Number {
+        return new Integer(this.intValue() * other.intValue());
+    }
+
+    fn __mul__(other: *Float) *Float {
+        return new Float(this.floatValue() * other.floatValue());
+    }
+
+    fn __div__(other: *IntLike) *Number {
+        return new Integer(this.intValue() / other.intValue());
+    }
+
+    fn __div__(other: *Float) *Float {
+        return new Float(this.floatValue() / other.floatValue());
+    }
+
+    fn __mod__(other: *IntLike) *Number {
+        return new Integer(this.intValue() % other.intValue());
+    }
+
+    fn __mod__(other: *Float) *Float {
+        return new Float(this.floatValue() % other.floatValue());
+    }
 }
 
-class Integer(Number) {
+abstract class IntLike(Number) {
+    @Override
+    fn floatValue() float {
+        return this.intValue() as float;
+    }
+}
+
+class Integer(IntLike) {
     private const value: int;
 
     fn __new__(value: int) void {
@@ -150,54 +219,9 @@ class Integer(Number) {
         this.value = value;
     }
 
-    fn __add__(other: *Number) *Number {
-        return new Integer(this.value + other.intValue());
-    }
-
-    fn __add__(other: *Float) *Float {
-        return new Float(this.value + other.floatValue());
-    }
-
-    fn __sub__(other: *Number) *Number {
-        return new Integer(this.value - other.intValue());
-    }
-
-    fn __sub__(other: *Float) *Float {
-        return new Float(this.value - other.floatValue());
-    }
-
-    fn __mul__(other: *Number) *Number {
-        return new Integer(this.value * other.intValue());
-    }
-
-    fn __mul__(other: *Float) *Float {
-        return new Float(this.value * other.floatValue());
-    }
-
-    fn __div__(other: *Number) *Number {
-        return new Integer(this.value / other.intValue());
-    }
-
-    fn __div__(other: *Float) *Float {
-        return new Float(this.value / other.floatValue());
-    }
-
-    fn __mod__(other: *Number) *Number {
-        return new Integer(this.value % other.intValue());
-    }
-
-    fn __mod__(other: *Float) *Float {
-        return new Float(this.value % other.floatValue());
-    }
-
     @Override
     fn intValue() int {
         return this.value;
-    }
-
-    @Override
-    fn floatValue() float {
-        return this.value as float;
     }
 
     @Override
@@ -251,7 +275,7 @@ class Float(Number) {
     }
 }
 
-class Char(Number) {
+class Char(IntLike) {
     private const value: char;
 
     fn __new__(value: char) void {
@@ -263,11 +287,6 @@ class Char(Number) {
     @Override
     fn intValue() int {
         return this.value as int;
-    }
-
-    @Override
-    fn floatValue() float {
-        return this.value as int as float;
     }
 
     @Override
@@ -288,7 +307,7 @@ class Char(Number) {
     }
 }
 
-class Byte(Number) {
+class Byte(IntLike) {
     private const value: byte;
 
     fn __new__(value: byte) void {
@@ -300,11 +319,6 @@ class Byte(Number) {
     @Override
     fn intValue() int {
         return this.value as int;
-    }
-
-    @Override
-    fn floatValue() float {
-        return this.value as int as float;
     }
 
     @Override

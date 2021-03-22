@@ -14,6 +14,7 @@ class Parser:
         self.var_level = ast.VAR_VAR
         self.permission = ast.PUBLIC
         self.abstract = False
+        self.inline = False
 
         self.special_binary = {
             "=": ast.Assignment,
@@ -60,7 +61,8 @@ class Parser:
             "case": self.process_case,
             "default": self.process_default,
             "private": self.process_private,
-            "protected": self.process_protected
+            "protected": self.process_protected,
+            "inline": self.process_inline
         }
 
     def parse(self):
@@ -86,6 +88,9 @@ class Parser:
 
     def process_protected(self, p, i, b, lfp):
         self.permission = ast.PROTECTED
+
+    def process_inline(self, p, i, b, lfp):
+        self.inline = True
 
     def process_lambda(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
         index += 1
@@ -583,9 +588,7 @@ def is_unary(leading_ele: tl.Element) -> bool:
             else:
                 return symbol in tl.ALL_BINARY or symbol in tl.RESERVED
         else:
-            return not (isinstance(token, tl.IntToken) or
-                        isinstance(token, tl.FloatToken) or
-                        isinstance(token, tl.CharToken))
+            return not isinstance(token, tl.LitToken)
     else:
         return not (isinstance(leading_ele, tl.CollectiveElement) and leading_ele.is_bracket())
 

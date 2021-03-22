@@ -1,11 +1,11 @@
-﻿//import lang;
+﻿import lang;
 //import functions;
 
 fn foo(y: int) int {
-    fn neg1(x: int) int {
+    fn neg(x: int) int {
         return -x;
     }
-    return neg1(y);
+    return neg(y);
 }
 
 fn main() int {
@@ -16,5 +16,7 @@ fn main() int {
         return x;
     }
 
-    return add(3, 4) + foo(1);
+    println("abc" * 4);
+
+    return add(3, 4) + neg(1);
 }

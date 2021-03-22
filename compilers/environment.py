@@ -157,8 +157,8 @@ class Environment:
     def get_working_class(self) -> typ.ClassType:
         return None
 
-    def get_working_function(self) -> typ.FuncType:
-        return None
+    def get_working_function(self) -> (str, typ.FuncType):
+        return None, None
 
 
 class SubAbstractEnvironment(Environment):
@@ -216,8 +216,8 @@ class FunctionEnvironment(MainAbstractEnvironment):
             raise errs.TplCompileError("Function '{}' has declared return type '{}', got actual return type '{}'. "
                                        .format(self.name, self.func_type.rtype, actual_rtype), lfp)
 
-    def get_working_function(self) -> typ.FuncType:
-        return self.func_type
+    def get_working_function(self) -> (str, typ.FuncType):
+        return self.name, self.func_type
 
 
 class MethodEnvironment(FunctionEnvironment):

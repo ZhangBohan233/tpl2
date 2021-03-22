@@ -1298,7 +1298,7 @@ class Assignment(BinaryExpr):
     def class_attr_assign(self, left, right, env: en.Environment, tpa: tp.TpaOutput):
         attr_ptr, attr_t, const = DotExpr.get_dot_attr_and_type(left, right, env, tpa, self.lfp)
         if const:
-            wf = env.get_working_function()
+            name, wf = env.get_working_function()
             if not isinstance(wf, typ.MethodType):
                 raise errs.TplCompileError(f"Cannot assign constant variable {right}. ", self.lfp)
             if not wf.constructor:
@@ -1443,9 +1443,6 @@ class LambdaExpr(Expression):
 
         tpa.manager.map_function(poly_name, self.lfp.get_file(), fo)
 
-        # res_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
-        # tpa.assign(res_ptr, fn_ptr)
-        # return res_ptr
         return fn_ptr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.LambdaType:
@@ -1512,6 +1509,9 @@ class FunctionDef(Expression):
 
         func_type = self.evaluated_type(env, tpa.manager)
         poly_name = self.get_simple_poly_name(env, tpa.manager)
+        out_name, wf = env.get_working_function()
+        if out_name is not None:
+            poly_name = out_name + "." + poly_name
         fo = FunctionObject(env, tpa, fn_ptr, self.parent_class, poly_name, self.params, func_type, self.body, self.lfp)
         env.define_function(simple_name, func_type, fn_ptr, self.lfp)
 

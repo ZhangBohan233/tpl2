@@ -1,4 +1,12 @@
-﻿===== VERSION 2069 =====
+﻿===== VERSION 2070 =====
+2021/03/22
+
+* Completed inner function implementation
+* Implemented more magic methods in lang
+* Fixed bug for operator '*' after some literal
+* Introduced keyword 'inline': not implemented
+
+===== VERSION 2069 =====
 2021/03/22
 
 * Implemented lambda expression
