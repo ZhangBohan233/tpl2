@@ -17,11 +17,12 @@ class Compiler:
         self.literals = literals
         self.str_lit_pos = str_lit_pos
         self.main_path = main_file_path
+        self.optimize_level = optimize_level
 
         ast.set_optimize_level(optimize_level)
 
     def compile(self) -> str:
-        manager = prod.Manager(self.literals, self.str_lit_pos)
+        manager = prod.Manager(self.literals, self.str_lit_pos, self.optimize_level)
         out = prod.TpaOutput(manager, is_global=True)
         ge = en.GlobalEnvironment()
         _init_compile_time_functions(ge)

@@ -74,6 +74,14 @@ int vm_check(const unsigned char *src_code) {
         fprintf(stderr, "%d bits code cannot run on %d bits virtual machine. ", src_code[4], VM_BITS);
         return 1;
     }
+    unsigned short code_version = bytes_to_ushort(src_code + 5);
+    if (code_version != BYTECODE_VERSION) {
+        fprintf(stderr,
+                "Trash program has bytecode version %u, which cannot run on virtual machine of version %d. ",
+                code_version,
+                BYTECODE_VERSION);
+        return 1;
+    }
 
     return 0;
 }

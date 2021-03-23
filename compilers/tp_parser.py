@@ -77,6 +77,8 @@ class Parser:
     # Note: do not return the index of the next
 
     def process_abstract(self, p, i, b, lfp):
+        if not valid_comb_till_specific(p, i, {"fn", "class"}, {"protected", "private"}):
+            raise errs.TplSyntaxError("Invalid keywords combination. ", lfp)
         self.abstract = True
 
     def process_declare(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
@@ -84,12 +86,18 @@ class Parser:
         self.permission = ast.PUBLIC
 
     def process_private(self, p, i, b, lfp):
+        if not valid_comb_raw(p, i, {"inline", "const"}, {"protected", "private"}):
+            raise errs.TplSyntaxError("Invalid keywords combination. ", lfp)
         self.permission = ast.PRIVATE
 
     def process_protected(self, p, i, b, lfp):
+        if not valid_comb_raw(p, i, {"inline", "const"}, {"protected", "private"}):
+            raise errs.TplSyntaxError("Invalid keywords combination. ", lfp)
         self.permission = ast.PROTECTED
 
     def process_inline(self, p, i, b, lfp):
+        if not valid_comb_till_specific(p, i, {"fn"}, {"private", "protected", "const"}):
+            raise errs.TplSyntaxError("Invalid keywords combination. ", lfp)
         self.inline = True
 
     def process_lambda(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
@@ -116,6 +124,8 @@ class Parser:
         self.var_level = ast.VAR_VAR
         permission = self.permission
         self.permission = ast.PUBLIC
+        inline = self.inline
+        self.inline = False
         index += 1
         name_list = tl.CollectiveElement(tl.CE_BRACKET, lfp, None)
         next_ele = parent[index]
@@ -152,7 +162,9 @@ class Parser:
         if abstract and body is not None:
             raise errs.TplSyntaxError("Abstract method must not have body. ", lfp)
 
-        builder.add_node(ast.FunctionDef(fn_name, params, rtype, abstract, const, permission, body, lfp))
+        fd = ast.FunctionDef(fn_name, params, rtype, abstract, const, permission, body, lfp)
+        fd.inline = inline
+        builder.add_node(fd)
         return index
 
     def process_class(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp):
@@ -189,9 +201,13 @@ class Parser:
         builder.finish_part()
 
     def process_var(self, p, i, b, lfp):
+        if not valid_comb_raw(p, i, set(), {"const", "var"}):
+            raise errs.TplSyntaxError("Invalid keywords combination. ", lfp)
         self.var_level = ast.VAR_VAR
 
     def process_const(self, p, i, b, lfp):
+        if not valid_comb_raw(p, i, set(), {"const", "var"}):
+            raise errs.TplSyntaxError("Invalid keywords combination. ", lfp)
         self.var_level = ast.VAR_CONST
 
     def process_if_stmt(self, parent: tl.CollectiveElement, index, builder, lfp):
@@ -576,6 +592,52 @@ UNARY_LEADING = {
 }
 
 
+def valid_comb_till_specific(parent: tl.CollectiveElement, index: int, target: set, allowed: set) -> bool:
+    """
+    Returns True iff keyword combinations until next specific identifier are all valid.
+
+    :param parent: parent collective element
+    :param index: the index of keyword in parent
+    :param target: the set of terminating strings
+    :param allowed: the set of allowed intermediate strings
+    :return:
+    """
+    index += 1
+    while index < len(parent):
+        ele = parent[index]
+        if isinstance(ele, tl.AtomicElement) and isinstance(ele.atom, tl.IdToken):
+            identifier = ele.atom.identifier
+            if identifier in target:
+                return True
+            if identifier not in allowed:
+                return False
+        index += 1
+    return False
+
+
+def valid_comb_raw(parent: tl.CollectiveElement, index: int, allowed: set, not_allowed: set) -> bool:
+    """
+    Returns True iff keyword combinations until next unknown identifier are all valid
+
+    :param parent: parent collective element
+    :param index: the index of keyword in parent
+    :param allowed: the set of known, but allowed strings
+    :param not_allowed: the set of not allowed strings
+    :return:
+    """
+    index += 1
+    while index < len(parent):
+        ele = parent[index]
+        if isinstance(ele, tl.AtomicElement) and isinstance(ele.atom, tl.IdToken):
+            identifier = ele.atom.identifier
+            if identifier in not_allowed:
+                return False
+            if identifier not in allowed:
+                return True
+        index += 1
+    return False
+
+
 def is_unary(leading_ele: tl.Element) -> bool:
     if isinstance(leading_ele, tl.AtomicElement):
         token = leading_ele.atom
@@ -597,8 +659,8 @@ def is_call(token_before: tl.Token) -> bool:
     if isinstance(token_before, tl.IdToken):
         symbol = token_before.identifier
         return symbol.isidentifier() and \
-            symbol not in tl.RESERVED and \
-            symbol not in tl.LOGICAL_UNARY
+               symbol not in tl.RESERVED and \
+               symbol not in tl.LOGICAL_UNARY
     return False
 
 

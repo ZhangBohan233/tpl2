@@ -103,8 +103,16 @@ class LabelManager:
         return "END_CASE_" + str(n)
 
 
+class Optimizer:
+    def __init__(self, opt_level):
+        self.optimize_level = opt_level
+
+    def do_inline(self):
+        return self.optimize_level >= 1
+
+
 class Manager:
-    def __init__(self, literal: bytes, str_lit_pos: dict):
+    def __init__(self, literal: bytes, str_lit_pos: dict, optimize_level=0):
         self.literal = literal
         self.str_lit_pos = str_lit_pos
         self.string_class_ptr = 0
@@ -116,6 +124,7 @@ class Manager:
         self.class_headers = []  # class object
         self.class_func_order = []
         self.label_manager = LabelManager()
+        self.optimizer = Optimizer(optimize_level)
 
     def allocate_global(self, length):
         addr = self.gp
@@ -172,8 +181,11 @@ class TpaOutput:
         self.is_global = is_global
         self.output = ["entry"] if is_global else []
 
-    def add_function(self, name, file_path, fn_ptr, clazz, abstract=False):
+    def add_function(self, name, file_path, fn_ptr, clazz, abstract=False, inline=False):
         title = "fn " + util.name_with_path(name, file_path, clazz) + " " + address(fn_ptr)
+        if inline:
+            title += " inline"
+            # note that 'inline' cannot combine with 'abstract'
         if abstract:
             self.output.append(title + " abstract")
             self.output.append("")
@@ -356,7 +368,7 @@ class TpaOutput:
         self.write_format(load_of_len(left_len), register(reg1), address(left))
         self.write_format(load_of_len(right_len), register(reg2), address(right))
         self.write_format(op_inst, register(reg1), register(reg2))
-        self.write_format("iload", register(reg2), number(res))
+        self.write_format("iload", register(reg2), address(res))
         self.write_format(store_of_len(res_len), register(reg2), register(reg1))
 
         self.manager.append_regs(reg2, reg1)
@@ -495,6 +507,7 @@ class TpaOutput:
 
     def set_call(self, args: list, reg1, reg2, ret_len, rtn_addr):
         count = 0
+        self.write_format("args")
         for arg in args:
             arg_addr = arg[0]
             arg_length = arg[1]
@@ -514,7 +527,7 @@ class TpaOutput:
             count += arg_length
 
         if ret_len > 0:
-            self.write_format("iload", register(reg1), number(rtn_addr))
+            self.write_format("iload", register(reg1), address(rtn_addr))
             self.write_format("set_ret", register(reg1))
         # if void, do nothing
 
@@ -585,7 +598,8 @@ class TpaOutput:
         for co in self.manager.class_headers:
             co.compile()
 
-        merged = ["bits", str(util.VM_BITS),
+        merged = ["version", str(util.BYTECODE_VERSION),
+                  "bits", str(util.VM_BITS),
                   "stack_size", str(util.STACK_SIZE),
                   "global_length", "",
                   "literal", "",

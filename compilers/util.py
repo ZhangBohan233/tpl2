@@ -2,6 +2,8 @@ import sys
 import struct
 
 
+BYTECODE_VERSION = 1
+
 VM_BITS = 32
 STACK_SIZE = 2048
 INT_LEN = VM_BITS // 8
@@ -81,6 +83,10 @@ class NaiveDict:
 def replace_extension(file_name: str, ext: str) -> str:
     ind = file_name.rfind(".")
     return file_name[:ind + 1] + ext
+
+
+def u_short_to_bytes(i: int) -> bytes:
+    return i.to_bytes(2, sys.byteorder, signed=False)
 
 
 def int_to_bytes(i: int) -> bytes:

@@ -1472,6 +1472,7 @@ class FunctionDef(Expression):
         self.abstract = abstract
         self.const = const
         self.permission = permission
+        self.inline = False
         self.annotations = []
 
     def get_simple_name(self) -> str:
@@ -1512,7 +1513,8 @@ class FunctionDef(Expression):
         out_name, wf = env.get_working_function()
         if out_name is not None:
             poly_name = out_name + "." + poly_name
-        fo = FunctionObject(env, tpa, fn_ptr, self.parent_class, poly_name, self.params, func_type, self.body, self.lfp)
+        fo = FunctionObject(env, tpa, fn_ptr, self.parent_class,
+                            poly_name, self.params, func_type, self.body, self.lfp, inline=self.inline)
         env.define_function(simple_name, func_type, fn_ptr, self.lfp)
 
         tpa.manager.map_function(poly_name, self.lfp.get_file(), fo)
@@ -1534,10 +1536,10 @@ class FunctionDef(Expression):
                 raise errs.TplCompileError("Function cannot be abstract. ", self.lfp)
             if self.permission != PUBLIC:
                 raise errs.TplCompileError("Function cannot be private or protected. ", self.lfp)
-            return typ.FuncType(param_types, rtype)
+            return typ.FuncType(param_types, rtype, self.inline)
         else:
             return typ.MethodType(param_types, rtype, self.parent_class, self.get_simple_name() == "__new__",
-                                  self.abstract, self.const, self.permission)
+                                  self.abstract, self.const, self.permission, self.inline)
 
     def is_method(self):
         return self.parent_class is not None
@@ -1864,6 +1866,7 @@ class FunctionCall(Expression):
         return rtn_addr
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
+        # dotted method call does not go through here
         placer = self.call_obj.evaluated_type(env, tpa.manager)
         if isinstance(placer, typ.SpecialCtfType):
             func_class = COMPILE_TIME_FUNCTIONS[placer]
@@ -1938,10 +1941,10 @@ class FunctionCall(Expression):
                 raise errs.TplError("Unexpected error. ", lf)
 
     @staticmethod
-    def call_name(fn_name: str, evaluated_args: list, tpa: tp.TpaOutput, dst_addr: int,
+    def call_name(full_poly_name: str, evaluated_args: list, tpa: tp.TpaOutput, dst_addr: int,
                   lf, func_type):
         if isinstance(func_type, typ.FuncType):
-            tpa.call_named_function(fn_name, evaluated_args, dst_addr, func_type.rtype.length)
+            tpa.call_named_function(full_poly_name, evaluated_args, dst_addr, func_type.rtype.length)
         else:
             raise errs.TplError("Unexpected error. ", lf)
 
@@ -2740,8 +2743,9 @@ class SwitchExpr(Expression):
 
 
 class FunctionObject:
-    def __init__(self, def_env: en.Environment, tpa, fn_ptr, parent_class, poly_name, params, func_type: typ.FuncType,
-                 body, lfp, is_lambda=False):
+    def __init__(self, def_env: en.Environment, tpa, fn_ptr, parent_class,
+                 poly_name, params, func_type: typ.FuncType,
+                 body, lfp, is_lambda=False, inline=False):
         self.parent_class = parent_class
         self.fn_ptr = fn_ptr
         self.def_env = def_env
@@ -2752,6 +2756,7 @@ class FunctionObject:
         self.body = body
         self.lfp = lfp
         self.is_lambda = is_lambda
+        self.inline = inline
 
     def compile(self):
         if self.parent_class is None:
@@ -2771,17 +2776,20 @@ class FunctionObject:
                 param.compile(scope, body_out)
 
         if self.body is None:  # abstract function
-            body_out.add_function(self.poly_name, self.lfp.get_file(), self.fn_ptr, self.parent_class, abstract=True)
+            body_out.add_function(self.poly_name, self.lfp.get_file(), self.fn_ptr, self.parent_class, abstract=True,
+                                  inline=self.inline)
         else:
             if not self.is_lambda:
                 # check return
                 complete_return = self.body.return_check()
                 if not complete_return:
                     if not self.func_type.rtype.is_void():
-                        raise errs.TplCompileError(f"Function '{self.poly_name}' missing a return statement. ", self.lf)
+                        raise errs.TplCompileError(f"Function '{self.poly_name}' missing a return statement. ",
+                                                   self.lfp)
 
             # compiling
-            body_out.add_function(self.poly_name, self.lfp.get_file(), self.fn_ptr, self.parent_class)
+            body_out.add_function(self.poly_name, self.lfp.get_file(), self.fn_ptr, self.parent_class,
+                                  inline=self.inline)
             push_index = body_out.add_indefinite_push()
             self.body.compile(scope, body_out)
 

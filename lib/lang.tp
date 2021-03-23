@@ -361,43 +361,43 @@ fn println() void {
     println("");
 }
 
-fn print(value: int) void {
+inline fn print(value: int) void {
     print_int(value);
 }
 
-fn println(value: int) void {
+inline fn println(value: int) void {
     println_int(value);
 }
 
-fn print(value: float) void {
+inline fn print(value: float) void {
     print_float(value);
 }
 
-fn println(value: float) void {
+inline fn println(value: float) void {
     println_float(value);
 }
 
-fn print(value: char) void {
+inline fn print(value: char) void {
     print_char(value);
 }
 
-fn println(value: char) void {
+inline fn println(value: char) void {
     println_char(value);
 }
 
-fn print(value: byte) void {
+inline fn print(value: byte) void {
     print_byte(value);
 }
 
-fn println(value: byte) void {
+inline fn println(value: byte) void {
     println_byte(value);
 }
 
-fn print(value: *String) void {
+inline fn print(value: *String) void {
     value.print();
 }
 
-fn println(value: *String) void {
+inline fn println(value: *String) void {
     value.println();
 }
 

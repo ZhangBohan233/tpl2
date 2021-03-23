@@ -95,7 +95,7 @@ INSTRUCTIONS = {
 }
 
 MNEMONIC = {
-    "fn", "entry", "call_fn", "label", "stop"
+    "fn", "entry", "call_fn", "label", "stop", "args"
 }
 
 PSEUDO_INSTRUCTIONS = {
@@ -128,6 +128,7 @@ class TpcCompiler:
 
         self.stack_size = 0
         self.global_length = 0
+        self.version = 0
 
     def compile(self, out_name=None):
         if out_name is None:
@@ -171,7 +172,12 @@ class TpcCompiler:
             line = orig_line.strip()
             lf = tl.LineFile(self.tpa_file, i + 1)
 
-            if line == "stack_size":
+            if line == "version":
+                cur_out.append(lines[i])
+                cur_out.append(lines[i + 1])
+                self.version = int(lines[i + 1])
+                i += 1
+            elif line == "stack_size":
                 cur_out.append(lines[i])
                 cur_out.append(lines[i + 1])
                 self.stack_size = int(lines[i + 1])
@@ -227,11 +233,11 @@ class TpcCompiler:
 
                         self.write_format(cur_out, "call", fn_ptr)
                     elif inst == "fn":
-                        if instructions[-1] != "abstract":
-                            cur_out.append(orig_line)
-                        else:
+                        if "abstract" in instructions[2:]:
                             if i < length - 2 and len(lines[i + 1].strip()) == 0:
                                 i += 1
+                        else:
+                            cur_out.append(orig_line)
                     elif inst in PSEUDO_INSTRUCTIONS:
                         self.compile_pseudo_inst(instructions, cur_out, lf)
                     else:
@@ -299,7 +305,8 @@ class TpeCompiler:
 
         # INFO HEADER
         vm_bits: 4 ~ 5
-        extra_info: 5 ~ 16
+        bytecode_version: 5 ~ 7
+        extra_info: 7 ~ 16
 
         stack_size: 16 ~ @24
         global_length: @24 ~ @32
@@ -318,6 +325,7 @@ class TpeCompiler:
 
         :return:
         """
+        version = 0
         vm_bits = 0
         literal = bytearray()
         function_body_positions = {}
@@ -341,7 +349,10 @@ class TpeCompiler:
             while i < length:
                 line = lines[i]
                 lf = tl.LineFile(self.tpc_file, i + 1)
-                if line == "bits":
+                if line == "version":
+                    version = int(lines[i + 1])
+                    i += 1
+                elif line == "bits":
                     vm_bits = int(lines[i + 1])
                     i += 1
                 elif line == "stack_size":
@@ -408,12 +419,14 @@ class TpeCompiler:
                             function_body_positions[cur_fn_name] = len(body)
                         elif inst == "entry":
                             cur_fn_body = []
-                        elif inst == "call_fn":
-                            fn_name = instructions[1]
-                            fn_ptr = function_pointers[fn_name]
-                            tup = INSTRUCTIONS["call"]
-                            cur_fn_body.append(tup[0])
-                            cur_fn_body.extend(util.int_to_bytes(fn_ptr))
+                        elif inst == "args":
+                            pass
+                        # elif inst == "call_fn":
+                        #     fn_name = instructions[1]
+                        #     fn_ptr = function_pointers[fn_name]
+                        #     tup = INSTRUCTIONS["call"]
+                        #     cur_fn_body.append(tup[0])
+                        #     cur_fn_body.extend(util.int_to_bytes(fn_ptr))
                         elif inst == "label":
                             label_name = instructions[1]
                             labels[label_name] = len(cur_fn_body)
@@ -459,7 +472,7 @@ class TpeCompiler:
                             raise errs.TpaError("Unknown instruction {}. ".format(inst), lf)
                 i += 1
 
-        header = SIGNATURE + bytes((vm_bits,)) + util.empty_bytes(11) + \
+        header = SIGNATURE + bytes((vm_bits,)) + util.u_short_to_bytes(version) + util.empty_bytes(9) + \
                  util.int_to_bytes(self.stack_size) + util.int_to_bytes(self.global_length) + \
                  util.int_to_bytes(len(literal)) + util.int_to_bytes(len(class_bodies)) + \
                  literal + class_bodies

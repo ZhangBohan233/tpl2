@@ -199,8 +199,10 @@ class CallableType(Type):
 
 
 class FuncType(CallableType):
-    def __init__(self, param_types, rtype):
+    def __init__(self, param_types, rtype, inline=False):
         super().__init__(param_types, rtype)
+
+        self.inline=inline
 
     def strong_convertible(self, left_tar_type):
         if isinstance(left_tar_type, FuncType):
@@ -232,8 +234,8 @@ class LambdaType(FuncType):
 
 class MethodType(FuncType):
     def __init__(self, param_types, rtype, def_class,
-                 is_constructor: bool, abstract: bool, const: bool, permission: int):
-        super().__init__(param_types, rtype)
+                 is_constructor: bool, abstract: bool, const: bool, permission: int, inline=False):
+        super().__init__(param_types, rtype, inline)
 
         self.defined_class = def_class
         self.constructor = is_constructor

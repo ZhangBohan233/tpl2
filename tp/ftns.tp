@@ -16,7 +16,7 @@ fn main() int {
         return x;
     }
 
-    println("abc" * 4);
+    println(new Integer(4).intValue());
 
-    return add(3, 4) + neg(1);
+    return add(3, 4) + neg(1) + 5;
 }

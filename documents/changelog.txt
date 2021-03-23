@@ -1,4 +1,12 @@
-﻿===== VERSION 2070 =====
+﻿===== VERSION 2071 =====
+2021/03/24
+
+* Added keywords combination check
+* Added bytecode version check
+* Implemented basic function inline optimization
+* Fixed -o1 optimization error
+
+===== VERSION 2070 =====
 2021/03/22
 
 * Completed inner function implementation

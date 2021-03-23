@@ -1,0 +1,75 @@
+version
+1
+bits
+32
+stack_size
+2048
+global_length
+12
+literal
+0 0 0 0 1 0 0 0 255 255 255 255 3 0 0 0
+classes
+
+fn E:\GitHub\tpl2\tp\opt.tp$foo(int) $2048 inline
+    push_fp
+    push          12
+    load          %0      $2064
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $0
+    load          %1      $8
+    addi          %0      %1
+    iload         %1      $4
+    store         %1      %0
+    load          %0      $4
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\opt.tp$bar(int) $2052
+    push_fp
+    push          12
+    load          %0      $2064
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $0
+    load          %1      $8
+    gti           %0      %1
+    iload         %1      $4
+    store         %1      %0
+    load          %0      $4
+    if_zero_goto  %0      ELSE_0
+    pull_fp
+    ret
+    goto          ENDIF_0
+    label         ELSE_0
+    label         ENDIF_0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\opt.tp$main() $2056
+    push_fp
+    push          8
+    load          %0      $2072
+    iload         %1      $4
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $4
+    store_abs     %0      %1
+    iload         %0      $0
+    set_ret       %0
+    call          $2048
+    load          %0      $0
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    aload         %0      $1
+    set_ret       %0
+    call          $2056
+    exit

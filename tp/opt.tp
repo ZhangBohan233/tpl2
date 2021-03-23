@@ -1,0 +1,15 @@
+﻿inline fn foo(a: int) int {
+    return a + 1;
+}
+
+fn bar(a: int) void {
+    if a > 1 {
+        return;
+    } else {
+    }
+}
+
+fn main() int {
+    a: int = foo(3);
+    return a;
+}
