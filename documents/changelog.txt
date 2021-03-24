@@ -1,4 +1,11 @@
-﻿===== VERSION 2071 =====
+﻿===== VERSION 2072 =====
+2021/03/24
+
+* Completed function inline
+* Added new optimization: unused label
+* Compiler optimization: call const method directly
+
+===== VERSION 2071 =====
 2021/03/24
 
 * Added keywords combination check

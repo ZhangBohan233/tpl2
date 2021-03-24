@@ -1,4 +1,13 @@
-﻿===== VERSION 2065 =====
+﻿===== VERSION 2072 =====
+
+-o1
+1000000 loop with ++i time 93
+1000000 loop with i = i + 1 time 116
+30 fib time 418
+1000000 heap array access time 142
+Trash program finished with exit code 832040
+
+===== VERSION 2065 =====
 
 1000000 loop with ++i time 86
 1000000 loop with i = i + 1 time 167

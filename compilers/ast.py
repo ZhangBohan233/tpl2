@@ -1048,7 +1048,7 @@ class DotExpr(BinaryExpr):
             arg_types.insert(0, None)  # insert a positional arg of 'this'
             method_id, method_p, t = ct.find_method(name, arg_types, lf)
             DotExpr.check_permission(t.defined_class, t.permission, env, lf)
-            t = t.copy()
+            t: typ.MethodType = t.copy()
             for i in range(len(t.param_types)):
                 pt = t.param_types[i]
                 if typ.is_generic(pt):
@@ -1057,7 +1057,10 @@ class DotExpr(BinaryExpr):
             res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
             ea = right.evaluate_args(t, env, tpa, is_method=True)
             ea.insert(0, (ins_ptr_addr, util.PTR_LEN))
-            tpa.call_method(ins_ptr_addr, method_id, ea, res_ptr, t.rtype.memory_length(), class_offset)
+            if t.const:  # cannot be overridden, so call it directly
+                FunctionCall.call_ptr(method_p, ea, tpa, res_ptr, lf, t)
+            else:
+                tpa.call_method(ins_ptr_addr, method_id, ea, res_ptr, t.rtype.memory_length(), class_offset)
             return res_ptr
 
         # print(class_offset)

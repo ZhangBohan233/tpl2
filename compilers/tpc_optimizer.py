@@ -1,5 +1,10 @@
+import sys
 import compilers.tokens_lib as tl
 import compilers.util as util
+
+
+INLINE_MAX_INST = 200
+INLINE_MAX_STACK = util.INT_LEN * 8
 
 
 class TpcOptimizer:
@@ -9,11 +14,14 @@ class TpcOptimizer:
 
         self.opt_literal = opt_level >= 1
         self.do_inline = opt_level >= 1
+        self.unused_label = opt_level >= 1
         self.retract_literal = opt_level >= 2
 
         self.bits = 0
         self.stack_size = 0
         self.global_length = 0
+
+        self.inline_count = 0
 
         self.header = []
         self.functions = {}
@@ -97,10 +105,12 @@ class TpcOptimizer:
         for fn_name in self.function_orders:
             fn_ptr, fn_body, inline = self.functions[fn_name]
 
-            if self.opt_literal:
-                self.optimize_literal(fn_body)
+            # if self.opt_literal:
+            #     self.optimize_literal(fn_body)
             if self.do_inline:
                 fn_body = self.function_inline(fn_body, fn_ptr)
+            if self.unused_label:
+                fn_body = self.remove_unused_label(fn_body)
 
             body.append(f"\nfn {fn_name} {fn_ptr}")
             for inst in fn_body:
@@ -130,21 +140,26 @@ class TpcOptimizer:
                 ret_addr = fn_body[i - 1][2]
             elif inst[0] == "args":
                 in_args = True
+            elif inst[0] == "invoke" or inst[0] == "call_reg":
+                in_args = False
+                new_body.extend(cur_args)
+                cur_args.clear()
             elif inst[0] == "call":
                 in_args = False
                 args = cur_args.copy()
                 cur_args.clear()
 
                 called_ptr = inst[1]
-                callee_ptr, callee_body, inline = self.find_func_at_ptr(called_ptr)
+                callee_name, callee_ptr, callee_body, inline = self.find_func_at_ptr(called_ptr)
                 # check this not a recursive call
                 # this check does not guarantee the call is not recursive
                 # i.e. cannot detect recursive call from 'getfunc'
                 if callee_ptr != caller_ptr:
                     if inline:  # 'False' or 'None' are all excluded
-                        # callee_body = self.function_inline(callee_body, callee_ptr)  # make callee inline first
+                        callee_body = self.function_inline(callee_body, callee_ptr)  # make callee inline first
                         inlined_body, more_push = \
-                            self.get_inlined(callee_body, callee_ptr, args, ret_addr, pushed, occupied_regs)
+                            self.get_inlined(
+                                callee_body, callee_ptr, args, ret_addr, pushed, occupied_regs, callee_name)
                         if inlined_body is not None:
                             new_body.extend(inlined_body)
                             pushed += more_push
@@ -159,7 +174,7 @@ class TpcOptimizer:
         return new_body
 
     def get_inlined(self, inline_func_body: list, inline_func_ptr: str, arg_inst: list,
-                    ret_addr: str, caller_stack_occupy: int, occupied_regs):
+                    ret_addr: str, caller_stack_occupy: int, occupied_regs, fn_name) -> (list, int):
         """
         Format of args:
         [['aload_sp', ra, aa],
@@ -168,11 +183,23 @@ class TpcOptimizer:
 
         :return:
         """
+        if len(inline_func_body) > INLINE_MAX_INST:
+            # function too big to inline
+            return None, None
         args = {}
         args_len = 0
-        # print(arg_inst)
-        assert len(arg_inst) % 3 == 0  # first one is 'args', last two are iload and set_ret
-        for ii in range(1, len(arg_inst) - 2, 3):
+        # first one is 'args'
+        if len(arg_inst) % 3 == 0:
+            # function with a returning value
+            # last two are iload and set_ret
+            arg_inst_end = len(arg_inst) - 2
+        elif len(arg_inst) % 3 == 1:
+            # void returning function
+            arg_inst_end = len(arg_inst)
+        else:
+            print(arg_inst, file=sys.stderr)
+            raise AssertionError(fn_name)
+        for ii in range(1, arg_inst_end, 3):
             dst_addr = arg_inst[ii][2]  # arg addr in the new function
             src_addr = arg_inst[ii + 1][2]  # arg original addr
             if arg_inst[ii + 1][0] == "loadb":
@@ -185,8 +212,6 @@ class TpcOptimizer:
             args_len += arg_len
 
         new_body = [["; begin of inlining " + inline_func_ptr]]
-        # print(args)
-        # print(inline_func_body)
 
         def make_addr(addr: str) -> str:
             if addr in args:
@@ -196,7 +221,21 @@ class TpcOptimizer:
             else:
                 return addr
 
-        ret_int = [["load", "ra", "aa"], ["put_ret", "ra"]]
+        ret_int = [["load", "ra", "aa"], ["put_ret", "ra"]]  # float also included
+        ret_byte = [["loadb", "ra", "aa"], ["put_ret", "ra"]]
+        ret_char = [["loadc", "ra", "aa"], ["put_ret", "ra"]]
+
+        def is_returning_value(index):
+            if matches(inline_func_body, index, ret_int):
+                return "load"
+            elif matches(inline_func_body, index, ret_byte):
+                return "loadb"
+            elif matches(inline_func_body, index, ret_char):
+                return "loadc"
+            else:
+                return None
+
+        inline_label = None
 
         # a key to determine whether an addr is in the function's stack space:
         stack_occupy = None
@@ -205,22 +244,34 @@ class TpcOptimizer:
             inst = inline_func_body[i]
             if inst[0] == "push":
                 stack_occupy = int(inst[1])
+                if stack_occupy > INLINE_MAX_STACK:
+                    # function too big to inline
+                    return None, None
             elif inst[0] == "push_fp" or inst[0] == "pull_fp" or inst[0] == "stop":
                 # should be omitted
                 pass
             elif inst[0] == "ret":
-                # todo: if not at end of function, add a goto label
-                pass
-            elif matches(inline_func_body, i, ret_int):
+                if inline_func_body[i + 1][0] != "stop":  # early returning
+                    inline_label = "INLINE_END_" + str(self.inline_count)
+                    new_body.append(["goto", inline_label])
+            elif is_returning_value(i) is not None:
+                loader = is_returning_value(i)
                 addr_to_return = make_addr(inst[2])
                 # todo: register
 
                 # see: tpa_producer.assign
-                new_body.append(["load", "%0", addr_to_return])
+                new_body.append([loader, "%0", addr_to_return])
                 new_body.append(["iload", "%1", ret_addr])
                 new_body.append(["store", "%1", "%0"])
 
                 i += 1
+            elif inst[0].endswith("sp"):
+                new_body.append(inst)
+            elif inst[0] == "label" or inst[0] == "goto":
+                new_body.append([inst[0], f"{inst[1]}_{self.inline_count}"])
+            elif inst[0] == "if_zero_goto":
+                cond_addr = make_addr(inst[1]) if inst[1].startswith("$") else inst[1]
+                new_body.append([inst[0], cond_addr, f"{inst[2]}_{self.inline_count}"])
             else:
                 new_inst = []
                 for item in inst:
@@ -232,15 +283,19 @@ class TpcOptimizer:
                 new_body.append(new_inst)
             i += 1
 
-        new_body.append(["; end of inlining"])
+        self.inline_count += 1
+        if inline_label is not None:
+            new_body.append(["label", inline_label])
+        comment = f"; end of inlining {inline_func_ptr}, pushed={stack_occupy - args_len}"
+        new_body.append([comment])
         return new_body, stack_occupy - args_len
 
     def find_func_at_ptr(self, ptr: str):
         for fn_name in self.functions:
             fn_ptr, fn_body, inline = self.functions[fn_name]
             if fn_ptr == ptr:
-                return fn_ptr, fn_body, inline
-        return None, None, None
+                return fn_name, fn_ptr, fn_body, inline
+        return None, None, None, None
 
     def optimize_literal(self, func_body: list):
         i = 0
@@ -258,6 +313,22 @@ class TpcOptimizer:
                     i += 2
             i += 1
         # print(lit_int_stacks)
+
+    def remove_unused_label(self, func_body) -> list:
+        i = 0
+        new_body = []
+        empty_else = [["goto", "la"],
+                      ["label", "lb"],
+                      ["label", "la"]]
+        while i < len(func_body):
+            inst = func_body[i]
+            if matches(func_body, i, empty_else):
+                # skips this goto
+                pass
+            else:
+                new_body.append(inst)
+            i += 1
+        return new_body
 
     def write_format(self, output: list, *inst):
         output.append(self._format(*inst))

@@ -96,7 +96,7 @@ class String {
         return TRUE;
     }
 
-    inline fn length() int {
+    const inline fn length() int {
         return this.chars.length;
     }
 
