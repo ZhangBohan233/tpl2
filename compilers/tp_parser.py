@@ -513,6 +513,18 @@ class Parser:
                         builder.add_node(ast.AddrExpr(lfp))
                     else:
                         builder.add_node(ast.BinaryOperator("&", ast.BIN_BITWISE, lfp))
+                elif symbol == "is":
+                    if index < len(parent) - 1 and tl.identifier_of(parent[index + 1], "not"):
+                        builder.add_node(ast.BinaryOperator("is not", ast.BIN_LOGICAL, lfp))
+                        index += 1
+                    else:
+                        builder.add_node(ast.BinaryOperator("is", ast.BIN_LOGICAL, lfp))
+                elif symbol == "not":  # 'not is', a tribute to Isabepla.
+                    if index < len(parent) - 1 and tl.identifier_of(parent[index + 1], "is"):
+                        builder.add_node(ast.BinaryOperator("is not", ast.BIN_LOGICAL, lfp))
+                        index += 1
+                    else:
+                        builder.add_node(ast.UnaryOperator("not", ast.UNA_LOGICAL, lfp))
                 elif symbol in tl.ARITH_BINARY:
                     builder.add_node(ast.BinaryOperator(symbol, ast.BIN_ARITH, lfp))
                 elif symbol in tl.LOGICAL_BINARY:
@@ -565,6 +577,9 @@ class Parser:
                 lfp = ele.lfp
                 if index > 0:
                     prob_call_obj = parent[index - 1]
+                    if tl.is_arrow_bracket(prob_call_obj):
+                        prob_call_obj = parent[index - 2]
+
                     if is_call_obj(prob_call_obj):
                         args = self.parse_as_line(ele)
                         call_obj = builder.remove_last()
@@ -648,7 +663,7 @@ def is_unary(leading_ele: tl.Element) -> bool:
             elif symbol in UNARY_LEADING:
                 return True
             else:
-                return symbol in tl.ALL_BINARY or symbol in tl.RESERVED
+                return symbol in tl.ALL_BINARY or symbol in tl.KEYWORDS
         else:
             return not isinstance(token, tl.LitToken)
     else:
@@ -659,7 +674,7 @@ def is_call(token_before: tl.Token) -> bool:
     if isinstance(token_before, tl.IdToken):
         symbol = token_before.identifier
         return symbol.isidentifier() and \
-               symbol not in tl.RESERVED and \
+               symbol not in tl.KEYWORDS and \
                symbol not in tl.LOGICAL_UNARY
     return False
 

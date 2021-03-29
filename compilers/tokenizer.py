@@ -329,6 +329,8 @@ def has_closing_arrow(tokens: list, left_arr_index: int) -> bool:
                 return True
             elif tk.identifier == ";":
                 return False
+            elif tk.identifier in tl.RESERVED:
+                return False
         elif (isinstance(tk, tl.StrToken) or
               isinstance(tk, tl.IntToken) or
               isinstance(tk, tl.ByteToken) or

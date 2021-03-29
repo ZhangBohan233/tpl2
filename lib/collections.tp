@@ -128,7 +128,11 @@ class List<T>(AbsList<T>) {
             strArr[i] = this.get(i).toString();
         }
         joint := ", ".join(strArr);
-        return "[".concat(joint).concat("]");
+        s1 := "[" + joint;
+        del joint;
+        res := s1 + "]";
+        del s1;
+        return res;
     }
 
     protected fn checkSize() void {
@@ -188,19 +192,23 @@ class LinkedList<T>(AbsList<T>) {
         return NULL;
     }
 
+    @Override
     fn append(value: *T) void {
 
     }
 
+    @Override
     fn get(index: int) *T {
         this.checkIndex(index);
         return NULL;
     }
 
+    @Override
     fn set(index: int, value: *T) void {
 
     }
 
+    @Override
     fn remove(index: int) *T {
         this.checkIndex(index);
         return NULL;
@@ -212,13 +220,227 @@ class LinkedList<T>(AbsList<T>) {
 }
 
 abstract class Map<K, V>(Iterable<K>) {
+    abstract fn get(key: *K) *V;
 
+    abstract fn set(key: *K, value: *V) void;
+
+    abstract fn remove(key: *K) *V;
+
+    abstract fn size() int;
+
+    fn __get__(key: *K) *V {
+        return this.get(key);
+    }
+
+    fn __set__(key: *K, value: *V) void {
+        this.set(key, value);
+    }
+}
+
+class HashEntry<K, V> {
+    key: *K;
+    value: *V;
+    next: *HashEntry<K, V> = NULL;
+
+    fn __new__(key: *K, value: *V) void {
+        this.key = key;
+        this.value = value;
+    }
+}
+
+class HashMapIterator<K, V>(Iterator<K>) {
+    const dict: *HashMap<K, V>;
+    index: int = 0;
+    looped: int = 0;
+    node: *HashEntry<K, V> = NULL;
+
+    fn __new__(dict: *HashMap<K, V>) void {
+        this.dict = dict;
+    }
+
+    @Override
+    fn hasNext() boolean {
+        return this.looped < this.dict.size();
+    }
+
+    @Override
+    fn next() *K {
+        if this.node is NULL {
+            while this.index < this.dict.array.length {
+                this.node = this.dict.array[this.index++];
+                if this.node is not NULL {
+                    break;
+                }
+            }
+        }
+        this.looped++;
+        cur := this.node;
+        this.node = this.node.next;
+        return cur.key;
+    }
 }
 
 class HashMap<K, V>(Map<K, V>) {
-    fn iter() *Iterator<K> {
+    const loadFactor: float;
+    numEle: int = 0;
+    array: HashEntry<K, V>[];
+
+    fn __new__() void {
+        this.loadFactor = 0.75;
+        this.array = new HashEntry<K, V>[8];
+    }
+
+    @Override
+    fn get(key: *K) *V {
+        hashCode := this.hash(key, this.array.length);
+        entry := this.array[hashCode];
+        if entry is NULL {
+            return NULL;
+        }
+        node := entry;
+        while node is not NULL {
+            if node.key == key {
+                return node.value;
+            }
+            node = node.next;
+        }
         return NULL;
     }
+
+    @Override
+    fn set(key: *K, value: *V) void {
+        hashCode := this.hash(key, this.array.length);
+        entry := this.array[hashCode];
+        if entry is NULL {
+            this.array[hashCode] = new HashEntry<K, V>(key, value);
+            this.numEle++;
+        } else {
+            found := FALSE;
+            node := entry;
+            while node is not NULL {
+                if node.key == key {
+                    node.value = value;
+                    found = TRUE;
+                    break;
+                }
+                node = node.next;
+            }
+            if not found {
+                newNode := new HashEntry<K, V>(key, value);
+                newNode.next = entry;
+                this.array[hashCode] = newNode;
+                this.numEle++;
+            }
+        }
+        if this.getLoad() > this.loadFactor {
+            this.expand();
+        }
+    }
+
+    @Override
+    fn remove(key: *K) *V {
+        hashCode := this.hash(key, this.array.length);
+        entry := this.array[hashCode];
+        if entry is NULL {
+            return NULL;
+        }
+        rtn: *V = NULL;
+        if entry.key == key {
+            // is the head
+            this.array[hashCode] = entry.next;
+            rtn = entry.value;
+            this.numEle--;
+        } else {
+            node := entry;
+            prev: *HashEntry<K, V> = NULL;
+            while node is not NULL {
+                if node.key == key {
+                    prev.next = node.next;
+                    rtn = node.value;
+                    this.numEle--;
+                }
+                prev = node;
+                node = node.next;
+            }
+        }
+        return rtn;
+    }
+
+    @Override
+    const inline fn size() int {
+        return this.numEle;
+    }
+
+    @Override
+    fn iter() *HashMapIterator<K, V> {
+        return new HashMapIterator<K, V>(this);
+    }
+
+    /*
+     Returns the actual index in array.
+     */
+    private inline fn hash(key: *K, capacity: int) int {
+        return key.hash() % capacity;
+    }
+
+    protected fn getLoad() float {
+        return this.numEle as float / this.array.length;
+    }
+
+    protected fn expand() void {
+        newArr := new HashEntry<K, V>[this.array.length * 2];
+        for i := 0; i < this.array.length; ++i {
+            oldEntry := this.array[i];
+            if oldEntry is not NULL {
+                node := oldEntry;
+                // divide the current link to two links
+                index2 := i + this.array.length;  // index of the other entry
+                curEntry: *HashEntry<K, V> = NULL;
+                newEntry: *HashEntry<K, V> = NULL;
+                while node is not NULL {
+                    index := this.hash(node.key, newArr.length);
+                    next := node.next;
+                    if index == i {
+                        node.next = curEntry;
+                        curEntry = node;
+                    } else {
+                        node.next = newEntry;
+                        newEntry = node;
+                    }
+                    node = next;
+                }
+                newArr[i] = curEntry;
+                newArr[index2] = newEntry;
+            }
+        }
+        this.array = newArr;
+    }
+
+    @Override
+    fn toString() *String {
+        strArr := new String[this.size()];
+        i := 0;
+        for key: *K in this {
+            k := key.toString();
+            v := this.get(key).toString();
+            front := k + ": ";
+            del k;
+            strArr[i] = front + v;
+            del front;
+            del v;
+            ++i;
+        }
+        joint := ", ".join(strArr);
+        s1 := "{" + joint;
+        del joint;
+        res := s1 + "}";
+        del s1;
+        return res;
+    }
+}
+
+abstract class Set<T>(Collection<T>) {
+
 }
 
 export {

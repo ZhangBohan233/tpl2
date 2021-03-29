@@ -65,3 +65,5 @@
 * Array element record in runtime
 * Template function
 * Inner function rename
+* Init array with all 0 or null
+* Explicit operator 'is', 'is not'

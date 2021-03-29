@@ -2,18 +2,20 @@ ARITH_BINARY = {"+", "-", "*", "/", "%"}
 BITWISE_BINARY = {"&", "|", "^", ">>", "<<", ">>>"}
 ARITH_BINARY_ASS = {"+=", "-=", "*=", "/=", "%="}
 BITWISE_BINARY_ASS = {"&=", "|=", "^=", ">>=", "<<=", ">>>="}
-LOGICAL_BINARY = {"<", ">", "==", "!=", "<=", ">="}
+LOGICAL_BINARY = {"<", ">", "==", "!=", "<=", ">=", "is", "is not"}
 LAZY_BINARY = {"and", "or"}
 ARITH_UNARY = {"-", "*", "&"}
 LOGICAL_UNARY = {"not"}
 SYMBOLS = {"{", "}", "[", "]", "(", ")", ".", "$", ",", ";", ":", "::", "@"}
 OTHERS = {"=", "->", ":=", "++", "--"}
 
-RESERVED = {"abstract", "as", "break", "case", "class", "cond", "const", "continue", "del", "do", "else",
+KEYWORDS = {"abstract", "as", "break", "case", "class", "cond", "const", "continue", "del", "do", "else",
             "export", "exportmacro", "fallthrough", "fn", "for",
             "if", "import", "in", "inline", "instanceof", "lambda", "macro", "new", "private", "protected",
             "require", "return", "super", "switch", "then",
             "this", "var", "while", "yield"}
+
+RESERVED = set.union(KEYWORDS, {"and", "or", "not", "is"})  # no 'is not' since it is not a word
 
 ALL_BINARY = set.union(
     ARITH_BINARY,
@@ -35,7 +37,7 @@ ALL = set.union(
     LOGICAL_UNARY,
     SYMBOLS,
     OTHERS,
-    RESERVED
+    KEYWORDS
 )
 
 

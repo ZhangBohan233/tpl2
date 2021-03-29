@@ -1,8 +1,4 @@
-﻿require {
-    clock, println_int
-}
-
-inline fn foo(a: int) int {
+﻿inline fn foo(a: int) int {
     return a + 1;
 }
 

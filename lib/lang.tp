@@ -26,6 +26,7 @@ class Object {
     }
 
     fn __del__() void {
+        free(this);
     }
 
     fn hash() int {
@@ -33,11 +34,15 @@ class Object {
     }
 
     fn equals(other: *Object) boolean {
-        return this == other;
+        return this is other;
+    }
+
+    fn notEquals(other: *Object) boolean {
+        return not this.equals(other);
     }
 
     fn toString() *String {
-        return "Object@";
+        return "Object@" + intToString((this as *void) as int);
     }
 }
 
@@ -57,11 +62,9 @@ class String {
 
     fn __del__() void {
         if mem_segment(this) == 3 {  // literal
-            println("Cannot delete literal string.");
-            exit(1);
+            return;
         }
         del this.chars;
-
         super.__del__();
     }
 
@@ -71,6 +74,11 @@ class String {
 
     fn __mul__(n: int) *String {
         return this.repeat(n);
+    }
+
+    @Override
+    fn toString() *String {
+        return this;
     }
 
     fn concat(other: *String) *String {

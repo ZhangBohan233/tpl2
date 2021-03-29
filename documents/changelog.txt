@@ -1,4 +1,15 @@
-﻿===== VERSION 2072 =====
+﻿===== VERSION 2073 =====
+2021/03/29
+
+* Cancelled manual require mechanism of native invokes
+* Fixed parse error of syntax: 'Class<T>[]'
+* Added new logical binary operators: 'is', 'is not', ('not is') to replace '==', "!="
+* Added magic function for '==' and '!='
+* Implemented library collection: HashMap
+* Changed the implementation of keyword 'del' on objects
+* Fixed bugs that some methods might be compiled twice
+
+===== VERSION 2072 =====
 2021/03/24
 
 * Completed function inline

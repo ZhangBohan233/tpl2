@@ -4,6 +4,7 @@ import compilers.ast as ast
 import compilers.types as typ
 import compilers.errors as errs
 import compilers.tokens_lib as tl
+import compilers.util as util
 
 MAIN_FN_ERR_MSG = "Main function should be one of\n" + \
                   "main() int, main(void) int, main(args: char[][]) int, " + \
@@ -25,7 +26,7 @@ class Compiler:
         manager = prod.Manager(self.literals, self.str_lit_pos, self.optimize_level)
         out = prod.TpaOutput(manager, is_global=True)
         ge = en.GlobalEnvironment()
-        _init_compile_time_functions(ge)
+        _init_compile_time_functions(ge, out)
 
         env = en.MainEnvironment(ge)
 
@@ -56,6 +57,11 @@ class Compiler:
         return "\n".join(res)
 
 
-def _init_compile_time_functions(env: en.GlobalEnvironment):
+def _init_compile_time_functions(env: en.GlobalEnvironment, tpa):
     for func_t in ast.COMPILE_TIME_FUNCTIONS:
         env.define_const(func_t.name, func_t, tl.LF_COMPILER)
+    for name in typ.NATIVE_FUNCTIONS:
+        func_id, func_type = typ.NATIVE_FUNCTIONS[name]
+        fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
+        tpa.require_name(name, fn_ptr)
+        env.define_function(name, func_type, fn_ptr, tl.LF_COMPILER)

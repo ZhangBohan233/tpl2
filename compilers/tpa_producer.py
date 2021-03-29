@@ -116,6 +116,7 @@ class Manager:
         self.literal = literal
         self.str_lit_pos = str_lit_pos
         self.string_class_ptr = 0
+        self.chars_pos_in_str = util.PTR_LEN  # position of 'chars' in class String
         self.blocks = []
         self.available_regs = [7, 6, 5, 4, 3, 2, 1, 0]
         self.gp = util.STACK_SIZE
@@ -631,23 +632,28 @@ class TpaOutput:
             merged.append(line)
         merged.append("")
 
+        compiled_fn_names = set()
+
         def compile_function(fn_name):
             fo = self.manager.functions_map[fn_name]
             content = fo.compile()
             merged.extend(content)
+            compiled_fn_names.add(fn_name)
 
         for name, t in self.manager.class_func_order:
             if t == 0:  # function
-                compile_function(name)
+                if name not in compiled_fn_names:
+                    compile_function(name)
             else:  # class
                 class_methods = class_methods_map[name]
                 for method_name in class_methods:
-                    compile_function(method_name)
+                    if method_name not in compiled_fn_names:
+                        compile_function(method_name)
 
         # process string literals
         # mechanism:
         # 1. simulate 'String' by adding a pointer to class 'String' at <str_pos>
-        # 2. simulate 'String.chars' by adding a pointer to literal char array at <str_pos + PTR_LEN>
+        # 2. simulate 'String.chars' by adding a pointer to literal char array at <str_pos + chars_pos_in_str>
         if len(self.manager.str_lit_pos) != 0 and self.manager.string_class_ptr == 0:
             raise errs.TplCompileError("String literal is not allowed without importing 'lang'.")
         str_class_ptr = util.int_to_bytes(self.manager.string_class_ptr)
@@ -655,10 +661,11 @@ class TpaOutput:
         for str_lit in self.manager.str_lit_pos:
             str_pos = self.manager.str_lit_pos[str_lit]
             str_addr = str_pos + lit_start
+            char_arr_ptr_pos = str_pos + self.manager.chars_pos_in_str
             self.manager.literal[str_pos: str_pos + util.PTR_LEN] = \
                 str_class_ptr
-            self.manager.literal[str_pos + util.PTR_LEN: str_pos + util.PTR_LEN * 2] = \
-                util.int_to_bytes(str_addr + util.PTR_LEN * 2)
+            self.manager.literal[char_arr_ptr_pos: char_arr_ptr_pos + util.PTR_LEN] = \
+                util.int_to_bytes(str_addr + self.manager.chars_pos_in_str + util.PTR_LEN)
 
         merged[merged.index("global_length") + 1] = str(self.manager.global_length())
         literal_str = " ".join([str(int(b)) for b in self.manager.literal])

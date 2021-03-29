@@ -1,0 +1,16 @@
+﻿import lang;
+import collections;
+
+class A<T> {
+
+}
+
+fn main() int {
+    map := new HashMap<Integer, String>();
+    map[new Integer(1)] = "a";
+    map[new Integer(2)] = "as";
+    map[new Integer(3)] = "asd";
+    println(map);
+
+    return map.size();
+}
