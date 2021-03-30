@@ -88,13 +88,14 @@ INSTRUCTIONS = {
     "storeb_abs": (82, 1, 1),
     "get_method": (83, 1, 1, 1),  # %reg1 inst_ptr_addr  %reg2 method_id  %reg3 backup   |
     #                             # get method ptr of a class, store to %reg1
-    "subclass": (84, 1, 1, 1, 1),   # %reg1 parent_class   %reg2 child_class   %reg3 temp1   %reg4 temp2
+    "subclass": (84, 1, 1, 1, 1),  # %reg1 parent_class   %reg2 child_class   %reg3 temp1   %reg4 temp2
     #                               # | store true to %reg1
     #                               # if parent_class is super of child_class
+    "exitv": (85, 1),  # exitv   %reg1 value    | exit with value stored in %reg1
 }
 
 MNEMONIC = {
-    "fn", "entry", "call_fn", "label", "stop"
+    "fn", "entry", "call_fn", "label", "stop", "args"
 }
 
 PSEUDO_INSTRUCTIONS = {
@@ -127,6 +128,7 @@ class TpcCompiler:
 
         self.stack_size = 0
         self.global_length = 0
+        self.version = 0
 
     def compile(self, out_name=None):
         if out_name is None:
@@ -146,14 +148,22 @@ class TpcCompiler:
         entry_out = []
         cur_out = header_out
 
-        function_pointers = {}
+        function_pointers = {}  # full poly name: $addr_text
+        class_pointers = {}  # full poly name: $addr_text
 
         with open(self.tpa_file, "r") as rf:
             lines = [line.strip("\n") for line in rf.readlines()]
         for line in lines:
-            if line.startswith("fn"):
-                fn, name, addr = (part.strip() for part in line.split(" "))
-                function_pointers[name] = int(addr[1:])
+            if line.startswith("fn "):
+                first_line = [part.strip() for part in line.split(" ")]
+                name = first_line[1]
+                addr = first_line[2]
+                function_pointers[name] = addr
+            elif line.startswith("class "):
+                first_line = [part.strip() for part in line.split(" ")]
+                name = first_line[1]
+                addr = first_line[2]
+                class_pointers[name] = addr
 
         i = 0
         length = len(lines)
@@ -162,7 +172,12 @@ class TpcCompiler:
             line = orig_line.strip()
             lf = tl.LineFile(self.tpa_file, i + 1)
 
-            if line == "stack_size":
+            if line == "version":
+                cur_out.append(lines[i])
+                cur_out.append(lines[i + 1])
+                self.version = int(lines[i + 1])
+                i += 1
+            elif line == "stack_size":
                 cur_out.append(lines[i])
                 cur_out.append(lines[i + 1])
                 self.stack_size = int(lines[i + 1])
@@ -179,6 +194,25 @@ class TpcCompiler:
                 for lit in literal_str:
                     literal.append(int(lit))
                 i += 1
+            elif line.strip().startswith("class "):
+                class_parts = [part.strip() for part in line.split(" ")]
+                out_parts = ["class", class_parts[1], "mro", class_parts[2]]
+                i += 1
+                new_line = lines[i].strip()
+                while not new_line.endswith("endclass"):
+                    class_parts.extend([part.strip() for part in new_line.split(" ")])
+                    i += 1
+                    new_line = lines[i].strip()
+                i += 1  # skips 'endclass'
+                mro_index = class_parts.index("mro")
+                methods_index = class_parts.index("methods")
+                for mro_class in class_parts[mro_index + 1: methods_index]:
+                    mro_ptr = class_pointers[mro_class]
+                    out_parts.append(mro_ptr)
+                out_parts.append("methods")
+                for method_name in class_parts[methods_index + 1:]:
+                    out_parts.append(function_pointers[method_name])
+                cur_out.append(" ".join(out_parts))
             else:
                 instructions = \
                     [part for part in [part.strip() for part in line.split(" ")] if len(part) > 0]
@@ -197,7 +231,13 @@ class TpcCompiler:
                         fn_name = instructions[1]
                         fn_ptr = function_pointers[fn_name]
 
-                        self.write_format(cur_out, "call", "$" + str(fn_ptr))
+                        self.write_format(cur_out, "call", fn_ptr)
+                    elif inst == "fn":
+                        if "abstract" in instructions[2:]:
+                            if i < length - 2 and len(lines[i + 1].strip()) == 0:
+                                i += 1
+                        else:
+                            cur_out.append(orig_line)
                     elif inst in PSEUDO_INSTRUCTIONS:
                         self.compile_pseudo_inst(instructions, cur_out, lf)
                     else:
@@ -265,7 +305,8 @@ class TpeCompiler:
 
         # INFO HEADER
         vm_bits: 4 ~ 5
-        extra_info: 5 ~ 16
+        bytecode_version: 5 ~ 7
+        extra_info: 7 ~ 16
 
         stack_size: 16 ~ @24
         global_length: @24 ~ @32
@@ -284,6 +325,7 @@ class TpeCompiler:
 
         :return:
         """
+        version = 0
         vm_bits = 0
         literal = bytearray()
         function_body_positions = {}
@@ -307,7 +349,10 @@ class TpeCompiler:
             while i < length:
                 line = lines[i]
                 lf = tl.LineFile(self.tpc_file, i + 1)
-                if line == "bits":
+                if line == "version":
+                    version = int(lines[i + 1])
+                    i += 1
+                elif line == "bits":
                     vm_bits = int(lines[i + 1])
                     i += 1
                 elif line == "stack_size":
@@ -374,12 +419,14 @@ class TpeCompiler:
                             function_body_positions[cur_fn_name] = len(body)
                         elif inst == "entry":
                             cur_fn_body = []
-                        elif inst == "call_fn":
-                            fn_name = instructions[1]
-                            fn_ptr = function_pointers[fn_name]
-                            tup = INSTRUCTIONS["call"]
-                            cur_fn_body.append(tup[0])
-                            cur_fn_body.extend(util.int_to_bytes(fn_ptr))
+                        elif inst == "args":
+                            pass
+                        # elif inst == "call_fn":
+                        #     fn_name = instructions[1]
+                        #     fn_ptr = function_pointers[fn_name]
+                        #     tup = INSTRUCTIONS["call"]
+                        #     cur_fn_body.append(tup[0])
+                        #     cur_fn_body.extend(util.int_to_bytes(fn_ptr))
                         elif inst == "label":
                             label_name = instructions[1]
                             labels[label_name] = len(cur_fn_body)
@@ -425,7 +472,7 @@ class TpeCompiler:
                             raise errs.TpaError("Unknown instruction {}. ".format(inst), lf)
                 i += 1
 
-        header = SIGNATURE + bytes((vm_bits,)) + util.empty_bytes(11) + \
+        header = SIGNATURE + bytes((vm_bits,)) + util.u_short_to_bytes(version) + util.empty_bytes(9) + \
                  util.int_to_bytes(self.stack_size) + util.int_to_bytes(self.global_length) + \
                  util.int_to_bytes(len(literal)) + util.int_to_bytes(len(class_bodies)) + \
                  literal + class_bodies

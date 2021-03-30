@@ -2,16 +2,20 @@ import sys
 import struct
 
 
-VM_BITS = 64
+BYTECODE_VERSION = 1
+
+VM_BITS = 32
 STACK_SIZE = 2048
-INT_LEN = VM_BITS >> 3
-FLOAT_LEN = VM_BITS >> 3
+INT_LEN = VM_BITS // 8
+FLOAT_LEN = VM_BITS // 8
 CHAR_LEN = 2
 PTR_LEN = INT_LEN
 
 ZERO_POS = 0
 ONE_POS = INT_LEN
 NEG_ONE_POS = INT_LEN + INT_LEN
+
+STRING_HEADER_LEN = PTR_LEN * 2
 
 float_pack = "d" if FLOAT_LEN == 8 else "f"
 
@@ -79,6 +83,10 @@ class NaiveDict:
 def replace_extension(file_name: str, ext: str) -> str:
     ind = file_name.rfind(".")
     return file_name[:ind + 1] + ext
+
+
+def u_short_to_bytes(i: int) -> bytes:
+    return i.to_bytes(2, sys.byteorder, signed=False)
 
 
 def int_to_bytes(i: int) -> bytes:

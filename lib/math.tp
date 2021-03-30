@@ -1,5 +1,8 @@
+import lang;
+import collections;
+
 require {
-    clock, nat_cos, nat_log
+    clock, nat_cos, nat_log, exit
 }
 
 const E: float = 2.7182818284590452354;
@@ -7,9 +10,9 @@ const PI: float = 3.14159265358979323846;
 const DEG_TO_RAD: float = 0.017453292519943295;
 const RAD_TO_DEG: float = 57.29577951308232;
 
-var expN: int = 256;
+var expN: int = sizeof(int) * 32;
 var powN: int = 21;
-var cosN: int = 32;
+var cosN: int = sizeof(float) * 4;
 
 const NaN: float = 0.0 / 0.0;
 const LN2: float = 0.6931471805599453094;
@@ -26,6 +29,22 @@ fn abs(x: float) float {
 
 fn isNaN(x: float) int {
     return x != x;
+}
+
+fn max(a: int, b: int) int {
+    return if a < b then b else a;
+}
+
+fn max(a: float, b: float) float {
+    return if a < b then b else a;
+}
+
+fn min(a: int, b: int) int {
+    return if a < b then a else b;
+}
+
+fn min(a: float, b: float) float {
+    return if a < b then a else b;
 }
 
 // exp
@@ -76,6 +95,78 @@ fn pow(base: float, expo: float) float {
         expLn *= LN2;
     }
     return if expo > 0 then res else 1.0 / res;
+}
+
+// algebraic
+
+/*
+ * Returns the factorial of <n>.
+ */
+fn fact(n: int) int {
+    if n < 0 {
+        println("Negative factorial.");
+        exit(1);
+    }
+    x := 1;
+    for i := 1; i <= n; ++i {
+        x *= i;
+    }
+    return x;
+}
+
+fn fib(n: int) int {
+    if n < 2 {
+        return n;
+    } else {
+        return fib(n - 2) + fib(n - 1);
+    }
+}
+
+fn gcd(x: int, y: int) int {
+    absX := abs(x);
+    absY := abs(y);
+    if absX == absY {
+        return absX;
+    }
+    a := max(absX, absY);
+    b := min(absX, absY);
+    if b == 0 {
+        return a;
+    }
+    r: int;
+    while (r = a % b) != 0 {
+        a = b;
+        b = r;
+    }
+    return b;
+}
+
+/*
+ * Returns a list of primes that less than or equal to <limit>.
+ */
+fn primes(limit: int) Integer[] {
+    lst := new List<Integer>();
+    for i := 2; i <= limit; i++ {
+        lst.append(new Integer(i));
+    }
+    index := 0;
+    tar: int = lst.get(0).intValue();
+    while lst.get(lst.size() - 1).intValue() > tar * tar {
+        tar = lst.get(index).intValue();
+        //lst = functions.filter(lst, x -> x == tar || x % tar != 0);
+        newList := new List<Integer>();
+        for item: *Integer in lst {
+            if item.intValue() == tar or item.intValue() % tar != 0 {
+                newList.append(item);
+            }
+        }
+        del lst;
+        lst = newList;
+        index += 1;
+    }
+    array := lst.toArray();
+    del lst;
+    return array;
 }
 
 // random
@@ -140,7 +231,8 @@ fn tan(x: int) float {
 
 export {
     E, PI, NaN,
-    abs, isNaN,
+    abs, max, min, isNaN,
+    fib, gcd, primes,
     random, randInt,
     cos, sin, tan,
 }

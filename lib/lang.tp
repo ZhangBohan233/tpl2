@@ -1,3 +1,7 @@
+/*
+Builtin library for most object oriented features of tpl.
+*/
+
 require {
     print_int, println_int,
     print_float, println_float,
@@ -5,7 +9,8 @@ require {
     print_byte, println_byte,
     print_str, println_str,
     mem_segment,
-    mem_copy
+    mem_copy,
+    exit
 }
 
 /*
@@ -21,18 +26,23 @@ class Object {
     }
 
     fn __del__() void {
+        free(this);
     }
 
     fn hash() int {
-        return this.__class__ * ((this as *void) as int);
+        return this.class * ((this as *void) as int);
     }
 
     fn equals(other: *Object) boolean {
-        return this == other;
+        return this is other;
+    }
+
+    fn notEquals(other: *Object) boolean {
+        return not this.equals(other);
     }
 
     fn toString() *String {
-        return "Object@";
+        return "Object@" + intToString((this as *void) as int);
     }
 }
 
@@ -42,22 +52,33 @@ class String {
     fn __new__(chars: char[]) void {
         super.__new__();
 
-        this.chars = chars;
+        this.chars = new char[chars.length];
+        arraycopy(chars, 0, this.chars, 0, chars.length);
     }
 
     fn __new__(other: *String) void {
-        super.__new__();
-
-        this.chars = other.chars;
+        this.__new__(other.chars);
     }
 
     fn __del__() void {
-        if mem_segment(this.chars) == 3 {  // literal
+        if mem_segment(this) == 3 {  // literal
             return;
         }
         del this.chars;
-
         super.__del__();
+    }
+
+    fn __add__(other: *String) *String {
+        return this.concat(other);
+    }
+
+    fn __mul__(n: int) *String {
+        return this.repeat(n);
+    }
+
+    @Override
+    fn toString() *String {
+        return this;
     }
 
     fn concat(other: *String) *String {
@@ -83,7 +104,7 @@ class String {
         return TRUE;
     }
 
-    fn length() int {
+    const inline fn length() int {
         return this.chars.length;
     }
 
@@ -120,6 +141,20 @@ class String {
     fn println() void {
         println_str(this.chars);
     }
+
+    fn repeat(n: int) *String {
+        if n < 0 {
+            println("Negative repeat times.");
+            exit(1);
+        }
+        resLen := this.length() * n;
+        resArr := new char[resLen];
+        for i := 0; i < n; ++i {
+            index := i * this.length();
+            arraycopy(this.chars, 0, resArr, index, this.length());
+        }
+        return new String(resArr);
+    }
 }
 
 abstract class Number {
@@ -134,9 +169,56 @@ abstract class Number {
     abstract fn charValue() char;
 
     abstract fn byteValue() byte;
+
+    fn __add__(other: *IntLike) *Integer {
+        return new Integer(this.intValue() + other.intValue());
+    }
+
+    fn __add__(other: *Float) *Float {
+        return new Float(this.floatValue() + other.floatValue());
+    }
+
+    fn __sub__(other: *IntLike) *Number {
+        return new Integer(this.intValue() - other.intValue());
+    }
+
+    fn __sub__(other: *Float) *Float {
+        return new Float(this.floatValue() - other.floatValue());
+    }
+
+    fn __mul__(other: *IntLike) *Number {
+        return new Integer(this.intValue() * other.intValue());
+    }
+
+    fn __mul__(other: *Float) *Float {
+        return new Float(this.floatValue() * other.floatValue());
+    }
+
+    fn __div__(other: *IntLike) *Number {
+        return new Integer(this.intValue() / other.intValue());
+    }
+
+    fn __div__(other: *Float) *Float {
+        return new Float(this.floatValue() / other.floatValue());
+    }
+
+    fn __mod__(other: *IntLike) *Number {
+        return new Integer(this.intValue() % other.intValue());
+    }
+
+    fn __mod__(other: *Float) *Float {
+        return new Float(this.floatValue() % other.floatValue());
+    }
 }
 
-class Integer(Number) {
+abstract class IntLike(Number) {
+    @Override
+    fn floatValue() float {
+        return this.intValue() as float;
+    }
+}
+
+class Integer(IntLike) {
     private const value: int;
 
     fn __new__(value: int) void {
@@ -148,11 +230,6 @@ class Integer(Number) {
     @Override
     fn intValue() int {
         return this.value;
-    }
-
-    @Override
-    fn floatValue() float {
-        return this.value as float;
     }
 
     @Override
@@ -202,22 +279,11 @@ class Float(Number) {
 
     @Override
     fn toString() *String {
-        iv: int = this.value as int;
-        dv := this.value - iv;
-        dv = if dv < 0 then -dv else dv;
-        front := intToString(iv as int);
-        count := 0;
-        while count < 6 and dv != dv as int {
-            dv *= 10;
-            count++;
-        }
-        back := intToString(dv as int);
-
-        return front.concat(".").concat(back);
+        return floatToString(this.value);
     }
 }
 
-class Char(Number) {
+class Char(IntLike) {
     private const value: char;
 
     fn __new__(value: char) void {
@@ -229,11 +295,6 @@ class Char(Number) {
     @Override
     fn intValue() int {
         return this.value as int;
-    }
-
-    @Override
-    fn floatValue() float {
-        return this.value as int as float;
     }
 
     @Override
@@ -254,7 +315,7 @@ class Char(Number) {
     }
 }
 
-class Byte(Number) {
+class Byte(IntLike) {
     private const value: byte;
 
     fn __new__(value: byte) void {
@@ -266,11 +327,6 @@ class Byte(Number) {
     @Override
     fn intValue() int {
         return this.value as int;
-    }
-
-    @Override
-    fn floatValue() float {
-        return this.value as int as float;
     }
 
     @Override
@@ -313,43 +369,43 @@ fn println() void {
     println("");
 }
 
-fn print(value: int) void {
+inline fn print(value: int) void {
     print_int(value);
 }
 
-fn println(value: int) void {
+inline fn println(value: int) void {
     println_int(value);
 }
 
-fn print(value: float) void {
+inline fn print(value: float) void {
     print_float(value);
 }
 
-fn println(value: float) void {
+inline fn println(value: float) void {
     println_float(value);
 }
 
-fn print(value: char) void {
+inline fn print(value: char) void {
     print_char(value);
 }
 
-fn println(value: char) void {
+inline fn println(value: char) void {
     println_char(value);
 }
 
-fn print(value: byte) void {
+inline fn print(value: byte) void {
     print_byte(value);
 }
 
-fn println(value: byte) void {
+inline fn println(value: byte) void {
     println_byte(value);
 }
 
-fn print(value: *String) void {
+inline fn print(value: *String) void {
     value.print();
 }
 
-fn println(value: *String) void {
+inline fn println(value: *String) void {
     value.println();
 }
 
@@ -359,6 +415,14 @@ fn print(value: *Object) void {
 
 fn println(value: *Object) void {
     println(value.toString());
+}
+
+fn print(value: Object[]) void {
+    print("Array");
+}
+
+fn println(value: Object[]) void {
+    println("Array");
 }
 
 fn intToString(value: int) *String {
@@ -389,8 +453,25 @@ fn intToString(value: int) *String {
         array[i] = (cur + 48) as char;
         mul /= 10;
     }
-
     return new String(array);
+}
+
+fn floatToString(value: float) *String {
+    iv: int = value as int;
+    dv := value - iv;
+    dv = if dv < 0 then -dv else dv;
+    front := intToString(iv as int);
+    count := 0;
+    while count < 6 and dv != dv as int {
+        dv *= 10;
+        count++;
+    }
+    back := intToString(dv as int);
+    s1 := front.concat(".");
+    del front;
+    s2 := s1.concat(back);
+    del s1;
+    return s2;
 }
 
 fn arraycopy(src: int[], srcIndex: int, dst: int[], dstIndex: int, length: int) void {
@@ -417,6 +498,10 @@ fn arraycopy(src: Object[], srcIndex: int, dst: Object[], dstIndex: int, length:
     mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
 }
 
+fn vmBitsCount() int {
+    return sizeof(int) << 3;
+}
+
 exportmacro {
     boolean
 }
@@ -425,5 +510,6 @@ export {
     FALSE, TRUE, NULL,
     Object, String,
     Number, Integer, Float, Char, Byte,
-    print, println, arraycopy
+    print, println, arraycopy, vmBitsCount,
+    intToString, floatToString
 }

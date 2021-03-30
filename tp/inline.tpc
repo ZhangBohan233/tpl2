@@ -1,0 +1,256 @@
+version
+1
+bits
+32
+stack_size
+2048
+global_length
+96
+literal
+0 0 0 0 1 0 0 0 255 255 255 255 64 66 15 0 10 0 0 0
+classes
+
+fn E:\GitHub\tpl2\tp\inline.tp$foo(int) $2124 inline
+    push_fp
+    push          12
+    load          %0      $2148
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $0
+    load          %1      $8
+    addi          %0      %1
+    iload         %1      $4
+    store         %1      %0
+    load          %0      $4
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\inline.tp$bar(int) $2128
+    push_fp
+    push          12
+    load          %0      $2148
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $0
+    load          %1      $8
+    addi          %0      %1
+    iload         %1      $4
+    store         %1      %0
+    load          %0      $4
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\inline.tp$loopInline() $2132
+    push_fp
+    push          32
+    args
+    iload         %0      $0
+    set_ret       %0
+    invoke        $2056
+    load          %0      $2144
+    iload         %1      $4
+    store         %1      %0
+    load          %0      $2144
+    iload         %1      $8
+    store         %1      %0
+    label         LOOP_TITLE_0
+    load          %0      $2156
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $8
+    load          %1      $16
+    lti           %0      %1
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    if_zero_goto  %0      END_LOOP_0
+    args
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    iload         %0      $20
+    set_ret       %0
+    call          $2124
+    load          %0      $4
+    load          %1      $20
+    addi          %0      %1
+    iload         %1      $4
+    store         %1      %0
+    label         LABEL_0
+    load          %0      $8
+    iload         %1      1
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    goto          LOOP_TITLE_0
+    label         END_LOOP_0
+    args
+    iload         %0      $24
+    set_ret       %0
+    invoke        $2056
+    load          %0      $24
+    load          %1      $0
+    subi          %0      %1
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $28
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\inline.tp$loop() $2136
+    push_fp
+    push          32
+    args
+    iload         %0      $0
+    set_ret       %0
+    invoke        $2056
+    load          %0      $2144
+    iload         %1      $4
+    store         %1      %0
+    load          %0      $2144
+    iload         %1      $8
+    store         %1      %0
+    label         LOOP_TITLE_1
+    load          %0      $2156
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $8
+    load          %1      $16
+    lti           %0      %1
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    if_zero_goto  %0      END_LOOP_1
+    args
+    aload_sp      %0      $0
+    load          %1      $8
+    store_abs     %0      %1
+    iload         %0      $20
+    set_ret       %0
+    call          $2128
+    load          %0      $4
+    load          %1      $20
+    addi          %0      %1
+    iload         %1      $4
+    store         %1      %0
+    label         LABEL_1
+    load          %0      $8
+    iload         %1      1
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    goto          LOOP_TITLE_1
+    label         END_LOOP_1
+    args
+    iload         %0      $24
+    set_ret       %0
+    invoke        $2056
+    load          %0      $24
+    load          %1      $0
+    subi          %0      %1
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $28
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\inline.tp$main() $2140
+    push_fp
+    push          32
+    load          %0      $2144
+    iload         %1      $0
+    store         %1      %0
+    load          %0      $2144
+    iload         %1      $4
+    store         %1      %0
+    load          %0      $2144
+    iload         %1      $8
+    store         %1      %0
+    label         LOOP_TITLE_2
+    load          %0      $2160
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $8
+    load          %1      $16
+    lti           %0      %1
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    if_zero_goto  %0      END_LOOP_2
+    args
+    iload         %0      $20
+    set_ret       %0
+    call          $2132
+    load          %0      $0
+    load          %1      $20
+    addi          %0      %1
+    iload         %1      $0
+    store         %1      %0
+    args
+    iload         %0      $24
+    set_ret       %0
+    call          $2136
+    load          %0      $4
+    load          %1      $24
+    addi          %0      %1
+    iload         %1      $4
+    store         %1      %0
+    label         LABEL_2
+    load          %0      $8
+    iload         %1      1
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    goto          LOOP_TITLE_2
+    label         END_LOOP_2
+    args
+    aload_sp      %0      $0
+    load          %1      $0
+    store_abs     %0      %1
+    invoke        $2052
+    args
+    aload_sp      %0      $0
+    load          %1      $4
+    store_abs     %0      %1
+    invoke        $2052
+    load          %0      $2144
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $28
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+entry
+    require       print_int $2048   %0      %1
+    require       println_int $2052   %0      %1
+    require       clock   $2056   %0      %1
+    require       print_char $2060   %0      %1
+    require       println_char $2064   %0      %1
+    require       print_float $2068   %0      %1
+    require       println_float $2072   %0      %1
+    require       print_str $2076   %0      %1
+    require       println_str $2080   %0      %1
+    require       malloc  $2084   %0      %1
+    require       free    $2088   %0      %1
+    require       heap_array $2092   %0      %1
+    require       nat_cos $2096   %0      %1
+    require       nat_log $2100   %0      %1
+    require       print_byte $2104   %0      %1
+    require       println_byte $2108   %0      %1
+    require       mem_segment $2112   %0      %1
+    require       mem_copy $2116   %0      %1
+    require       exit    $2120   %0      %1
+    aload         %0      $1
+    set_ret       %0
+    call          $2140
+    exit

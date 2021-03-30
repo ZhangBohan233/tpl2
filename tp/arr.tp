@@ -1,27 +1,18 @@
-require {
-    println_int
-}
-
-fn test(arr: int[]) void {
-    println_int(arr[2]);
-}
-
+import lang;
+import collections;
 
 fn main() int {
-    //a: char[][] = char[2][];  // {{0, 0, 0}, {0, 0, 0}}
-    //a[1] = char[3];
-    arr: char[] = new char[3];
-    b: int = 8;
-    arr[2] = 'c';
-    //a[1][0] = 99 as char;
-    //a[1][1] = 101 as char;
-    //a[1][2] = 104 as char;
+    arr: int[] = new int[2];
+    println(Array.class);
+    obj := new List<List<List<Integer> > >();
+    child := new List<List<Integer> >();
+    grand := new List<Integer>();
+    grand.append(new Integer(33));
+    child.append(grand);
+    obj.append(child);
+    println(obj.get(0).get(0).get(0).intValue());
+    b := 3;
+    println(b < b < b >> 1);
 
-
-    cprintln(arr[2]);
-
-    //test(a[0]);
-
-    //return a[1][2] as int;
-    return b;
+    return arr.length;
 }

@@ -12,7 +12,8 @@
 // To modify VM bits, modify all of the following
 //
 
-#define VM_BITS 64
+#define BYTECODE_VERSION 1
+#define VM_BITS 32
 
 #if VM_BITS == 32
     #define INT_LEN 4
@@ -71,6 +72,8 @@ void float_to_bytes64(unsigned char *b, tp_float d);
 tp_float bytes_to_float32(const unsigned char *bytes);
 
 void float_to_bytes32(unsigned char *b, tp_float d);
+
+unsigned short bytes_to_ushort(const unsigned char *b);
 
 char *format_bits(const char *format);
 

@@ -119,6 +119,15 @@ void float_to_bytes32(unsigned char *bytes, tp_float d) {
     memcpy(bytes, un.b, 4);
 }
 
+unsigned short bytes_to_ushort(const unsigned char *b) {
+    union {
+        unsigned short value;
+        unsigned char arr[2];
+    } un;
+    memcpy(un.arr, b, 2);
+    return un.value;
+}
+
 char *format_bits(const char *format) {
     int len = 0;
     int d_count = 0;

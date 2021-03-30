@@ -5,21 +5,21 @@
 #include <stdio.h>
 #include "mem.h"
 
-LinkedNode *build_ava_link(int_fast64_t lower, int_fast64_t upper) {
-    int_fast64_t capacity = upper - lower;
+LinkedNode *build_link(tp_int lower, tp_int upper, LinkedNode **pool) {
+    tp_int capacity = upper - lower;
     while (capacity % MEM_BLOCK != 0) capacity--;
-    int_fast64_t num_nodes = capacity / MEM_BLOCK + 1;
-    ava_pool = malloc(sizeof(LinkedNode) * num_nodes);
-    ava_pool->addr = 0;
+    tp_int num_nodes = capacity / MEM_BLOCK + 1;
+    *pool = malloc(sizeof(LinkedNode) * num_nodes);
+    (*pool)->addr = 0;
     LinkedNode *prev = ava_pool;
-    for (int_fast64_t i = 1; i < num_nodes; ++i) {
-        LinkedNode *node = &ava_pool[i];
+    for (tp_int i = 1; i < num_nodes; ++i) {
+        LinkedNode *node = &(*pool)[i];
         node->addr = lower + (i - 1) * MEM_BLOCK;
         prev->next = node;
         prev = node;
     }
     prev->next = NULL;  // last node
-    return ava_pool;
+    return *pool;
 }
 
 tp_int find_ava(int block_count) {
@@ -36,7 +36,7 @@ tp_int find_ava(int block_count) {
         }
         if (i == block_count - 1) {  // found!
             LinkedNode *node = head->next;
-            int_fast64_t found = node->addr;
+            tp_int found = node->addr;
             head->next = cur->next;
             return found;
         } else {
@@ -63,7 +63,7 @@ tp_int malloc_link(tp_int block_count) {
 void print_link(LinkedNode *head) {
     printf("LinkedList[");
     for (LinkedNode *node = head; node != NULL; node = node->next) {
-        printf("%lld, ", node->addr);
+        tp_printf("%lld, ", node->addr);
     }
     printf("]\n");
 }

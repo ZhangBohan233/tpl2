@@ -35,16 +35,17 @@ USAGE = """Usage: python tpc.py [flags] source target
 
 def parse_args():
     args_dict = {"py": sys.argv[0], "src_file": None, "tpc_file": None, "tpa_file": None, "tpe_file": None,
-                 "optimize": 0, "no_lang": False, "tokens": False, "ast": False, "delete": False}
+                 "optimize": 0, "no_lang": False, "tokens": False, "ast": False, "delete": False, "timer": False}
     i = 1
     while i < len(sys.argv):
         arg = sys.argv[i]
         if arg[0] == "-":
-            if len(arg) == 1:
+            flag = arg[1:].lower()
+            if len(flag) == 0:
                 print("Illegal syntax")
-            elif arg[1:].lower() == "nl" or arg[1:].lower() == "-no-lang":
+            elif flag == "nl" or flag == "-no-lang":
                 args_dict["no_lang"] = True
-            elif arg[1:].lower() == "del":
+            elif flag == "del":
                 args_dict["delete"] = True
             elif arg[1].lower() == "o":
                 try:
@@ -52,17 +53,19 @@ def parse_args():
                     args_dict["optimize"] = op_level
                 except ValueError:
                     print("Illegal optimize level")
-            elif arg[1:].lower() == "tk" or arg[1:].lower() == "-tokens":
+            elif flag == "tk" or flag == "-tokens":
                 args_dict["tokens"] = True
-            elif arg[1:].lower() == "ast":
+            elif flag == "ast":
                 args_dict["ast"] = True
-            elif arg[1:].lower() == "tpa":
+            elif flag == "t" or flag == "-timer":
+                args_dict["timer"] = True
+            elif flag == "tpa":
                 args_dict["tpa_file"] = sys.argv[i + 1]
                 i += 1
-            elif arg[1:].lower() == "tpc":
+            elif flag == "tpc":
                 args_dict["tpc_file"] = sys.argv[i + 1]
                 i += 1
-            elif arg[1:].lower() == "tpe":
+            elif flag == "tpe":
                 args_dict["tpe_file"] = sys.argv[i + 1]
                 i += 1
             else:
@@ -103,7 +106,7 @@ def replace_extension(orig_name: str, ext: str):
 
 
 if __name__ == '__main__':
-    t0 = time.time()
+    t_begin = time.time()
 
     args = parse_args()
     if args is None:
@@ -123,6 +126,8 @@ if __name__ == '__main__':
                                            "import_lang": not args["no_lang"]})
     processed_tks = txt_p.preprocess()
 
+    t_preprocess_end = time.time()
+
     parser = psr.Parser(processed_tks)
     fake_root = parser.parse()
 
@@ -131,13 +136,15 @@ if __name__ == '__main__':
         fake_root = ast_opt.optimize()
 
     tree_pre = prep.AstPreprocessor(fake_root)
-    root, literal = tree_pre.preprocess()
+    root, literal, str_lit_pos = tree_pre.preprocess()
+
+    t_parse_end = time.time()
 
     if args["ast"]:
         print(root)
         print("========== End of AST ==========")
 
-    compiler = cmp.Compiler(root, literal, src_abs_path, args["optimize"])
+    compiler = cmp.Compiler(root, literal, str_lit_pos, src_abs_path, args["optimize"])
     tpa_content = compiler.compile()
 
     tpc_name = args["tpc_file"]
@@ -148,6 +155,8 @@ if __name__ == '__main__':
 
     with open(tpa_name, "w") as tpa_file:
         tpa_file.write(tpa_content)
+
+    t_compile_end = time.time()
 
     tpc_cmp = tpc.TpcCompiler(tpa_name)
     tpc_cmp.compile(tpc_name)
@@ -162,11 +171,22 @@ if __name__ == '__main__':
 
         final_tpc_name = opt_file
 
+    t_tpc_end = time.time()
+
     tpe_cmp = tpc.TpeCompiler(final_tpc_name)
     tpe_cmp.compile(tpe_name)
 
-    t1 = time.time()
-    print("Compilation finished in {} seconds.".format(t1 - t0))
+    t_end = time.time()
+
+    if args["timer"]:
+        print(f"Time used: \n"
+              f"preprocess: {round(t_preprocess_end - t_begin, 4)} s, "
+              f"parse: {round(t_parse_end - t_preprocess_end, 4)} s, "
+              f"compile: {round(t_compile_end - t_preprocess_end, 4)} s, "
+              f"tpc compile: {round(t_tpc_end - t_compile_end, 4)} s, "
+              f"tpe compile: {round(t_end - t_tpc_end, 4)} s.")
+
+    print(f"Compilation finished in {round(t_end - t_begin, 4)} seconds.")
 
     if args["delete"]:
         for f in rem_file:

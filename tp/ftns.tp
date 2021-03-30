@@ -1,0 +1,22 @@
+﻿import lang;
+//import functions;
+
+fn foo(y: int) int {
+    fn neg(x: int) int {
+        return -x;
+    }
+    return neg(y);
+}
+
+fn main() int {
+    add: fn(int, int) -> int = lambda(a: int, b: int) a + b;
+    sub: fn(int, int) -> int = lambda(a: int, b: int) a - b;
+
+    fn neg(x: int) int {
+        return x;
+    }
+
+    println(new Integer(4).intValue());
+
+    return add(3, 4) + neg(1) + 5;
+}

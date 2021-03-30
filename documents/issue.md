@@ -24,6 +24,12 @@ fn main() int {
 }
 ```
 
+### ~~ISSUE C02~~ FIXED
+Function call with a return value of invoke as argument.
+```
+println(mem_segment(...));
+```
+
 ## Array
 
 ### ISSUE A01

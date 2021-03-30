@@ -1,14 +1,7 @@
-fn add(a: int, b: int) int {
-    return a + b;
-}
-
-fn sub(a: int, b: int) int {
-    return a - b;
+fn add(x: int, y: int) int {
+    return x + y;
 }
 
 fn main() int {
-    var a: int = 5;
-    b: int = 2;
-    var c: fn(int, int) -> int = sub;
-    return c(a, b);
+    return add(72, 3);
 }

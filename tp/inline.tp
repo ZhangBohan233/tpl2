@@ -1,0 +1,39 @@
+﻿inline fn foo(a: int) int {
+    return a + 1;
+}
+
+fn bar(a: int) int {
+    return a + 1;
+}
+
+fn loopInline() int {
+    t0 := clock();
+    res: int = 0;
+    for i := 0; i < 1_000_000; ++i {
+        res += foo(i);
+    }
+    t1 := clock();
+    return t1 - t0;
+}
+
+fn loop() int {
+    t0 := clock();
+    res: int = 0;
+    for i := 0; i < 1_000_000; ++i {
+        res += bar(i);
+    }
+    t1 := clock();
+    return t1 - t0;
+}
+
+fn main() int {
+    avgInline := 0;
+    avgOut := 0;
+    for i := 0; i < 10; ++i {
+        avgInline += loopInline();
+        avgOut += loop();
+    }
+    println_int(avgInline);
+    println_int(avgOut);
+    return 0;
+}

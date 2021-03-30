@@ -1,22 +1,16 @@
-﻿require {
-    malloc, free
-}
+﻿import lang;
 
-struct S {
-    x: int;
-    y: int;
+class Clazz {
+    x: byte;
 }
 
 fn main() int {
-    two: int = 2;
-    three: int = 3;
-    b: int[][] = new int[two][three];
-    b[0][0] = 33;
-    b[0][1] = 44;
-    b[0][2] = 55;
-    b[1][0] = 66;
-    b[1][1] = 77;
-    b[1][2] = 88;
-    c: int[] = b[1];
-    return c[2];
+    cla := new Clazz();
+    cla.x = 97b;
+
+    arr := new char[2];
+    arr[0] = 'x';
+    arr[1] = 'y';
+
+    return sizeof(Clazz) + 33;
 }

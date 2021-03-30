@@ -57,7 +57,13 @@
 * ~~Update LineFile to LineFilePos~~ Done
 * ~~'const' in class~~ Partial Done
 * Auto import lang
-* Interruption 'exit'
+* ~~Interruption 'exit'~~ Done
 * Print error, input
-* Method names in .tpa
+* ~~Method names in .tpa~~ Done
 * Heap memory optimization
+* ~~String literal management~~ Done
+* Array element record in runtime
+* Template function
+* Inner function rename
+* Init array with all 0 or null
+* Explicit operator 'is', 'is not'

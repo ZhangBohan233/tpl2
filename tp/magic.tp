@@ -1,0 +1,23 @@
+﻿import lang;
+import collections;
+
+class A<T> {
+    arr: T[] = new T[4];
+
+    fn __get__(index: int) *T {
+        return this.arr[index];
+    }
+
+    fn __set__(index: int, value: *T) void {
+        this.arr[index] = value;
+    }
+}
+
+fn main() void {
+    a := new A<Integer>();
+    a[0] = new Integer(77);
+    a[1] = new Integer(66);
+    println(a[0] + a[1]);
+    println("asd" + "efg");
+    println(34 % 7.7);
+}

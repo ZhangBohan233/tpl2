@@ -1,4 +1,5 @@
 from abc import ABC
+import os
 import compilers.tokens_lib as tl
 import compilers.environment as en
 import compilers.tpa_producer as tp
@@ -61,7 +62,7 @@ class SpaceCounter(Counter):
 
 
 SPACES = SpaceCounter()
-CLASS_ID = Counter()
+LAMBDA_COUNTER = Counter()
 
 
 class Node:
@@ -119,6 +120,14 @@ class Node:
 
 # Expression returns a thing while Statement returns nothing
 
+class Statement(Node, ABC):
+    def __init__(self, lf):
+        super().__init__(lf)
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
+        raise errs.TplTypeError(f"Statements {self} do not evaluate a type. ", self.lfp)
+
+
 class Expression(Node, ABC):
     def __init__(self, lf):
         super().__init__(lf)
@@ -130,8 +139,11 @@ class Expression(Node, ABC):
             tpa.assign(dst_addr, res)
         elif et.memory_length() == util.CHAR_LEN:
             tpa.assign_char(dst_addr, res)
+        elif et.memory_length() == 1:
+            tpa.assign_byte(dst_addr, res)
         else:
-            pass
+            raise errs.TplCompileError(
+                f"Unexpected memory length {et.memory_length()} of type {et}. ", self.lfp)
 
 
 class FakeNode(Node):
@@ -178,14 +190,6 @@ class FakeByteLit(FakeLiteral):
 class FakeStrLit(FakeLiteral):
     def __init__(self, value, lf):
         super().__init__(value, lf)
-
-
-class Statement(Node, ABC):
-    def __init__(self, lf):
-        super().__init__(lf)
-
-    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        raise errs.TplTypeError(f"Statements {self} do not evaluate a type. ", self.lfp)
 
 
 class Line(Expression):
@@ -399,7 +403,7 @@ class ByteLiteral(LiteralNode):
         return "Char@" + str(self.lit_pos)
 
 
-class CharArrayLiteral(LiteralNode):
+class StringLiteral(LiteralNode):
     def __init__(self, lit_pos, lf):
         super().__init__(lit_pos, lf)
 
@@ -412,7 +416,7 @@ class CharArrayLiteral(LiteralNode):
         tpa.load_literal_ptr(dst_addr, self.lit_pos)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
-        return typ.TYPE_CHAR_ARR
+        return typ.PointerType(env.get_type("String", self.lfp))
 
     def __str__(self):
         return "CharArray@" + str(self.lit_pos)
@@ -471,7 +475,7 @@ class BinaryBuildable(Buildable):
         return self.left is not None and self.right is not None
 
 
-class UnaryExpr(Expression, UnaryBuildable, ABC):
+class UnaryExpr(UnaryBuildable, Expression, ABC):
     def __init__(self, op: str, lf, operator_at_left=True):
         Expression.__init__(self, lf)
         UnaryBuildable.__init__(self, op, operator_at_left)
@@ -480,7 +484,7 @@ class UnaryExpr(Expression, UnaryBuildable, ABC):
         return type(self) == type(other) and self.op == other.op and self.value == other.value
 
 
-class UnaryStmt(Statement, UnaryBuildable, ABC):
+class UnaryStmt(UnaryBuildable, Statement, ABC):
     def __init__(self, op: str, lf, operator_at_left=True):
         Statement.__init__(self, lf)
         UnaryBuildable.__init__(self, op, operator_at_left)
@@ -604,9 +608,13 @@ class BinaryOperator(BinaryExpr):
                         right_convert_addr = convert_addr_to_float(rt, right_addr)
                         float_float_to_float(self.op, left_addr, right_convert_addr, dst_addr, tpa)
                         return
-            elif isinstance(lt, typ.PointerType) and isinstance(rt, typ.PointerType):
-                if self.op == "==" or self.op == "!=":
-                    int_int_to_int(self.op, left_addr, right_addr, dst_addr, tpa)
+            elif isinstance(lt, typ.PointerType):
+                if isinstance(rt, typ.PointerType):
+                    if self.op == "is" or self.op == "is not":
+                        int_int_to_int(self.op, left_addr, right_addr, dst_addr, tpa)
+                        return
+                if isinstance(lt.base, (typ.ClassType, typ.GenericClassType, typ.Generic)):
+                    self.magic_arith().compile_to(env, tpa, dst_addr, dst_len)
                     return
         elif self.op_type == BIN_BITWISE:
             lt = self.left.evaluated_type(env, tpa.manager)
@@ -649,11 +657,24 @@ class BinaryOperator(BinaryExpr):
                             return typ.TYPE_FLOAT
                     elif lt == typ.TYPE_FLOAT:
                         return typ.TYPE_FLOAT
+            elif isinstance(lt, typ.PointerType):
+                if isinstance(lt.base, (typ.ClassType, typ.GenericClassType)):
+                    return self.magic_arith().evaluated_type(env, manager)
         elif self.op_type == BIN_LOGICAL or self.op_type == BIN_BITWISE or self.op_type == BIN_LAZY:
             return typ.TYPE_INT
         raise errs.TplCompileError(f"Unsupported binary operation {self.op} between "
                                    f"{self.left.evaluated_type(env, manager)} and "
                                    f"{self.right.evaluated_type(env, manager)}. ", self.lfp)
+
+    def magic_arith(self):
+        if self.op in MAGIC_BIN_TABLE:
+            fn_name = MAGIC_BIN_TABLE[self.op]
+            dot = DotExpr(self.lfp)
+            dot.left = self.left
+            dot.right = FunctionCall(NameNode(fn_name, self.lfp), Line(self.lfp, self.right), self.lfp)
+            return dot
+        else:
+            raise errs.TplCompileError(f"unsupported binary operation {self.op}. ", self.lfp)
 
 
 class BinaryOperatorAssignment(BinaryExpr, FakeNode):
@@ -676,7 +697,7 @@ class InstanceOfExpr(BinaryExpr):
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
         class_node = DotExpr(self.lfp)
         class_node.left = self.left
-        class_node.right = NameNode("__class__", self.lfp)
+        class_node.right = NameNode("class", self.lfp)
 
         right_t = self.right.evaluated_type(env, tpa.manager)
         if not isinstance(right_t, typ.ClassType):
@@ -772,8 +793,8 @@ class NewExpr(UnaryExpr):
         malloc_t = self._malloc_type(env, tpa.manager)
 
         malloc = NameNode("malloc", self.lfp)
-        req = RequireStmt(malloc, self.lfp)
-        req.compile(env, tpa)
+        # req = RequireStmt(malloc, self.lfp)
+        # req.compile(env, tpa)
         malloc_size = tpa.manager.allocate_stack(util.INT_LEN)
         tpa.assign_i(malloc_size, malloc_t.memory_length())
         FunctionCall.call(malloc, [(malloc_size, util.INT_LEN)], env, tpa, dst_addr, self.lfp)
@@ -786,7 +807,7 @@ class NewExpr(UnaryExpr):
             elif isinstance(t.base, typ.GenericClassType):
                 self.compile_generic_class_init(t.base, env, tpa, dst_addr)
                 return
-
+        print(t)
         raise errs.TplCompileError("Cannot initial class without call. ", self.lfp)
 
     def compile_generic_class_init(self, gen_t: typ.GenericClassType, env: en.Environment,
@@ -799,7 +820,7 @@ class NewExpr(UnaryExpr):
 
         if class_t.abstract:
             raise errs.TplCompileError(f"Abstract class '{class_t.name_with_path}' is not initialisable. ", self.lfp)
-        tpa.i_ptr_assign(class_t.class_ptr, util.PTR_LEN, inst_ptr_addr)  # assign __class__
+        tpa.i_ptr_assign(class_t.class_ptr, util.PTR_LEN, inst_ptr_addr)  # assign class
 
         const_args = self.value.arg_types(env, tpa.manager)
         const_args.insert(0, None)  # insert a positional arg of 'this'
@@ -845,26 +866,31 @@ class DelStmt(UnaryStmt):
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         free = NameNode("free", self.lfp)
-        req = RequireStmt(free, self.lfp)
-        req.compile(env, tpa)
 
         val_t = self.value.evaluated_type(env, tpa.manager)
-        self.instance_del(val_t, env, tpa)
+        if self.instance_del(val_t, env, tpa):
+            return
 
         fc = FunctionCall(free, Line(self.lfp, self.value), self.value)
         fc.compile(env, tpa)
 
     def instance_del(self, val_t, env, tpa):
-        if isinstance(val_t, typ.ClassType):
+        if isinstance(val_t, typ.PointerType):
+            return self.instance_del(val_t.base, env, tpa)
+        elif isinstance(val_t, typ.ClassType):
             self.compile_class_del(val_t, env, tpa)
+            return True
         elif isinstance(val_t, typ.GenericClassType):
             self.compile_class_del(val_t.base, env, tpa)
+            return True
         elif isinstance(val_t, typ.Generic):
-            self.instance_del(val_t.max_t, env, tpa)
+            return self.instance_del(val_t.max_t, env, tpa)
+        else:
+            return False
 
     def compile_class_del(self, class_t: typ.ClassType, env: en.Environment, tpa: tp.TpaOutput):
         inst_ptr_addr = self.value.compile(env, tpa)
-        destructor_id, destructor_ptr, destructor_t = class_t.methods["__del__"]
+        destructor_id, destructor_ptr, destructor_t = class_t.find_method("__del__", [(0, None)], self.lfp)
         ea = [(inst_ptr_addr, util.PTR_LEN)]
         tpa.call_method(inst_ptr_addr, destructor_id, ea, 0, 0, 0)
 
@@ -1030,15 +1056,19 @@ class DotExpr(BinaryExpr):
             arg_types.insert(0, None)  # insert a positional arg of 'this'
             method_id, method_p, t = ct.find_method(name, arg_types, lf)
             DotExpr.check_permission(t.defined_class, t.permission, env, lf)
-            t = t.copy()
+            t: typ.MethodType = t.copy()
             for i in range(len(t.param_types)):
                 pt = t.param_types[i]
                 if typ.is_generic(pt):
                     t.param_types[i] = typ.replace_generic_with_real(pt, generics, lf)
+                # todo
             res_ptr = tpa.manager.allocate_stack(t.rtype.memory_length())
             ea = right.evaluate_args(t, env, tpa, is_method=True)
             ea.insert(0, (ins_ptr_addr, util.PTR_LEN))
-            tpa.call_method(ins_ptr_addr, method_id, ea, res_ptr, t.rtype.memory_length(), class_offset)
+            if t.const or t.permission == PRIVATE:  # cannot be overridden, so call it directly
+                FunctionCall.call_ptr(method_p, ea, tpa, res_ptr, lf, t)
+            else:
+                tpa.call_method(ins_ptr_addr, method_id, ea, res_ptr, t.rtype.memory_length(), class_offset)
             return res_ptr
 
         # print(class_offset)
@@ -1099,6 +1129,16 @@ class DotExpr(BinaryExpr):
 
         raise errs.TplCompileError(f"Array type does not have attribute '{name}'. ", lf)
 
+    @staticmethod
+    def class_attributes(left_node, env: en.Environment, tpa: tp.TpaOutput, name: str, lfp):
+        res_addr = tpa.manager.allocate_stack(util.INT_LEN)
+        class_ptr = left_node.compile(env, tpa)
+        if name == "class":
+            tpa.assign_i(res_addr, class_ptr)
+            return res_addr
+
+        raise errs.TplCompileError(f"Class type does not have attribute '{name}'. ", lfp)
+
     # helper functions for dot
     @staticmethod
     def compile_dot(left_node: Expression, right_node: Node, env: en.Environment, tpa: tp.TpaOutput, lf):
@@ -1119,6 +1159,8 @@ class DotExpr(BinaryExpr):
             if isinstance(right_node, FunctionCall):  # call via Class.method(obj, ...)
                 return DotExpr.compile_fixed_method_call(right_node,
                                                          typ.PointerType(left_t), -1, env, tpa, lf)
+            elif isinstance(right_node, NameNode):
+                return DotExpr.class_attributes(left_node, env, tpa, right_node.name, lf)
 
         raise errs.TplCompileError("Left side of dot must be a pointer to struct or an array. ", lf)
 
@@ -1193,6 +1235,7 @@ class DotExpr(BinaryExpr):
                     pos, attr_t, class_t, const, perm = struct_t.base.find_field(right_node.name, lf)
                     if typ.is_generic(attr_t):
                         return typ.replace_generic_with_real(attr_t, struct_t.generics, lf)
+                    # todo: possibly problem
                     return attr_t
             elif isinstance(right_node, FunctionCall):
                 arg_types = right_node.arg_types(env, manager)
@@ -1205,11 +1248,12 @@ class DotExpr(BinaryExpr):
                     name = right_node.get_name()
                     pos, ptr, t = struct_t.base.find_method(name, arg_types, lf)
                     t: typ.MethodType
-                    if typ.is_generic(t.rtype):  # rtype such as *T;
-                        return typ.replace_generic_with_real(t.rtype, struct_t.generics, lf)
-                    if typ.is_generic_type(t.rtype):
-                        return typ.replace_callee_generic_class(t.rtype, struct_t, lf)
-                    return t.rtype
+                    return typ.replace_generics_if(t.rtype, struct_t, lf)
+                    # if typ.is_generic(t.rtype):  # rtype such as *T;
+                    #     return typ.replace_generic_with_real(t.rtype, struct_t.generics, lf)
+                    # if typ.is_generic_type(t.rtype):
+                    #     return typ.replace_callee_generic_class(t.rtype, struct_t, lf)
+                    # return t.rtype
         elif isinstance(left_t, typ.ArrayType) and isinstance(right_node, NameNode):
             return array_attribute_types(right_node.name, lf)
         elif isinstance(left_t, typ.ClassType) and isinstance(right_node, FunctionCall):  # Class.method(instance, ...)
@@ -1217,6 +1261,8 @@ class DotExpr(BinaryExpr):
             name = right_node.get_name()
             pos, ptr, t = left_t.find_method(name, arg_types, lf)
             return t.rtype
+        elif isinstance(left_t, typ.ClassType) and isinstance(right_node, NameNode):
+            return class_attribute_types(right_node.name, lf)
 
         raise errs.TplCompileError(
             f"Left side of dot must be a pointer to class or an array, got {left_t}. ", lf)
@@ -1245,8 +1291,12 @@ class Assignment(BinaryExpr):
             right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
             return self.class_attr_assign(self.left.left, self.left.right, env, tpa)
         elif isinstance(self.left, IndexingExpr):
-            right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
-            return self.array_index_assign(self.left, self.right, env, tpa, self.lfp)
+            indexing_obj_t = self.left.indexing_obj.evaluated_type(env, tpa.manager)
+            if isinstance(indexing_obj_t, typ.ArrayType):
+                right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
+                return self.array_index_assign(self.left, self.right, env, tpa, self.lfp)
+            else:
+                return self.magic_set().compile(env, tpa)
         else:
             raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.left.__class__.__name__), self.lfp)
 
@@ -1259,7 +1309,7 @@ class Assignment(BinaryExpr):
     def class_attr_assign(self, left, right, env: en.Environment, tpa: tp.TpaOutput):
         attr_ptr, attr_t, const = DotExpr.get_dot_attr_and_type(left, right, env, tpa, self.lfp)
         if const:
-            wf = env.get_working_function()
+            name, wf = env.get_working_function()
             if not isinstance(wf, typ.MethodType):
                 raise errs.TplCompileError(f"Cannot assign constant variable {right}. ", self.lfp)
             if not wf.constructor:
@@ -1267,6 +1317,14 @@ class Assignment(BinaryExpr):
         res_addr = self.right.compile(env, tpa)
         tpa.ptr_assign(res_addr, attr_t.length, attr_ptr)
         return res_addr
+
+    def magic_set(self):
+        assert isinstance(self.left, IndexingExpr)
+        dot = DotExpr(self.lfp)
+        dot.left = self.left.indexing_obj
+        args = Line(self.lfp, *self.left.args, self.right)
+        dot.right = FunctionCall(NameNode("__set__", self.lfp), args, self.lfp)
+        return dot
 
     @staticmethod
     def array_index_assign(indexing, right, env: en.Environment, tpa: tp.TpaOutput, lf):
@@ -1343,6 +1401,8 @@ class QuickAssignment(BinaryStmt):
         t = self.right.evaluated_type(env, tpa.manager)
         if not isinstance(self.left, NameNode):
             raise errs.TplCompileError("Left side of ':=' must be name. ", self.lfp)
+        if t == typ.TYPE_VOID_PTR:
+            util.print_warning("Implicit quick assignment type.", self.lfp)
 
         res_addr = tpa.manager.allocate_stack(t.memory_length())
         env.define_var_set(self.left.name, t, res_addr, self.lfp)
@@ -1370,6 +1430,48 @@ class RightArrowExpr(BinaryExpr):
             return ft
 
 
+class LambdaExpr(Expression):
+    def __init__(self, params: Line, body: Expression, lfp):
+        super().__init__(lfp)
+
+        self.params = params
+        self.body = ReturnStmt(lfp)
+        self.body.value = body
+        self.lambda_id = LAMBDA_COUNTER.increment()
+
+    def lambda_name(self):
+        return "lambda#" + str(self.lambda_id)
+
+    def compile(self, env: en.Environment, tpa: tp.TpaOutput):
+        simple_name = self.lambda_name()
+        fn_ptr = tpa.manager.allocate_global(util.PTR_LEN)
+
+        func_type = self.evaluated_type(env, tpa.manager)
+        poly_name = typ.function_poly_name(simple_name,
+                                           func_type.param_types,
+                                           False)
+        fo = FunctionObject(env, tpa, fn_ptr, None, poly_name, self.params, func_type, self.body, self.lfp,
+                            is_lambda=True)
+        env.define_function(simple_name, func_type, fn_ptr, self.lfp)
+
+        tpa.manager.map_function(poly_name, self.lfp.get_file(), fo)
+
+        return fn_ptr
+
+    def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.LambdaType:
+        fn_env = en.FunctionEnvironment(env, f"lambda {self.lfp}", None)
+        param_types = []
+        for pn in self.params:
+            if isinstance(pn, Declaration):
+                pt = pn.right.definition_type(env, manager)
+                fn_env.define_const(pn.get_name(), pt, self.lfp)
+                param_types.append(pt)
+            else:
+                raise errs.TplCompileError("Invalid parameter. ", self.lfp)
+        rtype = self.body.value.evaluated_type(fn_env, manager)
+        return typ.LambdaType(param_types, rtype)
+
+
 class FunctionDef(Expression):
     def __init__(self, name: Expression, params: Line, rtype: Expression, abstract: bool, const: bool,
                  permission: int, body: BlockStmt, lf):
@@ -1383,6 +1485,7 @@ class FunctionDef(Expression):
         self.abstract = abstract
         self.const = const
         self.permission = permission
+        self.inline = False
         self.annotations = []
 
     def get_simple_name(self) -> str:
@@ -1391,6 +1494,24 @@ class FunctionDef(Expression):
         else:
             raise errs.TplCompileError("Not a named function. ", self.lfp)
 
+    def get_simple_poly_name(self, env, manager):
+        return typ.function_poly_name(self.get_simple_name(),
+                                      self.param_types_this_none(env, manager),
+                                      self.is_method())
+
+    def param_types_this_none(self, env, manager):
+        begin = 1 if self.is_method() else 0
+        param_types = [None] if self.is_method() else []
+        for i in range(begin, len(self.params.parts)):
+            param = self.params[i]
+            if isinstance(param, Declaration):
+                # print(param.right, self.params)
+                pt = param.right.definition_type(env, manager)
+                param_types.append(pt)
+            else:
+                raise errs.TplCompileError("Invalid parameter. ", self.lfp)
+        return param_types
+
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         if isinstance(self.name, NameNode):
             self.compile_as(self.name.name, env, tpa)
@@ -1398,12 +1519,15 @@ class FunctionDef(Expression):
             raise errs.TplCompileError("Unexpected function name. ")
 
     def compile_as(self, simple_name: str, env: en.Environment, tpa: tp.TpaOutput):
-        # rtype = self.rtype.definition_type(env, tpa.manager)
-        fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
+        fn_ptr = tpa.manager.allocate_global(util.PTR_LEN)
 
         func_type = self.evaluated_type(env, tpa.manager)
-        poly_name = typ.function_poly_name(simple_name, func_type.param_types, self.is_method())
-        fo = FunctionObject(env, tpa, fn_ptr, self.parent_class, poly_name, self.params, func_type, self.body, self.lfp)
+        poly_name = self.get_simple_poly_name(env, tpa.manager)
+        out_name, wf = env.get_working_function()
+        if out_name is not None:
+            poly_name = out_name + "." + poly_name
+        fo = FunctionObject(env, tpa, fn_ptr, self.parent_class,
+                            poly_name, self.params, func_type, self.body, self.lfp, inline=self.inline)
         env.define_function(simple_name, func_type, fn_ptr, self.lfp)
 
         tpa.manager.map_function(poly_name, self.lfp.get_file(), fo)
@@ -1414,6 +1538,7 @@ class FunctionDef(Expression):
         for i in range(len(self.params.parts)):
             param = self.params.parts[i]
             if isinstance(param, Declaration):
+                # print(param.right, self.params)
                 pt = param.right.definition_type(env, manager)
                 param_types.append(pt)
             else:
@@ -1424,10 +1549,10 @@ class FunctionDef(Expression):
                 raise errs.TplCompileError("Function cannot be abstract. ", self.lfp)
             if self.permission != PUBLIC:
                 raise errs.TplCompileError("Function cannot be private or protected. ", self.lfp)
-            return typ.FuncType(param_types, rtype)
+            return typ.FuncType(param_types, rtype, self.inline)
         else:
             return typ.MethodType(param_types, rtype, self.parent_class, self.get_simple_name() == "__new__",
-                                  self.abstract, self.const, self.permission)
+                                  self.abstract, self.const, self.permission, self.inline)
 
     def is_method(self):
         return self.parent_class is not None
@@ -1460,8 +1585,10 @@ class ClassStmt(Statement):
         :return:
         """
         class_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
-
         class_name_path = util.class_name_with_path(self.name, self.lfp.get_file())
+
+        if class_name_path.endswith(f"lib{os.sep}lang.tp$String"):
+            tpa.manager.string_class_ptr = class_ptr
         class_env = en.ClassEnvironment(env)
 
         # templates
@@ -1519,6 +1646,7 @@ class ClassStmt(Statement):
         for dsc in direct_sc:
             templates_map.update(dsc.templates_map)
         ClassStmt.create_templates_map(templates, direct_sc, templates_map, super_generics_lists, self.lfp)
+
         # print(self.name, templates_map)
 
         def get_actual(tem_name):
@@ -1672,7 +1800,8 @@ class GenericNode(Expression):
             gen_t = self.generics[i].evaluated_type(env, manager)
             if not (isinstance(gen_t, typ.ClassType) or
                     isinstance(gen_t, typ.ArrayType) or
-                    isinstance(gen_t, typ.Generic)):
+                    isinstance(gen_t, typ.Generic) or
+                    isinstance(gen_t, typ.GenericClassType)):  # todo: verify
                 raise errs.TplCompileError(f"Generics must be pointer type, got {gen_t}", self.lfp)
             gen = class_t.templates[i]
             if not gen.max_t.superclass_of(gen_t):
@@ -1750,6 +1879,7 @@ class FunctionCall(Expression):
         return rtn_addr
 
     def compile_to(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr: int, dst_len: int):
+        # dotted method call does not go through here
         placer = self.call_obj.evaluated_type(env, tpa.manager)
         if isinstance(placer, typ.SpecialCtfType):
             func_class = COMPILE_TIME_FUNCTIONS[placer]
@@ -1824,10 +1954,10 @@ class FunctionCall(Expression):
                 raise errs.TplError("Unexpected error. ", lf)
 
     @staticmethod
-    def call_name(fn_name: str, evaluated_args: list, tpa: tp.TpaOutput, dst_addr: int,
+    def call_name(full_poly_name: str, evaluated_args: list, tpa: tp.TpaOutput, dst_addr: int,
                   lf, func_type):
         if isinstance(func_type, typ.FuncType):
-            tpa.call_named_function(fn_name, evaluated_args, dst_addr, func_type.rtype.length)
+            tpa.call_named_function(full_poly_name, evaluated_args, dst_addr, func_type.rtype.length)
         else:
             raise errs.TplError("Unexpected error. ", lf)
 
@@ -2093,6 +2223,7 @@ class ForEachStmt(Statement):
             self.body.lines.insert(0, assignment)
 
             for_stmt = ForStmt(init, cond, step, self.body, self.lfp)
+            # print(for_stmt)
             return for_stmt.compile(env, tpa)
         elif isinstance(rt, typ.ArrayType):
             itr_name = ForEachStmt.iter_name(env)
@@ -2276,12 +2407,17 @@ class IndexingExpr(Expression):
     def get_eval_type(self, obj_t, env, manager) -> typ.Type:
         if isinstance(obj_t, typ.ArrayType):
             return obj_t.ele_type
-        else:
-            raise errs.TplCompileError("Only array type supports indexing. ", self.lfp)
+        elif isinstance(obj_t, typ.PointerType):
+            return self.magic_get().evaluated_type(env, manager)
+
+        raise errs.TplCompileError(
+            "Only arrays or classes implement '__get__(index: int)' and '__set__(index: int, value: )' "
+            "supports indexing. ",
+            self.lfp)
 
     def definition_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         base = self.indexing_obj.definition_type(env, manager)
-        if isinstance(base, typ.ClassType) or isinstance(base, typ.Generic):
+        if isinstance(base, typ.ClassType) or isinstance(base, typ.Generic) or isinstance(base, typ.GenericClassType):
             base = typ.PointerType(base)
         return typ.ArrayType(base)
 
@@ -2294,12 +2430,25 @@ class IndexingExpr(Expression):
             return False
 
     def indexing(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
+        obj_t = self.indexing_obj.evaluated_type(env, tpa.manager)
+        if isinstance(obj_t, typ.ArrayType):
+            return self.array_indexing(env, tpa)
+        else:
+            return self.magic_get().compile(env, tpa)
+
+    def array_indexing(self, env, tpa):
         mem_len = self.evaluated_type(env, tpa.manager).memory_length()
         res_addr = tpa.manager.allocate_stack(mem_len)
         indexed_addr = self.get_indexed_addr(env, tpa)
 
         tpa.value_in_addr_op(indexed_addr, mem_len, res_addr, mem_len)
         return res_addr
+
+    def magic_get(self):
+        dot = DotExpr(self.lfp)
+        dot.left = self.indexing_obj
+        dot.right = FunctionCall(NameNode("__get__", self.lfp), self.args, self.lfp)
+        return dot
 
     def get_indexed_addr(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
         ele_t = self.evaluated_type(env, tpa.manager)
@@ -2351,7 +2500,7 @@ class IndexingExpr(Expression):
     def get_index_literal(self, env, manager: tp.Manager):
         node = self._get_index_node(env, manager)
         if not isinstance(node, IntLiteral):
-            raise errs.TplCompileError("Array type declaration must be an int literal. ", self.lfp)
+            raise errs.TplCompileError("Stack array type declaration must be an int literal. ", self.lfp)
         return util.bytes_to_int(manager.literal[node.lit_pos: node.lit_pos + util.INT_LEN])
 
     def __str__(self):
@@ -2598,8 +2747,9 @@ class SwitchExpr(Expression):
 
 
 class FunctionObject:
-    def __init__(self, def_env: en.Environment, tpa, fn_ptr, parent_class, poly_name, params, func_type: typ.FuncType,
-                 body, lf):
+    def __init__(self, def_env: en.Environment, tpa, fn_ptr, parent_class,
+                 poly_name, params, func_type: typ.FuncType,
+                 body, lfp, is_lambda=False, inline=False):
         self.parent_class = parent_class
         self.fn_ptr = fn_ptr
         self.def_env = def_env
@@ -2608,7 +2758,9 @@ class FunctionObject:
         self.func_type = func_type
         self.params = params
         self.body = body
-        self.lf = lf
+        self.lfp = lfp
+        self.is_lambda = is_lambda
+        self.inline = inline
 
     def compile(self):
         if self.parent_class is None:
@@ -2627,15 +2779,21 @@ class FunctionObject:
                 param_types.append(pt)
                 param.compile(scope, body_out)
 
-        if self.body is not None:
-            # check return
-            complete_return = self.body.return_check()
-            if not complete_return:
-                if not self.func_type.rtype.is_void():
-                    raise errs.TplCompileError(f"Function '{self.poly_name}' missing a return statement. ", self.lf)
+        if self.body is None:  # abstract function
+            body_out.add_function(self.poly_name, self.lfp.get_file(), self.fn_ptr, self.parent_class, abstract=True,
+                                  inline=self.inline)
+        else:
+            if not self.is_lambda:
+                # check return
+                complete_return = self.body.return_check()
+                if not complete_return:
+                    if not self.func_type.rtype.is_void():
+                        raise errs.TplCompileError(f"Function '{self.poly_name}' missing a return statement. ",
+                                                   self.lfp)
 
             # compiling
-            body_out.add_function(self.poly_name, self.lf.get_file(), self.fn_ptr, self.parent_class)
+            body_out.add_function(self.poly_name, self.lfp.get_file(), self.fn_ptr, self.parent_class,
+                                  inline=self.inline)
             push_index = body_out.add_indefinite_push()
             self.body.compile(scope, body_out)
 
@@ -2678,7 +2836,7 @@ class ClassObject:
             self.class_type.method_rank.extend(mro[1].method_rank)
 
         # the class pointer
-        self.class_type.fields["__class__"] = 0, typ.TYPE_INT, self.class_type, True, PUBLIC
+        self.class_type.fields["class"] = 0, typ.TYPE_INT, self.class_type, True, PUBLIC
 
         def eval_declaration(dec: Declaration, cur_field_pos):
             dec_name = dec.get_name()
@@ -2687,6 +2845,8 @@ class ClassObject:
                     f"Name '{dec_name}' already defined in class '{self.class_type.name}'. ", self.lfp)
             t = dec.right.definition_type(self.class_env, self.tpa.manager)
             self.class_type.fields[dec_name] = cur_field_pos, t, self.class_type, dec.level == VAR_CONST, dec.permission
+            if dec_name == "chars" and self.class_type.full_name().endswith(f"lib{os.sep}lang.tp$String"):
+                self.tpa.manager.chars_pos_in_str = cur_field_pos
             return t.memory_length()
 
         active_ann = []
@@ -2733,7 +2893,7 @@ class ClassObject:
             method_def.compile(self.class_env, self.tpa)
             name = method_def.get_simple_name()
 
-            placer = self.class_env.get_type(name, self.lfp)
+            placer = self.class_env.get_method_type(name, self.lfp)
             assert isinstance(placer, typ.FunctionPlacer)
             method_t = method_def.evaluated_type(self.class_env, self.tpa.manager)
             try:
@@ -2754,7 +2914,8 @@ class ClassObject:
 
             if not self.abstract and method_t.abstract:
                 raise errs.TplCompileError(
-                    f"Class '{self.class_type.name}' is not abstract, but has abstract method '{name}'. ", method_def.lfp
+                    f"Class '{self.class_type.name}' is not abstract, but has abstract method '{name}'. ",
+                    method_def.lfp
                 )
 
             overriding = False
@@ -2903,7 +3064,9 @@ INT_ARITH_TABLE = {
 
 INT_LOGIC_TABLE = {
     "==": "eqi",
+    "is": "eqi",
     "!=": "nei",
+    "is not": "nei",
     ">": "gti",
     "<": "lti",
     ">=": "gei",
@@ -2929,11 +3092,23 @@ FLOAT_ARITH_TABLE = {
 
 FLOAT_LOGIC_TABLE = {
     "==": "eqf",
+    "is": "eqf",
     "!=": "nef",
+    "is not": "nef",
     ">": "gtf",
     "<": "ltf",
     ">=": "gef",
     "<=": "lef"
+}
+
+MAGIC_BIN_TABLE = {
+    "+": "__add__",
+    "-": "__sub__",
+    "*": "__mul__",
+    "/": "__div__",
+    "%": "__mod__",
+    "==": "equals",
+    "!=": "notEquals"
 }
 
 
@@ -3006,6 +3181,13 @@ def array_attribute_types(attr_name: str, lf):
     raise errs.TplCompileError(f"Array does not have attribute '{attr_name}'. ", lf)
 
 
+def class_attribute_types(attr_name: str, lf):
+    if attr_name == "class":
+        return typ.TYPE_INT
+
+    raise errs.TplCompileError(f"Class does not have attribute '{attr_name}'. ", lf)
+
+
 def validate_arg_count(args: Line, expected_arg_count):
     if len(args) != expected_arg_count:
         raise errs.TplCompileError("Arity mismatch for compile time function. ", args.lfp)
@@ -3038,7 +3220,7 @@ def ctf_cprint(args: Line, env: en.Environment, tpa: tp.TpaOutput):
     et = arg.evaluated_type(env, tpa.manager)
     if et in PRINT_FUNCTIONS:
         name_node = NameNode(PRINT_FUNCTIONS[et], args.lfp)
-        RequireStmt.require(name_node, env, tpa)
+        # RequireStmt.require(name_node, env, tpa)
         call = FunctionCall(name_node, args, args.lfp)
         return call.compile(env, tpa)
     else:
@@ -3051,7 +3233,7 @@ def ctf_cprintln(args: Line, env: en.Environment, tpa: tp.TpaOutput):
     et = arg.evaluated_type(env, tpa.manager)
     if et in PRINTLN_FUNCTIONS:
         name_node = NameNode(PRINTLN_FUNCTIONS[et], args.lfp)
-        RequireStmt.require(name_node, env, tpa)
+        # RequireStmt.require(name_node, env, tpa)
         call = FunctionCall(name_node, args, args.lfp)
         return call.compile(env, tpa)
     else:
@@ -3081,8 +3263,8 @@ def ctf_array(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
     sizeof_res = sizeof_call.compile(env, tpa)
 
     fn_name = NameNode("heap_array", args.lfp)
-    req = RequireStmt(fn_name, args.lfp)
-    req.compile(env, tpa)
+    # req = RequireStmt(fn_name, args.lfp)
+    # req.compile(env, tpa)
     FunctionCall.call(fn_name, [(sizeof_res, util.INT_LEN), (arr_ptr, util.PTR_LEN)],
                       env, tpa, dst_addr, args.lfp)
 
@@ -3119,7 +3301,8 @@ class CtfGetFunc(SpecialCtf):
                     arg_types = [None]
                     for i in range(1, len(self.args)):
                         arg_types.append(self.args[i].evaluated_type(env, manager))
-                    method_id, method_ptr, method_t = class_t.find_method(func_node.right.name, arg_types, self.args.lfp)
+                    method_id, method_ptr, method_t = class_t.find_method(func_node.right.name, arg_types,
+                                                                          self.args.lfp)
                     return method_t, method_ptr
         raise errs.TplCompileError(f"Cannot make call {self}. ", self.args.lfp)
 

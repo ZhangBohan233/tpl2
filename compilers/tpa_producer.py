@@ -103,9 +103,20 @@ class LabelManager:
         return "END_CASE_" + str(n)
 
 
+class Optimizer:
+    def __init__(self, opt_level):
+        self.optimize_level = opt_level
+
+    def do_inline(self):
+        return self.optimize_level >= 1
+
+
 class Manager:
-    def __init__(self, literal: bytes):
+    def __init__(self, literal: bytes, str_lit_pos: dict, optimize_level=0):
         self.literal = literal
+        self.str_lit_pos = str_lit_pos
+        self.string_class_ptr = 0
+        self.chars_pos_in_str = util.PTR_LEN  # position of 'chars' in class String
         self.blocks = []
         self.available_regs = [7, 6, 5, 4, 3, 2, 1, 0]
         self.gp = util.STACK_SIZE
@@ -114,6 +125,12 @@ class Manager:
         self.class_headers = []  # class object
         self.class_func_order = []
         self.label_manager = LabelManager()
+        self.optimizer = Optimizer(optimize_level)
+
+    def allocate_global(self, length):
+        addr = self.gp
+        self.gp += length
+        return addr
 
     def allocate_stack(self, length):
         if len(self.blocks) == 0:
@@ -144,8 +161,8 @@ class Manager:
         for reg in regs:
             self.available_regs.append(reg)
 
-    def map_function(self, name: str, file_path, function_object):
-        full_name = util.name_with_path(name, file_path, function_object.parent_class)
+    def map_function(self, poly_name: str, file_path, function_object):
+        full_name = util.name_with_path(poly_name, file_path, function_object.parent_class)
         self.functions_map[full_name] = function_object
         self.class_func_order.append((full_name, 0))
 
@@ -165,9 +182,17 @@ class TpaOutput:
         self.is_global = is_global
         self.output = ["entry"] if is_global else []
 
-    def add_function(self, name, file_path, fn_ptr, clazz):
-        self.output.append("fn " + util.name_with_path(name, file_path, clazz) + " " + address(fn_ptr))
-        self.write_format("push_fp")
+    def add_function(self, name, file_path, fn_ptr, clazz, abstract=False, inline=False):
+        title = "fn " + util.name_with_path(name, file_path, clazz) + " " + address(fn_ptr)
+        if inline:
+            title += " inline"
+            # note that 'inline' cannot combine with 'abstract'
+        if abstract:
+            self.output.append(title + " abstract")
+            self.output.append("")
+        else:
+            self.output.append(title)
+            self.write_format("push_fp")
 
     def add_indefinite_push(self) -> int:
         self.output.append("push")
@@ -344,7 +369,7 @@ class TpaOutput:
         self.write_format(load_of_len(left_len), register(reg1), address(left))
         self.write_format(load_of_len(right_len), register(reg2), address(right))
         self.write_format(op_inst, register(reg1), register(reg2))
-        self.write_format("iload", register(reg2), number(res))
+        self.write_format("iload", register(reg2), address(res))
         self.write_format(store_of_len(res_len), register(reg2), register(reg1))
 
         self.manager.append_regs(reg2, reg1)
@@ -467,7 +492,7 @@ class TpaOutput:
         :param args:
         :param rtn_addr:
         :param rtn_len:
-        :param offset: the offset of class pointer in instance. Typically: __class__ = 0, super = INT_LEN
+        :param offset: unused
         :return:
         """
         reg1, reg2, reg3 = self.manager.require_regs(3)
@@ -483,6 +508,7 @@ class TpaOutput:
 
     def set_call(self, args: list, reg1, reg2, ret_len, rtn_addr):
         count = 0
+        self.write_format("args")
         for arg in args:
             arg_addr = arg[0]
             arg_length = arg[1]
@@ -502,7 +528,7 @@ class TpaOutput:
             count += arg_length
 
         if ret_len > 0:
-            self.write_format("iload", register(reg1), number(rtn_addr))
+            self.write_format("iload", register(reg1), address(rtn_addr))
             self.write_format("set_ret", register(reg1))
         # if void, do nothing
 
@@ -540,6 +566,14 @@ class TpaOutput:
 
         self.manager.append_regs(reg4, reg3, reg2, reg1)
 
+    def exit_with_value(self, value_addr):
+        reg1 = self.manager.require_reg()
+
+        self.write_format("load", register(reg1), address(value_addr))
+        self.write_format("exitv", register(reg1))
+
+        self.manager.append_regs(reg1)
+
     def write_format(self, *inst):
         self.output.append(self._format(*inst))
 
@@ -565,11 +599,11 @@ class TpaOutput:
         for co in self.manager.class_headers:
             co.compile()
 
-        literal_str = " ".join([str(int(b)) for b in self.manager.literal])
-        merged = ["bits", str(util.VM_BITS),
+        merged = ["version", str(util.BYTECODE_VERSION),
+                  "bits", str(util.VM_BITS),
                   "stack_size", str(util.STACK_SIZE),
-                  "global_length", str(self.manager.global_length()),
-                  "literal", literal_str,
+                  "global_length", "",
+                  "literal", "",
                   "classes"]
 
         class_methods_map = {}
@@ -580,28 +614,62 @@ class TpaOutput:
 
             class_methods_map[full_name] = co.local_method_full_names
 
-            line = "class " + full_name + " mro"
-            for mro_t in ct.mro:
-                line += " $" + str(mro_t.class_ptr)
-            line += " methods"
+            line = f"class {full_name} ${ct.mro[0].class_ptr}\nmro\n"
+            for mro_t in ct.mro[1:]:
+                line += "    " + mro_t.full_name() + "\n"
+            line += "methods\n"
             # print(ct.method_rank)
-            for method_name, method_t in ct.method_rank:
-                line += " $" + str(ct.methods[method_name][method_t][1])
+            for method_name, base_t in ct.method_rank:
+                method_t = ct.methods[method_name][base_t][2]
+                poly_name = typ.function_poly_name(
+                    util.name_with_path(method_name, method_t.defined_class.file_path, method_t.defined_class),
+                    method_t.param_types,
+                    True)
+                line += \
+                    f"    {poly_name}\n"
+
+            line += "endclass\n"
             merged.append(line)
         merged.append("")
+
+        compiled_fn_names = set()
 
         def compile_function(fn_name):
             fo = self.manager.functions_map[fn_name]
             content = fo.compile()
             merged.extend(content)
+            compiled_fn_names.add(fn_name)
 
         for name, t in self.manager.class_func_order:
             if t == 0:  # function
-                compile_function(name)
+                if name not in compiled_fn_names:
+                    compile_function(name)
             else:  # class
                 class_methods = class_methods_map[name]
                 for method_name in class_methods:
-                    compile_function(method_name)
+                    if method_name not in compiled_fn_names:
+                        compile_function(method_name)
+
+        # process string literals
+        # mechanism:
+        # 1. simulate 'String' by adding a pointer to class 'String' at <str_pos>
+        # 2. simulate 'String.chars' by adding a pointer to literal char array at <str_pos + chars_pos_in_str>
+        if len(self.manager.str_lit_pos) != 0 and self.manager.string_class_ptr == 0:
+            raise errs.TplCompileError("String literal is not allowed without importing 'lang'.")
+        str_class_ptr = util.int_to_bytes(self.manager.string_class_ptr)
+        lit_start = util.STACK_SIZE + self.manager.global_length()
+        for str_lit in self.manager.str_lit_pos:
+            str_pos = self.manager.str_lit_pos[str_lit]
+            str_addr = str_pos + lit_start
+            char_arr_ptr_pos = str_pos + self.manager.chars_pos_in_str
+            self.manager.literal[str_pos: str_pos + util.PTR_LEN] = \
+                str_class_ptr
+            self.manager.literal[char_arr_ptr_pos: char_arr_ptr_pos + util.PTR_LEN] = \
+                util.int_to_bytes(str_addr + self.manager.chars_pos_in_str + util.PTR_LEN)
+
+        merged[merged.index("global_length") + 1] = str(self.manager.global_length())
+        literal_str = " ".join([str(int(b)) for b in self.manager.literal])
+        merged[merged.index("literal") + 1] = literal_str
 
         self.output = merged + self.output
 

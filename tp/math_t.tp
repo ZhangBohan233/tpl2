@@ -1,10 +1,14 @@
-﻿import math;
+﻿import lang;
+import math;
+import util;
 
 require clock;
 
 fn main() void {
-    cprintln(sin(1));
-    cprintln(clock());
-    cprintln(random());
-    cprintln(isNaN(1.0 / 0.0));
+    println(sin(1));
+    println(clock());
+    println(random());
+    println(isNaN(1.0 / 0.0));
+    println(gcd(-9, 6));
+    println(arrayToString(toPrimitiveArray(primes(60))));
 }
