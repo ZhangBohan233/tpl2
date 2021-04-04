@@ -4,7 +4,7 @@ import compilers.util as util
 
 
 INLINE_MAX_INST = 200
-INLINE_MAX_STACK = util.INT_LEN * 8
+INLINE_MAX_STACK = util.INT_PTR_LEN * 8
 
 
 class TpcOptimizer:
@@ -207,7 +207,7 @@ class TpcOptimizer:
             elif arg_inst[ii + 1][0] == "loadc":
                 arg_len = util.CHAR_LEN
             else:
-                arg_len = util.INT_LEN
+                arg_len = util.INT_PTR_LEN
             args[dst_addr] = src_addr, arg_len
             args_len += arg_len
 

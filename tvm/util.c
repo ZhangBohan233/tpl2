@@ -8,6 +8,25 @@
 #include <stdarg.h>
 #include "util.h"
 
+tp_int size_of_type(int type_code) {
+    switch (type_code) {
+        case INT_CODE:
+        case OBJECT_CODE:
+        case ARRAY_CODE:
+        case FUNCTION_CODE:
+        case NATIVE_FUNCTION_CODE:
+        case CLASS_CODE:
+            return INT_PTR_LEN;
+        case CHAR_CODE:
+            return CHAR_LEN;
+        case BYTE_CODE:
+            return 1;
+        default:
+            fprintf(stderr, "Unexpected type code %d.\n", type_code);
+            return 0;
+    }
+}
+
 unsigned char *read_file(char *file_name, int *length_ptr) {
     FILE *fp = malloc(sizeof(FILE));
     int res = fopen_s(&fp, file_name, "rb");

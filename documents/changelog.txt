@@ -1,4 +1,16 @@
-﻿===== VERSION 2073 =====
+﻿===== VERSION 2074 =====
+2021/04/05
+
+* Added new mnemonic: invoke_fn
+* Fixed bug on .tpa: multiple spaces after 'fn', 'require', 'class'
+* Memory alignment
+* Reworked on stack memory: last 1 / INT_LEN spaces of function memory stores type codes
+* Reworked on class header: class name, mro array, etc, are now put in class literals
+* Reworked on class field memory: field_types
+* Renamed all native invoke functions with a leading '_'
+* Added new compile time functions: rt_type, field_type
+
+===== VERSION 2073 =====
 2021/03/29
 
 * Cancelled manual require mechanism of native invokes

@@ -16,6 +16,7 @@ import compilers.tp_parser as psr
 import compilers.tokenizer as lex
 import compilers.text_preprocessor as txt_prep
 import compilers.tpc_compiler as tpc
+import compilers.tpe_compiler as tpe
 import compilers.tpc_optimizer as tpc_o
 import compilers.ast_preprocessor as prep
 import compilers.ast_optimizer as ast_o
@@ -173,7 +174,7 @@ if __name__ == '__main__':
 
     t_tpc_end = time.time()
 
-    tpe_cmp = tpc.TpeCompiler(final_tpc_name)
+    tpe_cmp = tpe.TpeCompiler(final_tpc_name)
     tpe_cmp.compile(tpe_name)
 
     t_end = time.time()

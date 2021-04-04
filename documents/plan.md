@@ -64,6 +64,9 @@
 * ~~String literal management~~ Done
 * Array element record in runtime
 * Template function
-* Inner function rename
+* ~~Inner function rename~~ Done
 * Init array with all 0 or null
-* Explicit operator 'is', 'is not'
+* ~~Explicit operator 'is', 'is not'~~ Done
+
+#### Phase 5
+* Smart pointer

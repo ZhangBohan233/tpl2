@@ -2,17 +2,6 @@
 Builtin library for most object oriented features of tpl.
 */
 
-require {
-    print_int, println_int,
-    print_float, println_float,
-    print_char, println_char,
-    print_byte, println_byte,
-    print_str, println_str,
-    mem_segment,
-    mem_copy,
-    exit
-}
-
 /*
 Macro constants
 */
@@ -26,7 +15,7 @@ class Object {
     }
 
     fn __del__() void {
-        free(this);
+        _free(this);
     }
 
     fn hash() int {
@@ -61,7 +50,7 @@ class String {
     }
 
     fn __del__() void {
-        if mem_segment(this) == 3 {  // literal
+        if _mem_segment(this) == 3 {  // literal
             return;
         }
         del this.chars;
@@ -135,17 +124,17 @@ class String {
     }
 
     fn print() void {
-        print_str(this.chars);
+        _print_str(this.chars);
     }
 
     fn println() void {
-        println_str(this.chars);
+        _println_str(this.chars);
     }
 
     fn repeat(n: int) *String {
         if n < 0 {
             println("Negative repeat times.");
-            exit(1);
+            _exit(1);
         }
         resLen := this.length() * n;
         resArr := new char[resLen];
@@ -370,35 +359,35 @@ fn println() void {
 }
 
 inline fn print(value: int) void {
-    print_int(value);
+    _print_int(value);
 }
 
 inline fn println(value: int) void {
-    println_int(value);
+    _println_int(value);
 }
 
 inline fn print(value: float) void {
-    print_float(value);
+    _print_float(value);
 }
 
 inline fn println(value: float) void {
-    println_float(value);
+    _println_float(value);
 }
 
 inline fn print(value: char) void {
-    print_char(value);
+    _print_char(value);
 }
 
 inline fn println(value: char) void {
-    println_char(value);
+    _println_char(value);
 }
 
 inline fn print(value: byte) void {
-    print_byte(value);
+    _print_byte(value);
 }
 
 inline fn println(value: byte) void {
-    println_byte(value);
+    _println_byte(value);
 }
 
 inline fn print(value: *String) void {
@@ -476,26 +465,26 @@ fn floatToString(value: float) *String {
 
 fn arraycopy(src: int[], srcIndex: int, dst: int[], dstIndex: int, length: int) void {
     unitLength := sizeof(int);
-    mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
+    _mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
 }
 
 fn arraycopy(src: float[], srcIndex: int, dst: float[], dstIndex: int, length: int) void {
     unitLength := sizeof(float);
-    mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
+    _mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
 }
 
 fn arraycopy(src: char[], srcIndex: int, dst: char[], dstIndex: int, length: int) void {
     unitLength := sizeof(char);
-    mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
+    _mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
 }
 
 fn arraycopy(src: byte[], srcIndex: int, dst: byte[], dstIndex: int, length: int) void {
-    mem_copy(src as *void, srcIndex, dst as *void, dstIndex, length);
+    _mem_copy(src as *void, srcIndex, dst as *void, dstIndex, length);
 }
 
 fn arraycopy(src: Object[], srcIndex: int, dst: Object[], dstIndex: int, length: int) void {
     unitLength := sizeof(*void);
-    mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
+    _mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
 }
 
 fn vmBitsCount() int {

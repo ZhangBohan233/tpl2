@@ -160,6 +160,12 @@ class Environment:
     def get_working_function(self) -> (str, typ.FuncType):
         return None, None
 
+    def add_object_pointer(self, ptr_addr: int):
+        self.outer.add_object_pointer(ptr_addr)
+
+    def get_object_pointers(self):
+        return self.outer.get_object_pointers()
+
 
 class SubAbstractEnvironment(Environment):
     def __init__(self, outer):
@@ -203,6 +209,12 @@ class GlobalEnvironment(MainAbstractEnvironment):
     def is_global(cls):
         return True
 
+    def add_object_pointer(self, ptr_addr: int):
+        pass
+
+    def get_object_pointers(self):
+        return set()
+
 
 class FunctionEnvironment(MainAbstractEnvironment):
     def __init__(self, outer, name: str, func_type: typ.FuncType):
@@ -210,6 +222,7 @@ class FunctionEnvironment(MainAbstractEnvironment):
 
         self.name = name
         self.func_type = func_type
+        self.local_object_pointers = set()
 
     def validate_rtype(self, actual_rtype: typ.Type, lfp: tl.LineFilePos):
         if not actual_rtype.convertible_to(self.func_type.rtype, lfp):
@@ -218,6 +231,12 @@ class FunctionEnvironment(MainAbstractEnvironment):
 
     def get_working_function(self) -> (str, typ.FuncType):
         return self.name, self.func_type
+
+    def add_object_pointer(self, ptr_addr: int):
+        self.local_object_pointers.add(ptr_addr)
+
+    def get_object_pointers(self):
+        return self.local_object_pointers
 
 
 class MethodEnvironment(FunctionEnvironment):

@@ -1,22 +1,18 @@
 ﻿import lang
 
-require {
-    println_int
-}
-
 fn foo(g: int) int {
     return g + 77;
 }
 
 abstract class A {
-    x: int;
+    private x: int;
     fn __new__(this: *A) void {
         super.__new__();
         this.x = 78;
     }
 
     fn foo(this: *A) int {
-        return 2;
+        return this.x;
     }
 
     fn bar(this: *A) void {

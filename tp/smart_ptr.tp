@@ -1,0 +1,20 @@
+﻿import lang
+
+class A {
+    a: int;
+    br: *B = new B();
+}
+
+class B {
+    b: int;
+}
+
+fn test() void {
+    aa: *A = new A();
+    //bb: *A = aa;
+    println(aa.references);
+}
+
+fn main() void {
+    test();
+}

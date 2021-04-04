@@ -1,3 +1,5 @@
+from abc import ABC
+
 import compilers.util as util
 import compilers.errors as errs
 
@@ -5,6 +7,9 @@ import compilers.errors as errs
 class Type:
     def __init__(self, length: int):
         self.length = length
+
+    def type_code(self):
+        raise NotImplementedError()
 
     def memory_length(self):
         """
@@ -85,10 +90,14 @@ class Type:
 
 
 class PrimitiveType(Type):
-    def __init__(self, type_name: str, length: int):
+    def __init__(self, type_name: str, length: int, code: int):
         super().__init__(length)
 
         self.t_name = type_name
+        self.code = code
+
+    def type_code(self):
+        return self.code
 
     def weak_convertible(self, left_tar_type: Type):
         if self.t_name == "int" and isinstance(left_tar_type, PointerType):
@@ -114,9 +123,12 @@ class PrimitiveType(Type):
 
 class PointerType(Type):
     def __init__(self, base: Type):
-        super().__init__(util.PTR_LEN)
+        super().__init__(util.INT_PTR_LEN)
 
         self.base = base
+
+    def type_code(self):
+        return self.base.type_code()
 
     def strong_convertible(self, left_tar_type):
         if self == TYPE_VOID_PTR:
@@ -161,6 +173,9 @@ class CompileTimeFunctionType(Type):
         self.name = name
         self.rtype = rtype
 
+    def type_code(self):
+        return 0
+
     def memory_length(self):
         raise errs.TplCompileError(f"Compile time function '{self.name}' does not occupy memory. ")
 
@@ -181,7 +196,7 @@ class SpecialCtfType(CompileTimeFunctionType):
 
 class CallableType(Type):
     def __init__(self, param_types, rtype):
-        super().__init__(util.PTR_LEN)
+        super().__init__(util.INT_PTR_LEN)
 
         self.param_types: [Type] = param_types
         self.rtype: Type = rtype
@@ -202,7 +217,10 @@ class FuncType(CallableType):
     def __init__(self, param_types, rtype, inline=False):
         super().__init__(param_types, rtype)
 
-        self.inline=inline
+        self.inline = inline
+
+    def type_code(self):
+        return util.FUNCTION_CODE
 
     def strong_convertible(self, left_tar_type):
         if isinstance(left_tar_type, FuncType):
@@ -255,6 +273,9 @@ class NativeFuncType(CallableType):
     def __init__(self, param_types, rtype):
         super().__init__(param_types, rtype)
 
+    def type_code(self):
+        return util.NATIVE_FUNCTION_CODE
+
 
 class FunctionPlacer(Type):
     def __init__(self, first_t: CallableType, first_addr: int):
@@ -263,6 +284,9 @@ class FunctionPlacer(Type):
         self.poly = util.NaiveDict(params_eq)  # functions with same name | func_type: ptr
 
         self.add_poly(first_t, first_addr)
+
+    def type_code(self):
+        return 0
 
     def add_poly(self, type_: CallableType, addr: int):
         if type_ in self.poly:
@@ -291,12 +315,12 @@ class FunctionPlacer(Type):
 
 
 class ClassType(Type):
-    def __init__(self, name: str, class_ptr: int, file_path: str, class_env, direct_sc: list, templates: list,
+    def __init__(self, name: str, file_path: str, class_env, direct_sc: list, templates: list,
                  templates_map: dict, abstract: bool):
-        super().__init__(0)
+        super().__init__(util.INT_PTR_LEN)
 
         self.name = name
-        self.class_ptr = class_ptr
+        self.class_ptr = 0
         self.file_path = file_path  # where this class is defined, avoiding conflict struct def'ns in non-export part
         self.name_with_path = util.class_name_with_path(self.name, self.file_path)
         self.class_env = class_env
@@ -313,7 +337,7 @@ class ClassType(Type):
         # methods with same name must have the same id, i.e. overriding methods have the same id
         # note that in each NaiveDict, the key is the type of the most super method, real type is in the values
         self.methods: {str: util.NaiveDict} = {}  # name: NaiveDict{func_type: (method_id, func_ptr, func_type)}
-        self.fields = {}  # name: (position, type, defined_class, const?, permission)
+        self.fields = {}  # position: (name, type, defined_class, const?, permission)
 
         # records mapping for all templates
         # e.g. class A<AT>, class B<BK, BV(Number)>(A<BK>), class D<DT>, class C<CT>(B<CT, Integer>, D<CT>) =>
@@ -325,11 +349,19 @@ class ClassType(Type):
 
         self.initializers = []  # nodes that will be executed in __new__
 
+    def type_code(self):
+        return util.CLASS_CODE
+
     def type_name(self):
         return self.name
 
     def full_name(self):
         return self.name_with_path
+
+    def field_list(self):
+        lst = [(key, *self.fields[key]) for key in self.fields]
+        lst.sort(key=lambda key: key[1])
+        return lst
 
     def get_actual_template_name(self, template_name):
         if template_name not in self.templates_map:
@@ -341,10 +373,11 @@ class ClassType(Type):
             return template_name
 
     def has_field(self, name: str) -> bool:
-        for mro_t in self.mro:
-            if name in mro_t.fields:
-                return True
-        return False
+        return name in self.fields
+        # for mro_t in self.mro:
+        #     if name in mro_t.fields:
+        #         return True
+        # return False
 
     def find_field(self, name: str, lf) -> (int, Type, Type, bool, int):
         """
@@ -354,9 +387,12 @@ class ClassType(Type):
         :param lf:
         :return:
         """
-        for mro_t in self.mro:
-            if name in mro_t.fields:
-                return mro_t.fields[name]
+        # todo: change this
+        # for mro_t in self.mro:
+        #     if name in mro_t.fields:
+        #         return mro_t.fields[name]
+        if name in self.fields:
+            return self.fields[name]
         raise errs.TplEnvironmentError(f"Class {self.name} does not have field '{name}'. ", lf)
 
     def _find_method(self, name, arg_types, lf):
@@ -454,7 +490,7 @@ class ClassType(Type):
         return self.__str__()
 
 
-class GenericType(Type):
+class GenericType(Type, ABC):
     def __init__(self, base, generics: dict):
         super().__init__(base.length)
 
@@ -468,6 +504,9 @@ class GenericType(Type):
 class GenericClassType(GenericType):
     def __init__(self, base: ClassType, generic: dict):
         super().__init__(base, generic)
+
+    def type_code(self):
+        return util.OBJECT_CODE
 
     def type_name(self):
         return self.base.type_name()
@@ -505,12 +544,15 @@ class GenericClassType(GenericType):
 
 class Generic(Type):
     def __init__(self, name: str, max_t: ClassType, class_name: str):
-        super().__init__(util.PTR_LEN)
+        super().__init__(util.INT_PTR_LEN)
 
         # print(name, class_name)
         self._name = name
         self.max_t = max_t
         self.class_name = class_name  # class full name
+
+    def type_code(self):
+        return util.OBJECT_CODE
 
     def strong_convertible(self, left_tar_type):
         return self.max_t.strong_convertible(left_tar_type)
@@ -548,9 +590,12 @@ class ArrayType(Type):
     This class actually represents the array pointer type.
     """
     def __init__(self, ele_type: Type):
-        super().__init__(util.PTR_LEN)
+        super().__init__(util.INT_PTR_LEN)
 
         self.ele_type = ele_type
+
+    def type_code(self):
+        return util.ARRAY_CODE
 
     def strong_convertible(self, left_tar_type):
         if left_tar_type == TYPE_VOID_PTR:
@@ -581,7 +626,15 @@ class ArrayType(Type):
 
 
 def is_object_ptr(t: Type) -> bool:
-    return isinstance(t, PointerType) and isinstance(t.base, (ClassType, GenericClassType))
+    return isinstance(t, PointerType) and isinstance(t.base, (ClassType, GenericClassType, Generic))
+
+
+def is_object_array(t: Type) -> bool:
+    return isinstance(t, ArrayType) and isinstance(t.ele_type, (ClassType, GenericClassType, Generic))
+
+
+def is_primitive_array(t: Type) -> bool:
+    return isinstance(t, ArrayType) and isinstance(t.ele_type, PrimitiveType)
 
 
 def replace_generics_if(t: Type, caller_class_t, lfp) -> Type:
@@ -829,36 +882,48 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
 # def find_correspond_tem_name()
 
 
-TYPE_INT = PrimitiveType("int", util.INT_LEN)
-TYPE_FLOAT = PrimitiveType("float", util.FLOAT_LEN)
-TYPE_CHAR = PrimitiveType("char", util.CHAR_LEN)
-TYPE_BYTE = PrimitiveType("byte", 1)
-TYPE_VOID = PrimitiveType("void", 0)
+TYPE_INT = PrimitiveType("int", util.INT_PTR_LEN, util.INT_CODE)
+TYPE_FLOAT = PrimitiveType("float", util.FLOAT_LEN, util.FLOAT_CODE)
+TYPE_CHAR = PrimitiveType("char", util.CHAR_LEN, util.CHAR_CODE)
+TYPE_BYTE = PrimitiveType("byte", 1, util.BYTE_CODE)
+TYPE_VOID = PrimitiveType("void", 0, 0)
+
+TYPE_STRING_PTR = PointerType(None)  # temp
 
 TYPE_CHAR_ARR = ArrayType(TYPE_CHAR)
-TYPE_STRING_ARR = ArrayType(TYPE_CHAR_ARR)
+TYPE_STRING_ARR = ArrayType(TYPE_STRING_PTR)
 TYPE_VOID_PTR = PointerType(TYPE_VOID)
 
 PRIMITIVE_TYPES = {"int": TYPE_INT, "float": TYPE_FLOAT, "char": TYPE_CHAR, "byte": TYPE_BYTE, "void": TYPE_VOID}
 
 NATIVE_FUNCTIONS = {
-    "print_int": (1, NativeFuncType([TYPE_INT], TYPE_VOID)),
-    "println_int": (2, NativeFuncType([TYPE_INT], TYPE_VOID)),
-    "clock": (3, NativeFuncType([], TYPE_INT)),
-    "print_char": (4, NativeFuncType([TYPE_CHAR], TYPE_VOID)),
-    "println_char": (5, NativeFuncType([TYPE_CHAR], TYPE_VOID)),
-    "print_float": (6, NativeFuncType([TYPE_FLOAT], TYPE_VOID)),
-    "println_float": (7, NativeFuncType([TYPE_FLOAT], TYPE_VOID)),
-    "print_str": (8, NativeFuncType([TYPE_CHAR_ARR], TYPE_VOID)),
-    "println_str": (9, NativeFuncType([TYPE_CHAR_ARR], TYPE_VOID)),
-    "malloc": (10, NativeFuncType([TYPE_INT], TYPE_VOID_PTR)),
-    "free": (11, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID)),
-    "heap_array": (12, NativeFuncType([TYPE_INT, ArrayType(TYPE_INT)], TYPE_VOID_PTR)),
-    "nat_cos": (13, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT)),
-    "nat_log": (14, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT)),
-    "print_byte": (15, NativeFuncType([TYPE_BYTE], TYPE_VOID)),
-    "println_byte": (16, NativeFuncType([TYPE_BYTE], TYPE_VOID)),
-    "mem_segment": (17, NativeFuncType([TYPE_VOID_PTR], TYPE_INT)),
-    "mem_copy": (18, NativeFuncType([TYPE_VOID_PTR, TYPE_INT, TYPE_VOID_PTR, TYPE_INT, TYPE_INT], TYPE_VOID)),
-    "exit": (19, NativeFuncType([TYPE_INT], TYPE_VOID))
+    "_print_int": (1, NativeFuncType([TYPE_INT], TYPE_VOID)),
+    "_println_int": (2, NativeFuncType([TYPE_INT], TYPE_VOID)),
+    "_clock": (3, NativeFuncType([], TYPE_INT)),
+    "_print_char": (4, NativeFuncType([TYPE_CHAR], TYPE_VOID)),
+    "_println_char": (5, NativeFuncType([TYPE_CHAR], TYPE_VOID)),
+    "_print_float": (6, NativeFuncType([TYPE_FLOAT], TYPE_VOID)),
+    "_println_float": (7, NativeFuncType([TYPE_FLOAT], TYPE_VOID)),
+    "_print_str": (8, NativeFuncType([TYPE_CHAR_ARR], TYPE_VOID)),
+    "_println_str": (9, NativeFuncType([TYPE_CHAR_ARR], TYPE_VOID)),
+    "_malloc": (10, NativeFuncType([TYPE_INT], TYPE_VOID_PTR)),
+    "_free": (11, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID)),
+    # args: length, element type code
+    # returns:
+    "_heap_array": (12, NativeFuncType([TYPE_VOID_PTR, TYPE_INT], TYPE_VOID_PTR)),
+    "_nat_cos": (13, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT)),
+    "_nat_log": (14, NativeFuncType([TYPE_FLOAT], TYPE_FLOAT)),
+    "_print_byte": (15, NativeFuncType([TYPE_BYTE], TYPE_VOID)),
+    "_println_byte": (16, NativeFuncType([TYPE_BYTE], TYPE_VOID)),
+    "_mem_segment": (17, NativeFuncType([TYPE_VOID_PTR], TYPE_INT)),
+    "_mem_copy": (18, NativeFuncType([TYPE_VOID_PTR, TYPE_INT, TYPE_VOID_PTR, TYPE_INT, TYPE_INT], TYPE_VOID)),
+    "_exit": (19, NativeFuncType([TYPE_INT], TYPE_VOID)),
+    "_inc_ref": (20, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID)),
+    "_dec_ref": (21, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID)),
+    "_nested_array": (22, NativeFuncType([], TYPE_VOID_PTR)),
+    "_class_name": (23, NativeFuncType([TYPE_INT], TYPE_STRING_PTR)),  # returns *String
 }
+
+
+def set_string_type(str_type: ClassType):
+    TYPE_STRING_PTR.base = str_type

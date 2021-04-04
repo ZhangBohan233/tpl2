@@ -22,22 +22,23 @@ const unsigned char SIGNATURE[] = "TPC_";
 int ERROR_CODE = 0;
 char *ERR_MSG = "";
 
-#define true_addr(ptr) (ptr < stack_end && call_p >= 0 ? ptr + fp : ptr)
-#define true_addr_sp(ptr) (ptr < stack_end ? ptr + sp : ptr)
+#define true_addr(ptr) ((ptr) < stack_end && call_p >= 0 ? (ptr) + fp : (ptr))
+#define true_addr_sp(ptr) ((ptr) < stack_end ? (ptr) + sp : (ptr))
 
-#define push(n) sp += n; if (sp >= stack_end) ERROR_CODE = ERR_STACK_OVERFLOW;
+#define push(n) sp += (n); if (sp >= stack_end) ERROR_CODE = ERR_STACK_OVERFLOW;
 #define push_fp call_stack[++call_p] = fp; fp = sp;
 #define pull_fp sp = fp; fp = call_stack[call_p--];
 
 #define MEMORY_SIZE 131072
 #define RECURSION_LIMIT 1000
-#define CLASS_FIXED_HEADER (INT_LEN * 2)
+#define CLASS_FIXED_HEADER (INT_PTR_LEN * 2)
 
-#define rshift_logical(val, n) ((tp_int) (int_fast64_t) ((uint_fast64_t) val >> n));
+#define rshift_logical(val, n) ((tp_int) (int_fast64_t) ((uint_fast64_t) (val) >> (n)));
 
 tp_int stack_end;
 tp_int literal_end;
 tp_int global_end;
+tp_int class_literal_end;
 tp_int class_header_end;
 tp_int functions_end;
 tp_int entry_end;
@@ -45,14 +46,14 @@ tp_int heap_start;  // there might be small gaps between entry_end and heap_star
 
 unsigned char MEMORY[MEMORY_SIZE];
 
-tp_int sp = 1 + INT_LEN;
+tp_int sp = 1 + INT_PTR_LEN;
 tp_int fp = 1;
 tp_int pc = 0;
 
 tp_int call_stack[RECURSION_LIMIT];  // stores fp (frame pointer)
 int call_p = -1;
 
-tp_int pc_stack[RECURSION_LIMIT];
+tp_int pc_stack[RECURSION_LIMIT];  // stores pc (program counter)
 int pc_p = -1;
 
 tp_int ret_stack[RECURSION_LIMIT];  // stores true addr of return addresses
@@ -90,14 +91,17 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
     int check = vm_check(src_code);
     if (check != 0) return check;
 
-    tp_int entry_len = bytes_to_int(src_code + code_length - INT_LEN);
+    tp_int entry_len = bytes_to_int(src_code + code_length - INT_PTR_LEN);
 
     stack_end = bytes_to_int(src_code + 16);  // 16 is fixed header length
-    global_end = stack_end + bytes_to_int(src_code + 16 + INT_LEN);
-    literal_end = global_end + bytes_to_int(src_code + 16 + INT_LEN * 2);
-    class_header_end = literal_end + bytes_to_int(src_code + 16 + INT_LEN * 3);
+    global_end = stack_end + bytes_to_int(src_code + 16 + INT_PTR_LEN);
+    literal_end = global_end + bytes_to_int(src_code + 16 + INT_PTR_LEN * 2);
+    class_literal_end = literal_end + bytes_to_int(src_code + 16 + INT_PTR_LEN * 3);
+    class_header_end = class_literal_end + bytes_to_int(src_code + 16 + INT_PTR_LEN * 4);
 
-    tp_int copy_len = code_length - 16 - INT_LEN * 5;  // stack, global, literal, class_headers, entry
+    // skips lengths of stack, global, literal, class_literal, class_headers, entry
+    // copies literal, class_literal, class_header, entry
+    tp_int copy_len = code_length - 16 - INT_PTR_LEN * 6;
     entry_end = global_end + copy_len;
 
     if (global_end + copy_len > MEMORY_SIZE) {
@@ -107,13 +111,13 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
     }
 //    printf("code len %d, copy len %d\n", code_length, copy_len);
 
-    memcpy(MEMORY + global_end, src_code + 16 + INT_LEN * 4, copy_len);
+    memcpy(MEMORY + global_end, src_code + 16 + INT_PTR_LEN * 5, copy_len);
 
     functions_end = entry_end - entry_len;
     pc = functions_end;
 
     heap_start = entry_end;
-    while (heap_start % INT_LEN != 0) heap_start++;
+    while (heap_start % INT_PTR_LEN != 0) heap_start++;
 
     available = build_link(heap_start, MEMORY_SIZE, &ava_pool);
 //    fragments = build_link(heap_start, MEMORY_SIZE, &fragment_pool);
@@ -121,6 +125,9 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
     return 0;
 }
 
+/*
+ * All native functions with non-void returning type must call one of the following 'return' functions.
+ */
 void nat_return_int(tp_int value) {
     int_to_bytes(MEMORY + ret_stack[ret_p--], value);
 }
@@ -129,9 +136,9 @@ void nat_return_float(tp_float value) {
     float_to_bytes(MEMORY + ret_stack[ret_p--], value);
 }
 
-void nat_return() {
-    ret_p--;
-}
+//void nat_return() {
+//    ret_p--;
+//}
 
 tp_int get_nat_return_addr() {
     return ret_stack[ret_p];
@@ -148,7 +155,7 @@ tp_int get_nat_return_addr() {
 
 void nat_print_int() {
     push_fp
-    push(INT_LEN)
+    push(INT_PTR_LEN)
 
     tp_int arg = bytes_to_int(MEMORY + true_addr(0));
     tp_printf("%d", arg);
@@ -158,7 +165,7 @@ void nat_print_int() {
 
 void nat_println_int() {
     push_fp
-    push(INT_LEN)
+    push(INT_PTR_LEN)
 
     tp_int arg = bytes_to_int(MEMORY + true_addr(0));
     tp_printf("%d\n", arg);
@@ -228,12 +235,12 @@ void nat_println_byte() {
 
 void nat_print_str() {
     push_fp
-    push(PTR_LEN)
+    push(INT_PTR_LEN)
 
     tp_int arr_ptr = bytes_to_int(MEMORY + true_addr(0));
     tp_int arr_len = bytes_to_int(MEMORY + true_addr(arr_ptr));
     for (int i = 0; i < arr_len; i++) {
-        tp_char arg = bytes_to_char(MEMORY + true_addr(arr_ptr + INT_LEN + i * CHAR_LEN));
+        tp_char arg = bytes_to_char(MEMORY + true_addr(arr_ptr + INT_PTR_LEN + i * CHAR_LEN));
         wprintf(L"%c", arg);
     }
 
@@ -242,12 +249,12 @@ void nat_print_str() {
 
 void nat_println_str() {
     push_fp
-    push(FLOAT_LEN)
+    push(INT_PTR_LEN)
 
     tp_int arr_ptr = bytes_to_int(MEMORY + true_addr(0));
     tp_int arr_len = bytes_to_int(MEMORY + true_addr(arr_ptr));
     for (int i = 0; i < arr_len; i++) {
-        tp_char arg = bytes_to_char(MEMORY + true_addr(arr_ptr + INT_LEN + i * CHAR_LEN));
+        tp_char arg = bytes_to_char(MEMORY + true_addr(arr_ptr + ARRAY_HEADER_LEN + i * CHAR_LEN));
         wprintf(L"%c", arg);
     }
     printf("\n");
@@ -266,7 +273,7 @@ void nat_clock() {
 
 void nat_mem_segment() {
     push_fp
-    push(PTR_LEN)
+    push(INT_PTR_LEN)
 
     tp_int ptr = bytes_to_int(MEMORY + true_addr(0));
     tp_int res;
@@ -288,13 +295,13 @@ void nat_mem_segment() {
 
 void nat_mem_copy() {
     push_fp
-    push(INT_LEN * 5)
+    push(INT_PTR_LEN * 5)
 
     tp_int src = bytes_to_int(MEMORY + true_addr(0));
-    tp_int src_index = bytes_to_int(MEMORY + true_addr(INT_LEN));
-    tp_int dst = bytes_to_int(MEMORY + true_addr(INT_LEN * 2));
-    tp_int dst_index = bytes_to_int(MEMORY + true_addr(INT_LEN * 3));
-    tp_int length = bytes_to_int(MEMORY + true_addr(INT_LEN * 4));
+    tp_int src_index = bytes_to_int(MEMORY + true_addr(INT_PTR_LEN));
+    tp_int dst = bytes_to_int(MEMORY + true_addr(INT_PTR_LEN * 2));
+    tp_int dst_index = bytes_to_int(MEMORY + true_addr(INT_PTR_LEN * 3));
+    tp_int length = bytes_to_int(MEMORY + true_addr(INT_PTR_LEN * 4));
 //    printf("%lld %lld %lld %lld %lld\n", src, src_index, dst, dst_index, length);
 
 //    tp_int dst_length = bytes_to_int(MEMORY + true_addr(dst));
@@ -304,8 +311,8 @@ void nat_mem_copy() {
 //        return;
 //    }
 
-    memmove(MEMORY + true_addr(dst + dst_index) + INT_LEN,  // last 'INT_LEN' is the array length recorder
-            MEMORY + true_addr(src + src_index) + INT_LEN,
+    memmove(MEMORY + true_addr(dst + dst_index) + ARRAY_HEADER_LEN,  // last 'INT_PTR_LEN' is the array header
+            MEMORY + true_addr(src + src_index) + ARRAY_HEADER_LEN,
             length);
 
     pull_fp
@@ -313,7 +320,7 @@ void nat_mem_copy() {
 
 void nat_exit() {
     push_fp
-    push(INT_LEN)
+    push(INT_PTR_LEN)
 
     ERROR_CODE = bytes_to_int(MEMORY + true_addr(0));
 
@@ -321,25 +328,25 @@ void nat_exit() {
 }
 
 tp_int _malloc_essential(tp_int asked_len) {
-    tp_int real_len = asked_len + INT_LEN;
+    tp_int real_len = asked_len + INT_PTR_LEN;
     tp_int allocate_len =
             real_len % MEM_BLOCK == 0 ? real_len / MEM_BLOCK : real_len / MEM_BLOCK + 1;
     tp_int location = malloc_link(allocate_len);
 
     if (location <= 0) {
-        int ava_size = link_len(available) * MEM_BLOCK - INT_LEN;
+        int ava_size = link_len(available) * MEM_BLOCK - INT_PTR_LEN;
         tp_fprintf(stderr, "Cannot allocate length %lld, available memory %d\n", asked_len, ava_size);
         ERROR_CODE = ERR_MEMORY_OUT;
         return 0;
     }
 
     int_to_bytes(MEMORY + location, allocate_len);  // stores the allocated length
-    return location + INT_LEN;
+    return location + INT_PTR_LEN;
 }
 
 void nat_malloc() {
     push_fp
-    push(INT_LEN)
+    push(INT_PTR_LEN)
 
     tp_int asked_len = bytes_to_int(MEMORY + true_addr(0));
     tp_int malloc_res = _malloc_essential(asked_len);
@@ -376,10 +383,10 @@ void _free_link(int_fast64_t real_ptr, int_fast64_t alloc_len) {
 
 void nat_free() {
     push_fp
-    push(PTR_LEN)
+    push(INT_PTR_LEN)
 
     tp_int free_ptr = bytes_to_int(MEMORY + true_addr(0));
-    int_fast64_t real_addr = free_ptr - INT_LEN;
+    int_fast64_t real_addr = free_ptr - INT_PTR_LEN;
     int_fast64_t alloc_len = bytes_to_int(MEMORY + real_addr);
 
     if (real_addr < entry_end || real_addr > MEMORY_SIZE) {
@@ -394,11 +401,11 @@ void nat_free() {
 
 tp_int _array_total_len(tp_int atom_len, const tp_int *dimensions, int dim_arr_len, int index_in_dim) {
     tp_int dim = dimensions[index_in_dim];
-    if (dim == -1) return PTR_LEN;
+    if (dim == -1) return INT_PTR_LEN;
 
-    if (index_in_dim == dim_arr_len - 1) return dimensions[index_in_dim] * atom_len + INT_LEN;
+    if (index_in_dim == dim_arr_len - 1) return dimensions[index_in_dim] * atom_len + INT_PTR_LEN;
     else {
-        tp_int res = dim * PTR_LEN + INT_LEN;
+        tp_int res = dim * INT_PTR_LEN + INT_PTR_LEN;
         for (int i = 0; i < dim; i++) {
             res += _array_total_len(atom_len, dimensions, dim_arr_len, index_in_dim + 1);
         }
@@ -411,7 +418,7 @@ void _create_arr_rec(tp_int to_write, tp_int atom_len,
     tp_int dim = dimensions[index_in_dim];
 //    printf("%lld\n", dim);
     if (dim == -1) {
-        *cur_heap += PTR_LEN;
+        *cur_heap += INT_PTR_LEN;
         return;
     }
 
@@ -419,18 +426,18 @@ void _create_arr_rec(tp_int to_write, tp_int atom_len,
 
     tp_int ele_len;
     if (index_in_dim == dim_arr_len - 1) ele_len = atom_len;
-    else ele_len = PTR_LEN;
+    else ele_len = INT_PTR_LEN;
 
     tp_int cur_arr_addr = *cur_heap;
-    *cur_heap += (dim * ele_len) + INT_LEN;
+    *cur_heap += (dim * ele_len) + INT_PTR_LEN;
 
     int_to_bytes(MEMORY + cur_arr_addr, dim);  // write array size
 
-    tp_int first_ele_addr = cur_arr_addr + INT_LEN;
+    tp_int first_ele_addr = cur_arr_addr + INT_PTR_LEN;
 
     if (index_in_dim < dim_arr_len - 1) {
         for (int i = 0; i < dim; i++) {
-            _create_arr_rec(first_ele_addr + i * PTR_LEN,
+            _create_arr_rec(first_ele_addr + i * INT_PTR_LEN,
                             atom_len,
                             dimensions,
                             dim_arr_len,
@@ -450,39 +457,76 @@ tp_float float_mod(tp_float d1, tp_float d2) {
 
 void nat_heap_array() {
     push_fp
-    push(INT_LEN * 2)
+    push(INT_PTR_LEN * 2)
 
-    tp_int atom_size = bytes_to_int(MEMORY + true_addr(0));
-    tp_int dim_arr_addr = bytes_to_int(MEMORY + true_addr(INT_LEN));
+    tp_int arr_length = bytes_to_int(MEMORY + true_addr(0));
+    tp_int ele_code = bytes_to_int(MEMORY + true_addr(INT_PTR_LEN));
 
-    tp_int dim_arr_len = bytes_to_int(MEMORY + dim_arr_addr);
-    tp_int *dimension = malloc(sizeof(tp_int) * dim_arr_len);
+//    printf("arr ptr %d, length %d, code %d\n", arr_ptr_addr, arr_length, ele_code);
 
-    for (int i = 0; i < dim_arr_len; i++) {
-        dimension[i] = bytes_to_int(MEMORY + dim_arr_addr + (i + 1) * INT_LEN);
-//        printf("%lld, ", dimension[i]);
-    }
-    if (dimension[0] < 0) {
-        fprintf(stderr, "Cannot create heap array of unspecified size. ");
-        ERROR_CODE = ERR_NATIVE_INVOKE;
-        return;
-    }
-//    print_array(dimension, dim_arr_len);
+    tp_int ele_length = size_of_type(ele_code);
+    tp_int heap_loc = _malloc_essential(ele_length * arr_length + INT_PTR_LEN * 2);  // array length, ele code
+    int_to_bytes(MEMORY + heap_loc, arr_length);
+    int_to_bytes(MEMORY + heap_loc + INT_PTR_LEN, ele_code);
+//    int_to_bytes(MEMORY + arr_ptr_addr, heap_loc);
+    nat_return_int(heap_loc);
 
-    tp_int total_heap_len = _array_total_len(atom_size, dimension, dim_arr_len, 0);
-//    printf("%lld %lld %lld\n", atom_size, dim_arr_addr, total_heap_len);
-
-    tp_int heap_loc = _malloc_essential(total_heap_len);
-//    printf("%lld\n", heap_loc);
-
-    tp_int cur_heap_loc = heap_loc;
-    _create_arr_rec(get_nat_return_addr(), atom_size, dimension, dim_arr_len, 0, &cur_heap_loc);
-
-    free(dimension);
-    nat_return();
+//    nat_return();
 
     pull_fp
 }
+
+void nat_nested_array() {
+
+}
+
+void nat_class_name() {
+    push_fp
+    push(INT_PTR_LEN)
+
+    tp_int class_ptr = bytes_to_int(MEMORY + true_addr(0));
+    tp_int class_header = bytes_to_int(MEMORY + class_ptr);
+    tp_int name_str_ptr = bytes_to_int(MEMORY + class_header);
+    nat_return_int(name_str_ptr);
+
+    pull_fp
+}
+
+//void nat_heap_array() {
+//    push_fp
+//    push(INT_PTR_LEN * 2)
+//
+//    tp_int atom_size = bytes_to_int(MEMORY + true_addr(0));
+//    tp_int dim_arr_addr = bytes_to_int(MEMORY + true_addr(INT_PTR_LEN));
+//
+//    tp_int dim_arr_len = bytes_to_int(MEMORY + dim_arr_addr);
+//    tp_int *dimension = malloc(sizeof(tp_int) * dim_arr_len);
+//
+//    for (int i = 0; i < dim_arr_len; i++) {
+//        dimension[i] = bytes_to_int(MEMORY + dim_arr_addr + (i + 1) * INT_PTR_LEN);
+////        printf("%lld, ", dimension[i]);
+//    }
+//    if (dimension[0] < 0) {
+//        fprintf(stderr, "Cannot create heap array of unspecified size. ");
+//        ERROR_CODE = ERR_NATIVE_INVOKE;
+//        return;
+//    }
+////    print_array(dimension, dim_arr_len);
+//
+//    tp_int total_heap_len = _array_total_len(atom_size, dimension, dim_arr_len, 0);
+////    printf("%lld %lld %lld\n", atom_size, dim_arr_addr, total_heap_len);
+//
+//    tp_int heap_loc = _malloc_essential(total_heap_len);
+////    printf("%lld\n", heap_loc);
+//
+//    tp_int cur_heap_loc = heap_loc;
+//    _create_arr_rec(get_nat_return_addr(), atom_size, dimension, dim_arr_len, 0, &cur_heap_loc);
+//
+//    free(dimension);
+//    nat_return();
+//
+//    pull_fp
+//}
 
 void nat_cos() {
     push_fp
@@ -504,6 +548,39 @@ void nat_log() {
     tp_float res = (tp_float) log(arg);
 
     nat_return_float(res);
+
+    pull_fp
+}
+
+void nat_inc_ref() {
+    push_fp
+    push(INT_PTR_LEN)
+
+    tp_int arg = bytes_to_int(MEMORY + true_addr(0));
+    if (arg != 0) {  // is not a null pointer
+        tp_int cur_count = bytes_to_int(MEMORY + arg + INT_PTR_LEN);
+//        printf("adding, cur %d\n", cur_count);
+        int_to_bytes(MEMORY + arg + INT_PTR_LEN, cur_count + 1);
+    }
+
+    pull_fp
+}
+
+void nat_dec_ref() {
+    push_fp
+    push(INT_PTR_LEN)
+
+    tp_int arg = bytes_to_int(MEMORY + true_addr(0));
+    if (arg != 0) {  // is not a null pointer
+        tp_int cur_count = bytes_to_int(MEMORY + arg + INT_PTR_LEN);
+//        printf("dec ing on %d, cur %d\n", arg, cur_count);
+        if (cur_count == 1) {
+//            printf("%d end of life.\n", arg);
+        }
+        int_to_bytes(MEMORY + arg + INT_PTR_LEN, cur_count - 1);
+    } else {
+//        printf("dec on null\n");
+    }
 
     pull_fp
 }
@@ -568,11 +645,47 @@ void invoke(tp_int func_ptr) {
         case 19:  // exit
             nat_exit();
             break;
+        case 20:  // inc_ref
+            nat_inc_ref();
+            break;
+        case 21:  // dec_ref
+            nat_dec_ref();
+            break;
+        case 22:  // nested_array
+            nat_nested_array();
+            break;
+        case 23:
+            nat_class_name();
+            break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;
             ERR_MSG = "No such native invoke. ";
             break;
     }
+}
+
+tp_int runtime_type(tp_int rel_addr) {
+    tp_int type_begin_addr;
+    tp_int from_seg;  // position of 'rel_addr' in its memory segment
+    if (rel_addr < stack_end) {
+        type_begin_addr = bytes_to_int(MEMORY + fp);
+        from_seg = rel_addr;
+    } else {
+        type_begin_addr = bytes_to_int(MEMORY + stack_end);  // begin of global
+        from_seg = rel_addr - stack_end;
+    }
+    tp_int typ_pos = type_begin_addr + (from_seg / INT_PTR_LEN - 1);
+    unsigned char res = MEMORY[true_addr(typ_pos)];
+//    printf("pos %d, %d %d\n", rel_addr, typ_pos, res);
+    return res;
+}
+
+tp_int field_type(tp_int class_ptr, tp_int field_pos) {
+    tp_int array_addr = bytes_to_int(MEMORY + class_ptr) + INT_PTR_LEN * 2;  // 2 is aligned_fields array pointer
+    tp_int array_ptr = bytes_to_int(MEMORY + array_addr);
+    tp_int res = MEMORY[array_ptr + ARRAY_HEADER_LEN + field_pos / INT_PTR_LEN];  // length of each element is 1
+
+    return res;
 }
 
 void tvm_mainloop() {
@@ -581,7 +694,7 @@ void tvm_mainloop() {
         tp_float double_value;
         tp_char char_value;
         tp_byte byte_value;
-        unsigned char bytes[INT_LEN];
+        unsigned char bytes[INT_PTR_LEN];
     };
     union reg64 regs[8];
 
@@ -598,52 +711,52 @@ void tvm_mainloop() {
                 break;
             case 2:  // load
                 reg1 = MEMORY[pc++];
-                memcpy(regs[reg1].bytes, MEMORY + pc, INT_LEN);
-                pc += INT_LEN;
-                memcpy(regs[reg1].bytes, MEMORY + true_addr(regs[reg1].int_value), INT_LEN);
+                memcpy(regs[reg1].bytes, MEMORY + pc, INT_PTR_LEN);
+                pc += INT_PTR_LEN;
+                memcpy(regs[reg1].bytes, MEMORY + true_addr(regs[reg1].int_value), INT_PTR_LEN);
                 break;
             case 3:  // iload
                 reg1 = MEMORY[pc++];
                 regs[reg1].int_value = bytes_to_int(MEMORY + pc);
-                pc += INT_LEN;
+                pc += INT_PTR_LEN;
                 break;
             case 4:  // aload
                 reg1 = MEMORY[pc++];
-                memcpy(regs[reg1].bytes, MEMORY + pc, INT_LEN);
-                pc += INT_LEN;
+                memcpy(regs[reg1].bytes, MEMORY + pc, INT_PTR_LEN);
+                pc += INT_PTR_LEN;
                 regs[reg1].int_value = true_addr(regs[reg1].int_value);
                 break;
             case 5:  // aload_sp
                 reg1 = MEMORY[pc++];
-                memcpy(regs[reg1].bytes, MEMORY + pc, INT_LEN);
-                pc += INT_LEN;
+                memcpy(regs[reg1].bytes, MEMORY + pc, INT_PTR_LEN);
+                pc += INT_PTR_LEN;
                 regs[reg1].int_value = true_addr_sp(regs[reg1].int_value);
                 break;
             case 6:  // store
                 reg1 = MEMORY[pc++];
                 reg2 = MEMORY[pc++];
-                memcpy(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].bytes, INT_LEN);
+                memcpy(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].bytes, INT_PTR_LEN);
                 break;
             case 7:  // astore
                 reg1 = MEMORY[pc++];
                 reg2 = MEMORY[pc++];
                 int_to_bytes(MEMORY + true_addr(regs[reg1].int_value), true_addr(regs[reg2].int_value));
-//                memcpy(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].bytes, INT_LEN);
+//                memcpy(MEMORY + true_addr(regs[reg1].int_value), regs[reg2].bytes, INT_PTR_LEN);
                 break;
             case 8:  // astore_sp
             case 9:  // store_abs
                 reg1 = MEMORY[pc++];
                 reg2 = MEMORY[pc++];
-                memcpy(MEMORY + regs[reg1].int_value, regs[reg2].bytes, INT_LEN);
+                memcpy(MEMORY + regs[reg1].int_value, regs[reg2].bytes, INT_PTR_LEN);
                 break;
             case 10:  // jump
-                pc += bytes_to_int(MEMORY + pc) + INT_LEN;
+                pc += bytes_to_int(MEMORY + pc) + INT_PTR_LEN;
                 break;
             case 11:  // move
                 break;
             case 12:  // push
             push(bytes_to_int(MEMORY + pc))
-                pc += INT_LEN;
+                pc += INT_PTR_LEN;
                 break;
             case 13:  // ret
                 pc = pc_stack[pc_p--];
@@ -661,7 +774,7 @@ void tvm_mainloop() {
                 break;
             case 17:  // call fn
 //                printf("call %lld\n", bytes_to_int(MEMORY + pc));
-                pc_stack[++pc_p] = pc + INT_LEN;
+                pc_stack[++pc_p] = pc + INT_PTR_LEN;
                 pc = true_addr(bytes_to_int(MEMORY + true_addr(bytes_to_int(MEMORY + pc))));
 //                printf("called pc %lld\n", pc);
                 break;
@@ -673,32 +786,32 @@ void tvm_mainloop() {
                 break;
             case 21:  // put_ret
                 reg1 = MEMORY[pc++];
-                memcpy(MEMORY + ret_stack[ret_p--], regs[reg1].bytes, INT_LEN);
+                memcpy(MEMORY + ret_stack[ret_p--], regs[reg1].bytes, INT_PTR_LEN);
                 break;
             case 22:  // copy
                 reg1 = MEMORY[pc++];
                 reg2 = MEMORY[pc++];
                 memcpy(MEMORY + regs[reg1].int_value,
                        MEMORY + regs[reg2].int_value,
-                       INT_LEN);
+                       INT_PTR_LEN);
                 break;
             case 23:  // if_zero_jump
                 reg1 = MEMORY[pc++];
 //                printf("jump %lld\n", bytes_to_int(MEMORY + pc));
                 if (regs[reg1].int_value == 0) {
-                    pc += bytes_to_int(MEMORY + pc) + INT_LEN;
+                    pc += bytes_to_int(MEMORY + pc) + INT_PTR_LEN;
                 } else {
-                    pc += INT_LEN;
+                    pc += INT_PTR_LEN;
                 }
                 break;
             case 24:  // invoke
                 invoke(true_addr(bytes_to_int(MEMORY + pc)));
-                pc += INT_LEN;
+                pc += INT_PTR_LEN;
                 break;
             case 25:  // rload_abs
                 reg1 = MEMORY[pc++];
                 reg2 = MEMORY[pc++];
-                memcpy(regs[reg1].bytes, MEMORY + regs[reg2].int_value, INT_LEN);
+                memcpy(regs[reg1].bytes, MEMORY + regs[reg2].int_value, INT_PTR_LEN);
                 break;
             case 26:  // rloadc_abs
                 reg1 = MEMORY[pc++];
@@ -879,8 +992,8 @@ void tvm_mainloop() {
                 break;
             case 70:  // loadc
                 reg1 = MEMORY[pc++];
-                memcpy(regs[reg1].bytes, MEMORY + pc, INT_LEN);
-                pc += INT_LEN;
+                memcpy(regs[reg1].bytes, MEMORY + pc, INT_PTR_LEN);
+                pc += INT_PTR_LEN;
                 regs[reg1].char_value = bytes_to_char(MEMORY + true_addr(regs[reg1].int_value));
                 break;
             case 71:  // storec
@@ -899,8 +1012,8 @@ void tvm_mainloop() {
                 break;
             case 80:  // loadb
                 reg1 = MEMORY[pc++];
-                memcpy(regs[reg1].bytes, MEMORY + pc, INT_LEN);
-                pc += INT_LEN;
+                memcpy(regs[reg1].bytes, MEMORY + pc, INT_PTR_LEN);
+                pc += INT_PTR_LEN;
 //                regs[reg1].char_value = bytes_to_char(MEMORY + true_addr(regs[reg1].int_value));
                 regs[reg1].byte_value = MEMORY[true_addr(regs[reg1].int_value)];
                 break;
@@ -921,39 +1034,48 @@ void tvm_mainloop() {
                 reg1 = MEMORY[pc++];  // inst_ptr_addr
                 reg2 = MEMORY[pc++];  // method id
                 reg3 = MEMORY[pc++];  // backup
+                if (regs[reg1].int_value == 0) {
+                    fprintf(stderr, "Instance is null.");
+                    ERROR_CODE = ERR_NULL_POINTER;
+                    break;
+                }
                 regs[reg1].int_value = bytes_to_int(
-                        MEMORY + true_addr(regs[reg1].int_value + regs[reg3].int_value));  // class pointer
-//                printf("class pointer %lld\n", regs[reg1].int_value);
+                        MEMORY + true_addr(regs[reg1].int_value));  // class pointer
+                if (regs[reg1].int_value == 0) {
+                    fprintf(stderr, "Class pointer is null.");
+                    ERROR_CODE = ERR_NULL_POINTER;
+                    break;
+                }
                 regs[reg1].int_value = bytes_to_int(MEMORY + regs[reg1].int_value);  // class header address
-                regs[reg3].int_value = bytes_to_int(MEMORY + regs[reg1].int_value);  // mro count
-//                printf("mro count %lld\n", regs[reg1].int_value);
+//                printf("class pointer %d\n", regs[reg1].int_value);
 
-                // skips mro, "mro count", and "method count"
-                regs[reg1].int_value += regs[reg3].int_value * PTR_LEN + INT_LEN * 2;
-//                printf("addr %lld\n", regs[reg1].int_value);
-                regs[reg1].int_value += regs[reg2].int_value * PTR_LEN;  // true addr of method ptr
-                regs[reg1].int_value = bytes_to_int(MEMORY + regs[reg1].int_value);
-//                printf("method ptr %lld\n", regs[reg1].int_value);
+                regs[reg1].int_value += INT_PTR_LEN * 3;  // addr of method array pointer, 3 is the pos in class header
+                regs[reg1].int_value = bytes_to_int(MEMORY + regs[reg1].int_value);  // method array address
+//                printf("method array %d\n", regs[reg1].int_value);
+                regs[reg1].int_value = bytes_to_int(MEMORY +
+                                                    regs[reg1].int_value + ARRAY_HEADER_LEN +
+                                                    regs[reg2].int_value * INT_PTR_LEN);
+                if (regs[reg1].int_value == 0) {
+                    fprintf(stderr, "Method pointer is null.");
+                    ERROR_CODE = ERR_NULL_POINTER;
+                    break;
+                }
+//                printf("method ptr %d\n", regs[reg1].int_value);
                 break;
-
             case 84:  // subclass   %reg1 parent  %reg2 child  %reg3 temp1  %reg4 temp2
                 reg1 = MEMORY[pc++];
                 reg2 = MEMORY[pc++];
                 reg3 = MEMORY[pc++];
                 reg4 = MEMORY[pc++];
-                regs[reg1].int_value = bytes_to_int(MEMORY + true_addr(regs[reg1].int_value));
+
                 regs[reg2].int_value = bytes_to_int(MEMORY + true_addr(regs[reg2].int_value));
+                regs[reg2].int_value = bytes_to_int(MEMORY + regs[reg2].int_value + INT_PTR_LEN);  // child mro array ptr
                 regs[reg3].int_value = bytes_to_int(MEMORY + true_addr(regs[reg2].int_value));  // child mro len
-//                printf("%lld %lld %lld\n", regs[reg1].int_value, regs[reg2].int_value, regs[reg3].int_value);
+//                printf("%d %d %d\n", regs[reg1].int_value, regs[reg2].int_value, regs[reg3].int_value);
                 for (regs[reg4].int_value = 0; regs[reg4].int_value < regs[reg3].int_value; regs[reg4].int_value++) {
                     if (regs[reg1].int_value ==
                         bytes_to_int(MEMORY +
-                                     true_addr(bytes_to_int(MEMORY +  // class ptr address
-                                                            true_addr(
-                                                                    regs[reg2].int_value +  // addr of class ptr in mro
-                                                                    CLASS_FIXED_HEADER +
-                                                                    regs[reg4].int_value *
-                                                                    INT_LEN))))) {
+                                     regs[reg2].int_value + ARRAY_HEADER_LEN + regs[reg4].int_value * INT_PTR_LEN)) {
                         regs[reg1].int_value = 1;
                         goto FOUND_CLASS;
                     }
@@ -965,6 +1087,19 @@ void tvm_mainloop() {
             case 85:  // exitv  %reg1
                 reg1 = MEMORY[pc++];
                 ERROR_CODE = bytes_to_int(MEMORY + true_addr(regs[reg1].int_value));
+                break;
+            case 86:  // rt_type  %reg1 dst  %reg2 src
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                int_to_bytes(MEMORY + true_addr(regs[reg1].int_value),
+                             runtime_type(regs[reg2].int_value));  // requires relative addr
+                break;
+            case 87:  // field_type   %reg1 dst_addr   %reg2 class_ptr   %reg3 field_pos
+                reg1 = MEMORY[pc++];
+                reg2 = MEMORY[pc++];
+                reg3 = MEMORY[pc++];
+                int_to_bytes(MEMORY + true_addr(regs[reg1].int_value),
+                             field_type(regs[reg2].int_value, regs[reg3].int_value));
                 break;
             default:
                 fprintf(stderr, "%d: ", instruction);
@@ -979,28 +1114,28 @@ void tvm_shutdown() {
 }
 
 tp_int tvm_set_args() {
-    tp_int total_malloc_len = INT_LEN;
+    tp_int total_malloc_len = INT_PTR_LEN;
     tp_int *lengths = malloc(sizeof(tp_int) * argc);
     for (int i = 0; i < argc; i++) {
         tp_int len = (tp_int) strlen(argv[i]);
         lengths[i] = len;
-        total_malloc_len += INT_LEN + len * CHAR_LEN;
+        total_malloc_len += INT_PTR_LEN + len * CHAR_LEN;
     }
 
     tp_int arr_ptr = _malloc_essential(total_malloc_len);
     int_to_bytes(MEMORY + arr_ptr, (tp_int) argc);
 
-    tp_int cur_ptr = arr_ptr + INT_LEN + argc * PTR_LEN;
+    tp_int cur_ptr = arr_ptr + INT_PTR_LEN + argc * INT_PTR_LEN;
     for (int i = 0; i < argc; i++) {
         char *str = argv[i];
         tp_int len = lengths[i];
         tp_int str_ptr = cur_ptr;
-        cur_ptr += INT_LEN + len * CHAR_LEN;
+        cur_ptr += INT_PTR_LEN + len * CHAR_LEN;
         int_to_bytes(MEMORY + str_ptr, len);  // write string length
         for (int j = 0; j < len; j++) {
-            char_to_bytes(MEMORY + str_ptr + INT_LEN + j * CHAR_LEN, str[j]);  // write char to string
+            char_to_bytes(MEMORY + str_ptr + INT_PTR_LEN + j * CHAR_LEN, str[j]);  // write char to string
         }
-        int_to_bytes(MEMORY + arr_ptr + INT_LEN + i * INT_LEN, str_ptr);  // write string ptr to string[]
+        int_to_bytes(MEMORY + arr_ptr + INT_PTR_LEN + i * INT_PTR_LEN, str_ptr);  // write string ptr to string[]
     }
 
     free(lengths);
@@ -1014,12 +1149,12 @@ void print_memory(int level) {
     printf("Stack ");
     for (; i < stack_end; i++) {
         printf("%d ", MEMORY[i]);
-        if (i % INT_LEN == 0) printf("| ");
+        if (i % INT_PTR_LEN == 0) printf("| ");
     }
 
     tp_printf("\nGlobal %d: ", stack_end)
     for (; i < global_end; ++i) {
-        if (i % INT_LEN == 0) printf("| ");
+        if (i % INT_PTR_LEN == 0) printf("| ");
         printf("%d ", MEMORY[i]);
     }
 
@@ -1029,8 +1164,14 @@ void print_memory(int level) {
     }
 
     if (level == 2) {
-        tp_printf("\nClass header %d: ", literal_end)
+        tp_printf("\nClass literal %d: ", literal_end)
+        for (; i < class_literal_end; ++i) {
+            printf("%d ", MEMORY[i]);
+        }
+
+        tp_printf("\nClass header %d: ", class_literal_end)
         for (; i < class_header_end; ++i) {
+            if ((i - class_header_end) % (4 * INT_PTR_LEN) == 0) printf("| ");
             printf("%d ", MEMORY[i]);
         }
 
@@ -1049,7 +1190,7 @@ void print_memory(int level) {
     tp_printf("\nHeap %d: ", heap_start)
     for (i = heap_start; i < heap_start + 128; i++) {
         printf("%d ", MEMORY[i]);
-        if ((i - entry_end) % INT_LEN == 7) printf("| ");
+        if ((i - entry_end) % INT_PTR_LEN == 7) printf("| ");
     }
     printf("\n");
 }

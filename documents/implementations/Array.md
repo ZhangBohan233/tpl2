@@ -2,11 +2,11 @@
 
 Notes: 
 * let `PTR_LEN` = byte length of a pointer
-* let `INT_LEN` = byte length of an int
+* let `INT_PTR_LEN` = byte length of an int
 
 ### Structure
 * An array stores a continuous value collection in memory.
-* An array of type `T` with size `n` occupies `sizeof(T) * n + INT_LEN` bytes
+* An array of type `T` with size `n` occupies `sizeof(T) * n + INT_PTR_LEN` bytes
 in memory
 * High dimensional arrays only contain an array of pointers to its direct
 elements. For example `int[][]` is an array consists of pointers

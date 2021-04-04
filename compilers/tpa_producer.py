@@ -25,7 +25,7 @@ def number(num: int) -> str:
 
 
 def load_of_len(length: int) -> str:
-    if length == util.INT_LEN:
+    if length == util.INT_PTR_LEN:
         return "load"
     elif length == util.CHAR_LEN:
         return "loadc"
@@ -34,7 +34,7 @@ def load_of_len(length: int) -> str:
 
 
 def store_of_len(length: int) -> str:
-    if length == util.INT_LEN:
+    if length == util.INT_PTR_LEN:
         return "store"
     elif length == util.CHAR_LEN:
         return "storec"
@@ -43,7 +43,7 @@ def store_of_len(length: int) -> str:
 
 
 def store_abs_of_len(length: int) -> str:
-    if length == util.INT_LEN:
+    if length == util.INT_PTR_LEN:
         return "store_abs"
     elif length == util.CHAR_LEN:
         return "storec_abs"
@@ -111,41 +111,93 @@ class Optimizer:
         return self.optimize_level >= 1
 
 
+class FunctionMemory:
+    def __init__(self, init_p):
+        self.var_types = {}
+        self.begin = init_p
+        self.ptr = init_p  # does not include type area
+
+    def allocate_new(self, t: typ.Type):
+        length = t.memory_length()
+        if length == util.INT_PTR_LEN and self.ptr % util.INT_PTR_LEN != 0:
+            self.ptr = (self.ptr // util.INT_PTR_LEN + 1) * util.INT_PTR_LEN  # align
+        old = self.ptr
+        self.var_types[old] = t
+        self.ptr += length
+        return old
+
+    def finalize(self):
+        if self.ptr % util.INT_PTR_LEN != 0:
+            self.ptr = (self.ptr // util.INT_PTR_LEN + 1) * util.INT_PTR_LEN  # align
+
+    def get_actual_push(self) -> (int, list):
+        """
+        :return: (push of local data, type bytes)
+        """
+        stack_types = []
+        for i in range(self.begin, self.ptr, util.INT_PTR_LEN):
+            if i in self.var_types:
+                # a trick here is: types with non-int length actually do not need to record
+                # so types not at aligned pos are not recorded
+                t: typ.Type = self.var_types[i]
+                stack_types.append(t.type_code())
+            else:
+                print("very long stack object near " + str(i))
+        while len(stack_types) % util.INT_PTR_LEN != 0:
+            stack_types.append(0)
+        # print(stack_types)
+        return self.ptr, stack_types
+
+    def make_type_header_tail(self, manager, is_func=True):
+        self.finalize()
+        sim = TpaOutput(manager)
+        sim.write_comment("begin of type assigning")
+        pure_end, type_bytes = self.get_actual_push()
+        if is_func:
+            sim.write_format("push", pure_end + len(type_bytes))
+            sim.i_assign(0, pure_end, False)
+        else:
+            sim.i_assign(self.begin - util.FUNC_STACK_HEADER_LEN, pure_end, False)
+        merged = util.merge_bytes_to_int(type_bytes)
+        for i in range(len(merged)):
+            sim.i_assign(pure_end + i * util.INT_PTR_LEN, merged[i], False)
+        sim.write_comment("end of type assigning")
+        return sim.result()
+
+
 class Manager:
     def __init__(self, literal: bytes, str_lit_pos: dict, optimize_level=0):
         self.literal = literal
         self.str_lit_pos = str_lit_pos
         self.string_class_ptr = 0
-        self.chars_pos_in_str = util.PTR_LEN  # position of 'chars' in class String
-        self.blocks = []
+        self.stack: [FunctionMemory] = []  # sp
+        self.global_types: FunctionMemory = FunctionMemory(util.STACK_SIZE + util.FUNC_STACK_HEADER_LEN)  # gp
         self.available_regs = [7, 6, 5, 4, 3, 2, 1, 0]
-        self.gp = util.STACK_SIZE
-        self.sp = util.INT_LEN + 1
+        # self.gp = util.STACK_SIZE
+        # self.sp = 0
         self.functions_map = {}
         self.class_headers = []  # class object
         self.class_func_order = []
         self.label_manager = LabelManager()
         self.optimizer = Optimizer(optimize_level)
 
-    def allocate_global(self, length):
-        addr = self.gp
-        self.gp += length
-        return addr
+    def allocate_global(self, t: typ.Type):
+        return self.global_types.allocate_new(t)
 
-    def allocate_stack(self, length):
-        if len(self.blocks) == 0:
-            addr = self.gp
-            self.gp += length
+    def allocate_stack(self, t: typ.Type):
+        if len(self.stack) == 0:
+            return self.allocate_global(t)
         else:
-            addr = self.sp - self.blocks[-1]
-            self.sp += length
-        return addr
+            return self.stack[-1].allocate_new(t)
 
     def push_stack(self):
-        self.blocks.append(self.sp)
+        self.stack.append(FunctionMemory(util.FUNC_STACK_HEADER_LEN))
+
+    def get_stack_top(self) -> FunctionMemory:
+        return self.stack[-1]
 
     def restore_stack(self):
-        self.sp = self.blocks.pop()
+        self.stack.pop()
 
     def require_regs(self, count):
         if len(self.available_regs) < count:
@@ -172,9 +224,6 @@ class Manager:
         self.class_headers.append(class_object)
         self.class_func_order.append((full_name, 1))
 
-    def global_length(self):
-        return self.gp - util.STACK_SIZE
-
 
 class TpaOutput:
     def __init__(self, manager: Manager, is_global=False):
@@ -195,12 +244,10 @@ class TpaOutput:
             self.write_format("push_fp")
 
     def add_indefinite_push(self) -> int:
-        self.output.append("push")
-        return len(self.output) - 1
+        return len(self.output)
 
-    def modify_indefinite_push(self, index, length):
-        push = self._format("push", length)
-        self.output[index] = push
+    def modify_indefinite_push(self, index: int, stack_top: FunctionMemory):
+        self.output[index: index] = stack_top.make_type_header_tail(self.manager, is_func=True)
 
     def end_func(self):
         self.write_format("stop")
@@ -237,10 +284,13 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
-    def assign_i(self, dst_addr, value):
+    def i_assign(self, dst_addr, value, value_is_addr=False):
         reg1, reg2 = self.manager.require_regs(2)
 
-        self.write_format("iload", register(reg1), address(value))
+        if value_is_addr:
+            self.write_format("iload", register(reg1), address(value))
+        else:
+            self.write_format("iload", register(reg1), number(value))
         self.write_format("iload", register(reg2), address(dst_addr))
         self.write_format("store", register(reg2), register(reg1))
 
@@ -424,7 +474,7 @@ class TpaOutput:
         reg1, reg2 = self.manager.require_regs(2)
 
         self.write_format("load", register(reg1), address(ptr_addr))
-        if length == util.INT_LEN:
+        if length == util.INT_PTR_LEN:
             self.write_format("rload_abs", register(reg2), register(reg1))
         elif length == util.CHAR_LEN:
             self.write_format("rloadc_abs", register(reg2), register(reg1))
@@ -469,6 +519,25 @@ class TpaOutput:
 
         self.manager.append_regs(reg2, reg1)
 
+    def runtime_type(self, dst_addr: int, src_addr: int):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.write_format("iload", register(reg1), address(dst_addr))
+        self.write_format("iload", register(reg2), address(src_addr))
+        self.write_format("rt_type", register(reg1), register(reg2))
+
+        self.manager.append_regs(reg2, reg1)
+
+    def field_type(self, dst_addr: int, class_ptr: int, field_pos: int):
+        reg1, reg2, reg3 = self.manager.require_regs(3)
+
+        self.write_format("iload", register(reg1), address(dst_addr))
+        self.write_format("iload", register(reg2), address(class_ptr))
+        self.write_format("iload", register(reg3), number(field_pos))
+        self.write_format("field_type", register(reg1), register(reg2), register(reg3))
+
+        self.manager.append_regs(reg3, reg2, reg1)
+
     def call_named_function(self, fn_name: str, args: list, rtn_addr: int, ret_len: int):
         reg1, reg2 = self.manager.require_regs(2)
 
@@ -499,24 +568,24 @@ class TpaOutput:
 
         self.write_format("load", register(reg1), address(inst_ptr_addr))
         self.write_format("iload", register(reg2), number(method_id))
-        self.write_format("iload", register(reg3), number(offset))
+        # self.write_format("iload", register(reg3), number(offset))
         self.write_format("get_method", register(reg1), register(reg2), register(reg3))
         self.set_call(args, reg2, reg3, rtn_len, rtn_addr)
         self.write_format("call_reg", register(reg1))
 
         self.manager.append_regs(reg3, reg2, reg1)
 
-    def set_call(self, args: list, reg1, reg2, ret_len, rtn_addr):
-        count = 0
+    def set_call(self, args: list, reg1, reg2, ret_len, rtn_addr, init_pos=util.INT_PTR_LEN):
+        sp_pos = init_pos
         self.write_format("args")
         for arg in args:
             arg_addr = arg[0]
             arg_length = arg[1]
-            self.write_format("aload_sp", register(reg1), address(count))
+            self.write_format("aload_sp", register(reg1), address(sp_pos))
             if arg_length == 1:
                 self.write_format("loadb", register(reg2), address(arg_addr))
                 self.write_format("store_abs", register(reg1), register(reg2))
-            elif arg_length == util.INT_LEN:
+            elif arg_length == util.INT_PTR_LEN:
                 self.write_format("load", register(reg2), address(arg_addr))
                 self.write_format("store_abs", register(reg1), register(reg2))
             elif arg_length == util.CHAR_LEN:
@@ -525,7 +594,7 @@ class TpaOutput:
             else:
                 raise errs.TpaError("Unexpected arg length. ")
 
-            count += arg_length
+            sp_pos += arg_length
 
         if ret_len > 0:
             self.write_format("iload", register(reg1), address(rtn_addr))
@@ -542,8 +611,16 @@ class TpaOutput:
     def invoke_ptr(self, fn_ptr: int, args: list, rtn_addr: int, ret_len: int):
         reg1, reg2 = self.manager.require_regs(2)
 
-        self.set_call(args, reg1, reg2, ret_len, rtn_addr)
+        self.set_call(args, reg1, reg2, ret_len, rtn_addr, init_pos=0)
         self.write_format("invoke", address(fn_ptr))
+
+        self.manager.append_regs(reg2, reg1)
+
+    def invoke_name(self, fn_name: str, args: list, rtn_addr: int, ret_len: int):
+        reg1, reg2 = self.manager.require_regs(2)
+
+        self.set_call(args, reg1, reg2, ret_len, rtn_addr, init_pos=0)
+        self.write_format("invoke_fn", fn_name)
 
         self.manager.append_regs(reg2, reg1)
 
@@ -573,6 +650,9 @@ class TpaOutput:
         self.write_format("exitv", register(reg1))
 
         self.manager.append_regs(reg1)
+
+    def write_comment(self, comment: str):
+        self.output.append("    ; " + comment)
 
     def write_format(self, *inst):
         self.output.append(self._format(*inst))
@@ -617,6 +697,12 @@ class TpaOutput:
             line = f"class {full_name} ${ct.mro[0].class_ptr}\nmro\n"
             for mro_t in ct.mro[1:]:
                 line += "    " + mro_t.full_name() + "\n"
+            line += "aligned_fields\n"
+            fields = ct.field_list()
+            # print(fields)
+            for name, pos, field_t, def_clazz, const, perm in fields:
+                if pos % util.INT_PTR_LEN == 0:
+                    line += f"    {name} {pos} {field_t.type_code()}\n"
             line += "methods\n"
             # print(ct.method_rank)
             for method_name, base_t in ct.method_rank:
@@ -650,24 +736,31 @@ class TpaOutput:
                     if method_name not in compiled_fn_names:
                         compile_function(method_name)
 
+        self.manager.global_types.finalize()
+        global_pure_pos, global_types = self.manager.global_types.get_actual_push()
+        global_pure_len = global_pure_pos - util.STACK_SIZE
+        global_total_len = global_pure_len + len(global_types)
+        # print(global_pure_len, len(global_types), global_types)
+        global_entry_sim = self.manager.global_types.make_type_header_tail(self.manager, is_func=False)
+        entry_begin = self.output.index("entry") + 1
+        self.output[entry_begin:entry_begin] = global_entry_sim
+
         # process string literals
         # mechanism:
         # 1. simulate 'String' by adding a pointer to class 'String' at <str_pos>
         # 2. simulate 'String.chars' by adding a pointer to literal char array at <str_pos + chars_pos_in_str>
-        if len(self.manager.str_lit_pos) != 0 and self.manager.string_class_ptr == 0:
+        if len(self.manager.str_lit_pos) != 0 and \
+                (self.manager.string_class_ptr == 0 or util.CHARS_POS_IN_STR == 0):
             raise errs.TplCompileError("String literal is not allowed without importing 'lang'.")
         str_class_ptr = util.int_to_bytes(self.manager.string_class_ptr)
-        lit_start = util.STACK_SIZE + self.manager.global_length()
+        lit_start = util.STACK_SIZE + global_total_len
         for str_lit in self.manager.str_lit_pos:
             str_pos = self.manager.str_lit_pos[str_lit]
             str_addr = str_pos + lit_start
-            char_arr_ptr_pos = str_pos + self.manager.chars_pos_in_str
-            self.manager.literal[str_pos: str_pos + util.PTR_LEN] = \
-                str_class_ptr
-            self.manager.literal[char_arr_ptr_pos: char_arr_ptr_pos + util.PTR_LEN] = \
-                util.int_to_bytes(str_addr + self.manager.chars_pos_in_str + util.PTR_LEN)
+            str_header_bytes = util.make_string_header(str_class_ptr, str_addr)
+            self.manager.literal[str_pos: str_pos + len(str_header_bytes)] = str_header_bytes
 
-        merged[merged.index("global_length") + 1] = str(self.manager.global_length())
+        merged[merged.index("global_length") + 1] = str(global_total_len)
         literal_str = " ".join([str(int(b)) for b in self.manager.literal])
         merged[merged.index("literal") + 1] = literal_str
 

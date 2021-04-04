@@ -1,0 +1,25 @@
+﻿import lang;
+
+gg: int = 4;
+
+class X {
+    vv: float;
+}
+
+class A(X) {
+    val: int;
+
+    fn foo() void {
+        println(gg);
+    }
+}
+
+fn main() int {
+    a: byte = 2b;
+    b: char = 'a';
+    c: int = 4;
+    println(field_type(A, val));
+    println(field_type(A, vv));
+
+    return c;
+}

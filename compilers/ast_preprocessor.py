@@ -55,7 +55,7 @@ class AstPreprocessor:
                 pos = self.str_literals[node.value]
             else:
                 pos = len(self.literal_bytes)
-                str_bytes = util.empty_bytes(util.STRING_HEADER_LEN) + util.string_to_bytes(node.value)
+                str_bytes = util.empty_bytes(util.STRING_HEADER_LEN) + util.string_to_chars_bytes(node.value)
                 self.literal_bytes.extend(str_bytes)
                 self.str_literals[node.value] = pos
             return ast.StringLiteral(pos, node.lfp)

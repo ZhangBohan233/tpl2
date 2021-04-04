@@ -62,6 +62,6 @@ def _init_compile_time_functions(env: en.GlobalEnvironment, tpa):
         env.define_const(func_t.name, func_t, tl.LF_COMPILER)
     for name in typ.NATIVE_FUNCTIONS:
         func_id, func_type = typ.NATIVE_FUNCTIONS[name]
-        fn_ptr = tpa.manager.allocate_stack(util.PTR_LEN)
+        fn_ptr = tpa.manager.allocate_global(func_type)
         tpa.require_name(name, fn_ptr)
         env.define_function(name, func_type, fn_ptr, tl.LF_COMPILER)

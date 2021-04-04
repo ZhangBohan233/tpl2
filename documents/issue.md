@@ -44,3 +44,9 @@ array := int[];  // should throw error but not
 
 ### ~~ISSUE M01~~ FIXED
 `exportmacro does` not work
+
+
+## Memory
+
+### ISSUE M01 
+Smart pointer leak when inlining function
