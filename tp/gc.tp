@@ -3,23 +3,42 @@
 gg: int = 4;
 
 class X {
-    vv: float;
+    vv: float = 1.0;
 }
 
 class A(X) {
     val: int;
 
     fn foo() void {
-        println(gg);
+        //println(gg);
     }
 }
 
-fn main() int {
-    a: byte = 2b;
-    b: char = 'a';
-    c: int = 4;
-    println(field_type(A, val));
-    println(field_type(A, vv));
+fn bar() void {
+    aaa: float = 42.4;
+    println(aaa);
+    _gc();
+}
 
-    return c;
+fn main() int {
+    a := new A();
+    a.val = 33;
+    b: float = 3.3;
+
+    c := new A();
+    c.val = 44;
+
+    bar();
+
+    c = new A();
+    c.val = 55;
+
+    arr: A[][] = new A[3][];
+    arr[0] = new A[2];
+    arr[0][0] = a;
+    arr[0][1] = c;
+
+    _gc();
+
+    return arr[0][1].val;
 }

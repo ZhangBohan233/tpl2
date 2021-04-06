@@ -85,6 +85,12 @@
 		<Unit filename="E:/GitHub/tpl2/main.c">
 			<Option target="tpl2"/>
 		</Unit>
+		<Unit filename="E:/GitHub/tpl2/tvm/gc.c">
+			<Option target="tpl2"/>
+		</Unit>
+		<Unit filename="E:/GitHub/tpl2/tvm/gc.h">
+			<Option target="tpl2"/>
+		</Unit>
 		<Unit filename="E:/GitHub/tpl2/tvm/mem.c">
 			<Option target="tpl2"/>
 		</Unit>
@@ -95,6 +101,9 @@
 			<Option target="tpl2"/>
 		</Unit>
 		<Unit filename="E:/GitHub/tpl2/tvm/os_spec.h">
+			<Option target="tpl2"/>
+		</Unit>
+		<Unit filename="E:/GitHub/tpl2/tvm/positions.h">
 			<Option target="tpl2"/>
 		</Unit>
 		<Unit filename="E:/GitHub/tpl2/tvm/tvm.c">

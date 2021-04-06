@@ -10,6 +10,7 @@
 #include "os_spec.h"
 #include "mem.h"
 #include "tvm.h"
+#include "gc.h"
 
 // The error code, set by virtual machine. Used to tell the main loop that the process is interrupted
 // Interrupt the vm if the code is not 0
@@ -29,35 +30,11 @@ char *ERR_MSG = "";
 #define push_fp call_stack[++call_p] = fp; fp = sp;
 #define pull_fp sp = fp; fp = call_stack[call_p--];
 
-#define MEMORY_SIZE 131072
-#define RECURSION_LIMIT 1000
-#define CLASS_FIXED_HEADER (INT_PTR_LEN * 2)
-
 #define rshift_logical(val, n) ((tp_int) (int_fast64_t) ((uint_fast64_t) (val) >> (n)));
-
-tp_int stack_end;
-tp_int literal_end;
-tp_int global_end;
-tp_int class_literal_end;
-tp_int class_header_end;
-tp_int functions_end;
-tp_int entry_end;
-tp_int heap_start;  // there might be small gaps between entry_end and heap_start, due to alignment
-
-unsigned char MEMORY[MEMORY_SIZE];
 
 tp_int sp = 1 + INT_PTR_LEN;
 tp_int fp = 1;
 tp_int pc = 0;
-
-tp_int call_stack[RECURSION_LIMIT];  // stores fp (frame pointer)
-int call_p = -1;
-
-tp_int pc_stack[RECURSION_LIMIT];  // stores pc (program counter)
-int pc_p = -1;
-
-tp_int ret_stack[RECURSION_LIMIT];  // stores true addr of return addresses
-int ret_p = -1;
 
 int argc;
 char **argv;
@@ -88,6 +65,10 @@ int vm_check(const unsigned char *src_code) {
 }
 
 int tvm_load(const unsigned char *src_code, const int code_length) {
+    call_p = -1;
+    pc_p = -1;
+    ret_p = -1;
+
     int check = vm_check(src_code);
     if (check != 0) return check;
 
@@ -118,6 +99,8 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
 
     heap_start = entry_end;
     while (heap_start % INT_PTR_LEN != 0) heap_start++;
+
+    create_heap(heap_start);
 
     available = build_link(heap_start, MEMORY_SIZE, &ava_pool);
 //    fragments = build_link(heap_start, MEMORY_SIZE, &fragment_pool);
@@ -328,20 +311,23 @@ void nat_exit() {
 }
 
 tp_int _malloc_essential(tp_int asked_len) {
-    tp_int real_len = asked_len + INT_PTR_LEN;
-    tp_int allocate_len =
-            real_len % MEM_BLOCK == 0 ? real_len / MEM_BLOCK : real_len / MEM_BLOCK + 1;
-    tp_int location = malloc_link(allocate_len);
+//    tp_int real_len = asked_len + INT_PTR_LEN;
+//    tp_int allocate_len =
+//            real_len % MEM_BLOCK == 0 ? real_len / MEM_BLOCK : real_len / MEM_BLOCK + 1;
+//    tp_int location = malloc_link(allocate_len);
+
+    tp_int location = heap_allocate(asked_len);
 
     if (location <= 0) {
         int ava_size = link_len(available) * MEM_BLOCK - INT_PTR_LEN;
-        tp_fprintf(stderr, "Cannot allocate length %lld, available memory %d\n", asked_len, ava_size);
+        tp_fprintf(stderr, "Cannot heap_allocate length %lld, available memory %d\n", asked_len, ava_size);
         ERROR_CODE = ERR_MEMORY_OUT;
         return 0;
     }
 
-    int_to_bytes(MEMORY + location, allocate_len);  // stores the allocated length
-    return location + INT_PTR_LEN;
+//    int_to_bytes(MEMORY + location, allocate_len);  // stores the allocated length
+//    return location + INT_PTR_LEN;
+    return location;
 }
 
 void nat_malloc() {
@@ -385,16 +371,16 @@ void nat_free() {
     push_fp
     push(INT_PTR_LEN)
 
-    tp_int free_ptr = bytes_to_int(MEMORY + true_addr(0));
-    int_fast64_t real_addr = free_ptr - INT_PTR_LEN;
-    int_fast64_t alloc_len = bytes_to_int(MEMORY + real_addr);
-
-    if (real_addr < entry_end || real_addr > MEMORY_SIZE) {
-        printf("Cannot free pointer: %lld outside heap\n", real_addr);
-        ERROR_CODE = ERR_HEAP_COLLISION;
-        return;
-    }
-    _free_link(real_addr, alloc_len);
+//    tp_int free_ptr = bytes_to_int(MEMORY + true_addr(0));
+//    int_fast64_t real_addr = free_ptr - INT_PTR_LEN;
+//    int_fast64_t alloc_len = bytes_to_int(MEMORY + real_addr);
+//
+//    if (real_addr < entry_end || real_addr > MEMORY_SIZE) {
+//        printf("Cannot free pointer: %lld outside heap\n", real_addr);
+//        ERROR_CODE = ERR_HEAP_COLLISION;
+//        return;
+//    }
+//    _free_link(real_addr, alloc_len);
 
     pull_fp
 }
@@ -468,6 +454,7 @@ void nat_heap_array() {
     tp_int heap_loc = _malloc_essential(ele_length * arr_length + INT_PTR_LEN * 2);  // array length, ele code
     int_to_bytes(MEMORY + heap_loc, arr_length);
     int_to_bytes(MEMORY + heap_loc + INT_PTR_LEN, ele_code);
+    memset(MEMORY + heap_loc + INT_PTR_LEN * 2, 0, 1);  // init to 0
 //    int_to_bytes(MEMORY + arr_ptr_addr, heap_loc);
     nat_return_int(heap_loc);
 
@@ -488,6 +475,14 @@ void nat_class_name() {
     tp_int class_header = bytes_to_int(MEMORY + class_ptr);
     tp_int name_str_ptr = bytes_to_int(MEMORY + class_header);
     nat_return_int(name_str_ptr);
+
+    pull_fp
+}
+
+void nat_gc() {
+    push_fp
+
+    gc();
 
     pull_fp
 }
@@ -654,8 +649,11 @@ void invoke(tp_int func_ptr) {
         case 22:  // nested_array
             nat_nested_array();
             break;
-        case 23:
+        case 23:  // class_name
             nat_class_name();
+            break;
+        case 24:  // gc
+            nat_gc();
             break;
         default:
             ERROR_CODE = ERR_NATIVE_INVOKE;
@@ -664,24 +662,32 @@ void invoke(tp_int func_ptr) {
     }
 }
 
-tp_int runtime_type(tp_int rel_addr) {
+tp_int runtime_type_abs(tp_int abs_addr, tp_int segment_begin) {
     tp_int type_begin_addr;
     tp_int from_seg;  // position of 'rel_addr' in its memory segment
-    if (rel_addr < stack_end) {
-        type_begin_addr = bytes_to_int(MEMORY + fp);
-        from_seg = rel_addr;
+    if (abs_addr < stack_end) {
+        type_begin_addr = bytes_to_int(MEMORY + segment_begin) + segment_begin;
+        from_seg = abs_addr - segment_begin;
     } else {
-        type_begin_addr = bytes_to_int(MEMORY + stack_end);  // begin of global
-        from_seg = rel_addr - stack_end;
+        type_begin_addr = bytes_to_int(MEMORY + stack_end);
+        from_seg = abs_addr - stack_end;
     }
     tp_int typ_pos = type_begin_addr + (from_seg / INT_PTR_LEN - 1);
-    unsigned char res = MEMORY[true_addr(typ_pos)];
-//    printf("pos %d, %d %d\n", rel_addr, typ_pos, res);
+    unsigned char res = MEMORY[typ_pos];
+//    printf("pos %d, %d %d\n", abs_addr, typ_pos, res);
     return res;
 }
 
+tp_int runtime_type(tp_int rel_addr) {
+    if (rel_addr < stack_end) {
+        return runtime_type_abs(true_addr(rel_addr), fp);
+    } else {
+        return runtime_type_abs(rel_addr, stack_end);
+    }
+}
+
 tp_int field_type(tp_int class_ptr, tp_int field_pos) {
-    tp_int array_addr = bytes_to_int(MEMORY + class_ptr) + INT_PTR_LEN * 2;  // 2 is aligned_fields array pointer
+    tp_int array_addr = bytes_to_int(MEMORY + class_ptr) + CLASS_FIELD_ARRAY_POS;  // 2 is aligned_fields array pointer
     tp_int array_ptr = bytes_to_int(MEMORY + array_addr);
     tp_int res = MEMORY[array_ptr + ARRAY_HEADER_LEN + field_pos / INT_PTR_LEN];  // length of each element is 1
 

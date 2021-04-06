@@ -154,6 +154,33 @@ main.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles\tpl2.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\tpl2.dir\main.c.s
 .PHONY : main.c.s
 
+tvm\gc.obj: tvm\gc.c.obj
+
+.PHONY : tvm\gc.obj
+
+# target to build an object file
+tvm\gc.c.obj:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\tpl2.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\tpl2.dir\tvm\gc.c.obj
+.PHONY : tvm\gc.c.obj
+
+tvm\gc.i: tvm\gc.c.i
+
+.PHONY : tvm\gc.i
+
+# target to preprocess a source file
+tvm\gc.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\tpl2.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\tpl2.dir\tvm\gc.c.i
+.PHONY : tvm\gc.c.i
+
+tvm\gc.s: tvm\gc.c.s
+
+.PHONY : tvm\gc.s
+
+# target to generate assembly for a file
+tvm\gc.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles\tpl2.dir\build.make /nologo -$(MAKEFLAGS) CMakeFiles\tpl2.dir\tvm\gc.c.s
+.PHONY : tvm\gc.c.s
+
 tvm\mem.obj: tvm\mem.c.obj
 
 .PHONY : tvm\mem.obj
@@ -274,6 +301,9 @@ help:
 	@echo ... main.obj
 	@echo ... main.i
 	@echo ... main.s
+	@echo ... tvm/gc.obj
+	@echo ... tvm/gc.i
+	@echo ... tvm/gc.s
 	@echo ... tvm/mem.obj
 	@echo ... tvm/mem.i
 	@echo ... tvm/mem.s

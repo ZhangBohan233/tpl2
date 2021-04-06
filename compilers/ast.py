@@ -734,9 +734,6 @@ class ReturnStmt(UnaryStmt):
             else:
                 raise errs.TplCompileError("Unexpected value length. ", self.lfp)
 
-        object_pointers = env.get_object_pointers()
-        for obj_ptr in object_pointers:
-            dec_ref(obj_ptr, env, tpa, self.lfp)
         tpa.return_func()
 
     def return_check(self):
@@ -825,8 +822,14 @@ class NewExpr(UnaryExpr):
 
         if class_t.abstract:
             raise errs.TplCompileError(f"Abstract class '{class_t.name_with_path}' is not initialisable. ", self.lfp)
-        tpa.i_ptr_assign(class_t.class_ptr, util.INT_PTR_LEN, inst_ptr_addr)  # assign 'class'
-        # inc_ref(inst_ptr_addr, env, tpa, self.lfp)
+
+        # assign 'class'
+        tpa.i_ptr_assign(class_t.class_ptr, util.INT_PTR_LEN, inst_ptr_addr)
+
+        # assign 'byteLength'
+        arith_addr = tpa.manager.allocate_stack(typ.TYPE_INT)
+        tpa.i_binary_arith("addi", inst_ptr_addr, util.INT_PTR_LEN, arith_addr)
+        tpa.i_ptr_assign(class_t.memory_length(), util.INT_PTR_LEN, arith_addr)
 
         const_args = self.value.arg_types(env, tpa.manager)
         const_args.insert(0, None)  # insert a positional arg of 'this'
@@ -836,7 +839,6 @@ class NewExpr(UnaryExpr):
 
         ea = self.value.evaluate_args(constructor_t, env, tpa, True)
         ea.insert(0, (inst_ptr_addr, util.INT_PTR_LEN))
-        # inc_ref(inst_ptr_addr, env, tpa, self.lfp)
         FunctionCall.call_name(util.name_with_path(
             typ.function_poly_name("__new__", constructor_t.param_types, True), class_t.file_path, class_t),
             ea,
@@ -1077,7 +1079,6 @@ class DotExpr(BinaryExpr):
             res_ptr = tpa.manager.allocate_stack(t.rtype)
             ea = right.evaluate_args(t, env, tpa, is_method=True)
             ea.insert(0, (ins_ptr_addr, util.INT_PTR_LEN))
-            # inc_ref(ins_ptr_addr, env, tpa, lf)
             if t.const or t.permission == PRIVATE:  # cannot be overridden, so call it directly
                 FunctionCall.call_ptr(method_p, ea, tpa, res_ptr, lf, t)
             else:
@@ -1124,7 +1125,6 @@ class DotExpr(BinaryExpr):
                 ea = right_node.evaluate_args(t, env, tpa, is_method=is_method)
                 if is_method:
                     ea.insert(0, (ins_ptr_addr, util.INT_PTR_LEN))
-                    # inc_ref(ins_ptr_addr, env, tpa, lf)
                 FunctionCall.call_name(full_name, ea, tpa, res_ptr, lf, t)
                 return res_ptr
         raise errs.TplCompileError("Cannot make method call. ", lf)
@@ -1156,6 +1156,7 @@ class DotExpr(BinaryExpr):
         if name == "class":
             tpa.i_assign(res_addr, class_ptr, value_is_addr=True)
             return res_addr
+        # there is no 'byteLength' in class. e.g. 'Object.byteLength' should be replaced by 'sizeof(Object)'
 
         raise errs.TplCompileError(f"Class type does not have attribute '{name}'. ", lfp)
 
@@ -1320,11 +1321,7 @@ class Assignment(BinaryExpr):
         else:
             raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.left.__class__.__name__), self.lfp)
 
-        # if typ.is_object_ptr(left_t):
-        #     dec_ref(left_addr, env, tpa, self.lfp)
         self.right.compile_to(env, tpa, left_addr, left_t.memory_length())
-        # if typ.is_object_ptr(right_t):
-        #     inc_ref(left_addr, env, tpa, self.lfp)  # since 'left_addr' now stores value in right
         return left_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -1389,8 +1386,6 @@ class Declaration(BinaryStmt):
         right_t = self.right.definition_type(env, tpa.manager)
         if isinstance(self.left, NameNode):
             rel_addr = tpa.manager.allocate_stack(right_t)
-            if typ.is_object_ptr(right_t) and not self.left.name == "this":
-                env.add_object_pointer(rel_addr)
             # print(right_t)
             if self.level == VAR_CONST:
                 env.define_const_set(self.left.name, right_t, rel_addr, self.lfp)
@@ -1433,12 +1428,7 @@ class QuickAssignment(BinaryStmt):
         res_addr = tpa.manager.allocate_stack(t)
         env.define_var_set(self.left.name, t, res_addr, self.lfp)
 
-        if typ.is_object_ptr(t):
-            env.add_object_pointer(res_addr)
-
         self.right.compile_to(env, tpa, res_addr, t.memory_length())
-        if typ.is_object_ptr(t):
-            inc_ref(res_addr, env, tpa, self.lfp)
 
 
 class RightArrowExpr(BinaryExpr):
@@ -2060,8 +2050,6 @@ class FunctionCall(Expression):
                 raise errs.TplCompileError("Argument type does not match param type. "
                                            "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lfp)
             arg_addr = self.args[i - diff].compile(env, tpa)
-            # if typ.is_object_ptr(arg_t):
-            #     inc_ref(arg_addr, env, tpa, self.lfp)
             evaluated_args.append((arg_addr, arg_t.length))
         return evaluated_args
 
@@ -2456,10 +2444,10 @@ class IndexingExpr(Expression):
         self.args = args
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        if self.is_array_initialization(env):
-            return array_creation(self, env, tpa)
-        else:
-            return self.indexing(env, tpa)
+        # if self.is_array_initialization(env):
+        #     return array_creation(self, env, tpa)
+        # else:
+        return self.indexing(env, tpa)
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         if self.is_array_initialization(env):
@@ -2875,9 +2863,6 @@ class FunctionObject:
 
             # ending
             if self.func_type.rtype.is_void():
-                object_pointers = scope.get_object_pointers()
-                for obj_ptr in object_pointers:
-                    dec_ref(obj_ptr, scope, body_out, self.lfp)
                 body_out.return_func()
             body_out.end_func()
 
@@ -2920,7 +2905,7 @@ class ClassObject:
         # the class pointer
         self.class_type.fields["class"] = 0, typ.TYPE_INT, self.class_type, True, PUBLIC
         # the ref count
-        self.class_type.fields["gcCount"] = util.INT_PTR_LEN, typ.TYPE_INT, self.class_type, True, PUBLIC
+        self.class_type.fields["byteLength"] = util.INT_PTR_LEN, typ.TYPE_INT, self.class_type, True, PUBLIC
 
         def eval_declaration(dec: Declaration, cur_field_pos):
             dec_name = dec.get_name()
@@ -3282,6 +3267,8 @@ def array_attribute_types(attr_name: str, lf):
 
 def class_attribute_types(attr_name: str, lf):
     if attr_name == "class":
+        return typ.TYPE_INT
+    elif attr_name == "byteLength":
         return typ.TYPE_INT
 
     raise errs.TplCompileError(f"Class does not have attribute '{attr_name}'. ", lf)

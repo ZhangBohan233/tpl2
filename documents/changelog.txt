@@ -1,4 +1,10 @@
-﻿===== VERSION 2074 =====
+﻿===== VERSION 2075 =====
+2021/04/07
+
+* Almost finished gc system
+* Added new attribute 'byteLength' in object instance
+
+===== VERSION 2074 =====
 2021/04/05
 
 * Added new mnemonic: invoke_fn

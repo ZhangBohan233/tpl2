@@ -128,7 +128,10 @@ class PointerType(Type):
         self.base = base
 
     def type_code(self):
-        return self.base.type_code()
+        if is_object_ptr(self):
+            return util.OBJECT_CODE
+        else:
+            return 0
 
     def strong_convertible(self, left_tar_type):
         if self == TYPE_VOID_PTR:
@@ -194,7 +197,7 @@ class SpecialCtfType(CompileTimeFunctionType):
         super().__init__(name, None)
 
 
-class CallableType(Type):
+class CallableType(Type, ABC):
     def __init__(self, param_types, rtype):
         super().__init__(util.INT_PTR_LEN)
 
@@ -922,6 +925,7 @@ NATIVE_FUNCTIONS = {
     "_dec_ref": (21, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID)),
     "_nested_array": (22, NativeFuncType([], TYPE_VOID_PTR)),
     "_class_name": (23, NativeFuncType([TYPE_INT], TYPE_STRING_PTR)),  # returns *String
+    "_gc": (24, NativeFuncType([], TYPE_VOID)),
 }
 
 

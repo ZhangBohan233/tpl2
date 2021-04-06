@@ -18,6 +18,7 @@
 #if VM_BITS == 32
     #define INT_PTR_LEN 4
     #define FLOAT_LEN 4
+    #define SHIFT 2
 
     #define bytes_to_int(b) bytes_to_int32(b)
     #define int_to_bytes(b, i) int_to_bytes32(b, i)
@@ -29,6 +30,7 @@
 #else
     #define INT_PTR_LEN 8
     #define FLOAT_LEN 8
+    #define SHIFT 3
 
     #define bytes_to_int(b) bytes_to_int64(b)
     #define int_to_bytes(b, i) int_to_bytes64(b, i)
@@ -59,7 +61,7 @@ typedef unsigned char tp_byte;
 #define NATIVE_FUNCTION_CODE 8
 #define CLASS_CODE 9
 
-#define ARRAY_HEADER_LEN (INT_PTR_LEN * 2)
+#define MEMORY_SIZE 131072
 
 #define tp_printf(fmt, ...) {char *fmt_mod = format_bits(fmt); printf(fmt_mod, __VA_ARGS__); free(fmt_mod);}
 #define tp_fprintf(dst, fmt, ...) {char *fmt_mod = format_bits(fmt); fprintf(dst, fmt_mod, __VA_ARGS__); free(fmt_mod);}
