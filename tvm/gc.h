@@ -10,6 +10,8 @@
 
 #define HASH_TABLE_SIZE (MEMORY_SIZE / 128)
 
+#define MEM_ALIGN(NUM) (((NUM) & ANDER) == 0 ? (NUM) : (((NUM) >> SHIFT) + 1) << SHIFT)
+
 tp_int heap_counter;
 
 typedef struct HashLink {

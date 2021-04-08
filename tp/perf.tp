@@ -1,9 +1,5 @@
 ﻿import lang;
 
-require {
-    clock
-}
-
 fn fib(n: int) int {
     if n < 2 {
         return n;
@@ -13,13 +9,13 @@ fn fib(n: int) int {
 }
 
 fn main() int {
-    t0: int = clock();
+    t0: int = _clock();
 
     i: int;
     for i = 0; i < 1_000_000; ++i {
     }
 
-    t1: int = clock();
+    t1: int = _clock();
     print(i);
     print(" loop with ++i time ");
     println(t1 - t0);
@@ -27,7 +23,7 @@ fn main() int {
     for i = 0; i < 1_000_000; i = i + 1 {
     }
 
-    t2: int = clock();
+    t2: int = _clock();
     print(i);
     print(" loop with i = i + 1 time ");
     println(t2 - t1);
@@ -35,7 +31,7 @@ fn main() int {
     n: int = 30;
     x: int = fib(n);
 
-    t3: int = clock();
+    t3: int = _clock();
     print(n);
     print(" fib time ");
     println(t3 - t2);
@@ -44,10 +40,19 @@ fn main() int {
     for i = 0; i < 1_000_000; ++i {
         array[i % array.length] = i;
     }
-    t4: int = clock();
+    t4: int = _clock();
     print(i);
     print(" heap array access time ");
     println(t4 - t3);
+
+    str := "asd";
+    for i = 0; i < 10_000; ++i {
+        str = str + (i as char);
+    }
+    t5: int = _clock();
+    print(i);
+    print(" string concat with gc ");
+    println(t5 - t4);
 
     return x;
 

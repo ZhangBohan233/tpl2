@@ -223,7 +223,7 @@ void nat_print_str() {
     tp_int arr_ptr = bytes_to_int(MEMORY + true_addr(0));
     tp_int arr_len = bytes_to_int(MEMORY + true_addr(arr_ptr));
     for (int i = 0; i < arr_len; i++) {
-        tp_char arg = bytes_to_char(MEMORY + true_addr(arr_ptr + INT_PTR_LEN + i * CHAR_LEN));
+        tp_char arg = bytes_to_char(MEMORY + true_addr(arr_ptr + ARRAY_HEADER_LEN + i * CHAR_LEN));
         wprintf(L"%c", arg);
     }
 
@@ -319,8 +319,8 @@ tp_int _malloc_essential(tp_int asked_len) {
     tp_int location = heap_allocate(asked_len);
 
     if (location <= 0) {
-        int ava_size = link_len(available) * MEM_BLOCK - INT_PTR_LEN;
-        tp_fprintf(stderr, "Cannot heap_allocate length %lld, available memory %d\n", asked_len, ava_size);
+//        tp_int ava_size = link_len(available) * MEM_BLOCK - INT_PTR_LEN;
+//        tp_fprintf(stderr, "Cannot heap_allocate length %d, available memory %d\n", asked_len, ava_size);
         ERROR_CODE = ERR_MEMORY_OUT;
         return 0;
     }
@@ -547,39 +547,6 @@ void nat_log() {
     pull_fp
 }
 
-void nat_inc_ref() {
-    push_fp
-    push(INT_PTR_LEN)
-
-    tp_int arg = bytes_to_int(MEMORY + true_addr(0));
-    if (arg != 0) {  // is not a null pointer
-        tp_int cur_count = bytes_to_int(MEMORY + arg + INT_PTR_LEN);
-//        printf("adding, cur %d\n", cur_count);
-        int_to_bytes(MEMORY + arg + INT_PTR_LEN, cur_count + 1);
-    }
-
-    pull_fp
-}
-
-void nat_dec_ref() {
-    push_fp
-    push(INT_PTR_LEN)
-
-    tp_int arg = bytes_to_int(MEMORY + true_addr(0));
-    if (arg != 0) {  // is not a null pointer
-        tp_int cur_count = bytes_to_int(MEMORY + arg + INT_PTR_LEN);
-//        printf("dec ing on %d, cur %d\n", arg, cur_count);
-        if (cur_count == 1) {
-//            printf("%d end of life.\n", arg);
-        }
-        int_to_bytes(MEMORY + arg + INT_PTR_LEN, cur_count - 1);
-    } else {
-//        printf("dec on null\n");
-    }
-
-    pull_fp
-}
-
 void invoke(tp_int func_ptr) {
     tp_int func_id = bytes_to_int(MEMORY + func_ptr);
     switch (func_id) {
@@ -639,12 +606,6 @@ void invoke(tp_int func_ptr) {
             break;
         case 19:  // exit
             nat_exit();
-            break;
-        case 20:  // inc_ref
-            nat_inc_ref();
-            break;
-        case 21:  // dec_ref
-            nat_dec_ref();
             break;
         case 22:  // nested_array
             nat_nested_array();
@@ -1194,9 +1155,9 @@ void print_memory(int level) {
     }
 
     tp_printf("\nHeap %d: ", heap_start)
-    for (i = heap_start; i < heap_start + 128; i++) {
+    for (i = heap_start; i < heap_counter; i++) {
         printf("%d ", MEMORY[i]);
-        if ((i - entry_end) % INT_PTR_LEN == 7) printf("| ");
+        if ((i - heap_start) % INT_PTR_LEN == (INT_PTR_LEN - 1)) printf("| ");
     }
     printf("\n");
 }

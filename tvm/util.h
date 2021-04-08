@@ -19,6 +19,7 @@
     #define INT_PTR_LEN 4
     #define FLOAT_LEN 4
     #define SHIFT 2
+    #define ANDER 0b11
 
     #define bytes_to_int(b) bytes_to_int32(b)
     #define int_to_bytes(b, i) int_to_bytes32(b, i)
@@ -31,6 +32,7 @@
     #define INT_PTR_LEN 8
     #define FLOAT_LEN 8
     #define SHIFT 3
+    #define ANDER 0b111
 
     #define bytes_to_int(b) bytes_to_int64(b)
     #define int_to_bytes(b, i) int_to_bytes64(b, i)

@@ -61,6 +61,10 @@ class String {
         return this.concat(other);
     }
 
+    fn __add__(other: char) *String {
+        return this.concat(other);
+    }
+
     fn __mul__(n: int) *String {
         return this.repeat(n);
     }
@@ -74,6 +78,13 @@ class String {
         newChars: char[] = new char[this.length() + other.length()];
         arraycopy(this.chars, 0, newChars, 0, this.length());
         arraycopy(other.chars, 0, newChars, this.length(), other.length());
+        return new String(newChars);
+    }
+
+    fn concat(other: char) *String {
+        newChars: char[] = new char[this.length() + 1];
+        arraycopy(this.chars, 0, newChars, 0, this.length());
+        newChars[newChars.length - 1] = other;
         return new String(newChars);
     }
 

@@ -921,8 +921,6 @@ NATIVE_FUNCTIONS = {
     "_mem_segment": (17, NativeFuncType([TYPE_VOID_PTR], TYPE_INT)),
     "_mem_copy": (18, NativeFuncType([TYPE_VOID_PTR, TYPE_INT, TYPE_VOID_PTR, TYPE_INT, TYPE_INT], TYPE_VOID)),
     "_exit": (19, NativeFuncType([TYPE_INT], TYPE_VOID)),
-    "_inc_ref": (20, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID)),
-    "_dec_ref": (21, NativeFuncType([TYPE_VOID_PTR], TYPE_VOID)),
     "_nested_array": (22, NativeFuncType([], TYPE_VOID_PTR)),
     "_class_name": (23, NativeFuncType([TYPE_INT], TYPE_STRING_PTR)),  # returns *String
     "_gc": (24, NativeFuncType([], TYPE_VOID)),

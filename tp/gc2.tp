@@ -1,0 +1,12 @@
+﻿import lang;
+
+fn main() int {
+    str: *String = "ab";
+    for i := 0; i < 10; ++i {
+        str += "c";
+        _gc();
+    }
+
+    println(str);
+    return str.length();
+}

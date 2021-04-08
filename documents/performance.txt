@@ -1,4 +1,12 @@
-﻿===== VERSION 2072 =====
+﻿===== VERSION 2076 =====
+
+1000000 loop with ++i time 51
+1000000 loop with i = i + 1 time 54
+30 fib time 477
+1000000 heap array access time 110
+10000 string concat with gc 34
+
+===== VERSION 2072 =====
 
 -o1
 1000000 loop with ++i time 93

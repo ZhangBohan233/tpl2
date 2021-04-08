@@ -8,9 +8,13 @@
 #include "gc.h"
 #include "os_spec.h"
 
+#define PRINT_GC 0
+
 tp_int inner_allocate(tp_int length) {
+    length = MEM_ALIGN(length);
     if (heap_counter + length < MEMORY_SIZE) {
         tp_int cur = heap_counter;
+        memset(MEMORY + cur, 0, length);
         heap_counter += length;
         return cur;
     } else return -1;
@@ -26,7 +30,9 @@ tp_int heap_allocate(tp_int length) {
         gc();
         res = inner_allocate(length);
         if (res == -1) {
-            fprintf(stderr, "Not enough heap space to heap_allocate %lld.", (int_fast64_t) length);
+            fprintf(stderr, "Not enough heap space to heap_allocate %lld. Available memory %lld. \n",
+                    (int_fast64_t) length,
+                    (int_fast64_t) (MEMORY_SIZE - heap_counter));
             return -1;
         }
     }
@@ -140,9 +146,10 @@ HashEntry *get_table(HashTable *table, tp_int key) {
 }
 
 void mark_one(HashTable *table, tp_int ptr_addr, tp_int type_code, tp_int parent) {
-    if (bytes_to_int(MEMORY + ptr_addr) == 0) return;  // NULL pointer
+    tp_int object_addr = bytes_to_int(MEMORY + ptr_addr);
+    if (object_addr == 0) return;  // NULL pointer
+    if (object_addr < heap_start) return;  // Not a heap object
     if (type_code == OBJECT_CODE) {
-        tp_int object_addr = bytes_to_int(MEMORY + ptr_addr);
         tp_int class_ptr = bytes_to_int(MEMORY + object_addr);
         tp_int object_len = bytes_to_int(MEMORY + object_addr + OBJECT_BYTE_LENGTH_POS);
         insert_table(table, object_addr, object_len, type_code, ptr_addr, parent);
@@ -151,25 +158,28 @@ void mark_one(HashTable *table, tp_int ptr_addr, tp_int type_code, tp_int parent
         for (tp_int field_pos = 0; field_pos < object_len; field_pos += INT_PTR_LEN) {
             tp_int field_addr = object_addr + field_pos;
             tp_int field_code = MEMORY[field_array_ptr + ARRAY_HEADER_LEN + field_pos / INT_PTR_LEN];
-            mark_one(table, field_addr, field_code, 0);
+            mark_one(table, field_addr, field_code, object_addr);
         }
     } else if (type_code == ARRAY_CODE) {
-        tp_int array_addr = bytes_to_int(MEMORY + ptr_addr);
-//        printf("array %d\n", array_addr);
-        tp_int array_length = bytes_to_int(MEMORY + array_addr);
-        tp_int array_ele_code = bytes_to_int(MEMORY + array_addr + INT_PTR_LEN);
-        tp_int array_byte_length = array_length * size_of_type(array_ele_code) + ARRAY_HEADER_LEN;
-        insert_table(table, array_addr, array_byte_length, type_code, ptr_addr, parent);
+//        printf("array %d\n", object_addr);
+        tp_int array_length = bytes_to_int(MEMORY + object_addr);
+        tp_int array_ele_code = bytes_to_int(MEMORY + object_addr + INT_PTR_LEN);
+        tp_int ele_len = size_of_type(array_ele_code);
+        tp_int array_byte_length = array_length * ele_len + ARRAY_HEADER_LEN;
+        tp_int occupation = MEM_ALIGN(array_byte_length);
+//        printf("ele length %d, arr_length %d, %d, occupy %d\n",
+//               ele_len, array_length, array_byte_length, occupation);
+        insert_table(table, object_addr, occupation, type_code, ptr_addr, parent);
         for (tp_int index = 0; index < array_length; ++index) {
-            tp_int ptr_addr_in_arr = array_addr + ARRAY_HEADER_LEN + index * INT_PTR_LEN;
-            mark_one(table, ptr_addr_in_arr, array_ele_code, array_addr);
+            tp_int ptr_addr_in_arr = object_addr + ARRAY_HEADER_LEN + index * ele_len;
+            mark_one(table, ptr_addr_in_arr, array_ele_code, object_addr);
         }
     }
 }
 
 void mark() {
     tp_int addr = 1 + INT_PTR_LEN;  // begin of stack
-    printf("Active functions: %d\n", call_p);
+//    printf("Active functions: %d\n", call_p);
 
     // loop through stack
     for (int call_id = 0; call_id < call_p; ++call_id) {
@@ -267,10 +277,12 @@ void sweep() {
     while (remain > 0) {
         HashEntry *entry = get_table(pointer_table, addr);
         if (entry != NULL) {
-            memmove(MEMORY + new_addr, MEMORY + addr, entry->key1);
+            tp_int move_len = entry->key1;
+            memmove(MEMORY + new_addr, MEMORY + addr, move_len);
+//            printf("Moved length %d from %d to %d, real_len %d\n", move_len, addr, new_addr, entry->key1);
             insert_map(trans_map, new_addr, addr);
             insert_map(inv_trans_map, addr, new_addr);
-            new_addr += entry->key1;
+            new_addr += move_len;
             remain--;
         }
         addr += INT_PTR_LEN;
@@ -291,11 +303,11 @@ void sweep() {
                     int_to_bytes(MEMORY + link->value, new_ptr);
                 } else {
                     // also modify pointers in heap arrays
-                    tp_int arr_new_pos = get_map(inv_trans_map, link->parent);
-                    tp_int pos_from_arr_head = link->value - link->parent;
-//                    printf("replaced ptr in array %d from %d to %d!\n",
-//                           link->value, bytes_to_int(MEMORY + arr_new_pos + pos_from_arr_head), new_ptr);
-                    int_to_bytes(MEMORY + arr_new_pos + pos_from_arr_head, new_ptr);
+                    tp_int parent_new_pos = get_map(inv_trans_map, link->parent);
+                    tp_int pos_from_parent_head = link->value - link->parent;
+//                    printf("replaced ptr in parent %d from %d to %d!\n",
+//                           link->value, bytes_to_int(MEMORY + parent_new_pos + pos_from_parent_head), new_ptr);
+                    int_to_bytes(MEMORY + parent_new_pos + pos_from_parent_head, new_ptr);
                 }
             }
         }
@@ -308,7 +320,8 @@ void sweep() {
 
 void gc() {
     tp_int st_time = get_time();
-    tp_printf("heap counter before gc %d\n", heap_counter);
+    if (PRINT_GC)
+        tp_printf("heap counter before gc %d\n", heap_counter);
 
     pointer_table = create_table(HASH_TABLE_SIZE);
 
@@ -316,9 +329,11 @@ void gc() {
     sweep();
 
     free_table(pointer_table);
-    tp_printf("heap counter after gc %d\n", heap_counter);
-
     tp_int end_time = get_time();
-    tp_printf("Gc time: %d\n", end_time - st_time);
+
+    if (PRINT_GC) {
+        tp_printf("heap counter after gc %d\n", heap_counter);
+        tp_printf("Gc time: %d\n", end_time - st_time);
+    }
 }
 

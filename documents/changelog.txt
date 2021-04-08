@@ -1,4 +1,10 @@
-﻿===== VERSION 2075 =====
+﻿===== VERSION 2076 =====
+2021/04/08
+
+* Fixed heap memory not aligned error caused by char array or byte array
+* Fixed gc bug for pointers in objects
+
+===== VERSION 2075 =====
 2021/04/07
 
 * Almost finished gc system
