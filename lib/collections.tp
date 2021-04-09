@@ -1,9 +1,5 @@
 ﻿import lang;
 
-require {
-    exit
-}
-
 abstract class Iterator<T> {
     abstract fn hasNext() boolean;
 
@@ -127,12 +123,7 @@ class List<T>(AbsList<T>) {
         for i := 0; i < this.size; i++ {
             strArr[i] = this.get(i).toString();
         }
-        joint := ", ".join(strArr);
-        s1 := "[" + joint;
-        del joint;
-        res := s1 + "]";
-        del s1;
-        return res;
+        return "[" + ", ".join(strArr) + "]";
     }
 
     protected fn checkSize() void {
@@ -147,14 +138,12 @@ class List<T>(AbsList<T>) {
     private fn expand() void {
         arr := new T[this.array.length * 2];
         arraycopy(this.array, 0, arr, 0, this.size);
-        del this.array;
         this.array = arr;
     }
 
     private fn collapse() void {
         arr := new T[this.array.length / 2];
         arraycopy(this.array, 0, arr, 0, this.size);
-        del this.array;
         this.array = arr;
     }
 }
@@ -423,19 +412,10 @@ class HashMap<K, V>(Map<K, V>) {
         for key: *K in this {
             k := key.toString();
             v := this.get(key).toString();
-            front := k + ": ";
-            del k;
-            strArr[i] = front + v;
-            del front;
-            del v;
+            strArr[i] = k + ": " + v;
             ++i;
         }
-        joint := ", ".join(strArr);
-        s1 := "{" + joint;
-        del joint;
-        res := s1 + "}";
-        del s1;
-        return res;
+        return "{" + ", ".join(strArr) + "}";
     }
 }
 

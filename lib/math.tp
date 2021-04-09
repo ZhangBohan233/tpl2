@@ -160,13 +160,10 @@ fn primes(limit: int) Integer[] {
                 newList.append(item);
             }
         }
-        del lst;
         lst = newList;
         index += 1;
     }
-    array := lst.toArray();
-    del lst;
-    return array;
+    return lst.toArray();
 }
 
 // random

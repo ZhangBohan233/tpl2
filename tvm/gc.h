@@ -45,9 +45,9 @@ typedef struct HashMap {
     MapEntry **array;
 } HashMap;
 
-HashTable *pointer_table;
-
 void create_heap(tp_int heap_begins);
+
+void free_heap();
 
 tp_int heap_allocate(tp_int length);
 

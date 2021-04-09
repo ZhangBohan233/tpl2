@@ -1,10 +1,20 @@
-﻿===== VERSION 2076 =====
+﻿===== VERSION 2077 =====
 
-1000000 loop with ++i time 51
-1000000 loop with i = i + 1 time 54
+1000000 loop with ++i time 47
+1000000 loop with i = i + 1 time 73
+30 fib time 498
+1000000 heap array access time 128
+50000 string concat with gc 168
+Trash program finished with exit code 832040
+
+===== VERSION 2076 =====
+
+1000000 loop with ++i time 55
+1000000 loop with i = i + 1 time 69
 30 fib time 477
-1000000 heap array access time 110
-10000 string concat with gc 34
+1000000 heap array access time 111
+50000 string concat with gc 179
+Trash program finished with exit code 832040
 
 ===== VERSION 2072 =====
 

@@ -14,10 +14,6 @@ class Object {
     fn __new__() void {
     }
 
-    fn __del__() void {
-        _free(this);
-    }
-
     fn hash() int {
         return this.class * ((this as *void) as int);
     }
@@ -47,14 +43,6 @@ class String {
 
     fn __new__(other: *String) void {
         this.__new__(other.chars);
-    }
-
-    fn __del__() void {
-        if _mem_segment(this) == 3 {  // literal
-            return;
-        }
-        del this.chars;
-        super.__del__();
     }
 
     fn __add__(other: *String) *String {
@@ -467,11 +455,7 @@ fn floatToString(value: float) *String {
         count++;
     }
     back := intToString(dv as int);
-    s1 := front.concat(".");
-    del front;
-    s2 := s1.concat(back);
-    del s1;
-    return s2;
+    return front + "." + back;
 }
 
 fn arraycopy(src: int[], srcIndex: int, dst: int[], dstIndex: int, length: int) void {

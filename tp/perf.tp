@@ -46,7 +46,7 @@ fn main() int {
     println(t4 - t3);
 
     str := "asd";
-    for i = 0; i < 10_000; ++i {
+    for i = 0; i < 50_000; ++i {
         str = str + (i as char);
     }
     t5: int = _clock();

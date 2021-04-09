@@ -8,7 +8,7 @@
 #include <locale.h>
 #include <math.h>
 #include "os_spec.h"
-#include "mem.h"
+//#include "mem.h"
 #include "tvm.h"
 #include "gc.h"
 
@@ -102,7 +102,7 @@ int tvm_load(const unsigned char *src_code, const int code_length) {
 
     create_heap(heap_start);
 
-    available = build_link(heap_start, MEMORY_SIZE, &ava_pool);
+//    available = build_link(heap_start, MEMORY_SIZE, &ava_pool);
 //    fragments = build_link(heap_start, MEMORY_SIZE, &fragment_pool);
 
     return 0;
@@ -342,30 +342,30 @@ void nat_malloc() {
     pull_fp
 }
 
-void _free_link(int_fast64_t real_ptr, int_fast64_t alloc_len) {
-    LinkedNode *head = available;
-    LinkedNode *after = available;
-    while (after->addr < real_ptr) {
-        head = after;
-        after = after->next;
-    }
-//    printf("%lld, %lld\n", head->addr, after->addr);
-    int_fast64_t index_in_pool = (real_ptr - entry_end) / MEM_BLOCK + 1;
-//    printf("%lld\n", index_in_pool);
-    for (int_fast64_t i = 0; i < alloc_len; ++i) {
-        LinkedNode *node = &ava_pool[index_in_pool++];
-        node->addr = real_ptr + i * MEM_BLOCK;
-        head->next = node;
-        head = node;
-    }
-    if (head->addr >= after->addr) {
-        fprintf(stderr, "Heap memory collision");
-        ERROR_CODE = ERR_HEAP_COLLISION;
-        head->next = NULL;  // avoid cyclic reference
-        return;
-    }
-    head->next = after;
-}
+//void _free_link(int_fast64_t real_ptr, int_fast64_t alloc_len) {
+//    LinkedNode *head = available;
+//    LinkedNode *after = available;
+//    while (after->addr < real_ptr) {
+//        head = after;
+//        after = after->next;
+//    }
+////    printf("%lld, %lld\n", head->addr, after->addr);
+//    int_fast64_t index_in_pool = (real_ptr - entry_end) / MEM_BLOCK + 1;
+////    printf("%lld\n", index_in_pool);
+//    for (int_fast64_t i = 0; i < alloc_len; ++i) {
+//        LinkedNode *node = &ava_pool[index_in_pool++];
+//        node->addr = real_ptr + i * MEM_BLOCK;
+//        head->next = node;
+//        head = node;
+//    }
+//    if (head->addr >= after->addr) {
+//        fprintf(stderr, "Heap memory collision");
+//        ERROR_CODE = ERR_HEAP_COLLISION;
+//        head->next = NULL;  // avoid cyclic reference
+//        return;
+//    }
+//    head->next = after;
+//}
 
 void nat_free() {
     push_fp
@@ -1036,7 +1036,8 @@ void tvm_mainloop() {
                 reg4 = MEMORY[pc++];
 
                 regs[reg2].int_value = bytes_to_int(MEMORY + true_addr(regs[reg2].int_value));
-                regs[reg2].int_value = bytes_to_int(MEMORY + regs[reg2].int_value + INT_PTR_LEN);  // child mro array ptr
+                regs[reg2].int_value = bytes_to_int(
+                        MEMORY + regs[reg2].int_value + INT_PTR_LEN);  // child mro array ptr
                 regs[reg3].int_value = bytes_to_int(MEMORY + true_addr(regs[reg2].int_value));  // child mro len
 //                printf("%d %d %d\n", regs[reg1].int_value, regs[reg2].int_value, regs[reg3].int_value);
                 for (regs[reg4].int_value = 0; regs[reg4].int_value < regs[reg3].int_value; regs[reg4].int_value++) {
@@ -1077,7 +1078,8 @@ void tvm_mainloop() {
 }
 
 void tvm_shutdown() {
-    free_link_pool(ava_pool);
+//    free_link_pool(ava_pool);
+    free_heap();
 }
 
 tp_int tvm_set_args() {

@@ -8,7 +8,31 @@
 #include "gc.h"
 #include "os_spec.h"
 
-#define PRINT_GC 0
+#define PRINT_GC_TIME 0
+#define PRINT_GC_EXPAND 1
+
+
+struct HashEntryPool {
+    size_t index;
+    size_t capacity;
+    HashEntry *pool;
+};
+
+struct LinkPool {
+    size_t index;
+    size_t capacity;
+    HashLink *pool;
+};
+
+struct MapEntryPool {
+    size_t index;
+    size_t capacity;
+    MapEntry *pool;
+};
+
+struct HashEntryPool *hashEntryPool;
+struct LinkPool *linkPool;
+struct MapEntryPool *mapEntryPool;
 
 tp_int inner_allocate(tp_int length) {
     length = MEM_ALIGN(length);
@@ -22,6 +46,66 @@ tp_int inner_allocate(tp_int length) {
 
 void create_heap(tp_int heap_begins) {
     heap_counter = heap_begins;
+
+    hashEntryPool = malloc(sizeof(struct HashEntryPool));
+    hashEntryPool->capacity = MEMORY_SIZE / 512;
+    hashEntryPool->index = 0;
+    hashEntryPool->pool = malloc(hashEntryPool->capacity * sizeof(HashEntry));
+
+    linkPool = malloc(sizeof(struct LinkPool));
+    linkPool->capacity = MEMORY_SIZE / 512;
+    linkPool->index = 0;
+    linkPool->pool = malloc(linkPool->capacity * sizeof(HashLink));
+
+    mapEntryPool = malloc(sizeof(struct MapEntryPool));
+    mapEntryPool->capacity = MEMORY_SIZE / 512;
+    mapEntryPool->index = 0;
+    mapEntryPool->pool = malloc(mapEntryPool->capacity * sizeof(MapEntry));
+}
+
+void free_heap() {
+    free(hashEntryPool->pool);
+    free(hashEntryPool);
+    free(linkPool->pool);
+    free(linkPool);
+    free(mapEntryPool->pool);
+    free(mapEntryPool);
+}
+
+HashEntry *create_hash_entry() {
+    HashEntry **pool = &hashEntryPool->pool;
+    HashEntry *entry = &(*pool)[hashEntryPool->index++];
+    if (hashEntryPool->index == hashEntryPool->capacity) {
+        size_t curPoolSize = sizeof(HashEntry) * hashEntryPool->capacity;
+        hashEntryPool->pool = realloc(hashEntryPool->pool, curPoolSize * 2);
+        hashEntryPool->capacity *= 2;
+        if (PRINT_GC_EXPAND) printf("Hash entry pool expanded to %d\n", hashEntryPool->capacity);
+    }
+    return entry;
+}
+
+HashLink *create_hash_link() {
+    HashLink **pool = &linkPool->pool;
+    HashLink *link = &(*pool)[linkPool->index++];
+    if (linkPool->index == linkPool->capacity) {
+        size_t curPoolSize = sizeof(HashLink) * linkPool->capacity;
+        linkPool->pool = realloc(linkPool->pool, curPoolSize * 2);
+        linkPool->capacity *= 2;
+        if (PRINT_GC_EXPAND) printf("Hash link pool expanded to %d\n", linkPool->capacity);
+    }
+    return link;
+}
+
+MapEntry *create_map_entry() {
+    MapEntry **pool = &mapEntryPool->pool;
+    MapEntry *entry = &(*pool)[mapEntryPool->index++];
+    if (mapEntryPool->index == mapEntryPool->capacity) {
+        size_t curPoolSize = sizeof(MapEntry) * mapEntryPool->capacity;
+        mapEntryPool->pool = realloc(mapEntryPool->pool, curPoolSize * 2);
+        mapEntryPool->capacity *= 2;
+        if (PRINT_GC_EXPAND) printf("Map entry pool expanded to %d\n", mapEntryPool->capacity);
+    }
+    return entry;
 }
 
 tp_int heap_allocate(tp_int length) {
@@ -49,18 +133,6 @@ HashTable *create_table(size_t capacity) {
 }
 
 void free_table(HashTable *table) {
-    for (int i = 0; i < table->capacity; ++i) {
-        for (HashEntry *head = table->array[i]; head != NULL;) {
-            for (HashLink *link = head->value; link != NULL;) {
-                HashLink *next_link = link->next;
-                free(link);
-                link = next_link;
-            }
-            HashEntry *next = head->next;
-            free(head);
-            head = next;
-        }
-    }
     free(table->array);
     free(table);
 }
@@ -95,11 +167,11 @@ void insert_table(HashTable *table, tp_int obj_addr, tp_int obj_len, tp_int obj_
     unsigned int index = hash(obj_addr, table->capacity);
     HashEntry *entry = table->array[index];
     if (entry == NULL) {
-        entry = malloc(sizeof(HashEntry));
+        entry = create_hash_entry();
         entry->key = obj_addr;
         entry->key1 = obj_len;
         entry->key2 = obj_type;
-        entry->value = malloc(sizeof(HashLink));
+        entry->value = create_hash_link();
         entry->value->value = ptr_addr;
         entry->value->parent = parent_array;
         entry->value->next = NULL;
@@ -114,7 +186,7 @@ void insert_table(HashTable *table, tp_int obj_addr, tp_int obj_len, tp_int obj_
                     if (link->value == ptr_addr) return;  // duplicate pointer
                     link = link->next;
                 }
-                HashLink *new_link = malloc(sizeof(HashLink));
+                HashLink *new_link = create_hash_link();
                 new_link->value = ptr_addr;
                 new_link->parent = parent_array;
                 new_link->next = entry->value;
@@ -123,11 +195,11 @@ void insert_table(HashTable *table, tp_int obj_addr, tp_int obj_len, tp_int obj_
             }
             entry = entry->next;
         }
-        HashEntry *new_entry = malloc(sizeof(HashEntry));
+        HashEntry *new_entry = create_hash_entry();
         new_entry->key = obj_addr;
         new_entry->key1 = obj_len;
         new_entry->key2 = obj_type;
-        new_entry->value = malloc(sizeof(HashLink));
+        new_entry->value = create_hash_link();
         new_entry->value->value = ptr_addr;
         new_entry->value->parent = parent_array;
         new_entry->value->next = NULL;
@@ -177,7 +249,7 @@ void mark_one(HashTable *table, tp_int ptr_addr, tp_int type_code, tp_int parent
     }
 }
 
-void mark() {
+void mark(HashTable *marked) {
     tp_int addr = 1 + INT_PTR_LEN;  // begin of stack
 //    printf("Active functions: %d\n", call_p);
 
@@ -192,12 +264,12 @@ void mark() {
         for (addr += INT_PTR_LEN; addr < func_pure_stack_end; addr += INT_PTR_LEN) {
             tp_int type_code = runtime_type_abs(addr, this_stack_begin);
 //            printf("type code at %d is %d\n", addr, type_code);
-            mark_one(pointer_table, addr, type_code, 0);
+            mark_one(marked, addr, type_code, 0);
         }
         addr = func_pure_stack_end + type_push;
     }
 
-//    print_table(pointer_table, "objPtr", "objLen", "objCode", "pointers");
+//    print_table(marked, "objPtr", "objLen", "objCode", "pointers");
 }
 
 HashMap *create_map(size_t capacity) {
@@ -222,7 +294,7 @@ void insert_map(HashMap *map, tp_int key, tp_int value) {
     size_t index = hash(key, map->capacity);
     MapEntry *entry = map->array[index];
     if (entry == NULL) {
-        MapEntry *new_entry = malloc(sizeof(MapEntry));
+        MapEntry *new_entry = create_map_entry();
         new_entry->key = key;
         new_entry->value = value;
         new_entry->next = NULL;
@@ -237,7 +309,7 @@ void insert_map(HashMap *map, tp_int key, tp_int value) {
             }
             entry = entry->next;
         }
-        MapEntry *new_entry = malloc(sizeof(MapEntry));
+        MapEntry *new_entry = create_map_entry();
         new_entry->key = key;
         new_entry->value = value;
         new_entry->next = map->array[index];
@@ -254,19 +326,12 @@ tp_int get_map(HashMap *map, tp_int key) {
 }
 
 void free_map(HashMap *map) {
-    for (int i = 0; i < map->capacity; ++i) {
-        for (MapEntry *head = map->array[i]; head != NULL;) {
-            MapEntry *next = head->next;
-            free(head);
-            head = next;
-        }
-    }
     free(map->array);
     free(map);
 }
 
-void sweep() {
-    size_t remain = pointer_table->size;
+void sweep(HashTable *marked) {
+    size_t remain = marked->size;
     tp_int addr = heap_start;
 
     HashMap *trans_map = create_map(HASH_TABLE_SIZE);  // new_pos: old_pos
@@ -275,7 +340,7 @@ void sweep() {
     // move memory and create relation map
     tp_int new_addr = heap_start;
     while (remain > 0) {
-        HashEntry *entry = get_table(pointer_table, addr);
+        HashEntry *entry = get_table(marked, addr);
         if (entry != NULL) {
             tp_int move_len = entry->key1;
             memmove(MEMORY + new_addr, MEMORY + addr, move_len);
@@ -295,7 +360,7 @@ void sweep() {
     for (size_t i = 0; i < trans_map->capacity; ++i) {
         for (MapEntry *head = trans_map->array[i]; head != NULL; head = head->next) {
             tp_int new_ptr = head->key;
-            HashEntry *old_pointers = get_table(pointer_table, head->value);
+            HashEntry *old_pointers = get_table(marked, head->value);
             for (HashLink *link = old_pointers->value; link != NULL; link = link->next) {
                 if (link->parent == 0) {
 //                    printf("replaced ptr %d from %d to %d!\n",
@@ -320,18 +385,21 @@ void sweep() {
 
 void gc() {
     tp_int st_time = get_time();
-    if (PRINT_GC)
+    if (PRINT_GC_TIME)
         tp_printf("heap counter before gc %d\n", heap_counter);
 
-    pointer_table = create_table(HASH_TABLE_SIZE);
+    hashEntryPool->index = 0;
+    linkPool->index = 0;
+    mapEntryPool->index = 0;
+    HashTable *marked = create_table(HASH_TABLE_SIZE);
 
-    mark();
-    sweep();
+    mark(marked);
+    sweep(marked);
 
-    free_table(pointer_table);
+    free_table(marked);
     tp_int end_time = get_time();
 
-    if (PRINT_GC) {
+    if (PRINT_GC_TIME) {
         tp_printf("heap counter after gc %d\n", heap_counter);
         tp_printf("Gc time: %d\n", end_time - st_time);
     }

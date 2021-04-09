@@ -1,4 +1,10 @@
-﻿===== VERSION 2076 =====
+﻿===== VERSION 2077 =====
+2021/04/10
+
+* Removed __del__ and 'del' in builtin libraries
+* Optimized garbage collector: used pool memory
+
+===== VERSION 2076 =====
 2021/04/08
 
 * Fixed heap memory not aligned error caused by char array or byte array

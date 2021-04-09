@@ -13,12 +13,7 @@ fn arrayToString(array: int[]) *String {
     for i := 0; i < array.length; ++i {
         strArray[i] = intToString(array[i]);
     }
-    joint := ", ".join(strArray);
-    s1 := "[".concat(joint);
-    del joint;
-    res := s1.concat("]");
-    del s1;
-    return res;
+    return "[" + ", ".join(strArray) + "]";
 }
 
 export {
