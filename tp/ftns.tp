@@ -8,6 +8,12 @@ fn foo(y: int) int {
     return neg(y);
 }
 
+class A<T> {
+    fn foo() void {
+        objs := new T[2];
+    }
+}
+
 fn main() int {
     add: fn(int, int) -> int = lambda(a: int, b: int) a + b;
     sub: fn(int, int) -> int = lambda(a: int, b: int) a - b;
@@ -17,6 +23,7 @@ fn main() int {
     }
 
     println(new Integer(4).intValue());
+    new A<Integer>[2];
 
     return add(3, 4) + neg(1) + 5;
 }

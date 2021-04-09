@@ -1,4 +1,10 @@
-﻿===== VERSION 2077 =====
+﻿===== VERSION 2078 =====
+2021/04/10
+
+* Bug fixes:
+    * Error when creating array with generics
+
+===== VERSION 2077 =====
 2021/04/10
 
 * Removed __del__ and 'del' in builtin libraries

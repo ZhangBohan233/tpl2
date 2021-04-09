@@ -2444,7 +2444,8 @@ class IndexingExpr(Expression):
         self.args = args
 
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
-        # if self.is_array_initialization(env):
+        if self.is_array_initialization(env):
+            print("fuck")
         #     return array_creation(self, env, tpa)
         # else:
         return self.indexing(env, tpa)
@@ -2460,7 +2461,7 @@ class IndexingExpr(Expression):
             return obj_t.ele_type
         elif isinstance(obj_t, typ.PointerType):
             return self.magic_get().evaluated_type(env, manager)
-
+        # print(obj_t)
         raise errs.TplCompileError(
             "Only arrays or classes implement '__get__(index: int)' and '__set__(index: int, value: )' "
             "supports indexing. ",
@@ -2476,9 +2477,15 @@ class IndexingExpr(Expression):
         if isinstance(self.indexing_obj, IndexingExpr):
             return self.indexing_obj.is_array_initialization(env)
         elif isinstance(self.indexing_obj, NameNode):
-            return env.is_type(self.indexing_obj.name, self.lfp)
-        else:
-            return False
+            if env.is_type(self.indexing_obj.name, self.lfp):
+                return True
+            wc = env.get_working_class()
+            if wc is not None:
+                prob_name = typ.Generic.generic_name(wc.full_name(), self.indexing_obj.name)
+                return env.is_type(prob_name, self.lfp)
+        elif isinstance(self.indexing_obj, GenericNode):
+            return True
+        return False
 
     def indexing(self, env: en.Environment, tpa: tp.TpaOutput) -> int:
         obj_t = self.indexing_obj.evaluated_type(env, tpa.manager)
@@ -3339,6 +3346,7 @@ def ctf_array(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
 
     # dim = [len(args) - 1]
     size = outermost.compile(env, tpa)
+    # print(args[0])
     arr_t = args[0].evaluated_type(env, tpa.manager)
     assert isinstance(arr_t, typ.ArrayType)
     # arr_ptr = tpa.manager.allocate_stack(arr_t)

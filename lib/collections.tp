@@ -35,7 +35,7 @@ abstract class AbsList<T>(Collection<T>) {
     protected fn checkIndex(index: int) void {
         if index < 0 or index >= this.size() {
             println("Index out of bound.");
-            exit(1);
+            _exit(1);
         }
     }
 

@@ -93,6 +93,7 @@ class Environment:
         if entry is None:
             return False
         return (isinstance(entry.type, typ.ClassType) or
+                isinstance(entry.type, typ.GenericClassType) or
                 isinstance(entry.type, typ.Generic))
 
     def is_named_function(self, name: str, lfp) -> bool:
