@@ -1,0 +1,13 @@
+﻿import lang;
+
+class A<T, R> {
+    fn foo(x: *T, r: *R) void {  }
+}
+class B<R>(A<Integer, R>) {
+    @Override
+    fn foo(x: *Integer, r: *R) void {  }  // causes error
+}
+
+fn main() void {
+
+}

@@ -7,7 +7,7 @@ LAZY_BINARY = {"and", "or"}
 ARITH_UNARY = {"-", "*", "&"}
 LOGICAL_UNARY = {"not"}
 SYMBOLS = {"{", "}", "[", "]", "(", ")", ".", "$", ",", ";", ":", "::", "@"}
-OTHERS = {"=", "->", ":=", "++", "--"}
+OTHERS = {"=", "->", "<-", ":=", "++", "--"}
 
 KEYWORDS = {"abstract", "as", "break", "case", "class", "cond", "const", "continue", "del", "do", "else",
             "export", "exportmacro", "fallthrough", "fn", "for",

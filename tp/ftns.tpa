@@ -5,9 +5,9 @@ bits
 stack_size
 2048
 global_length
-620
+1040
 literal
-0 0 0 0 1 0 0 0 255 255 255 255 112 8 0 0 0 0 0 0 132 10 0 0 7 0 0 0 3 0 0 0 79 0 98 0 106 0 101 0 99 0 116 0 64 0 112 8 0 0 0 0 0 0 166 10 0 0 22 0 0 0 3 0 0 0 78 0 101 0 103 0 97 0 116 0 105 0 118 0 101 0 32 0 114 0 101 0 112 0 101 0 97 0 116 0 32 0 116 0 105 0 109 0 101 0 115 0 46 0 112 8 0 0 0 0 0 0 230 10 0 0 1 0 0 0 3 0 0 0 98 0 112 8 0 0 0 0 0 0 252 10 0 0 0 0 0 0 3 0 0 0 112 8 0 0 0 0 0 0 16 11 0 0 5 0 0 0 3 0 0 0 65 0 114 0 114 0 97 0 121 0 112 8 0 0 0 0 0 0 46 11 0 0 1 0 0 0 3 0 0 0 48 0 10 0 0 0 45 0 48 0 0 0 6 0 0 0 112 8 0 0 0 0 0 0 82 11 0 0 1 0 0 0 3 0 0 0 46 0 3 0 0 0 2 0 0 0 4 0 0 0 5 0 0 0
+0 0 0 0 1 0 0 0 255 255 255 255 112 8 0 0 0 0 0 0 40 12 0 0 7 0 0 0 3 0 0 0 79 0 98 0 106 0 101 0 99 0 116 0 64 0 112 8 0 0 0 0 0 0 74 12 0 0 22 0 0 0 3 0 0 0 78 0 101 0 103 0 97 0 116 0 105 0 118 0 101 0 32 0 114 0 101 0 112 0 101 0 97 0 116 0 32 0 116 0 105 0 109 0 101 0 115 0 46 0 112 8 0 0 0 0 0 0 138 12 0 0 1 0 0 0 3 0 0 0 98 0 112 8 0 0 0 0 0 0 160 12 0 0 0 0 0 0 3 0 0 0 112 8 0 0 0 0 0 0 180 12 0 0 5 0 0 0 3 0 0 0 65 0 114 0 114 0 97 0 121 0 112 8 0 0 0 0 0 0 210 12 0 0 1 0 0 0 3 0 0 0 48 0 10 0 0 0 45 0 48 0 0 0 6 0 0 0 112 8 0 0 0 0 0 0 246 12 0 0 1 0 0 0 3 0 0 0 46 0 3 0 0 0 112 8 0 0 0 0 0 0 16 13 0 0 19 0 0 0 3 0 0 0 73 0 110 0 100 0 101 0 120 0 32 0 111 0 117 0 116 0 32 0 111 0 102 0 32 0 98 0 111 0 117 0 110 0 100 0 46 0 8 0 0 0 112 8 0 0 0 0 0 0 78 13 0 0 1 0 0 0 3 0 0 0 91 0 112 8 0 0 0 0 0 0 100 13 0 0 2 0 0 0 3 0 0 0 44 0 32 0 112 8 0 0 0 0 0 0 124 13 0 0 1 0 0 0 3 0 0 0 93 0 4 0 0 0 2 0 0 0 0 0 64 63 112 8 0 0 0 0 0 0 158 13 0 0 2 0 0 0 3 0 0 0 58 0 32 0 112 8 0 0 0 0 0 0 182 13 0 0 1 0 0 0 3 0 0 0 123 0 112 8 0 0 0 0 0 0 204 13 0 0 1 0 0 0 3 0 0 0 125 0 5 0 0 0
 classes
 class E:\GitHub\tpl2\lib\lang.tp$Object $2156
 mro
@@ -233,7 +233,339 @@ methods
     E:\GitHub\tpl2\lib\lang.tp$Byte.__new__(byte)
 endclass
 
-class E:\GitHub\tpl2\tp\ftns.tp$A $2284
+class E:\GitHub\tpl2\lib\collections.tp$Iterator $2280
+mro
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+methods
+    E:\GitHub\tpl2\lib\collections.tp$Iterator.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+    E:\GitHub\tpl2\lib\collections.tp$Iterator.hasNext()
+    E:\GitHub\tpl2\lib\collections.tp$Iterator.next()
+endclass
+
+class E:\GitHub\tpl2\lib\collections.tp$Iterable $2284
+mro
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+methods
+    E:\GitHub\tpl2\lib\collections.tp$Iterable.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+    E:\GitHub\tpl2\lib\collections.tp$Iterable.iter()
+endclass
+
+class E:\GitHub\tpl2\lib\collections.tp$Collection $2288
+mro
+    E:\GitHub\tpl2\lib\collections.tp$Iterable
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+methods
+    E:\GitHub\tpl2\lib\collections.tp$Collection.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+    E:\GitHub\tpl2\lib\collections.tp$Iterable.iter()
+    E:\GitHub\tpl2\lib\collections.tp$Collection.size()
+endclass
+
+class E:\GitHub\tpl2\lib\collections.tp$AbsList $2292
+mro
+    E:\GitHub\tpl2\lib\collections.tp$Collection
+    E:\GitHub\tpl2\lib\collections.tp$Iterable
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+methods
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+    E:\GitHub\tpl2\lib\collections.tp$Iterable.iter()
+    E:\GitHub\tpl2\lib\collections.tp$Collection.size()
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.append(*Object)
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.get(int)
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.set(int,*Object)
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.remove(int)
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.toArray()
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.checkIndex(int)
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.__get__(int)
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.__set__(int,*Object)
+endclass
+
+class E:\GitHub\tpl2\lib\collections.tp$ListIterator $2296
+mro
+    E:\GitHub\tpl2\lib\collections.tp$Iterator
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+    lst 8 5
+    index 12 1
+methods
+    E:\GitHub\tpl2\lib\collections.tp$Iterator.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+    E:\GitHub\tpl2\lib\collections.tp$ListIterator.hasNext()
+    E:\GitHub\tpl2\lib\collections.tp$ListIterator.next()
+    E:\GitHub\tpl2\lib\collections.tp$ListIterator.__new__(*List)
+endclass
+
+class E:\GitHub\tpl2\lib\collections.tp$List $2300
+mro
+    E:\GitHub\tpl2\lib\collections.tp$AbsList
+    E:\GitHub\tpl2\lib\collections.tp$Collection
+    E:\GitHub\tpl2\lib\collections.tp$Iterable
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+    array 8 6
+    size 12 1
+methods
+    E:\GitHub\tpl2\lib\collections.tp$List.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\collections.tp$List.toString()
+    E:\GitHub\tpl2\lib\collections.tp$List.iter()
+    E:\GitHub\tpl2\lib\collections.tp$List.size()
+    E:\GitHub\tpl2\lib\collections.tp$List.append(*Object)
+    E:\GitHub\tpl2\lib\collections.tp$List.get(int)
+    E:\GitHub\tpl2\lib\collections.tp$List.set(int,*Object)
+    E:\GitHub\tpl2\lib\collections.tp$List.remove(int)
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.toArray()
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.checkIndex(int)
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.__get__(int)
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.__set__(int,*Object)
+    E:\GitHub\tpl2\lib\collections.tp$List.checkSize()
+    E:\GitHub\tpl2\lib\collections.tp$List.expand()
+    E:\GitHub\tpl2\lib\collections.tp$List.collapse()
+endclass
+
+class E:\GitHub\tpl2\lib\collections.tp$LinkedIterator $2304
+mro
+    E:\GitHub\tpl2\lib\collections.tp$Iterator
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+    node 8 5
+methods
+    E:\GitHub\tpl2\lib\collections.tp$Iterator.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+    E:\GitHub\tpl2\lib\collections.tp$LinkedIterator.hasNext()
+    E:\GitHub\tpl2\lib\collections.tp$LinkedIterator.next()
+    E:\GitHub\tpl2\lib\collections.tp$LinkedIterator.__new__(*LinkedNode)
+endclass
+
+class E:\GitHub\tpl2\lib\collections.tp$LinkedNode $2308
+mro
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+    value 8 5
+    next 12 5
+    prev 16 5
+methods
+    E:\GitHub\tpl2\lib\collections.tp$LinkedNode.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+endclass
+
+class E:\GitHub\tpl2\lib\collections.tp$LinkedList $2312
+mro
+    E:\GitHub\tpl2\lib\collections.tp$AbsList
+    E:\GitHub\tpl2\lib\collections.tp$Collection
+    E:\GitHub\tpl2\lib\collections.tp$Iterable
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+    head 8 5
+    tail 12 5
+    size 16 1
+methods
+    E:\GitHub\tpl2\lib\collections.tp$LinkedList.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+    E:\GitHub\tpl2\lib\collections.tp$LinkedList.iter()
+    E:\GitHub\tpl2\lib\collections.tp$LinkedList.size()
+    E:\GitHub\tpl2\lib\collections.tp$LinkedList.append(*Object)
+    E:\GitHub\tpl2\lib\collections.tp$LinkedList.get(int)
+    E:\GitHub\tpl2\lib\collections.tp$LinkedList.set(int,*Object)
+    E:\GitHub\tpl2\lib\collections.tp$LinkedList.remove(int)
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.toArray()
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.checkIndex(int)
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.__get__(int)
+    E:\GitHub\tpl2\lib\collections.tp$AbsList.__set__(int,*Object)
+endclass
+
+class E:\GitHub\tpl2\lib\collections.tp$Map $2316
+mro
+    E:\GitHub\tpl2\lib\collections.tp$Iterable
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+methods
+    E:\GitHub\tpl2\lib\collections.tp$Map.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+    E:\GitHub\tpl2\lib\collections.tp$Iterable.iter()
+    E:\GitHub\tpl2\lib\collections.tp$Map.get(*Object)
+    E:\GitHub\tpl2\lib\collections.tp$Map.set(*Object,*Object)
+    E:\GitHub\tpl2\lib\collections.tp$Map.remove(*Object)
+    E:\GitHub\tpl2\lib\collections.tp$Map.size()
+    E:\GitHub\tpl2\lib\collections.tp$Map.__get__(*Object)
+    E:\GitHub\tpl2\lib\collections.tp$Map.__set__(*Object,*Object)
+endclass
+
+class E:\GitHub\tpl2\lib\collections.tp$HashEntry $2320
+mro
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+    key 8 5
+    value 12 5
+    next 16 5
+methods
+    E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+    E:\GitHub\tpl2\lib\collections.tp$HashEntry.__new__(*Object,*Object)
+endclass
+
+class E:\GitHub\tpl2\lib\collections.tp$HashMapIterator $2324
+mro
+    E:\GitHub\tpl2\lib\collections.tp$Iterator
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+    dict 8 5
+    index 12 1
+    looped 16 1
+    node 20 5
+methods
+    E:\GitHub\tpl2\lib\collections.tp$Iterator.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+    E:\GitHub\tpl2\lib\collections.tp$HashMapIterator.hasNext()
+    E:\GitHub\tpl2\lib\collections.tp$HashMapIterator.next()
+    E:\GitHub\tpl2\lib\collections.tp$HashMapIterator.__new__(*HashMap)
+endclass
+
+class E:\GitHub\tpl2\lib\collections.tp$HashMap $2328
+mro
+    E:\GitHub\tpl2\lib\collections.tp$Map
+    E:\GitHub\tpl2\lib\collections.tp$Iterable
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+    loadFactor 8 2
+    numEle 12 1
+    array 16 6
+methods
+    E:\GitHub\tpl2\lib\collections.tp$HashMap.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\collections.tp$HashMap.toString()
+    E:\GitHub\tpl2\lib\collections.tp$HashMap.iter()
+    E:\GitHub\tpl2\lib\collections.tp$HashMap.get(*Object)
+    E:\GitHub\tpl2\lib\collections.tp$HashMap.set(*Object,*Object)
+    E:\GitHub\tpl2\lib\collections.tp$HashMap.remove(*Object)
+    E:\GitHub\tpl2\lib\collections.tp$HashMap.size()
+    E:\GitHub\tpl2\lib\collections.tp$Map.__get__(*Object)
+    E:\GitHub\tpl2\lib\collections.tp$Map.__set__(*Object,*Object)
+    E:\GitHub\tpl2\lib\collections.tp$HashMap.hash(*Object,int)
+    E:\GitHub\tpl2\lib\collections.tp$HashMap.getLoad()
+    E:\GitHub\tpl2\lib\collections.tp$HashMap.expand()
+endclass
+
+class E:\GitHub\tpl2\lib\collections.tp$Set $2332
+mro
+    E:\GitHub\tpl2\lib\collections.tp$Collection
+    E:\GitHub\tpl2\lib\collections.tp$Iterable
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+methods
+    E:\GitHub\tpl2\lib\collections.tp$Set.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+    E:\GitHub\tpl2\lib\collections.tp$Iterable.iter()
+    E:\GitHub\tpl2\lib\collections.tp$Collection.size()
+endclass
+
+class E:\GitHub\tpl2\lib\functions.tp$Function $2336
+mro
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+methods
+    E:\GitHub\tpl2\lib\functions.tp$Function.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+    E:\GitHub\tpl2\lib\functions.tp$Function.__call__(*Object)
+    E:\GitHub\tpl2\lib\functions.tp$Function.map(*AbsList)
+endclass
+
+class E:\GitHub\tpl2\lib\functions.tp$BiFunction $2340
+mro
+    E:\GitHub\tpl2\lib\lang.tp$Object
+aligned_fields
+    class 0 1
+    byteLength 4 1
+methods
+    E:\GitHub\tpl2\lib\functions.tp$BiFunction.__new__()
+    E:\GitHub\tpl2\lib\lang.tp$Object.hash()
+    E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object)
+    E:\GitHub\tpl2\lib\lang.tp$Object.toString()
+    E:\GitHub\tpl2\lib\functions.tp$BiFunction.__call__(*Object,*Object)
+endclass
+
+class E:\GitHub\tpl2\tp\ftns.tp$A $2348
 mro
     E:\GitHub\tpl2\lib\lang.tp$Object
 aligned_fields
@@ -249,7 +581,7 @@ methods
 endclass
 
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__() $2292
+fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__() $2356
     push_fp
     ; begin of type assigning
     push          12
@@ -264,7 +596,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.__new__() $2292
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.hash() $2296
+fn E:\GitHub\tpl2\lib\lang.tp$Object.hash() $2360
     push_fp
     ; begin of type assigning
     push          36
@@ -307,7 +639,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.hash() $2296
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object) $2300
+fn E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object) $2364
     push_fp
     ; begin of type assigning
     push          20
@@ -329,7 +661,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.equals(*Object) $2300
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object) $2304
+fn E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object) $2368
     push_fp
     ; begin of type assigning
     push          24
@@ -363,7 +695,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.notEquals(*Object) $2304
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Object.toString() $2308
+fn E:\GitHub\tpl2\lib\lang.tp$Object.toString() $2372
     push_fp
     ; begin of type assigning
     push          60
@@ -434,7 +766,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Object.toString() $2308
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(char[]) $2312
+fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(char[]) $2376
     push_fp
     ; begin of type assigning
     push          60
@@ -527,7 +859,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(char[]) $2312
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(*String) $2316
+fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(*String) $2380
     push_fp
     ; begin of type assigning
     push          24
@@ -570,7 +902,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__new__(*String) $2316
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.__add__(*String) $2320
+fn E:\GitHub\tpl2\lib\lang.tp$String.__add__(*String) $2384
     push_fp
     ; begin of type assigning
     push          20
@@ -600,7 +932,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__add__(*String) $2320
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.__add__(char) $2324
+fn E:\GitHub\tpl2\lib\lang.tp$String.__add__(char) $2388
     push_fp
     ; begin of type assigning
     push          20
@@ -630,7 +962,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__add__(char) $2324
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.__mul__(int) $2328
+fn E:\GitHub\tpl2\lib\lang.tp$String.__mul__(int) $2392
     push_fp
     ; begin of type assigning
     push          20
@@ -660,7 +992,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.__mul__(int) $2328
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.toString() $2332
+fn E:\GitHub\tpl2\lib\lang.tp$String.toString() $2396
     push_fp
     ; begin of type assigning
     push          12
@@ -677,7 +1009,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.toString() $2332
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.concat(*String) $2336
+fn E:\GitHub\tpl2\lib\lang.tp$String.concat(*String) $2400
     push_fp
     ; begin of type assigning
     push          104
@@ -706,14 +1038,14 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.concat(*String) $2336
     store_abs     %0      %1
     iload         %0      $20
     set_ret       %0
-    call          $2348
+    call          $2412
     args
     aload_sp      %0      $4
     load          %1      $8
     store_abs     %0      %1
     iload         %0      $24
     set_ret       %0
-    call          $2348
+    call          $2412
     load          %0      $20
     load          %1      $24
     addi          %0      %1
@@ -756,7 +1088,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.concat(*String) $2336
     store_abs     %0      %1
     iload         %0      $48
     set_ret       %0
-    call          $2348
+    call          $2412
     args
     aload_sp      %0      $4
     load          %1      $36
@@ -795,14 +1127,14 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.concat(*String) $2336
     store_abs     %0      %1
     iload         %0      $64
     set_ret       %0
-    call          $2348
+    call          $2412
     args
     aload_sp      %0      $4
     load          %1      $8
     store_abs     %0      %1
     iload         %0      $68
     set_ret       %0
-    call          $2348
+    call          $2412
     args
     aload_sp      %0      $4
     load          %1      $56
@@ -855,7 +1187,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.concat(*String) $2336
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.concat(char) $2340
+fn E:\GitHub\tpl2\lib\lang.tp$String.concat(char) $2404
     push_fp
     ; begin of type assigning
     push          100
@@ -884,7 +1216,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.concat(char) $2340
     store_abs     %0      %1
     iload         %0      $20
     set_ret       %0
-    call          $2348
+    call          $2412
     load_lit      %0      $4
     iload         %1      $24
     store         %1      %0
@@ -930,7 +1262,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.concat(char) $2340
     store_abs     %0      %1
     iload         %0      $48
     set_ret       %0
-    call          $2348
+    call          $2412
     args
     aload_sp      %0      $4
     load          %1      $36
@@ -1016,7 +1348,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.concat(char) $2340
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $2344
+fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $2408
     push_fp
     ; begin of type assigning
     push          136
@@ -1082,14 +1414,14 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $2344
     store_abs     %0      %1
     iload         %0      $36
     set_ret       %0
-    call          $2348
+    call          $2412
     args
     aload_sp      %0      $4
     load          %1      $28
     store_abs     %0      %1
     iload         %0      $40
     set_ret       %0
-    call          $2348
+    call          $2412
     load          %0      $36
     load          %1      $40
     nei           %0      %1
@@ -1229,7 +1561,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.equals(*Object) $2344
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.length() $2348 inline
+fn E:\GitHub\tpl2\lib\lang.tp$String.length() $2412 inline
     push_fp
     ; begin of type assigning
     push          24
@@ -1262,7 +1594,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.length() $2348 inline
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.join(*String[]) $2352
+fn E:\GitHub\tpl2\lib\lang.tp$String.join(*String[]) $2416
     push_fp
     ; begin of type assigning
     push          196
@@ -1309,7 +1641,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.join(*String[]) $2352
     store_abs     %0      %1
     iload         %0      $20
     set_ret       %0
-    call          $2348
+    call          $2412
     load          %0      $20
     iload         %1      $16
     store         %1      %0
@@ -1356,7 +1688,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.join(*String[]) $2352
     store_abs     %0      %1
     iload         %0      $44
     set_ret       %0
-    call          $2348
+    call          $2412
     load          %0      $12
     load          %1      $44
     addi          %0      %1
@@ -1592,7 +1924,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.join(*String[]) $2352
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.print() $2356
+fn E:\GitHub\tpl2\lib\lang.tp$String.print() $2420
     push_fp
     ; begin of type assigning
     push          20
@@ -1624,7 +1956,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.print() $2356
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.println() $2360
+fn E:\GitHub\tpl2\lib\lang.tp$String.println() $2424
     push_fp
     ; begin of type assigning
     push          20
@@ -1656,7 +1988,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.println() $2360
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$String.repeat(int) $2364
+fn E:\GitHub\tpl2\lib\lang.tp$String.repeat(int) $2428
     push_fp
     ; begin of type assigning
     push          112
@@ -1715,7 +2047,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.repeat(int) $2364
     store_abs     %0      %1
     iload         %0      $32
     set_ret       %0
-    call          $2348
+    call          $2412
     load          %0      $32
     load          %1      $8
     muli          %0      %1
@@ -1751,7 +2083,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.repeat(int) $2364
     store_abs     %0      %1
     iload         %0      $56
     set_ret       %0
-    call          $2348
+    call          $2412
     load          %0      $44
     load          %1      $56
     muli          %0      %1
@@ -1778,7 +2110,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.repeat(int) $2364
     store_abs     %0      %1
     iload         %0      $72
     set_ret       %0
-    call          $2348
+    call          $2412
     args
     aload_sp      %0      $4
     load          %1      $64
@@ -1839,7 +2171,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$String.repeat(int) $2364
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.__new__() $2368
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__new__() $2432
     push_fp
     ; begin of type assigning
     push          12
@@ -1859,15 +2191,15 @@ fn E:\GitHub\tpl2\lib\lang.tp$Number.__new__() $2368
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.intValue() $2372 abstract
+fn E:\GitHub\tpl2\lib\lang.tp$Number.intValue() $2436 abstract
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.floatValue() $2376 abstract
+fn E:\GitHub\tpl2\lib\lang.tp$Number.floatValue() $2440 abstract
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.charValue() $2380 abstract
+fn E:\GitHub\tpl2\lib\lang.tp$Number.charValue() $2444 abstract
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.byteValue() $2384 abstract
+fn E:\GitHub\tpl2\lib\lang.tp$Number.byteValue() $2448 abstract
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.__add__(*IntLike) $2388
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__add__(*IntLike) $2452
     push_fp
     ; begin of type assigning
     push          44
@@ -1941,7 +2273,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Number.__add__(*IntLike) $2388
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.__add__(*Float) $2392
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__add__(*Float) $2456
     push_fp
     ; begin of type assigning
     push          44
@@ -2015,7 +2347,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Number.__add__(*Float) $2392
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.__sub__(*IntLike) $2396
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__sub__(*IntLike) $2460
     push_fp
     ; begin of type assigning
     push          44
@@ -2089,7 +2421,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Number.__sub__(*IntLike) $2396
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.__sub__(*Float) $2400
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__sub__(*Float) $2464
     push_fp
     ; begin of type assigning
     push          44
@@ -2163,7 +2495,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Number.__sub__(*Float) $2400
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.__mul__(*IntLike) $2404
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__mul__(*IntLike) $2468
     push_fp
     ; begin of type assigning
     push          44
@@ -2237,7 +2569,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Number.__mul__(*IntLike) $2404
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.__mul__(*Float) $2408
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__mul__(*Float) $2472
     push_fp
     ; begin of type assigning
     push          44
@@ -2311,7 +2643,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Number.__mul__(*Float) $2408
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.__div__(*IntLike) $2412
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__div__(*IntLike) $2476
     push_fp
     ; begin of type assigning
     push          44
@@ -2385,7 +2717,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Number.__div__(*IntLike) $2412
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.__div__(*Float) $2416
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__div__(*Float) $2480
     push_fp
     ; begin of type assigning
     push          44
@@ -2459,7 +2791,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Number.__div__(*Float) $2416
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.__mod__(*IntLike) $2420
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__mod__(*IntLike) $2484
     push_fp
     ; begin of type assigning
     push          44
@@ -2533,7 +2865,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Number.__mod__(*IntLike) $2420
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Number.__mod__(*Float) $2424
+fn E:\GitHub\tpl2\lib\lang.tp$Number.__mod__(*Float) $2488
     push_fp
     ; begin of type assigning
     push          44
@@ -2607,7 +2939,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Number.__mod__(*Float) $2424
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$IntLike.floatValue() $2428
+fn E:\GitHub\tpl2\lib\lang.tp$IntLike.floatValue() $2492
     push_fp
     ; begin of type assigning
     push          20
@@ -2638,7 +2970,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$IntLike.floatValue() $2428
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$IntLike.__new__() $2432
+fn E:\GitHub\tpl2\lib\lang.tp$IntLike.__new__() $2496
     push_fp
     ; begin of type assigning
     push          12
@@ -2658,7 +2990,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$IntLike.__new__() $2432
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Integer.__new__(int) $2436
+fn E:\GitHub\tpl2\lib\lang.tp$Integer.__new__(int) $2500
     push_fp
     ; begin of type assigning
     push          20
@@ -2689,7 +3021,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Integer.__new__(int) $2436
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Integer.intValue() $2440
+fn E:\GitHub\tpl2\lib\lang.tp$Integer.intValue() $2504
     push_fp
     ; begin of type assigning
     push          20
@@ -2718,7 +3050,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Integer.intValue() $2440
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Integer.charValue() $2444
+fn E:\GitHub\tpl2\lib\lang.tp$Integer.charValue() $2508
     push_fp
     ; begin of type assigning
     push          24
@@ -2750,7 +3082,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Integer.charValue() $2444
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Integer.byteValue() $2448
+fn E:\GitHub\tpl2\lib\lang.tp$Integer.byteValue() $2512
     push_fp
     ; begin of type assigning
     push          24
@@ -2782,7 +3114,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Integer.byteValue() $2448
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Integer.toString() $2452
+fn E:\GitHub\tpl2\lib\lang.tp$Integer.toString() $2516
     push_fp
     ; begin of type assigning
     push          24
@@ -2818,7 +3150,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Integer.toString() $2452
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Float.__new__(float) $2456
+fn E:\GitHub\tpl2\lib\lang.tp$Float.__new__(float) $2520
     push_fp
     ; begin of type assigning
     push          20
@@ -2849,7 +3181,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Float.__new__(float) $2456
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Float.intValue() $2460
+fn E:\GitHub\tpl2\lib\lang.tp$Float.intValue() $2524
     push_fp
     ; begin of type assigning
     push          24
@@ -2882,7 +3214,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Float.intValue() $2460
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Float.floatValue() $2464
+fn E:\GitHub\tpl2\lib\lang.tp$Float.floatValue() $2528
     push_fp
     ; begin of type assigning
     push          20
@@ -2911,7 +3243,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Float.floatValue() $2464
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Float.charValue() $2468
+fn E:\GitHub\tpl2\lib\lang.tp$Float.charValue() $2532
     push_fp
     ; begin of type assigning
     push          32
@@ -2950,7 +3282,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Float.charValue() $2468
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Float.byteValue() $2472
+fn E:\GitHub\tpl2\lib\lang.tp$Float.byteValue() $2536
     push_fp
     ; begin of type assigning
     push          32
@@ -2989,7 +3321,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Float.byteValue() $2472
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Float.toString() $2476
+fn E:\GitHub\tpl2\lib\lang.tp$Float.toString() $2540
     push_fp
     ; begin of type assigning
     push          24
@@ -3025,7 +3357,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Float.toString() $2476
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Char.__new__(char) $2480
+fn E:\GitHub\tpl2\lib\lang.tp$Char.__new__(char) $2544
     push_fp
     ; begin of type assigning
     push          20
@@ -3056,7 +3388,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Char.__new__(char) $2480
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Char.intValue() $2484
+fn E:\GitHub\tpl2\lib\lang.tp$Char.intValue() $2548
     push_fp
     ; begin of type assigning
     push          24
@@ -3088,7 +3420,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Char.intValue() $2484
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Char.charValue() $2488
+fn E:\GitHub\tpl2\lib\lang.tp$Char.charValue() $2552
     push_fp
     ; begin of type assigning
     push          20
@@ -3117,7 +3449,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Char.charValue() $2488
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Char.byteValue() $2492
+fn E:\GitHub\tpl2\lib\lang.tp$Char.byteValue() $2556
     push_fp
     ; begin of type assigning
     push          32
@@ -3155,7 +3487,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Char.byteValue() $2492
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Char.toString() $2496
+fn E:\GitHub\tpl2\lib\lang.tp$Char.toString() $2560
     push_fp
     ; begin of type assigning
     push          60
@@ -3259,7 +3591,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Char.toString() $2496
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Byte.__new__(byte) $2500
+fn E:\GitHub\tpl2\lib\lang.tp$Byte.__new__(byte) $2564
     push_fp
     ; begin of type assigning
     push          20
@@ -3290,7 +3622,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Byte.__new__(byte) $2500
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Byte.intValue() $2504
+fn E:\GitHub\tpl2\lib\lang.tp$Byte.intValue() $2568
     push_fp
     ; begin of type assigning
     push          24
@@ -3322,7 +3654,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Byte.intValue() $2504
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Byte.charValue() $2508
+fn E:\GitHub\tpl2\lib\lang.tp$Byte.charValue() $2572
     push_fp
     ; begin of type assigning
     push          32
@@ -3360,7 +3692,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Byte.charValue() $2508
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Byte.byteValue() $2512
+fn E:\GitHub\tpl2\lib\lang.tp$Byte.byteValue() $2576
     push_fp
     ; begin of type assigning
     push          20
@@ -3389,7 +3721,7 @@ fn E:\GitHub\tpl2\lib\lang.tp$Byte.byteValue() $2512
     ret
     stop
 
-fn E:\GitHub\tpl2\lib\lang.tp$Byte.toString() $2516
+fn E:\GitHub\tpl2\lib\lang.tp$Byte.toString() $2580
     push_fp
     ; begin of type assigning
     push          40
@@ -4676,62 +5008,11 @@ fn E:\GitHub\tpl2\lib\lang.tp$vmBitsCount() $2276
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\ftns.tp$foo(int) $2280
-    push_fp
-    ; begin of type assigning
-    push          16
-    iload         %0      12
-    iload         %1      $0
-    store         %1      %0
-    iload         %0      257
-    iload         %1      $12
-    store         %1      %0
-    ; end of type assigning
-    args
-    aload_sp      %0      $4
-    load          %1      $4
-    store_abs     %0      %1
-    iload         %0      $8
-    set_ret       %0
-    call          $2528
-    load          %0      $8
-    put_ret       %0
-    pull_fp
-    ret
-    stop
+fn E:\GitHub\tpl2\lib\collections.tp$Iterator.hasNext() $2584 abstract
 
-fn E:\GitHub\tpl2\tp\ftns.tp$A.foo() $2520
-    push_fp
-    ; begin of type assigning
-    push          24
-    iload         %0      20
-    iload         %1      $0
-    store         %1      %0
-    iload         %0      16844293
-    iload         %1      $20
-    store         %1      %0
-    ; end of type assigning
-    load_lit      %0      $244
-    iload         %1      $12
-    store         %1      %0
-    iload         %0      5
-    iload         %1      $16
-    store         %1      %0
-    args
-    aload_sp      %0      $0
-    load          %1      $12
-    store_abs     %0      %1
-    aload_sp      %0      $4
-    load          %1      $16
-    store_abs     %0      %1
-    iload         %0      $8
-    set_ret       %0
-    invoke_fn     _heap_array
-    pull_fp
-    ret
-    stop
+fn E:\GitHub\tpl2\lib\collections.tp$Iterator.next() $2588 abstract
 
-fn E:\GitHub\tpl2\tp\ftns.tp$A.__new__() $2524
+fn E:\GitHub\tpl2\lib\collections.tp$Iterator.__new__() $2592
     push_fp
     ; begin of type assigning
     push          12
@@ -4751,7 +5032,5111 @@ fn E:\GitHub\tpl2\tp\ftns.tp$A.__new__() $2524
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\ftns.tp$main() $2288
+fn E:\GitHub\tpl2\lib\collections.tp$Iterable.iter() $2596 abstract
+
+fn E:\GitHub\tpl2\lib\collections.tp$Iterable.__new__() $2600
+    push_fp
+    ; begin of type assigning
+    push          12
+    iload         %0      8
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $8
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$Collection.size() $2604 abstract
+
+fn E:\GitHub\tpl2\lib\collections.tp$Collection.__new__() $2608
+    push_fp
+    ; begin of type assigning
+    push          12
+    iload         %0      8
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $8
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$Iterable.__new__()
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$AbsList.append(*Object) $2612 abstract
+
+fn E:\GitHub\tpl2\lib\collections.tp$AbsList.get(int) $2616 abstract
+
+fn E:\GitHub\tpl2\lib\collections.tp$AbsList.set(int,*Object) $2620 abstract
+
+fn E:\GitHub\tpl2\lib\collections.tp$AbsList.remove(int) $2624 abstract
+
+fn E:\GitHub\tpl2\lib\collections.tp$AbsList.toArray() $2628
+    push_fp
+    ; begin of type assigning
+    push          56
+    iload         %0      44
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      100729093
+    iload         %1      $44
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $48
+    store         %1      %0
+    iload         %0      1281
+    iload         %1      $52
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      6
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    iload         %1      $12
+    set_ret       %1
+    call_reg      %0
+    load          %0      $12
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $4
+    iload         %1      6
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    iload         %1      $20
+    set_ret       %1
+    call_reg      %0
+    iload         %0      5
+    iload         %1      $24
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $20
+    store_abs     %0      %1
+    aload_sp      %0      $4
+    load          %1      $24
+    store_abs     %0      %1
+    iload         %0      $16
+    set_ret       %0
+    invoke_fn     _heap_array
+    load_lit      %0      $0
+    iload         %1      $28
+    store         %1      %0
+    label         LOOP_TITLE_7
+    load          %0      $28
+    load          %1      $8
+    lti           %0      %1
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    if_zero_goto  %0      END_LOOP_7
+    load          %0      $28
+    iload         %1      $36
+    store         %1      %0
+    load          %0      $36
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      36
+    store         %1      %0
+    load          %0      $36
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      36
+    store         %1      %0
+    load          %0      $16
+    load          %1      $36
+    addi          %0      %1
+    iload         %1      $36
+    store         %1      %0
+    load          %0      $4
+    iload         %1      8
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $28
+    store_abs     %1      %2
+    iload         %1      $40
+    set_ret       %1
+    call_reg      %0
+    load          %0      $36
+    load          %1      $40
+    store_abs     %0      %1
+    label         LABEL_5
+    load          %0      $28
+    iload         %1      1
+    addi          %0      %1
+    iload         %1      28
+    store         %1      %0
+    goto          LOOP_TITLE_7
+    label         END_LOOP_7
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$AbsList.checkIndex(int) $2632
+    push_fp
+    ; begin of type assigning
+    push          56
+    iload         %0      44
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16843013
+    iload         %1      $44
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $48
+    store         %1      %0
+    iload         %0      261
+    iload         %1      $52
+    store         %1      %0
+    ; end of type assigning
+    load_lit      %0      $0
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $8
+    load          %1      $20
+    lti           %0      %1
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    if_zero_goto  %0      ELSE_12
+    load_lit      %0      $4
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      $12
+    store         %1      %0
+    goto          ENDIF_12
+    label         ELSE_12
+    load          %0      $4
+    iload         %1      6
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    iload         %1      $32
+    set_ret       %1
+    call_reg      %0
+    load          %0      $8
+    load          %1      $32
+    gei           %0      %1
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $28
+    iload         %1      $12
+    store         %1      %0
+    label         ENDIF_12
+    load          %0      $12
+    if_zero_goto  %0      ENDIF_13
+    lit_abs       %0      $244
+    iload         %1      $36
+    store         %1      %0
+    args
+    aload_sp      %0      $4
+    load          %1      $36
+    store_abs     %0      %1
+    call          $2228
+    load_lit      %0      $4
+    iload         %1      $40
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $40
+    store_abs     %0      %1
+    invoke_fn     _exit
+    label         ENDIF_13
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$AbsList.__get__(int) $2636
+    push_fp
+    ; begin of type assigning
+    push          20
+    iload         %0      16
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      327941
+    iload         %1      $16
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      8
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $12
+    set_ret       %1
+    call_reg      %0
+    load          %0      $12
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$AbsList.__set__(int,*Object) $2640
+    push_fp
+    ; begin of type assigning
+    push          20
+    iload         %0      16
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      327941
+    iload         %1      $16
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      9
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    aload_sp      %1      $12
+    load          %2      $12
+    store_abs     %1      %2
+    call_reg      %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$AbsList.__new__() $2644
+    push_fp
+    ; begin of type assigning
+    push          12
+    iload         %0      8
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $8
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$Collection.__new__()
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$ListIterator.__new__(*List) $2648
+    push_fp
+    ; begin of type assigning
+    push          32
+    iload         %0      24
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844037
+    iload         %1      $24
+    store         %1      %0
+    iload         %0      1
+    iload         %1      $28
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$Iterator.__new__()
+    load          %0      $4
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      12
+    store         %1      %0
+    load_lit      %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $12
+    load          %1      $16
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load          %0      $20
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$ListIterator.hasNext() $2652
+    push_fp
+    ; begin of type assigning
+    push          40
+    iload         %0      32
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16843013
+    iload         %1      $32
+    store         %1      %0
+    iload         %0      66817
+    iload         %1      $36
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      12
+    store         %1      %0
+    load          %0      $12
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load          %0      $20
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    load          %0      $24
+    iload         %1      6
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $24
+    store_abs     %1      %2
+    iload         %1      $28
+    set_ret       %1
+    call_reg      %0
+    load          %0      $16
+    load          %1      $28
+    lti           %0      %1
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$ListIterator.next() $2656
+    push_fp
+    ; begin of type assigning
+    push          60
+    iload         %0      48
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      84214021
+    iload         %1      $48
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $52
+    store         %1      %0
+    iload         %0      65793
+    iload         %1      $56
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      12
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load          %0      $20
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $28
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      28
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $36
+    store         %1      %0
+    load          %0      $36
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      36
+    store         %1      %0
+    load          %0      $36
+    rload_abs     %1      %0
+    iload         %0      40
+    store         %0      %1
+    load_lit      %0      $4
+    iload         %1      $44
+    store         %1      %0
+    load          %0      $40
+    load          %1      $44
+    addi          %0      %1
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $28
+    load          %1      $32
+    store_abs     %0      %1
+    load          %0      $12
+    iload         %1      8
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $12
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $24
+    store_abs     %1      %2
+    iload         %1      $16
+    set_ret       %1
+    call_reg      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.__new__() $2660
+    push_fp
+    ; begin of type assigning
+    push          40
+    iload         %0      32
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16843013
+    iload         %1      $32
+    store         %1      %0
+    iload         %0      65798
+    iload         %1      $36
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$AbsList.__new__()
+    load          %0      $4
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load_lit      %0      $0
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $8
+    load          %1      $12
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load_lit      %0      $302
+    iload         %1      $24
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $28
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $24
+    store_abs     %0      %1
+    aload_sp      %0      $4
+    load          %1      $28
+    store_abs     %0      %1
+    iload         %0      $20
+    set_ret       %0
+    invoke_fn     _heap_array
+    load          %0      $16
+    load          %1      $20
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.iter() $2664
+    push_fp
+    ; begin of type assigning
+    push          24
+    iload         %0      20
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844037
+    iload         %1      $20
+    store         %1      %0
+    ; end of type assigning
+    iload         %0      16
+    iload         %1      $12
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $12
+    store_abs     %0      %1
+    iload         %0      $8
+    set_ret       %0
+    invoke_fn     _malloc
+    load          %0      $8
+    iload         %1      2296
+    store_abs     %0      %1
+    load          %0      $8
+    iload         %1      4
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      16
+    store_abs     %0      %1
+    args
+    aload_sp      %0      $4
+    load          %1      $8
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$ListIterator.__new__(*List)
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.size() $2668
+    push_fp
+    ; begin of type assigning
+    push          20
+    iload         %0      16
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      65797
+    iload         %1      $16
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      12
+    store         %0      %1
+    load          %0      $12
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.append(*Object) $2672
+    push_fp
+    ; begin of type assigning
+    push          64
+    iload         %0      52
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      100730117
+    iload         %1      $52
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $56
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $60
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      12
+    store         %1      %0
+    load          %0      $12
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load          %0      $20
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $28
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      28
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $36
+    store         %1      %0
+    load          %0      $36
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      36
+    store         %1      %0
+    load          %0      $36
+    rload_abs     %1      %0
+    iload         %0      40
+    store         %0      %1
+    load_lit      %0      $4
+    iload         %1      $44
+    store         %1      %0
+    load          %0      $40
+    load          %1      $44
+    addi          %0      %1
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $28
+    load          %1      $32
+    store_abs     %0      %1
+    load          %0      $24
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $48
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      48
+    store         %1      %0
+    load          %0      $48
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      48
+    store         %1      %0
+    load          %0      $16
+    load          %1      $48
+    addi          %0      %1
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $48
+    load          %1      $8
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      15
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    call_reg      %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.get(int) $2676
+    push_fp
+    ; begin of type assigning
+    push          36
+    iload         %0      28
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      17105157
+    iload         %1      $28
+    store         %1      %0
+    iload         %0      262
+    iload         %1      $32
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      12
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    call_reg      %0
+    load          %0      $4
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    rload_abs     %1      %0
+    iload         %0      20
+    store         %0      %1
+    load          %0      $8
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load          %0      $20
+    load          %1      $24
+    addi          %0      %1
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    rload_abs     %1      %0
+    iload         %0      12
+    store         %0      %1
+    load          %0      $12
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.set(int,*Object) $2680
+    push_fp
+    ; begin of type assigning
+    push          36
+    iload         %0      28
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      17105157
+    iload         %1      $28
+    store         %1      %0
+    iload         %0      262
+    iload         %1      $32
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      12
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    call_reg      %0
+    load          %0      $4
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    rload_abs     %1      %0
+    iload         %0      20
+    store         %0      %1
+    load          %0      $8
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load          %0      $20
+    load          %1      $24
+    addi          %0      %1
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    load          %1      $12
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.remove(int) $2684
+    push_fp
+    ; begin of type assigning
+    push          132
+    iload         %0      104
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      84214021
+    iload         %1      $104
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $108
+    store         %1      %0
+    iload         %0      17170689
+    iload         %1      $112
+    store         %1      %0
+    iload         %0      17105153
+    iload         %1      $116
+    store         %1      %0
+    iload         %0      16843014
+    iload         %1      $120
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $124
+    store         %1      %0
+    iload         %0      1
+    iload         %1      $128
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      8
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $16
+    set_ret       %1
+    call_reg      %0
+    load          %0      $16
+    iload         %1      $12
+    store         %1      %0
+    load_lit      %0      $4
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $8
+    load          %1      $24
+    addi          %0      %1
+    iload         %1      $20
+    store         %1      %0
+    label         LOOP_TITLE_8
+    load          %0      $4
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      32
+    store         %1      %0
+    load          %0      $32
+    rload_abs     %1      %0
+    iload         %0      36
+    store         %0      %1
+    load          %0      $20
+    load          %1      $36
+    lti           %0      %1
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $28
+    if_zero_goto  %0      END_LOOP_8
+    load          %0      $4
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    rload_abs     %1      %0
+    iload         %0      44
+    store         %0      %1
+    load_lit      %0      $4
+    iload         %1      $52
+    store         %1      %0
+    load          %0      $20
+    load          %1      $52
+    subi          %0      %1
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $48
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $56
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      56
+    store         %1      %0
+    load          %0      $56
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      56
+    store         %1      %0
+    load          %0      $44
+    load          %1      $56
+    addi          %0      %1
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $64
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      64
+    store         %1      %0
+    load          %0      $64
+    rload_abs     %1      %0
+    iload         %0      68
+    store         %0      %1
+    load          %0      $20
+    iload         %1      $72
+    store         %1      %0
+    load          %0      $72
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      72
+    store         %1      %0
+    load          %0      $72
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      72
+    store         %1      %0
+    load          %0      $68
+    load          %1      $72
+    addi          %0      %1
+    iload         %1      $72
+    store         %1      %0
+    load          %0      $72
+    rload_abs     %1      %0
+    iload         %0      60
+    store         %0      %1
+    load          %0      $56
+    load          %1      $60
+    store_abs     %0      %1
+    label         LABEL_6
+    load          %0      $20
+    iload         %1      1
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    goto          LOOP_TITLE_8
+    label         END_LOOP_8
+    load          %0      $4
+    iload         %1      $76
+    store         %1      %0
+    load          %0      $76
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      76
+    store         %1      %0
+    load          %0      $76
+    rload_abs     %1      %0
+    iload         %0      80
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $84
+    store         %1      %0
+    load          %0      $84
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      84
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $92
+    store         %1      %0
+    load          %0      $92
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      92
+    store         %1      %0
+    load          %0      $92
+    rload_abs     %1      %0
+    iload         %0      96
+    store         %0      %1
+    load_lit      %0      $4
+    iload         %1      $100
+    store         %1      %0
+    load          %0      $96
+    load          %1      $100
+    subi          %0      %1
+    iload         %1      $88
+    store         %1      %0
+    load          %0      $84
+    load          %1      $88
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      15
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    call_reg      %0
+    load          %0      $12
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.toString() $2688
+    push_fp
+    ; begin of type assigning
+    push          172
+    iload         %0      136
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844293
+    iload         %1      $136
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $140
+    store         %1      %0
+    iload         %0      84214017
+    iload         %1      $144
+    store         %1      %0
+    iload         %0      84215041
+    iload         %1      $148
+    store         %1      %0
+    iload         %0      84215045
+    iload         %1      $152
+    store         %1      %0
+    iload         %0      84215045
+    iload         %1      $156
+    store         %1      %0
+    iload         %0      84215045
+    iload         %1      $160
+    store         %1      %0
+    iload         %0      84215045
+    iload         %1      $164
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $168
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      12
+    store         %1      %0
+    load          %0      $12
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    iload         %0      5
+    iload         %1      $20
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    aload_sp      %0      $4
+    load          %1      $20
+    store_abs     %0      %1
+    iload         %0      $8
+    set_ret       %0
+    invoke_fn     _heap_array
+    load_lit      %0      $0
+    iload         %1      $24
+    store         %1      %0
+    label         LOOP_TITLE_9
+    load          %0      $4
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      32
+    store         %1      %0
+    load          %0      $32
+    rload_abs     %1      %0
+    iload         %0      36
+    store         %0      %1
+    load          %0      $24
+    load          %1      $36
+    lti           %0      %1
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $28
+    if_zero_goto  %0      END_LOOP_9
+    load          %0      $24
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $8
+    load          %1      $40
+    addi          %0      %1
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $4
+    iload         %1      8
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $24
+    store_abs     %1      %2
+    iload         %1      $44
+    set_ret       %1
+    call_reg      %0
+    load          %0      $44
+    iload         %1      4
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $44
+    store_abs     %1      %2
+    iload         %1      $48
+    set_ret       %1
+    call_reg      %0
+    load          %0      $40
+    load          %1      $48
+    store_abs     %0      %1
+    label         LABEL_7
+    load          %0      $24
+    iload         %1      $52
+    store         %1      %0
+    load          %0      $24
+    iload         %1      1
+    addi          %0      %1
+    iload         %1      24
+    store         %1      %0
+    goto          LOOP_TITLE_9
+    label         END_LOOP_9
+    lit_abs       %0      $306
+    iload         %1      $64
+    store         %1      %0
+    lit_abs       %0      $328
+    iload         %1      $68
+    store         %1      %0
+    load          %0      $68
+    iload         %1      13
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $68
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $72
+    set_ret       %1
+    call_reg      %0
+    lit_abs       %0      $306
+    iload         %1      $76
+    store         %1      %0
+    lit_abs       %0      $328
+    iload         %1      $84
+    store         %1      %0
+    load          %0      $84
+    iload         %1      13
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $84
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $88
+    set_ret       %1
+    call_reg      %0
+    load          %0      $76
+    iload         %1      7
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $76
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $88
+    store_abs     %1      %2
+    iload         %1      $80
+    set_ret       %1
+    call_reg      %0
+    load          %0      $80
+    iload         %1      $60
+    store         %1      %0
+    lit_abs       %0      $352
+    iload         %1      $92
+    store         %1      %0
+    lit_abs       %0      $306
+    iload         %1      $100
+    store         %1      %0
+    lit_abs       %0      $328
+    iload         %1      $104
+    store         %1      %0
+    load          %0      $104
+    iload         %1      13
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $104
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $108
+    set_ret       %1
+    call_reg      %0
+    lit_abs       %0      $306
+    iload         %1      $112
+    store         %1      %0
+    lit_abs       %0      $328
+    iload         %1      $120
+    store         %1      %0
+    load          %0      $120
+    iload         %1      13
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $120
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $124
+    set_ret       %1
+    call_reg      %0
+    load          %0      $112
+    iload         %1      7
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $112
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $124
+    store_abs     %1      %2
+    iload         %1      $116
+    set_ret       %1
+    call_reg      %0
+    load          %0      $116
+    iload         %1      $96
+    store         %1      %0
+    lit_abs       %0      $352
+    iload         %1      $132
+    store         %1      %0
+    load          %0      $96
+    iload         %1      7
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $96
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $132
+    store_abs     %1      %2
+    iload         %1      $128
+    set_ret       %1
+    call_reg      %0
+    load          %0      $128
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $56
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.checkSize() $2692
+    push_fp
+    ; begin of type assigning
+    push          80
+    iload         %0      64
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16843013
+    iload         %1      $64
+    store         %1      %0
+    iload         %0      17170689
+    iload         %1      $68
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $72
+    store         %1      %0
+    iload         %0      67073
+    iload         %1      $76
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      12
+    store         %1      %0
+    load          %0      $12
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    rload_abs     %1      %0
+    iload         %0      28
+    store         %0      %1
+    load          %0      $28
+    rload_abs     %1      %0
+    iload         %0      20
+    store         %0      %1
+    load          %0      $16
+    load          %1      $20
+    eqi           %0      %1
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    if_zero_goto  %0      ENDIF_14
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call          $2696
+    label         ENDIF_14
+    load          %0      $4
+    iload         %1      $36
+    store         %1      %0
+    load          %0      $36
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      36
+    store         %1      %0
+    load          %0      $36
+    rload_abs     %1      %0
+    iload         %0      40
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $52
+    store         %1      %0
+    load          %0      $52
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      52
+    store         %1      %0
+    load          %0      $52
+    rload_abs     %1      %0
+    iload         %0      56
+    store         %0      %1
+    load          %0      $56
+    rload_abs     %1      %0
+    iload         %0      48
+    store         %0      %1
+    load_lit      %0      $374
+    iload         %1      $60
+    store         %1      %0
+    load          %0      $48
+    load          %1      $60
+    divi          %0      %1
+    iload         %1      $44
+    store         %1      %0
+    load          %0      $40
+    load          %1      $44
+    lti           %0      %1
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    if_zero_goto  %0      ENDIF_15
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call          $2700
+    label         ENDIF_15
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.expand() $2696
+    push_fp
+    ; begin of type assigning
+    push          80
+    iload         %0      64
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844293
+    iload         %1      $64
+    store         %1      %0
+    iload         %0      16844289
+    iload         %1      $68
+    store         %1      %0
+    iload         %0      16844289
+    iload         %1      $72
+    store         %1      %0
+    iload         %0      65793
+    iload         %1      $76
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load          %0      $20
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    load          %0      $24
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load_lit      %0      $378
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $16
+    load          %1      $28
+    muli          %0      %1
+    iload         %1      $12
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $32
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $12
+    store_abs     %0      %1
+    aload_sp      %0      $4
+    load          %1      $32
+    store_abs     %0      %1
+    iload         %0      $8
+    set_ret       %0
+    invoke_fn     _heap_array
+    load          %0      $4
+    iload         %1      $36
+    store         %1      %0
+    load          %0      $36
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      36
+    store         %1      %0
+    load          %0      $36
+    rload_abs     %1      %0
+    iload         %0      40
+    store         %0      %1
+    load_lit      %0      $0
+    iload         %1      $44
+    store         %1      %0
+    load_lit      %0      $0
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $52
+    store         %1      %0
+    load          %0      $52
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      52
+    store         %1      %0
+    load          %0      $52
+    rload_abs     %1      %0
+    iload         %0      56
+    store         %0      %1
+    args
+    aload_sp      %0      $4
+    load          %1      $40
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $44
+    store_abs     %0      %1
+    aload_sp      %0      $12
+    load          %1      $8
+    store_abs     %0      %1
+    aload_sp      %0      $16
+    load          %1      $48
+    store_abs     %0      %1
+    aload_sp      %0      $20
+    load          %1      $56
+    store_abs     %0      %1
+    call          $2272
+    load          %0      $4
+    iload         %1      $60
+    store         %1      %0
+    load          %0      $60
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      60
+    store         %1      %0
+    load          %0      $60
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$List.collapse() $2700
+    push_fp
+    ; begin of type assigning
+    push          80
+    iload         %0      64
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844293
+    iload         %1      $64
+    store         %1      %0
+    iload         %0      16844289
+    iload         %1      $68
+    store         %1      %0
+    iload         %0      16844289
+    iload         %1      $72
+    store         %1      %0
+    iload         %0      65793
+    iload         %1      $76
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load          %0      $20
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    load          %0      $24
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load_lit      %0      $378
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $16
+    load          %1      $28
+    divi          %0      %1
+    iload         %1      $12
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $32
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $12
+    store_abs     %0      %1
+    aload_sp      %0      $4
+    load          %1      $32
+    store_abs     %0      %1
+    iload         %0      $8
+    set_ret       %0
+    invoke_fn     _heap_array
+    load          %0      $4
+    iload         %1      $36
+    store         %1      %0
+    load          %0      $36
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      36
+    store         %1      %0
+    load          %0      $36
+    rload_abs     %1      %0
+    iload         %0      40
+    store         %0      %1
+    load_lit      %0      $0
+    iload         %1      $44
+    store         %1      %0
+    load_lit      %0      $0
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $52
+    store         %1      %0
+    load          %0      $52
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      52
+    store         %1      %0
+    load          %0      $52
+    rload_abs     %1      %0
+    iload         %0      56
+    store         %0      %1
+    args
+    aload_sp      %0      $4
+    load          %1      $40
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $44
+    store_abs     %0      %1
+    aload_sp      %0      $12
+    load          %1      $8
+    store_abs     %0      %1
+    aload_sp      %0      $16
+    load          %1      $48
+    store_abs     %0      %1
+    aload_sp      %0      $20
+    load          %1      $56
+    store_abs     %0      %1
+    call          $2272
+    load          %0      $4
+    iload         %1      $60
+    store         %1      %0
+    load          %0      $60
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      60
+    store         %1      %0
+    load          %0      $60
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$LinkedIterator.__new__(*LinkedNode) $2704
+    push_fp
+    ; begin of type assigning
+    push          20
+    iload         %0      16
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      66821
+    iload         %1      $16
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$Iterator.__new__()
+    load          %0      $4
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      12
+    store         %1      %0
+    load          %0      $12
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$LinkedIterator.hasNext() $2708
+    push_fp
+    ; begin of type assigning
+    push          40
+    iload         %0      32
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      83951877
+    iload         %1      $32
+    store         %1      %0
+    iload         %0      66817
+    iload         %1      $36
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      12
+    store         %1      %0
+    load          %0      $12
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load          %0      $20
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    load          %0      $24
+    iload         %1      3
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $24
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $2148
+    store_abs     %1      %2
+    iload         %1      $28
+    set_ret       %1
+    call_reg      %0
+    load          %0      $28
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$LinkedIterator.next() $2712
+    push_fp
+    ; begin of type assigning
+    push          60
+    iload         %0      48
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      83952901
+    iload         %1      $48
+    store         %1      %0
+    iload         %0      16844033
+    iload         %1      $52
+    store         %1      %0
+    iload         %0      327941
+    iload         %1      $56
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      12
+    store         %1      %0
+    load          %0      $12
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $16
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load          %0      $20
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    load          %0      $24
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $28
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      28
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      32
+    store         %1      %0
+    load          %0      $32
+    rload_abs     %1      %0
+    iload         %0      36
+    store         %0      %1
+    load          %0      $36
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    rload_abs     %1      %0
+    iload         %0      44
+    store         %0      %1
+    load          %0      $28
+    load          %1      $44
+    store_abs     %0      %1
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$LinkedNode.__new__() $2716
+    push_fp
+    ; begin of type assigning
+    push          12
+    iload         %0      8
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $8
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$LinkedList.iter() $2720
+    push_fp
+    ; begin of type assigning
+    push          12
+    iload         %0      8
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $8
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $2148
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$LinkedList.append(*Object) $2724
+    push_fp
+    ; begin of type assigning
+    push          16
+    iload         %0      12
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      1285
+    iload         %1      $12
+    store         %1      %0
+    ; end of type assigning
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$LinkedList.get(int) $2728
+    push_fp
+    ; begin of type assigning
+    push          16
+    iload         %0      12
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      261
+    iload         %1      $12
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      12
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    call_reg      %0
+    load          %0      $2148
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$LinkedList.set(int,*Object) $2732
+    push_fp
+    ; begin of type assigning
+    push          20
+    iload         %0      16
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      327941
+    iload         %1      $16
+    store         %1      %0
+    ; end of type assigning
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$LinkedList.remove(int) $2736
+    push_fp
+    ; begin of type assigning
+    push          16
+    iload         %0      12
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      261
+    iload         %1      $12
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      12
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    call_reg      %0
+    load          %0      $2148
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$LinkedList.size() $2740
+    push_fp
+    ; begin of type assigning
+    push          20
+    iload         %0      16
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      65797
+    iload         %1      $16
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      12
+    store         %0      %1
+    load          %0      $12
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$LinkedList.__new__() $2744
+    push_fp
+    ; begin of type assigning
+    push          32
+    iload         %0      24
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16843013
+    iload         %1      $24
+    store         %1      %0
+    iload         %0      1
+    iload         %1      $28
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    load          %1      $2148
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      12
+    store         %1      %0
+    load          %0      $12
+    load          %1      $2148
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load_lit      %0      $0
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $16
+    load          %1      $20
+    store_abs     %0      %1
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$AbsList.__new__()
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$Map.get(*Object) $2748 abstract
+
+fn E:\GitHub\tpl2\lib\collections.tp$Map.set(*Object,*Object) $2752 abstract
+
+fn E:\GitHub\tpl2\lib\collections.tp$Map.remove(*Object) $2756 abstract
+
+fn E:\GitHub\tpl2\lib\collections.tp$Map.size() $2760 abstract
+
+fn E:\GitHub\tpl2\lib\collections.tp$Map.__get__(*Object) $2764
+    push_fp
+    ; begin of type assigning
+    push          20
+    iload         %0      16
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      328965
+    iload         %1      $16
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      6
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $12
+    set_ret       %1
+    call_reg      %0
+    load          %0      $12
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$Map.__set__(*Object,*Object) $2768
+    push_fp
+    ; begin of type assigning
+    push          20
+    iload         %0      16
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      328965
+    iload         %1      $16
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      7
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    aload_sp      %1      $12
+    load          %2      $12
+    store_abs     %1      %2
+    call_reg      %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$Map.__new__() $2772
+    push_fp
+    ; begin of type assigning
+    push          12
+    iload         %0      8
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $8
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$Iterable.__new__()
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashEntry.__new__(*Object,*Object) $2776
+    push_fp
+    ; begin of type assigning
+    push          36
+    iload         %0      28
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      17106181
+    iload         %1      $28
+    store         %1      %0
+    iload         %0      257
+    iload         %1      $32
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
+    load          %0      $4
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    load          %1      $8
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load          %0      $20
+    load          %1      $2148
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    load          %1      $12
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashMapIterator.__new__(*HashMap) $2780
+    push_fp
+    ; begin of type assigning
+    push          44
+    iload         %0      36
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844037
+    iload         %1      $36
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $40
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$Iterator.__new__()
+    load          %0      $4
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      12
+    store         %1      %0
+    load_lit      %0      $0
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $12
+    load          %1      $16
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load_lit      %0      $0
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $20
+    load          %1      $24
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $28
+    iload         %1      20
+    addi          %0      %1
+    iload         %1      28
+    store         %1      %0
+    load          %0      $28
+    load          %1      $2148
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      32
+    store         %1      %0
+    load          %0      $32
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashMapIterator.hasNext() $2784
+    push_fp
+    ; begin of type assigning
+    push          40
+    iload         %0      32
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16843013
+    iload         %1      $32
+    store         %1      %0
+    iload         %0      66817
+    iload         %1      $36
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      12
+    store         %1      %0
+    load          %0      $12
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load          %0      $20
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    args
+    aload_sp      %0      $4
+    load          %1      $24
+    store_abs     %0      %1
+    iload         %0      $28
+    set_ret       %0
+    call          $2808
+    load          %0      $16
+    load          %1      $28
+    lti           %0      %1
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashMapIterator.next() $2788
+    push_fp
+    ; begin of type assigning
+    push          236
+    iload         %0      188
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      83951877
+    iload         %1      $188
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $192
+    store         %1      %0
+    iload         %0      100730113
+    iload         %1      $196
+    store         %1      %0
+    iload         %0      83952897
+    iload         %1      $200
+    store         %1      %0
+    iload         %0      16844289
+    iload         %1      $204
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $208
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $212
+    store         %1      %0
+    iload         %0      16843013
+    iload         %1      $216
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $220
+    store         %1      %0
+    iload         %0      17105157
+    iload         %1      $224
+    store         %1      %0
+    iload         %0      83952897
+    iload         %1      $228
+    store         %1      %0
+    iload         %0      1281
+    iload         %1      $232
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $12
+    iload         %1      20
+    addi          %0      %1
+    iload         %1      12
+    store         %1      %0
+    load          %0      $12
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load          %0      $16
+    load          %1      $2148
+    eqi           %0      %1
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    if_zero_goto  %0      ENDIF_16
+    label         LOOP_TITLE_10
+    load          %0      $4
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    rload_abs     %1      %0
+    iload         %0      28
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $36
+    store         %1      %0
+    load          %0      $36
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      36
+    store         %1      %0
+    load          %0      $36
+    rload_abs     %1      %0
+    iload         %0      40
+    store         %0      %1
+    load          %0      $40
+    iload         %1      $44
+    store         %1      %0
+    load          %0      $44
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      44
+    store         %1      %0
+    load          %0      $44
+    rload_abs     %1      %0
+    iload         %0      48
+    store         %0      %1
+    load          %0      $48
+    rload_abs     %1      %0
+    iload         %0      32
+    store         %0      %1
+    load          %0      $28
+    load          %1      $32
+    lti           %0      %1
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $20
+    if_zero_goto  %0      END_LOOP_10
+    load          %0      $4
+    iload         %1      $52
+    store         %1      %0
+    load          %0      $52
+    iload         %1      20
+    addi          %0      %1
+    iload         %1      52
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $60
+    store         %1      %0
+    load          %0      $60
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      60
+    store         %1      %0
+    load          %0      $60
+    rload_abs     %1      %0
+    iload         %0      64
+    store         %0      %1
+    load          %0      $64
+    iload         %1      $68
+    store         %1      %0
+    load          %0      $68
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      68
+    store         %1      %0
+    load          %0      $68
+    rload_abs     %1      %0
+    iload         %0      72
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $76
+    store         %1      %0
+    load          %0      $76
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      76
+    store         %1      %0
+    load          %0      $76
+    rload_abs     %1      %0
+    iload         %0      80
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $84
+    store         %1      %0
+    load          %0      $84
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      84
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $92
+    store         %1      %0
+    load          %0      $92
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      92
+    store         %1      %0
+    load          %0      $92
+    rload_abs     %1      %0
+    iload         %0      96
+    store         %0      %1
+    load_lit      %0      $4
+    iload         %1      $100
+    store         %1      %0
+    load          %0      $96
+    load          %1      $100
+    addi          %0      %1
+    iload         %1      $88
+    store         %1      %0
+    load          %0      $84
+    load          %1      $88
+    store_abs     %0      %1
+    load          %0      $80
+    iload         %1      $104
+    store         %1      %0
+    load          %0      $104
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      104
+    store         %1      %0
+    load          %0      $104
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      104
+    store         %1      %0
+    load          %0      $72
+    load          %1      $104
+    addi          %0      %1
+    iload         %1      $104
+    store         %1      %0
+    load          %0      $104
+    rload_abs     %1      %0
+    iload         %0      56
+    store         %0      %1
+    load          %0      $52
+    load          %1      $56
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $112
+    store         %1      %0
+    load          %0      $112
+    iload         %1      20
+    addi          %0      %1
+    iload         %1      112
+    store         %1      %0
+    load          %0      $112
+    rload_abs     %1      %0
+    iload         %0      116
+    store         %0      %1
+    load          %0      $116
+    load          %1      $2148
+    nei           %0      %1
+    iload         %1      $108
+    store         %1      %0
+    load          %0      $108
+    if_zero_goto  %0      ENDIF_17
+    goto          END_LOOP_10
+    label         ENDIF_17
+    goto          LOOP_TITLE_10
+    label         END_LOOP_10
+    label         ENDIF_16
+    load          %0      $4
+    iload         %1      $120
+    store         %1      %0
+    load          %0      $120
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      120
+    store         %1      %0
+    load          %0      $120
+    rload_abs     %1      %0
+    iload         %0      124
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $128
+    store         %1      %0
+    load          %0      $128
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      128
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $136
+    store         %1      %0
+    load          %0      $136
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      136
+    store         %1      %0
+    load          %0      $136
+    rload_abs     %1      %0
+    iload         %0      140
+    store         %0      %1
+    load_lit      %0      $4
+    iload         %1      $144
+    store         %1      %0
+    load          %0      $140
+    load          %1      $144
+    addi          %0      %1
+    iload         %1      $132
+    store         %1      %0
+    load          %0      $128
+    load          %1      $132
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $152
+    store         %1      %0
+    load          %0      $152
+    iload         %1      20
+    addi          %0      %1
+    iload         %1      152
+    store         %1      %0
+    load          %0      $152
+    rload_abs     %1      %0
+    iload         %0      156
+    store         %0      %1
+    load          %0      $156
+    iload         %1      $148
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $160
+    store         %1      %0
+    load          %0      $160
+    iload         %1      20
+    addi          %0      %1
+    iload         %1      160
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $164
+    store         %1      %0
+    load          %0      $164
+    iload         %1      20
+    addi          %0      %1
+    iload         %1      164
+    store         %1      %0
+    load          %0      $164
+    rload_abs     %1      %0
+    iload         %0      168
+    store         %0      %1
+    load          %0      $168
+    iload         %1      $172
+    store         %1      %0
+    load          %0      $172
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      172
+    store         %1      %0
+    load          %0      $172
+    rload_abs     %1      %0
+    iload         %0      176
+    store         %0      %1
+    load          %0      $160
+    load          %1      $176
+    store_abs     %0      %1
+    load          %0      $148
+    iload         %1      $180
+    store         %1      %0
+    load          %0      $180
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      180
+    store         %1      %0
+    load          %0      $180
+    rload_abs     %1      %0
+    iload         %0      184
+    store         %0      %1
+    load          %0      $184
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashMap.__new__() $2792
+    push_fp
+    ; begin of type assigning
+    push          52
+    iload         %0      40
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16908549
+    iload         %1      $40
+    store         %1      %0
+    iload         %0      17170689
+    iload         %1      $44
+    store         %1      %0
+    iload         %0      1
+    iload         %1      $48
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$Map.__new__()
+    load          %0      $4
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load_lit      %0      $382
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $8
+    load          %1      $12
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load_lit      %0      $0
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $16
+    load          %1      $20
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load_lit      %0      $302
+    iload         %1      $32
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $36
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $32
+    store_abs     %0      %1
+    aload_sp      %0      $4
+    load          %1      $36
+    store_abs     %0      %1
+    iload         %0      $28
+    set_ret       %0
+    invoke_fn     _heap_array
+    load          %0      $24
+    load          %1      $28
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashMap.get(*Object) $2796
+    push_fp
+    ; begin of type assigning
+    push          132
+    iload         %0      104
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844037
+    iload         %1      $104
+    store         %1      %0
+    iload         %0      84279553
+    iload         %1      $108
+    store         %1      %0
+    iload         %0      17170693
+    iload         %1      $112
+    store         %1      %0
+    iload         %0      16844033
+    iload         %1      $116
+    store         %1      %0
+    iload         %0      83952897
+    iload         %1      $120
+    store         %1      %0
+    iload         %0      17105153
+    iload         %1      $124
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $128
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    rload_abs     %1      %0
+    iload         %0      28
+    store         %0      %1
+    load          %0      $28
+    rload_abs     %1      %0
+    iload         %0      20
+    store         %0      %1
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $8
+    store_abs     %0      %1
+    aload_sp      %0      $12
+    load          %1      $20
+    store_abs     %0      %1
+    iload         %0      $16
+    set_ret       %0
+    call          $2816
+    load          %0      $16
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    rload_abs     %1      %0
+    iload         %0      44
+    store         %0      %1
+    load          %0      $12
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $48
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      48
+    store         %1      %0
+    load          %0      $48
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      48
+    store         %1      %0
+    load          %0      $44
+    load          %1      $48
+    addi          %0      %1
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $48
+    rload_abs     %1      %0
+    iload         %0      36
+    store         %0      %1
+    load          %0      $36
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    load          %1      $2148
+    eqi           %0      %1
+    iload         %1      $52
+    store         %1      %0
+    load          %0      $52
+    if_zero_goto  %0      ENDIF_18
+    load          %0      $2148
+    put_ret       %0
+    pull_fp
+    ret
+    label         ENDIF_18
+    load          %0      $32
+    iload         %1      $56
+    store         %1      %0
+    label         LOOP_TITLE_11
+    load          %0      $56
+    load          %1      $2148
+    nei           %0      %1
+    iload         %1      $60
+    store         %1      %0
+    load          %0      $60
+    if_zero_goto  %0      END_LOOP_11
+    load          %0      $56
+    iload         %1      $68
+    store         %1      %0
+    load          %0      $68
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      68
+    store         %1      %0
+    load          %0      $68
+    rload_abs     %1      %0
+    iload         %0      72
+    store         %0      %1
+    load          %0      $56
+    iload         %1      $76
+    store         %1      %0
+    load          %0      $76
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      76
+    store         %1      %0
+    load          %0      $76
+    rload_abs     %1      %0
+    iload         %0      80
+    store         %0      %1
+    load          %0      $80
+    iload         %1      2
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $80
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $84
+    set_ret       %1
+    call_reg      %0
+    load          %0      $84
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $64
+    if_zero_goto  %0      ENDIF_19
+    load          %0      $56
+    iload         %1      $88
+    store         %1      %0
+    load          %0      $88
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      88
+    store         %1      %0
+    load          %0      $88
+    rload_abs     %1      %0
+    iload         %0      92
+    store         %0      %1
+    load          %0      $92
+    put_ret       %0
+    pull_fp
+    ret
+    label         ENDIF_19
+    load          %0      $56
+    iload         %1      $96
+    store         %1      %0
+    load          %0      $96
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      96
+    store         %1      %0
+    load          %0      $96
+    rload_abs     %1      %0
+    iload         %0      100
+    store         %0      %1
+    load          %0      $100
+    iload         %1      $56
+    store         %1      %0
+    goto          LOOP_TITLE_11
+    label         END_LOOP_11
+    load          %0      $2148
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashMap.set(*Object,*Object) $2800
+    push_fp
+    ; begin of type assigning
+    push          296
+    iload         %0      236
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      17106181
+    iload         %1      $236
+    store         %1      %0
+    iload         %0      100729089
+    iload         %1      $240
+    store         %1      %0
+    iload         %0      100730117
+    iload         %1      $244
+    store         %1      %0
+    iload         %0      100729089
+    iload         %1      $248
+    store         %1      %0
+    iload         %0      16844033
+    iload         %1      $252
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $256
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $260
+    store         %1      %0
+    iload         %0      16843013
+    iload         %1      $264
+    store         %1      %0
+    iload         %0      17105157
+    iload         %1      $268
+    store         %1      %0
+    iload         %0      17105153
+    iload         %1      $272
+    store         %1      %0
+    iload         %0      16843013
+    iload         %1      $276
+    store         %1      %0
+    iload         %0      16844289
+    iload         %1      $280
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $284
+    store         %1      %0
+    iload         %0      33620225
+    iload         %1      $288
+    store         %1      %0
+    iload         %0      513
+    iload         %1      $292
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $28
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      28
+    store         %1      %0
+    load          %0      $28
+    rload_abs     %1      %0
+    iload         %0      32
+    store         %0      %1
+    load          %0      $32
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $8
+    store_abs     %0      %1
+    aload_sp      %0      $12
+    load          %1      $24
+    store_abs     %0      %1
+    iload         %0      $20
+    set_ret       %0
+    call          $2816
+    load          %0      $20
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $44
+    store         %1      %0
+    load          %0      $44
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      44
+    store         %1      %0
+    load          %0      $44
+    rload_abs     %1      %0
+    iload         %0      48
+    store         %0      %1
+    load          %0      $16
+    iload         %1      $52
+    store         %1      %0
+    load          %0      $52
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      52
+    store         %1      %0
+    load          %0      $52
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      52
+    store         %1      %0
+    load          %0      $48
+    load          %1      $52
+    addi          %0      %1
+    iload         %1      $52
+    store         %1      %0
+    load          %0      $52
+    rload_abs     %1      %0
+    iload         %0      40
+    store         %0      %1
+    load          %0      $40
+    iload         %1      $36
+    store         %1      %0
+    load          %0      $36
+    load          %1      $2148
+    eqi           %0      %1
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $56
+    if_zero_goto  %0      ELSE_20
+    load          %0      $4
+    iload         %1      $60
+    store         %1      %0
+    load          %0      $60
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      60
+    store         %1      %0
+    load          %0      $60
+    rload_abs     %1      %0
+    iload         %0      64
+    store         %0      %1
+    load          %0      $16
+    iload         %1      $68
+    store         %1      %0
+    load          %0      $68
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      68
+    store         %1      %0
+    load          %0      $68
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      68
+    store         %1      %0
+    load          %0      $64
+    load          %1      $68
+    addi          %0      %1
+    iload         %1      $68
+    store         %1      %0
+    iload         %0      20
+    iload         %1      $76
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $76
+    store_abs     %0      %1
+    iload         %0      $72
+    set_ret       %0
+    invoke_fn     _malloc
+    load          %0      $72
+    iload         %1      2320
+    store_abs     %0      %1
+    load          %0      $72
+    iload         %1      4
+    addi          %0      %1
+    iload         %1      80
+    store         %1      %0
+    load          %0      $80
+    iload         %1      20
+    store_abs     %0      %1
+    args
+    aload_sp      %0      $4
+    load          %1      $72
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $8
+    store_abs     %0      %1
+    aload_sp      %0      $12
+    load          %1      $12
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$HashEntry.__new__(*Object,*Object)
+    load          %0      $68
+    load          %1      $72
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $84
+    store         %1      %0
+    load          %0      $84
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      84
+    store         %1      %0
+    load          %0      $84
+    rload_abs     %1      %0
+    iload         %0      88
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $92
+    store         %1      %0
+    load          %0      $92
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      92
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $100
+    store         %1      %0
+    load          %0      $100
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      100
+    store         %1      %0
+    load          %0      $100
+    rload_abs     %1      %0
+    iload         %0      104
+    store         %0      %1
+    load_lit      %0      $4
+    iload         %1      $108
+    store         %1      %0
+    load          %0      $104
+    load          %1      $108
+    addi          %0      %1
+    iload         %1      $96
+    store         %1      %0
+    load          %0      $92
+    load          %1      $96
+    store_abs     %0      %1
+    goto          ENDIF_20
+    label         ELSE_20
+    load          %0      $2140
+    iload         %1      $112
+    store         %1      %0
+    load          %0      $36
+    iload         %1      $116
+    store         %1      %0
+    label         LOOP_TITLE_12
+    load          %0      $116
+    load          %1      $2148
+    nei           %0      %1
+    iload         %1      $120
+    store         %1      %0
+    load          %0      $120
+    if_zero_goto  %0      END_LOOP_12
+    load          %0      $116
+    iload         %1      $128
+    store         %1      %0
+    load          %0      $128
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      128
+    store         %1      %0
+    load          %0      $128
+    rload_abs     %1      %0
+    iload         %0      132
+    store         %0      %1
+    load          %0      $116
+    iload         %1      $136
+    store         %1      %0
+    load          %0      $136
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      136
+    store         %1      %0
+    load          %0      $136
+    rload_abs     %1      %0
+    iload         %0      140
+    store         %0      %1
+    load          %0      $140
+    iload         %1      2
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $140
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $144
+    set_ret       %1
+    call_reg      %0
+    load          %0      $144
+    iload         %1      $124
+    store         %1      %0
+    load          %0      $124
+    if_zero_goto  %0      ENDIF_21
+    load          %0      $116
+    iload         %1      $148
+    store         %1      %0
+    load          %0      $148
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      148
+    store         %1      %0
+    load          %0      $148
+    load          %1      $12
+    store_abs     %0      %1
+    load          %0      $2144
+    iload         %1      $112
+    store         %1      %0
+    goto          END_LOOP_12
+    label         ENDIF_21
+    load          %0      $116
+    iload         %1      $152
+    store         %1      %0
+    load          %0      $152
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      152
+    store         %1      %0
+    load          %0      $152
+    rload_abs     %1      %0
+    iload         %0      156
+    store         %0      %1
+    load          %0      $156
+    iload         %1      $116
+    store         %1      %0
+    goto          LOOP_TITLE_12
+    label         END_LOOP_12
+    load          %0      $112
+    not           %0
+    iload         %1      160
+    store         %1      %0
+    load          %0      $160
+    if_zero_goto  %0      ENDIF_22
+    iload         %0      20
+    iload         %1      $168
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $168
+    store_abs     %0      %1
+    iload         %0      $164
+    set_ret       %0
+    invoke_fn     _malloc
+    load          %0      $164
+    iload         %1      2320
+    store_abs     %0      %1
+    load          %0      $164
+    iload         %1      4
+    addi          %0      %1
+    iload         %1      172
+    store         %1      %0
+    load          %0      $172
+    iload         %1      20
+    store_abs     %0      %1
+    args
+    aload_sp      %0      $4
+    load          %1      $164
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $8
+    store_abs     %0      %1
+    aload_sp      %0      $12
+    load          %1      $12
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$HashEntry.__new__(*Object,*Object)
+    load          %0      $164
+    iload         %1      $176
+    store         %1      %0
+    load          %0      $176
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      176
+    store         %1      %0
+    load          %0      $176
+    load          %1      $36
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $180
+    store         %1      %0
+    load          %0      $180
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      180
+    store         %1      %0
+    load          %0      $180
+    rload_abs     %1      %0
+    iload         %0      184
+    store         %0      %1
+    load          %0      $16
+    iload         %1      $188
+    store         %1      %0
+    load          %0      $188
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      188
+    store         %1      %0
+    load          %0      $188
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      188
+    store         %1      %0
+    load          %0      $184
+    load          %1      $188
+    addi          %0      %1
+    iload         %1      $188
+    store         %1      %0
+    load          %0      $188
+    load          %1      $164
+    store_abs     %0      %1
+    load          %0      $4
+    iload         %1      $192
+    store         %1      %0
+    load          %0      $192
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      192
+    store         %1      %0
+    load          %0      $192
+    rload_abs     %1      %0
+    iload         %0      196
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $200
+    store         %1      %0
+    load          %0      $200
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      200
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $208
+    store         %1      %0
+    load          %0      $208
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      208
+    store         %1      %0
+    load          %0      $208
+    rload_abs     %1      %0
+    iload         %0      212
+    store         %0      %1
+    load_lit      %0      $4
+    iload         %1      $216
+    store         %1      %0
+    load          %0      $212
+    load          %1      $216
+    addi          %0      %1
+    iload         %1      $204
+    store         %1      %0
+    load          %0      $200
+    load          %1      $204
+    store_abs     %0      %1
+    label         ENDIF_22
+    label         ENDIF_20
+    load          %0      $4
+    iload         %1      13
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    iload         %1      $224
+    set_ret       %1
+    call_reg      %0
+    load          %0      $4
+    iload         %1      $228
+    store         %1      %0
+    load          %0      $228
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      228
+    store         %1      %0
+    load          %0      $228
+    rload_abs     %1      %0
+    iload         %0      232
+    store         %0      %1
+    load          %0      $224
+    load          %1      $232
+    gtf           %0      %1
+    iload         %1      $220
+    store         %1      %0
+    load          %0      $220
+    if_zero_goto  %0      ENDIF_23
+    load          %0      $4
+    iload         %1      14
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    call_reg      %0
+    label         ENDIF_23
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashMap.remove(*Object) $2804
+    push_fp
+    ; begin of type assigning
+    push          292
+    iload         %0      232
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844037
+    iload         %1      $232
+    store         %1      %0
+    iload         %0      84279553
+    iload         %1      $236
+    store         %1      %0
+    iload         %0      17170693
+    iload         %1      $240
+    store         %1      %0
+    iload         %0      16844033
+    iload         %1      $244
+    store         %1      %0
+    iload         %0      17105157
+    iload         %1      $248
+    store         %1      %0
+    iload         %0      16844289
+    iload         %1      $252
+    store         %1      %0
+    iload         %0      17105157
+    iload         %1      $256
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $260
+    store         %1      %0
+    iload         %0      84214017
+    iload         %1      $264
+    store         %1      %0
+    iload         %0      83951873
+    iload         %1      $268
+    store         %1      %0
+    iload         %0      16844033
+    iload         %1      $272
+    store         %1      %0
+    iload         %0      83952897
+    iload         %1      $276
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $280
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $284
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $288
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $24
+    store         %1      %0
+    load          %0      $24
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      24
+    store         %1      %0
+    load          %0      $24
+    rload_abs     %1      %0
+    iload         %0      28
+    store         %0      %1
+    load          %0      $28
+    rload_abs     %1      %0
+    iload         %0      20
+    store         %0      %1
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $8
+    store_abs     %0      %1
+    aload_sp      %0      $12
+    load          %1      $20
+    store_abs     %0      %1
+    iload         %0      $16
+    set_ret       %0
+    call          $2816
+    load          %0      $16
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $40
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      40
+    store         %1      %0
+    load          %0      $40
+    rload_abs     %1      %0
+    iload         %0      44
+    store         %0      %1
+    load          %0      $12
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $48
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      48
+    store         %1      %0
+    load          %0      $48
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      48
+    store         %1      %0
+    load          %0      $44
+    load          %1      $48
+    addi          %0      %1
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $48
+    rload_abs     %1      %0
+    iload         %0      36
+    store         %0      %1
+    load          %0      $36
+    iload         %1      $32
+    store         %1      %0
+    load          %0      $32
+    load          %1      $2148
+    eqi           %0      %1
+    iload         %1      $52
+    store         %1      %0
+    load          %0      $52
+    if_zero_goto  %0      ENDIF_24
+    load          %0      $2148
+    put_ret       %0
+    pull_fp
+    ret
+    label         ENDIF_24
+    load          %0      $2148
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $32
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $64
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      64
+    store         %1      %0
+    load          %0      $64
+    rload_abs     %1      %0
+    iload         %0      68
+    store         %0      %1
+    load          %0      $32
+    iload         %1      $72
+    store         %1      %0
+    load          %0      $72
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      72
+    store         %1      %0
+    load          %0      $72
+    rload_abs     %1      %0
+    iload         %0      76
+    store         %0      %1
+    load          %0      $76
+    iload         %1      2
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $76
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $80
+    set_ret       %1
+    call_reg      %0
+    load          %0      $80
+    iload         %1      $60
+    store         %1      %0
+    load          %0      $60
+    if_zero_goto  %0      ELSE_25
+    load          %0      $4
+    iload         %1      $84
+    store         %1      %0
+    load          %0      $84
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      84
+    store         %1      %0
+    load          %0      $84
+    rload_abs     %1      %0
+    iload         %0      88
+    store         %0      %1
+    load          %0      $12
+    iload         %1      $92
+    store         %1      %0
+    load          %0      $92
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      92
+    store         %1      %0
+    load          %0      $92
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      92
+    store         %1      %0
+    load          %0      $88
+    load          %1      $92
+    addi          %0      %1
+    iload         %1      $92
+    store         %1      %0
+    load          %0      $32
+    iload         %1      $96
+    store         %1      %0
+    load          %0      $96
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      96
+    store         %1      %0
+    load          %0      $96
+    rload_abs     %1      %0
+    iload         %0      100
+    store         %0      %1
+    load          %0      $92
+    load          %1      $100
+    store_abs     %0      %1
+    load          %0      $32
+    iload         %1      $104
+    store         %1      %0
+    load          %0      $104
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      104
+    store         %1      %0
+    load          %0      $104
+    rload_abs     %1      %0
+    iload         %0      108
+    store         %0      %1
+    load          %0      $108
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $112
+    store         %1      %0
+    load          %0      $112
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      112
+    store         %1      %0
+    load          %0      $112
+    rload_abs     %1      %0
+    iload         %0      116
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $120
+    store         %1      %0
+    load          %0      $120
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      120
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $128
+    store         %1      %0
+    load          %0      $128
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      128
+    store         %1      %0
+    load          %0      $128
+    rload_abs     %1      %0
+    iload         %0      132
+    store         %0      %1
+    load_lit      %0      $4
+    iload         %1      $136
+    store         %1      %0
+    load          %0      $132
+    load          %1      $136
+    subi          %0      %1
+    iload         %1      $124
+    store         %1      %0
+    load          %0      $120
+    load          %1      $124
+    store_abs     %0      %1
+    goto          ENDIF_25
+    label         ELSE_25
+    load          %0      $32
+    iload         %1      $140
+    store         %1      %0
+    load          %0      $2148
+    iload         %1      $144
+    store         %1      %0
+    label         LOOP_TITLE_13
+    load          %0      $140
+    load          %1      $2148
+    nei           %0      %1
+    iload         %1      $148
+    store         %1      %0
+    load          %0      $148
+    if_zero_goto  %0      END_LOOP_13
+    load          %0      $140
+    iload         %1      $156
+    store         %1      %0
+    load          %0      $156
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      156
+    store         %1      %0
+    load          %0      $156
+    rload_abs     %1      %0
+    iload         %0      160
+    store         %0      %1
+    load          %0      $140
+    iload         %1      $164
+    store         %1      %0
+    load          %0      $164
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      164
+    store         %1      %0
+    load          %0      $164
+    rload_abs     %1      %0
+    iload         %0      168
+    store         %0      %1
+    load          %0      $168
+    iload         %1      2
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $168
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $172
+    set_ret       %1
+    call_reg      %0
+    load          %0      $172
+    iload         %1      $152
+    store         %1      %0
+    load          %0      $152
+    if_zero_goto  %0      ENDIF_26
+    load          %0      $144
+    iload         %1      $176
+    store         %1      %0
+    load          %0      $176
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      176
+    store         %1      %0
+    load          %0      $140
+    iload         %1      $180
+    store         %1      %0
+    load          %0      $180
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      180
+    store         %1      %0
+    load          %0      $180
+    rload_abs     %1      %0
+    iload         %0      184
+    store         %0      %1
+    load          %0      $176
+    load          %1      $184
+    store_abs     %0      %1
+    load          %0      $140
+    iload         %1      $188
+    store         %1      %0
+    load          %0      $188
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      188
+    store         %1      %0
+    load          %0      $188
+    rload_abs     %1      %0
+    iload         %0      192
+    store         %0      %1
+    load          %0      $192
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $196
+    store         %1      %0
+    load          %0      $196
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      196
+    store         %1      %0
+    load          %0      $196
+    rload_abs     %1      %0
+    iload         %0      200
+    store         %0      %1
+    load          %0      $4
+    iload         %1      $204
+    store         %1      %0
+    load          %0      $204
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      204
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $212
+    store         %1      %0
+    load          %0      $212
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      212
+    store         %1      %0
+    load          %0      $212
+    rload_abs     %1      %0
+    iload         %0      216
+    store         %0      %1
+    load_lit      %0      $4
+    iload         %1      $220
+    store         %1      %0
+    load          %0      $216
+    load          %1      $220
+    subi          %0      %1
+    iload         %1      $208
+    store         %1      %0
+    load          %0      $204
+    load          %1      $208
+    store_abs     %0      %1
+    label         ENDIF_26
+    load          %0      $140
+    iload         %1      $144
+    store         %1      %0
+    load          %0      $140
+    iload         %1      $224
+    store         %1      %0
+    load          %0      $224
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      224
+    store         %1      %0
+    load          %0      $224
+    rload_abs     %1      %0
+    iload         %0      228
+    store         %0      %1
+    load          %0      $228
+    iload         %1      $140
+    store         %1      %0
+    goto          LOOP_TITLE_13
+    label         END_LOOP_13
+    label         ENDIF_25
+    load          %0      $56
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashMap.size() $2808 inline
+    push_fp
+    ; begin of type assigning
+    push          20
+    iload         %0      16
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      65797
+    iload         %1      $16
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      8
+    store         %1      %0
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      12
+    store         %0      %1
+    load          %0      $12
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashMap.iter() $2812
+    push_fp
+    ; begin of type assigning
+    push          24
+    iload         %0      20
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844037
+    iload         %1      $20
+    store         %1      %0
+    ; end of type assigning
+    iload         %0      24
+    iload         %1      $12
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $12
+    store_abs     %0      %1
+    iload         %0      $8
+    set_ret       %0
+    invoke_fn     _malloc
+    load          %0      $8
+    iload         %1      2324
+    store_abs     %0      %1
+    load          %0      $8
+    iload         %1      4
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      24
+    store_abs     %0      %1
+    args
+    aload_sp      %0      $4
+    load          %1      $8
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$HashMapIterator.__new__(*HashMap)
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashMap.hash(*Object,int) $2816 inline
+    push_fp
+    ; begin of type assigning
+    push          32
+    iload         %0      24
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844037
+    iload         %1      $24
+    store         %1      %0
+    iload         %0      1
+    iload         %1      $28
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $8
+    iload         %1      1
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $20
+    set_ret       %1
+    call_reg      %0
+    load          %0      $20
+    load          %1      $12
+    modi          %0      %1
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashMap.getLoad() $2820
+    push_fp
+    ; begin of type assigning
+    push          52
+    iload         %0      40
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16908805
+    iload         %1      $40
+    store         %1      %0
+    iload         %0      100729089
+    iload         %1      $44
+    store         %1      %0
+    iload         %0      2
+    iload         %1      $48
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      12
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    rload_abs     %1      %0
+    iload         %0      20
+    store         %0      %1
+    load          %0      $20
+    i_to_f        %0
+    iload         %1      $12
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $28
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      28
+    store         %1      %0
+    load          %0      $28
+    rload_abs     %1      %0
+    iload         %0      32
+    store         %0      %1
+    load          %0      $32
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    load          %0      $24
+    i_to_f        %0
+    iload         %1      $36
+    store         %1      %0
+    load          %0      $12
+    load          %1      $36
+    divf          %0      %1
+    iload         %1      $8
+    store         %1      %0
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashMap.expand() $2824
+    push_fp
+    ; begin of type assigning
+    push          212
+    iload         %0      168
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844293
+    iload         %1      $168
+    store         %1      %0
+    iload         %0      16844289
+    iload         %1      $172
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $176
+    store         %1      %0
+    iload         %0      17106182
+    iload         %1      $180
+    store         %1      %0
+    iload         %0      83951878
+    iload         %1      $184
+    store         %1      %0
+    iload         %0      100729089
+    iload         %1      $188
+    store         %1      %0
+    iload         %0      16844037
+    iload         %1      $192
+    store         %1      %0
+    iload         %0      17105153
+    iload         %1      $196
+    store         %1      %0
+    iload         %0      17105157
+    iload         %1      $200
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $204
+    store         %1      %0
+    iload         %0      1
+    iload         %1      $208
+    store         %1      %0
+    ; end of type assigning
+    load          %0      $4
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load          %0      $20
+    rload_abs     %1      %0
+    iload         %0      24
+    store         %0      %1
+    load          %0      $24
+    rload_abs     %1      %0
+    iload         %0      16
+    store         %0      %1
+    load_lit      %0      $378
+    iload         %1      $28
+    store         %1      %0
+    load          %0      $16
+    load          %1      $28
+    muli          %0      %1
+    iload         %1      $12
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $32
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $12
+    store_abs     %0      %1
+    aload_sp      %0      $4
+    load          %1      $32
+    store_abs     %0      %1
+    iload         %0      $8
+    set_ret       %0
+    invoke_fn     _heap_array
+    load_lit      %0      $0
+    iload         %1      $36
+    store         %1      %0
+    label         LOOP_TITLE_14
+    load          %0      $4
+    iload         %1      $48
+    store         %1      %0
+    load          %0      $48
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      48
+    store         %1      %0
+    load          %0      $48
+    rload_abs     %1      %0
+    iload         %0      52
+    store         %0      %1
+    load          %0      $52
+    rload_abs     %1      %0
+    iload         %0      44
+    store         %0      %1
+    load          %0      $36
+    load          %1      $44
+    lti           %0      %1
+    iload         %1      $40
+    store         %1      %0
+    load          %0      $40
+    if_zero_goto  %0      END_LOOP_14
+    load          %0      $4
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $64
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      64
+    store         %1      %0
+    load          %0      $64
+    rload_abs     %1      %0
+    iload         %0      68
+    store         %0      %1
+    load          %0      $36
+    iload         %1      $72
+    store         %1      %0
+    load          %0      $72
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      72
+    store         %1      %0
+    load          %0      $72
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      72
+    store         %1      %0
+    load          %0      $68
+    load          %1      $72
+    addi          %0      %1
+    iload         %1      $72
+    store         %1      %0
+    load          %0      $72
+    rload_abs     %1      %0
+    iload         %0      60
+    store         %0      %1
+    load          %0      $60
+    iload         %1      $56
+    store         %1      %0
+    load          %0      $56
+    load          %1      $2148
+    nei           %0      %1
+    iload         %1      $76
+    store         %1      %0
+    load          %0      $76
+    if_zero_goto  %0      ENDIF_27
+    load          %0      $56
+    iload         %1      $80
+    store         %1      %0
+    load          %0      $4
+    iload         %1      $92
+    store         %1      %0
+    load          %0      $92
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      92
+    store         %1      %0
+    load          %0      $92
+    rload_abs     %1      %0
+    iload         %0      96
+    store         %0      %1
+    load          %0      $96
+    rload_abs     %1      %0
+    iload         %0      88
+    store         %0      %1
+    load          %0      $36
+    load          %1      $88
+    addi          %0      %1
+    iload         %1      $84
+    store         %1      %0
+    load          %0      $2148
+    iload         %1      $100
+    store         %1      %0
+    load          %0      $2148
+    iload         %1      $104
+    store         %1      %0
+    label         LOOP_TITLE_15
+    load          %0      $80
+    load          %1      $2148
+    nei           %0      %1
+    iload         %1      $108
+    store         %1      %0
+    load          %0      $108
+    if_zero_goto  %0      END_LOOP_15
+    load          %0      $80
+    iload         %1      $120
+    store         %1      %0
+    load          %0      $120
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      120
+    store         %1      %0
+    load          %0      $120
+    rload_abs     %1      %0
+    iload         %0      124
+    store         %0      %1
+    load          %0      $8
+    rload_abs     %1      %0
+    iload         %0      128
+    store         %0      %1
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    aload_sp      %0      $8
+    load          %1      $124
+    store_abs     %0      %1
+    aload_sp      %0      $12
+    load          %1      $128
+    store_abs     %0      %1
+    iload         %0      $116
+    set_ret       %0
+    call          $2816
+    load          %0      $116
+    iload         %1      $112
+    store         %1      %0
+    load          %0      $80
+    iload         %1      $136
+    store         %1      %0
+    load          %0      $136
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      136
+    store         %1      %0
+    load          %0      $136
+    rload_abs     %1      %0
+    iload         %0      140
+    store         %0      %1
+    load          %0      $140
+    iload         %1      $132
+    store         %1      %0
+    load          %0      $112
+    load          %1      $36
+    eqi           %0      %1
+    iload         %1      $144
+    store         %1      %0
+    load          %0      $144
+    if_zero_goto  %0      ELSE_28
+    load          %0      $80
+    iload         %1      $148
+    store         %1      %0
+    load          %0      $148
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      148
+    store         %1      %0
+    load          %0      $148
+    load          %1      $100
+    store_abs     %0      %1
+    load          %0      $80
+    iload         %1      $100
+    store         %1      %0
+    goto          ENDIF_28
+    label         ELSE_28
+    load          %0      $80
+    iload         %1      $152
+    store         %1      %0
+    load          %0      $152
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      152
+    store         %1      %0
+    load          %0      $152
+    load          %1      $104
+    store_abs     %0      %1
+    load          %0      $80
+    iload         %1      $104
+    store         %1      %0
+    label         ENDIF_28
+    load          %0      $132
+    iload         %1      $80
+    store         %1      %0
+    goto          LOOP_TITLE_15
+    label         END_LOOP_15
+    load          %0      $36
+    iload         %1      $156
+    store         %1      %0
+    load          %0      $156
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      156
+    store         %1      %0
+    load          %0      $156
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      156
+    store         %1      %0
+    load          %0      $8
+    load          %1      $156
+    addi          %0      %1
+    iload         %1      $156
+    store         %1      %0
+    load          %0      $156
+    load          %1      $100
+    store_abs     %0      %1
+    load          %0      $84
+    iload         %1      $160
+    store         %1      %0
+    load          %0      $160
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      160
+    store         %1      %0
+    load          %0      $160
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      160
+    store         %1      %0
+    load          %0      $8
+    load          %1      $160
+    addi          %0      %1
+    iload         %1      $160
+    store         %1      %0
+    load          %0      $160
+    load          %1      $104
+    store_abs     %0      %1
+    label         ENDIF_27
+    label         LABEL_8
+    load          %0      $36
+    iload         %1      1
+    addi          %0      %1
+    iload         %1      36
+    store         %1      %0
+    goto          LOOP_TITLE_14
+    label         END_LOOP_14
+    load          %0      $4
+    iload         %1      $164
+    store         %1      %0
+    load          %0      $164
+    iload         %1      16
+    addi          %0      %1
+    iload         %1      164
+    store         %1      %0
+    load          %0      $164
+    load          %1      $8
+    store_abs     %0      %1
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$HashMap.toString() $2828
+    push_fp
+    ; begin of type assigning
+    push          236
+    iload         %0      188
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844293
+    iload         %1      $188
+    store         %1      %0
+    iload         %0      17106177
+    iload         %1      $192
+    store         %1      %0
+    iload         %0      84215045
+    iload         %1      $196
+    store         %1      %0
+    iload         %0      17106181
+    iload         %1      $200
+    store         %1      %0
+    iload         %0      84215045
+    iload         %1      $204
+    store         %1      %0
+    iload         %0      84215045
+    iload         %1      $208
+    store         %1      %0
+    iload         %0      84215045
+    iload         %1      $212
+    store         %1      %0
+    iload         %0      84215045
+    iload         %1      $216
+    store         %1      %0
+    iload         %0      84215045
+    iload         %1      $220
+    store         %1      %0
+    iload         %0      84215045
+    iload         %1      $224
+    store         %1      %0
+    iload         %0      84215045
+    iload         %1      $228
+    store         %1      %0
+    iload         %0      1285
+    iload         %1      $232
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    iload         %0      $12
+    set_ret       %0
+    call          $2808
+    iload         %0      5
+    iload         %1      $16
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $12
+    store_abs     %0      %1
+    aload_sp      %0      $4
+    load          %1      $16
+    store_abs     %0      %1
+    iload         %0      $8
+    set_ret       %0
+    invoke_fn     _heap_array
+    load_lit      %0      $0
+    iload         %1      $20
+    store         %1      %0
+    load          %0      $4
+    iload         %1      5
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    iload         %1      $28
+    set_ret       %1
+    call_reg      %0
+    load          %0      $28
+    iload         %1      $24
+    store         %1      %0
+    label         LOOP_TITLE_16
+    load          %0      $24
+    iload         %1      5
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $24
+    store_abs     %1      %2
+    iload         %1      $32
+    set_ret       %1
+    call_reg      %0
+    load          %0      $32
+    if_zero_goto  %0      END_LOOP_16
+    load          %0      $24
+    iload         %1      6
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $24
+    store_abs     %1      %2
+    iload         %1      $40
+    set_ret       %1
+    call_reg      %0
+    load          %0      $40
+    iload         %1      $36
+    store         %1      %0
+    load          %0      $36
+    iload         %1      4
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $36
+    store_abs     %1      %2
+    iload         %1      $48
+    set_ret       %1
+    call_reg      %0
+    load          %0      $48
+    iload         %1      $44
+    store         %1      %0
+    load          %0      $4
+    iload         %1      6
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $36
+    store_abs     %1      %2
+    iload         %1      $56
+    set_ret       %1
+    call_reg      %0
+    load          %0      $56
+    iload         %1      4
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $56
+    store_abs     %1      %2
+    iload         %1      $60
+    set_ret       %1
+    call_reg      %0
+    load          %0      $60
+    iload         %1      $52
+    store         %1      %0
+    load          %0      $20
+    iload         %1      $64
+    store         %1      %0
+    load          %0      $64
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      64
+    store         %1      %0
+    load          %0      $64
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      64
+    store         %1      %0
+    load          %0      $8
+    load          %1      $64
+    addi          %0      %1
+    iload         %1      $64
+    store         %1      %0
+    lit_abs       %0      $386
+    iload         %1      $76
+    store         %1      %0
+    lit_abs       %0      $386
+    iload         %1      $84
+    store         %1      %0
+    load          %0      $44
+    iload         %1      7
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $44
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $84
+    store_abs     %1      %2
+    iload         %1      $80
+    set_ret       %1
+    call_reg      %0
+    load          %0      $80
+    iload         %1      $72
+    store         %1      %0
+    lit_abs       %0      $386
+    iload         %1      $92
+    store         %1      %0
+    lit_abs       %0      $386
+    iload         %1      $100
+    store         %1      %0
+    load          %0      $44
+    iload         %1      7
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $44
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $100
+    store_abs     %1      %2
+    iload         %1      $96
+    set_ret       %1
+    call_reg      %0
+    load          %0      $96
+    iload         %1      $88
+    store         %1      %0
+    load          %0      $88
+    iload         %1      7
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $88
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $52
+    store_abs     %1      %2
+    iload         %1      $104
+    set_ret       %1
+    call_reg      %0
+    load          %0      $104
+    iload         %1      $68
+    store         %1      %0
+    load          %0      $64
+    load          %1      $68
+    store_abs     %0      %1
+    load          %0      $20
+    iload         %1      1
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    label         LABEL_9
+    goto          LOOP_TITLE_16
+    label         END_LOOP_16
+    lit_abs       %0      $410
+    iload         %1      $116
+    store         %1      %0
+    lit_abs       %0      $328
+    iload         %1      $120
+    store         %1      %0
+    load          %0      $120
+    iload         %1      13
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $120
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $124
+    set_ret       %1
+    call_reg      %0
+    lit_abs       %0      $410
+    iload         %1      $128
+    store         %1      %0
+    lit_abs       %0      $328
+    iload         %1      $136
+    store         %1      %0
+    load          %0      $136
+    iload         %1      13
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $136
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $140
+    set_ret       %1
+    call_reg      %0
+    load          %0      $128
+    iload         %1      7
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $128
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $140
+    store_abs     %1      %2
+    iload         %1      $132
+    set_ret       %1
+    call_reg      %0
+    load          %0      $132
+    iload         %1      $112
+    store         %1      %0
+    lit_abs       %0      $432
+    iload         %1      $144
+    store         %1      %0
+    lit_abs       %0      $410
+    iload         %1      $152
+    store         %1      %0
+    lit_abs       %0      $328
+    iload         %1      $156
+    store         %1      %0
+    load          %0      $156
+    iload         %1      13
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $156
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $160
+    set_ret       %1
+    call_reg      %0
+    lit_abs       %0      $410
+    iload         %1      $164
+    store         %1      %0
+    lit_abs       %0      $328
+    iload         %1      $172
+    store         %1      %0
+    load          %0      $172
+    iload         %1      13
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $172
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $176
+    set_ret       %1
+    call_reg      %0
+    load          %0      $164
+    iload         %1      7
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $164
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $176
+    store_abs     %1      %2
+    iload         %1      $168
+    set_ret       %1
+    call_reg      %0
+    load          %0      $168
+    iload         %1      $148
+    store         %1      %0
+    lit_abs       %0      $432
+    iload         %1      $184
+    store         %1      %0
+    load          %0      $148
+    iload         %1      7
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $148
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $184
+    store_abs     %1      %2
+    iload         %1      $180
+    set_ret       %1
+    call_reg      %0
+    load          %0      $180
+    iload         %1      $108
+    store         %1      %0
+    load          %0      $108
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\collections.tp$Set.__new__() $2832
+    push_fp
+    ; begin of type assigning
+    push          12
+    iload         %0      8
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $8
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$Collection.__new__()
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\functions.tp$Function.__call__(*Object) $2836 abstract
+
+fn E:\GitHub\tpl2\lib\functions.tp$Function.map(*AbsList) $2840
+    push_fp
+    ; begin of type assigning
+    push          60
+    iload         %0      48
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      17106181
+    iload         %1      $48
+    store         %1      %0
+    iload         %0      17106177
+    iload         %1      $52
+    store         %1      %0
+    iload         %0      328965
+    iload         %1      $56
+    store         %1      %0
+    ; end of type assigning
+    iload         %0      16
+    iload         %1      $16
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $16
+    store_abs     %0      %1
+    iload         %0      $12
+    set_ret       %0
+    invoke_fn     _malloc
+    load          %0      $12
+    iload         %1      2300
+    store_abs     %0      %1
+    load          %0      $12
+    iload         %1      4
+    addi          %0      %1
+    iload         %1      20
+    store         %1      %0
+    load          %0      $20
+    iload         %1      16
+    store_abs     %0      %1
+    args
+    aload_sp      %0      $4
+    load          %1      $12
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\collections.tp$List.__new__()
+    load          %0      $8
+    iload         %1      5
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $8
+    store_abs     %1      %2
+    iload         %1      $28
+    set_ret       %1
+    call_reg      %0
+    load          %0      $28
+    iload         %1      $24
+    store         %1      %0
+    label         LOOP_TITLE_17
+    load          %0      $24
+    iload         %1      5
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $24
+    store_abs     %1      %2
+    iload         %1      $32
+    set_ret       %1
+    call_reg      %0
+    load          %0      $32
+    if_zero_goto  %0      END_LOOP_17
+    load          %0      $24
+    iload         %1      6
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $24
+    store_abs     %1      %2
+    iload         %1      $40
+    set_ret       %1
+    call_reg      %0
+    load          %0      $40
+    iload         %1      $36
+    store         %1      %0
+    load          %0      $4
+    iload         %1      5
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $36
+    store_abs     %1      %2
+    iload         %1      $44
+    set_ret       %1
+    call_reg      %0
+    load          %0      $12
+    iload         %1      7
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $12
+    store_abs     %1      %2
+    aload_sp      %1      $8
+    load          %2      $44
+    store_abs     %1      %2
+    call_reg      %0
+    label         LABEL_10
+    goto          LOOP_TITLE_17
+    label         END_LOOP_17
+    load          %0      $12
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\functions.tp$Function.__new__() $2844
+    push_fp
+    ; begin of type assigning
+    push          12
+    iload         %0      8
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $8
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\lib\functions.tp$BiFunction.__call__(*Object,*Object) $2848 abstract
+
+fn E:\GitHub\tpl2\lib\functions.tp$BiFunction.__new__() $2852
+    push_fp
+    ; begin of type assigning
+    push          12
+    iload         %0      8
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $8
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\ftns.tp$foo(int) $2344
+    push_fp
+    ; begin of type assigning
+    push          16
+    iload         %0      12
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      257
+    iload         %1      $12
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    iload         %0      $8
+    set_ret       %0
+    call          $2864
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\ftns.tp$A.foo() $2856
+    push_fp
+    ; begin of type assigning
+    push          24
+    iload         %0      20
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844293
+    iload         %1      $20
+    store         %1      %0
+    ; end of type assigning
+    load_lit      %0      $378
+    iload         %1      $12
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $16
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $12
+    store_abs     %0      %1
+    aload_sp      %0      $4
+    load          %1      $16
+    store_abs     %0      %1
+    iload         %0      $8
+    set_ret       %0
+    invoke_fn     _heap_array
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\ftns.tp$A.__new__() $2860
+    push_fp
+    ; begin of type assigning
+    push          12
+    iload         %0      8
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      5
+    iload         %1      $8
+    store         %1      %0
+    ; end of type assigning
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call_fn       E:\GitHub\tpl2\lib\lang.tp$Object.__new__()
+    pull_fp
+    ret
+    stop
+
+fn E:\GitHub\tpl2\tp\ftns.tp$main() $2352
     push_fp
     ; begin of type assigning
     push          96
@@ -4774,10 +10159,10 @@ fn E:\GitHub\tpl2\tp\ftns.tp$main() $2288
     iload         %1      $92
     store         %1      %0
     ; end of type assigning
-    load          %0      $2532
+    load          %0      $2868
     iload         %1      $4
     store         %1      %0
-    load          %0      $2536
+    load          %0      $2872
     iload         %1      $8
     store         %1      %0
     iload         %0      12
@@ -4801,7 +10186,7 @@ fn E:\GitHub\tpl2\tp\ftns.tp$main() $2288
     load          %0      $20
     iload         %1      12
     store_abs     %0      %1
-    load_lit      %0      $248
+    load_lit      %0      $374
     iload         %1      $24
     store         %1      %0
     args
@@ -4827,7 +10212,7 @@ fn E:\GitHub\tpl2\tp\ftns.tp$main() $2288
     load          %1      $28
     store_abs     %0      %1
     call          $2196
-    load_lit      %0      $244
+    load_lit      %0      $378
     iload         %1      $36
     store         %1      %0
     iload         %0      5
@@ -4846,7 +10231,7 @@ fn E:\GitHub\tpl2\tp\ftns.tp$main() $2288
     load_lit      %0      $240
     iload         %1      $56
     store         %1      %0
-    load_lit      %0      $248
+    load_lit      %0      $374
     iload         %1      $60
     store         %1      %0
     args
@@ -4868,13 +10253,13 @@ fn E:\GitHub\tpl2\tp\ftns.tp$main() $2288
     store_abs     %0      %1
     iload         %0      $64
     set_ret       %0
-    call          $2540
+    call          $2876
     load          %0      $52
     load          %1      $64
     addi          %0      %1
     iload         %1      $48
     store         %1      %0
-    load_lit      %0      $252
+    load_lit      %0      $454
     iload         %1      $72
     store         %1      %0
     load          %0      $48
@@ -4888,7 +10273,7 @@ fn E:\GitHub\tpl2\tp\ftns.tp$main() $2288
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\ftns.tp$foo(int).neg(int) $2528
+fn E:\GitHub\tpl2\tp\ftns.tp$foo(int).neg(int) $2864
     push_fp
     ; begin of type assigning
     push          16
@@ -4909,7 +10294,7 @@ fn E:\GitHub\tpl2\tp\ftns.tp$foo(int).neg(int) $2528
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\ftns.tp$lambda#0(int,int) $2532
+fn E:\GitHub\tpl2\tp\ftns.tp$lambda#0(int,int) $2868
     push_fp
     ; begin of type assigning
     push          20
@@ -4931,7 +10316,7 @@ fn E:\GitHub\tpl2\tp\ftns.tp$lambda#0(int,int) $2532
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\ftns.tp$lambda#1(int,int) $2536
+fn E:\GitHub\tpl2\tp\ftns.tp$lambda#1(int,int) $2872
     push_fp
     ; begin of type assigning
     push          20
@@ -4953,22 +10338,18 @@ fn E:\GitHub\tpl2\tp\ftns.tp$lambda#1(int,int) $2536
     ret
     stop
 
-fn E:\GitHub\tpl2\tp\ftns.tp$main().neg(int) $2540
+fn E:\GitHub\tpl2\tp\ftns.tp$main().neg(int) $2876
     push_fp
     ; begin of type assigning
-    push          16
-    iload         %0      12
+    push          12
+    iload         %0      8
     iload         %1      $0
     store         %1      %0
-    iload         %0      257
-    iload         %1      $12
+    iload         %0      1
+    iload         %1      $8
     store         %1      %0
     ; end of type assigning
     load          %0      $4
-    negi          %0
-    iload         %1      8
-    store         %1      %0
-    load          %0      $8
     put_ret       %0
     pull_fp
     ret
@@ -4976,101 +10357,164 @@ fn E:\GitHub\tpl2\tp\ftns.tp$main().neg(int) $2540
 
 entry
     ; begin of type assigning
-    iload         %0      2544
+    iload         %0      2880
     iload         %1      $2048
     store         %1      %0
     iload         %0      134744072
-    iload         %1      $2544
+    iload         %1      $2880
     store         %1      %0
     iload         %0      134744072
-    iload         %1      $2548
+    iload         %1      $2884
     store         %1      %0
     iload         %0      134744072
-    iload         %1      $2552
+    iload         %1      $2888
     store         %1      %0
     iload         %0      134744072
-    iload         %1      $2556
+    iload         %1      $2892
     store         %1      %0
     iload         %0      134744072
-    iload         %1      $2560
+    iload         %1      $2896
     store         %1      %0
     iload         %0      16844808
-    iload         %1      $2564
+    iload         %1      $2900
     store         %1      %0
     iload         %0      151585024
-    iload         %1      $2568
+    iload         %1      $2904
     store         %1      %0
     iload         %0      151587081
-    iload         %1      $2572
+    iload         %1      $2908
     store         %1      %0
     iload         %0      117901577
-    iload         %1      $2576
+    iload         %1      $2912
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2580
+    iload         %1      $2916
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2584
+    iload         %1      $2920
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2588
+    iload         %1      $2924
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2592
+    iload         %1      $2928
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2596
+    iload         %1      $2932
     store         %1      %0
-    iload         %0      118032135
-    iload         %1      $2600
+    iload         %0      151587079
+    iload         %1      $2936
     store         %1      %0
-    iload         %0      117901063
-    iload         %1      $2604
+    iload         %0      151587081
+    iload         %1      $2940
     store         %1      %0
-    iload         %0      117901063
-    iload         %1      $2608
+    iload         %0      151587081
+    iload         %1      $2944
     store         %1      %0
-    iload         %0      117901063
-    iload         %1      $2612
+    iload         %0      151587081
+    iload         %1      $2948
     store         %1      %0
-    iload         %0      117901063
-    iload         %1      $2616
-    store         %1      %0
-    iload         %0      117901063
-    iload         %1      $2620
+    iload         %0      118032137
+    iload         %1      $2952
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2624
+    iload         %1      $2956
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2628
+    iload         %1      $2960
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2632
+    iload         %1      $2964
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2636
+    iload         %1      $2968
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2640
+    iload         %1      $2972
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2644
+    iload         %1      $2976
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2648
+    iload         %1      $2980
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2652
+    iload         %1      $2984
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2656
+    iload         %1      $2988
     store         %1      %0
     iload         %0      117901063
-    iload         %1      $2660
+    iload         %1      $2992
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $2996
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3000
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3004
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3008
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3012
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3016
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3020
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3024
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3028
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3032
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3036
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3040
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3044
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3048
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3052
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3056
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3060
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3064
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3068
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3072
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3076
+    store         %1      %0
+    iload         %0      117901063
+    iload         %1      $3080
     store         %1      %0
     iload         %0      460551
-    iload         %1      $2664
+    iload         %1      $3084
     store         %1      %0
     ; end of type assigning
     require       _print_int $2052   %0      %1

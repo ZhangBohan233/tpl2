@@ -258,14 +258,14 @@ class MethodType(FuncType):
                  is_constructor: bool, abstract: bool, const: bool, permission: int, inline=False):
         super().__init__(param_types, rtype, inline)
 
-        self.defined_class = def_class
+        self.defined_class: ClassType = def_class
         self.constructor = is_constructor
         self.abstract = abstract
         self.const = const
         self.permission = permission
 
     def __str__(self):
-        return ("abstract " if self.abstract else "") + "method " + super().__str__()
+        return ("abstract " if self.abstract else "") + super().__str__()
 
     def copy(self):
         return MethodType(self.param_types.copy(), self.rtype, self.defined_class, self.constructor,
@@ -632,6 +632,19 @@ def is_object_ptr(t: Type) -> bool:
     return isinstance(t, PointerType) and isinstance(t.base, (ClassType, GenericClassType, Generic))
 
 
+def extract_object(t: Type) -> ClassType:
+    if isinstance(t, PointerType):
+        return extract_object(t.base)
+    elif isinstance(t, ClassType):
+        return t
+    elif isinstance(t, GenericClassType):
+        return t.base
+    elif isinstance(t, Generic):
+        return t.max_t
+    else:
+        raise errs.TplTypeError("Not an object.")
+
+
 def is_object_array(t: Type) -> bool:
     return isinstance(t, ArrayType) and isinstance(t.ele_type, (ClassType, GenericClassType, Generic))
 
@@ -880,6 +893,40 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
     if min_tup is None:
         raise errs.TplCompileError(f"Cannot resolve call: {function_poly_name(name, arg_types, is_method)}. ", lf)
     return min_tup
+
+
+def replace_generic_method_with_real(method_t: MethodType, replacement: dict):
+    any_changed = False
+    params = []
+
+    def inner_replace(t: Type):
+        if isinstance(t, PointerType):
+            if isinstance(t.base, Generic):
+                if t.base.full_name() in replacement:
+                    return PointerType(replacement[t.base.full_name()]), True
+        return t, False
+
+    for param in method_t.param_types:
+        replaced, changed = inner_replace(param)
+        if changed:
+            any_changed = True
+        params.append(replaced)
+
+    replaced, changed = inner_replace(method_t.rtype)
+    if changed:
+        any_changed = True
+
+    if not any_changed:
+        return method_t
+    else:
+        return MethodType(params,
+                          replaced,
+                          method_t.defined_class,
+                          method_t.constructor,
+                          method_t.abstract,
+                          method_t.const,
+                          method_t.permission,
+                          method_t.inline)
 
 
 # def find_correspond_tem_name()

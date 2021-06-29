@@ -1,4 +1,23 @@
 ﻿import lang;
 import collections;
 
+abstract class Function<T, R> {
+    abstract fn __call__(arg: *T) *R;
 
+    fn map(lst: *AbsList<T>) *AbsList<R> {
+        res := new List<R>();
+        for item: *T in lst {
+            res.append(this(item));
+        }
+        return res;
+    }
+}
+
+abstract class BiFunction<T, U, R> {
+    abstract fn __call__(arg1: *T, arg2: *U) *R;
+}
+
+
+export {
+    Function, BiFunction
+}

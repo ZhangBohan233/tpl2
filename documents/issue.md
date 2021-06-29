@@ -30,6 +30,18 @@ Function call with a return value of invoke as argument.
 println(mem_segment(...));
 ```
 
+### ISSUE C03
+Overriding generic methods by a fixed generic.
+```
+class A<T> {
+    fn foo(x: *T) void { ... }
+}
+class B(A<Integer>) {
+    @Override
+    fn foo(x: *Integer) void { ... }  // causes error
+}
+```
+
 ## Array
 
 ### ISSUE A01

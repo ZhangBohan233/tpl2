@@ -37,6 +37,7 @@ class Parser:
             ":": self.process_declare,
             ",": self.process_comma,
             ";": self.process_eol,
+            "<-": self.process_anonymous_class,
             "abstract": self.process_abstract,
             "fn": self.process_fn,
             "lambda": self.process_lambda,
@@ -100,6 +101,15 @@ class Parser:
             raise errs.TplSyntaxError("Invalid keywords combination. ", lfp)
         self.inline = True
 
+    def process_anonymous_class(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp):
+        last = builder.remove_last()
+        index += 1
+        body = parent[index]
+        if not tl.is_brace(body):
+            raise errs.TplSyntaxError("'{' expected. ", lfp)
+        builder.add_node(ast.AnonymousClassExpr(last, self.parse_as_block(body), lfp))
+        return index
+
     def process_lambda(self, parent: tl.CollectiveElement, index: int, builder: ab.AstBuilder, lfp: tl.LineFilePos):
         index += 1
         params_bracket = parent[index]
@@ -112,6 +122,8 @@ class Parser:
         while not tl.identifier_of(next_tk, ";"):
             body_bracket.append(next_tk)
             index += 1
+            if index >= len(parent):
+                break
             next_tk = parent[index]
         body = self.parse_as_part(body_bracket)
         builder.add_node(ast.LambdaExpr(params, body, lfp))
@@ -673,6 +685,8 @@ def is_unary(leading_ele: tl.Element) -> bool:
 def is_call(token_before: tl.Token) -> bool:
     if isinstance(token_before, tl.IdToken):
         symbol = token_before.identifier
+        if symbol == "this" or symbol == "super":
+            return True
         return symbol.isidentifier() and \
                symbol not in tl.KEYWORDS and \
                symbol not in tl.LOGICAL_UNARY

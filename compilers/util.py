@@ -33,11 +33,27 @@ CHARS_POS_IN_STR = 0  # position of 'chars' in class String
 float_pack = "d" if FLOAT_LEN == 8 else "f"
 
 
+class NaiveDictIterator:
+    def __init__(self, d):
+        self.dict: NaiveDict = d
+        self.index = 0
+
+    def __next__(self):
+        if self.index < len(self.dict):
+            self.index += 1
+            return self.dict.keys[self.index - 1]
+        else:
+            raise StopIteration()
+
+
 class NaiveDict:
     def __init__(self, checker=None):
         self.keys = []
         self.values = []
         self.checker = checker
+
+    def __iter__(self):
+        return NaiveDictIterator(self)
 
     def check(self, v1, v2):
         if self.checker is None:
@@ -91,6 +107,9 @@ class NaiveDict:
         for i in range(len(self)):
             kv.append(f"{self.keys[i]}: {self.values[i]}")
         return "NaiveDict{" + ", ".join(kv) + "}"
+
+    def __repr__(self):
+        return self.__str__()
 
 
 def set_chars_pos_in_str(pos: int):

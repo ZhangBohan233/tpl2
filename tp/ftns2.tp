@@ -1,0 +1,40 @@
+﻿import lang;
+import collections;
+import functions;
+
+class A {
+    fn __call__(a: int) int {
+        return a + 22;
+    }
+
+    fn call2() int {
+        return this(2);
+    }
+}
+
+class MulTwo(Function<Integer, Integer>) {
+    @Override
+    fn __call__(arg: *Integer) *Integer {
+        return (arg as *Integer) * new Integer(2);
+    }
+}
+
+fn main() int {
+    lst: *List<Integer> = new List<Integer>();
+    for i := 0; i < 10; ++i {
+        lst.append(new Integer(i));
+    }
+
+
+    //ftn: *Function<Integer, Integer> = new Function<Integer, Integer>() <- {
+    //    @Override
+    //    fn __call__(arg: *Integer) *Integer {
+    //        return arg * 2;
+    //    }
+    //};
+    ftn := new MulTwo<Integer, Integer>();
+
+    mapped := ftn.map(lst);
+    println(mapped);
+    return mapped.size();
+}

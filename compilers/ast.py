@@ -45,6 +45,11 @@ class Counter(IntWrapper):
         super().__init__(init_value)
 
     def increment(self):
+        """
+        Returns the current count and increment this counter by one for the future use.
+
+        :return:
+        """
         cur = self.get()
         self.set(cur + 1)
         return cur
@@ -63,6 +68,7 @@ class SpaceCounter(Counter):
 
 SPACES = SpaceCounter()
 LAMBDA_COUNTER = Counter()
+ANONYMOUS_CLASS_COUNTER = Counter()
 
 
 class Node:
@@ -802,23 +808,29 @@ class NewExpr(UnaryExpr):
         tpa.i_assign(malloc_size, malloc_t.memory_length(), False)
         FunctionCall.call(malloc, [(malloc_size, util.INT_PTR_LEN)], env, tpa, dst_addr, self.lfp)
 
-        if (isinstance(self.value, FunctionCall) and
-                isinstance(t, typ.PointerType)):
-            if isinstance(t.base, typ.ClassType):
-                self.compile_class_init(t.base, env, tpa, dst_addr)
-                return
-            elif isinstance(t.base, typ.GenericClassType):
-                self.compile_generic_class_init(t.base, env, tpa, dst_addr)
-                return
+        self.eval_call_obj(self.value, t, env, tpa, dst_addr)
+
+    def eval_call_obj(self, node, t, env, tpa, dst_addr):
+        if isinstance(t, typ.PointerType):
+            if isinstance(node, FunctionCall):
+                if isinstance(t.base, typ.ClassType):
+                    self.compile_class_init(node, t.base, env, tpa, dst_addr)
+                    return
+                elif isinstance(t.base, typ.GenericClassType):
+                    self.compile_generic_class_init(node, t.base, env, tpa, dst_addr)
+                    return
+            elif isinstance(node, AnonymousClassExpr):
+                print(node)
         raise errs.TplCompileError("Cannot initial class without call. ", self.lfp)
 
-    def compile_generic_class_init(self, gen_t: typ.GenericClassType, env: en.Environment,
+    def compile_generic_class_init(self, call, gen_t: typ.GenericClassType, env: en.Environment,
                                    tpa: tp.TpaOutput, inst_ptr_addr):
         # print(gen_t)
-        self.compile_class_init(gen_t.base, env, tpa, inst_ptr_addr)
+        self.compile_class_init(call, gen_t.base, env, tpa, inst_ptr_addr)
 
-    def compile_class_init(self, class_t: typ.ClassType, env: en.Environment, tpa: tp.TpaOutput, inst_ptr_addr):
-        self.value: FunctionCall
+    def compile_class_init(self, call,
+                           class_t: typ.ClassType, env: en.Environment, tpa: tp.TpaOutput, inst_ptr_addr):
+        call: FunctionCall
 
         if class_t.abstract:
             raise errs.TplCompileError(f"Abstract class '{class_t.name_with_path}' is not initialisable. ", self.lfp)
@@ -831,13 +843,13 @@ class NewExpr(UnaryExpr):
         tpa.i_binary_arith("addi", inst_ptr_addr, util.INT_PTR_LEN, arith_addr)
         tpa.i_ptr_assign(class_t.memory_length(), util.INT_PTR_LEN, arith_addr)
 
-        const_args = self.value.arg_types(env, tpa.manager)
+        const_args = call.arg_types(env, tpa.manager)
         const_args.insert(0, None)  # insert a positional arg of 'this'
 
         constructor_id, constructor_ptr, constructor_t = \
             class_t.find_local_method("__new__", const_args, self.lfp)
 
-        ea = self.value.evaluate_args(constructor_t, env, tpa, True)
+        ea = call.evaluate_args(constructor_t, env, tpa, True)
         ea.insert(0, (inst_ptr_addr, util.INT_PTR_LEN))
         FunctionCall.call_name(util.name_with_path(
             typ.function_poly_name("__new__", constructor_t.param_types, True), class_t.file_path, class_t),
@@ -846,6 +858,9 @@ class NewExpr(UnaryExpr):
             0,
             self.lfp,
             constructor_t)
+
+    def compile_anonymous_class_init(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr, dst_len):
+        pass
 
     def compile_heap_arr_init(self, env: en.Environment, tpa: tp.TpaOutput, dst_addr, dst_len: int):
         self.value: IndexingExpr
@@ -860,6 +875,8 @@ class NewExpr(UnaryExpr):
             return self.value.definition_type(env, manager)
         if isinstance(self.value, FunctionCall):
             return typ.PointerType(self.value.call_obj.definition_type(env, manager))
+        if isinstance(self.value, AnonymousClassExpr):
+            return typ.PointerType(self.value.call_obj.call_obj.definition_type(env, manager))
         return typ.PointerType(self.value.definition_type(env, manager))
 
     def _malloc_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
@@ -867,6 +884,8 @@ class NewExpr(UnaryExpr):
             return self.value.definition_type(env, manager)
         if isinstance(self.value, FunctionCall):
             return self.value.call_obj.definition_type(env, manager)
+        if isinstance(self.value, AnonymousClassExpr):
+            return self.value.call_obj.call_obj.definition_type(env, manager)
         return self.value.definition_type(env, manager)
 
 
@@ -1767,6 +1786,24 @@ class ClassStmt(Statement):
             return f"Class {self.name}<{self.template_nodes}> ({self.extensions}) {self.body}"
 
 
+class AnonymousClassExpr(Expression, FakeNode):
+    def __init__(self, call_obj, body, lfp):
+        super().__init__(lfp)
+
+        self.call_obj: FunctionCall = call_obj
+        self.body: BlockStmt = body
+        self.class_id = ANONYMOUS_CLASS_COUNTER.increment()
+
+    def __str__(self):
+        return f"{self.call_obj} <- {self.body}"
+
+    def class_name(self):
+        return f"lambda-class-{self.class_id}"
+
+    def define_class(self, env, tpa):
+        class_stmt = ClassStmt(self.class_name(), Line(self.lfp, self.call_obj), None, False, self.body, self.lfp)
+
+
 class SuperExpr(Statement):
     def __init__(self, lf):
         super().__init__(lf)
@@ -1873,6 +1910,13 @@ class FunctionCall(Expression):
         else:
             raise errs.TplCompileError("Not a named function call. ", self.lfp)
 
+    def get_magic_call(self):
+        fc = FunctionCall(NameNode("__call__", self.lfp), self.args, self.lfp)
+        dot = DotExpr(self.lfp)
+        dot.left = self.call_obj
+        dot.right = fc
+        return dot
+
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         placer = self.call_obj.evaluated_type(env, tpa.manager)
         if isinstance(placer, typ.SpecialCtfType):
@@ -1887,6 +1931,8 @@ class FunctionCall(Expression):
             dst_addr = tpa.manager.allocate_stack(placer.rtype)
             call_compile_time_function(placer, self.args, env, tpa, dst_addr)
             return dst_addr
+        if typ.is_object_ptr(placer):
+            return self.get_magic_call().compile(env, tpa)
 
         try:
             name = self.get_name()
@@ -1917,6 +1963,9 @@ class FunctionCall(Expression):
             return
         if isinstance(placer, typ.CompileTimeFunctionType):
             call_compile_time_function(placer, self.args, env, tpa, dst_addr)
+            return
+        if typ.is_object_ptr(placer):
+            self.get_magic_call().compile_to(env, tpa, dst_addr, dst_len)
             return
 
         try:
@@ -1950,6 +1999,12 @@ class FunctionCall(Expression):
             return placer
         if isinstance(placer, typ.CompileTimeFunctionType):
             return placer
+        if typ.is_object_ptr(placer):
+            clazz: typ.ClassType = typ.extract_object(placer)
+            arg_types = self.arg_types(env, manager)
+            arg_types.insert(0, None)
+            mi, mp, mt = clazz.find_method("__call__", arg_types, self.lfp)
+            return mt
 
         try:
             name = self.get_name()
@@ -2902,12 +2957,32 @@ class ClassObject:
         if len(mro) == 1:  # Object itself
             pos = util.INT_PTR_LEN * 2  # at 0: class pointer, at INT_LEN: ref count
         else:
+            # replace defined generics
+            # example: class A<T> { ... }; class B(A<Integer>)
+            # then replace 'T: Object' to 'Integer'
+            defined_generics = {}
+            # print(self.class_type.templates_map)
+            for tem_name in self.class_type.templates_map:
+                if tem_name.startswith(mro[1].full_name()):  # fixme: may be direct superclasses, not mro[1]
+                    value = self.class_type.templates_map[tem_name]
+                    if isinstance(value, typ.Type):
+                        defined_generics[tem_name] = value
+
             pos = mro[1].memory_length()
             for f_name in mro[1].fields:
                 self.class_type.fields[f_name] = mro[1].fields[f_name]
             for m_name in mro[1].methods:
-                self.class_type.methods[m_name] = mro[1].methods[m_name].copy()
+                super_methods: util.NaiveDict = mro[1].methods[m_name]
+                poly = util.NaiveDict(super_methods.checker)
+                for method_t in super_methods:
+                    orig_id, orig_ptr, orig_t = super_methods[method_t]
+                    poly[method_t] = (orig_id,
+                                      orig_ptr,
+                                      typ.replace_generic_method_with_real(orig_t, defined_generics))
+                self.class_type.methods[m_name] = poly
+                # self.class_type.methods[m_name] = mro[1].methods[m_name].copy()
             self.class_type.method_rank.extend(mro[1].method_rank)
+        # print(self.class_type.methods)
 
         # the class pointer
         self.class_type.fields["class"] = 0, typ.TYPE_INT, self.class_type, True, PUBLIC
@@ -3000,9 +3075,11 @@ class ClassObject:
                     f"Class '{self.class_type.name}' is not abstract, but has abstract method '{name}'. ",
                     method_def.lfp
                 )
-
             overriding = False
             if name in self.class_type.methods:
+                if name == "foo":
+                    print(self.class_type.methods[name])  # todo: 搞不懂
+
                 if method_t in self.class_type.methods[name]:  # in overriding format
                     m_pos, m_ptr, m_t = self.class_type.methods[name][method_t]
                     # print(f"class {self.class_type.name} overrides method {name} at {m_ptr}, new ptr {method_ptr}")
