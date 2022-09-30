@@ -69,4 +69,6 @@
 * ~~Explicit operator 'is', 'is not'~~ Done
 
 #### Phase 5
-* Smart pointer
+* ~~Smart pointer~~ Replaced by garbage collection
+* Auto boxing-unboxing
+* Exception

@@ -108,10 +108,10 @@ MapEntry *create_map_entry() {
     return entry;
 }
 
-tp_int heap_allocate(tp_int length) {
+tp_int heap_allocate(tp_int length, int print_gc_info) {
     tp_int res = inner_allocate(length);
     if (res == -1) {
-        gc();
+        gc(print_gc_info);
         res = inner_allocate(length);
         if (res == -1) {
             fprintf(stderr, "Not enough heap space to heap_allocate %lld. Available memory %lld. \n",
@@ -383,10 +383,12 @@ void sweep(HashTable *marked) {
     heap_counter = new_addr;
 }
 
-void gc() {
+void gc(int print_gc_info) {
     tp_int st_time = get_time();
     if (PRINT_GC_TIME)
         tp_printf("heap counter before gc %d\n", heap_counter);
+
+    tp_int heap_counter_before = heap_counter;
 
     hashEntryPool->index = 0;
     linkPool->index = 0;
@@ -398,6 +400,10 @@ void gc() {
 
     free_table(marked);
     tp_int end_time = get_time();
+
+    if (print_gc_info) {
+        tp_printf("Head counter before gc: %d, after: %d\n", heap_counter_before, heap_counter);
+    }
 
     if (PRINT_GC_TIME) {
         tp_printf("heap counter after gc %d\n", heap_counter);

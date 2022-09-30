@@ -64,7 +64,7 @@ fn main() int {
     }
 
     t6: int = _clock();
-    println("");
+    println();  // 最小复现方式: println()卡住, println("") 没问题
     print(stop);
     print(" number wrapper loop time ");  // 诡异的bug: 多一行少一行都没问题
     println(t6 - t5);

@@ -1,4 +1,14 @@
-﻿===== VERSION 2078 =====
+﻿===== VERSION 2079 =====
+2022/10/01
+
+* Primitive type auto boxing and unboxing:
+    * Effective for assignments
+* Optimized floatToString function
+* Added support of magic function "<": "lt", ">": "gt"
+* Cancelled the direct conversion from pointer type to int
+    * Replaced by compile time function "mem_addr"
+
+===== VERSION 2078 =====
 2021/04/10
 
 * Bug fixes:

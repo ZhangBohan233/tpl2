@@ -65,3 +65,6 @@ Smart pointer leak when inlining function
 
 ### ISSUE
 Args array currently unavailable
+
+### ISSUE M03
+Mysterious memory issue in `perf_bug.tp`

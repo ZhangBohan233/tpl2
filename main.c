@@ -10,6 +10,7 @@
  * -e, --exit:       print exit value
  * -m, --mem:        print stack, global, literal, heap memory
  * -fm, --full-mem:  print all memory
+ * -gc:              print garbage collection info
  */
 
 int main(int argc, char **argv) {
@@ -20,6 +21,7 @@ int main(int argc, char **argv) {
 
     int p_memory = 0;
     int p_exit = 0;
+    int p_gc = 0;
     char *file_name = argv[1];
 
     int vm_args_begin = 0;
@@ -33,6 +35,8 @@ int main(int argc, char **argv) {
                 p_memory = 1;
             else if (strcmp(arg, "-fm") == 0 || strcmp(arg, "--full_mem") == 0)
                 p_memory = 2;
+            else if (strcmp(arg, "-gc") == 0)
+                p_gc = 1;
             else
                 printf("Unknown flag: -%c", arg[1]);
         } else {
@@ -48,7 +52,7 @@ int main(int argc, char **argv) {
         vm_argv[i - vm_args_begin] = argv[i];
     }
 
-    tvm_run(p_memory, p_exit, file_name, vm_argc, vm_argv);
+    tvm_run(p_memory, p_exit, p_gc, file_name, vm_argc, vm_argv);
 
     free(vm_argv);
 

@@ -46,6 +46,6 @@ tp_int runtime_type(tp_int rel_addr);
 
 tp_int field_type(tp_int class_ptr, tp_int field_pos);
 
-void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_argv);
+void tvm_run(int p_memory, int p_exit, int p_gc, char *file_name, int vm_argc, char **vm_argv);
 
 #endif //TPL2_TVM_H

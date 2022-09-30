@@ -1,3 +1,4 @@
+import ast
 from abc import ABC
 import os
 import compilers.tokens_lib as tl
@@ -1312,41 +1313,62 @@ class Assignment(BinaryExpr):
     def __init__(self, lf):
         super().__init__("=", lf)
 
+    @staticmethod
+    def get_right_side_node(node: Expression, src_t: typ.Type, tar_t: typ.Type, lfp: tl.LineFilePos):
+        if src_t.convertible_to(tar_t, lfp):
+            return node
+        elif src_t.box_convertible(tar_t):
+            return box(tar_t, node, src_t, lfp)
+        elif src_t.unbox_convertible(tar_t):
+            return unbox(tar_t, node, src_t, lfp)
+        else:
+            raise errs.TplCompileError(f"Cannot convert '{node}' to '{tar_t}'. ", lfp)
+
     def compile(self, env: en.Environment, tpa: tp.TpaOutput):
         right_t = self.right.evaluated_type(env, tpa.manager)
         if isinstance(self.left, NameNode):
             if env.is_const(self.left.name, self.lfp):
                 raise errs.TplEnvironmentError("Cannot assign constant '{}'. ".format(self.left.name), self.lfp)
             left_t = self.left.evaluated_type(env, tpa.manager)
-            right_t.check_convertibility(left_t, self.lfp)
+            right = Assignment.get_right_side_node(self.right, right_t, left_t, self.lfp)
+            # right_t.check_convertibility(left_t, self.lfp)
             left_addr = self.left.compile(env, tpa)
         elif isinstance(self.left, Declaration):
             left_t = self.left.right.definition_type(env, tpa.manager)
-            right_t.check_convertibility(left_t, self.lfp)
+            right = Assignment.get_right_side_node(self.right, right_t, left_t, self.lfp)
             left_addr = self.left.compile(env, tpa)
-        elif isinstance(self.left, StarExpr):
-            right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
-            return self.ptr_assign(self.left, env, tpa)
-        elif isinstance(self.left, DollarExpr) or isinstance(self.left, DotExpr):
-            right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
-            return self.class_attr_assign(self.left.left, self.left.right, env, tpa)
+        # elif isinstance(self.left, StarExpr):
+        #     print("Deprecated!")
+        #     right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
+        #     return self.ptr_assign(self.left, env, tpa)
+        # elif isinstance(self.left, DollarExpr):
+        #     print("Deprecated!")
+        #     right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
+        #     return self.class_attr_assign(self.left.left, self.left.right, env, tpa)
+        elif isinstance(self.left, DotExpr):
+            # right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
+            left_t = self.left.evaluated_type(env, tpa.manager)
+            right = Assignment.get_right_side_node(self.right, right_t, left_t, self.lfp)
+            return self.class_attr_assign(self.left.left, self.left.right, right, env, tpa)
         elif isinstance(self.left, IndexingExpr):
             indexing_obj_t = self.left.indexing_obj.evaluated_type(env, tpa.manager)
             if isinstance(indexing_obj_t, typ.ArrayType):
-                right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
-                return self.array_index_assign(self.left, self.right, env, tpa, self.lfp)
+                # right_t.check_convertibility(self.left.evaluated_type(env, tpa.manager), self.lfp)
+                left_t = self.left.evaluated_type(env, tpa.manager)
+                right = Assignment.get_right_side_node(self.right, right_t, left_t, self.lfp)
+                return self.array_index_assign(self.left, right, env, tpa, self.lfp)
             else:
                 return self.magic_set().compile(env, tpa)
         else:
             raise errs.TplCompileError("Cannot assign to a '{}'.".format(self.left.__class__.__name__), self.lfp)
 
-        self.right.compile_to(env, tpa, left_addr, left_t.memory_length())
+        right.compile_to(env, tpa, left_addr, left_t.memory_length())
         return left_addr
 
     def evaluated_type(self, env: en.Environment, manager: tp.Manager) -> typ.Type:
         return self.right.evaluated_type(env, manager)
 
-    def class_attr_assign(self, left, right, env: en.Environment, tpa: tp.TpaOutput):
+    def class_attr_assign(self, left, right, src_node, env: en.Environment, tpa: tp.TpaOutput):
         attr_ptr, attr_t, const = DotExpr.get_dot_attr_and_type(left, right, env, tpa, self.lfp)
         if const:
             name, wf = env.get_working_function()
@@ -1354,7 +1376,7 @@ class Assignment(BinaryExpr):
                 raise errs.TplCompileError(f"Cannot assign constant variable {right}. ", self.lfp)
             if not wf.constructor:
                 raise errs.TplCompileError(f"Cannot assign constant variable {right}. ", self.lfp)
-        res_addr = self.right.compile(env, tpa)
+        res_addr = src_node.compile(env, tpa)
         tpa.ptr_assign(res_addr, attr_t.length, attr_ptr)
         return res_addr
 
@@ -3267,9 +3289,30 @@ MAGIC_BIN_TABLE = {
     "*": "__mul__",
     "/": "__div__",
     "%": "__mod__",
+    ">": "__gt__",
+    "<": "__lt__",
     "==": "equals",
     "!=": "notEquals"
 }
+
+
+def box(target_t: typ.Type, src_node: ast.Expression, src_t: typ.Type, lfp: tl.LineFilePos):
+    class_name = typ.BOXING[src_t.type_name()]
+    call = FunctionCall(NameNode(class_name, lfp), Line(lfp, src_node), lfp)
+    new_call = NewExpr(lfp)
+    new_call.value = call
+    return new_call
+
+
+def unbox(target_t: typ.Type, src_node: ast.Expression, src_t: typ.Type, lfp: tl.LineFilePos):
+    assert isinstance(src_t, typ.PointerType) and isinstance(src_t.base, typ.ClassType)
+    primitive_name = typ.UNBOXING[src_t.base.name]
+    value_of_name = primitive_name + "Value"
+    call = FunctionCall(NameNode(value_of_name, lfp), Line(lfp), lfp)
+    dot = DotExpr(lfp)
+    dot.left = src_node
+    dot.right = call
+    return dot
 
 
 def int_int_to_int(op: str, left_addr: int, right_addr: int, res_addr: int, tpa: tp.TpaOutput):
@@ -3449,7 +3492,7 @@ def ctf_runtime_type(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_add
 
 def ctf_runtime_field_type(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
     if len(args) != 2:
-        raise errs.TplCompileError("Function 'field_type' requires exactly 2 argument. ",
+        raise errs.TplCompileError("Function 'field_type' requires exactly 2 arguments. ",
                                    args.lfp)
     class_node = args[0]
     name_node = args[1]
@@ -3460,6 +3503,18 @@ def ctf_runtime_field_type(args: Line, env: en.Environment, tpa: tp.TpaOutput, d
         raise errs.TplCompileError("Second argument of function 'field_type' must be name. ", args.lfp)
     f_pos, f_type, defined_class, const, perm = class_t.find_field(name_node.name, args.lfp)
     tpa.field_type(dst_addr, class_t.class_ptr, f_pos)
+
+
+def ctf_mem_addr(args: Line, env: en.Environment, tpa: tp.TpaOutput, dst_addr):
+    if len(args) != 1:
+        raise errs.TplCompileError("Function 'mem_addr' requires exactly 1 argument. ",
+                                   args.lfp)
+    obj_node = args[0]
+    obj_t = obj_node.evaluated_type(env, tpa.manager)
+    if not isinstance(obj_t, typ.PointerType):
+        raise errs.TplCompileError("Argument of function 'mem_addr' must be pointer type. ")
+    value = obj_node.compile(env, tpa)
+    tpa.assign(dst_addr, value)
 
 
 class SpecialCtf:
@@ -3516,6 +3571,7 @@ COMPILE_TIME_FUNCTIONS = {
     typ.CompileTimeFunctionType("cprint", typ.TYPE_VOID): ctf_cprint,
     typ.CompileTimeFunctionType("cprintln", typ.TYPE_VOID): ctf_cprintln,
     typ.CompileTimeFunctionType("heaparray", typ.TYPE_VOID_PTR): ctf_array,
+    typ.CompileTimeFunctionType("mem_addr", typ.TYPE_INT): ctf_mem_addr,
     typ.CompileTimeFunctionType("runtime_type", typ.TYPE_INT): ctf_runtime_type,
     typ.CompileTimeFunctionType("field_type", typ.TYPE_INT): ctf_runtime_field_type,
     typ.SpecialCtfType("getfunc"): CtfGetFunc

@@ -49,8 +49,8 @@ void create_heap(tp_int heap_begins);
 
 void free_heap();
 
-tp_int heap_allocate(tp_int length);
+tp_int heap_allocate(tp_int length, int print_gc_info);
 
-void gc();
+void gc(int print_gc_info);
 
 #endif //TPL2_GC_H

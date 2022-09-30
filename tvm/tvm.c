@@ -23,6 +23,8 @@ const unsigned char SIGNATURE[] = "TPC_";
 int ERROR_CODE = 0;
 char *ERR_MSG = "";
 
+int print_gc_info = 0;
+
 #define true_addr(ptr) ((ptr) < stack_end && call_p >= 0 ? (ptr) + fp : (ptr))
 #define true_addr_sp(ptr) ((ptr) < stack_end ? (ptr) + sp : (ptr))
 
@@ -316,7 +318,7 @@ tp_int _malloc_essential(tp_int asked_len) {
 //            real_len % MEM_BLOCK == 0 ? real_len / MEM_BLOCK : real_len / MEM_BLOCK + 1;
 //    tp_int location = malloc_link(allocate_len);
 
-    tp_int location = heap_allocate(asked_len);
+    tp_int location = heap_allocate(asked_len, print_gc_info);
 
     if (location <= 0) {
 //        tp_int ava_size = link_len(available) * MEM_BLOCK - INT_PTR_LEN;
@@ -482,7 +484,7 @@ void nat_class_name() {
 void nat_gc() {
     push_fp
 
-    gc();
+    gc(print_gc_info);
 
     pull_fp
 }
@@ -1185,7 +1187,9 @@ void print_error(int error_code) {
     fprintf(stderr, "%s\n", ERR_MSG);
 }
 
-void tvm_run(int p_memory, int p_exit, char *file_name, int vm_argc, char **vm_argv) {
+void tvm_run(int p_memory, int p_exit, int p_gc, char *file_name, int vm_argc, char **vm_argv) {
+    print_gc_info = p_gc;
+
     int read;
 
     setlocale(LC_ALL, "chs");

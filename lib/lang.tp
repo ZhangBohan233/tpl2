@@ -53,6 +53,10 @@ class String {
         return this.concat(other);
     }
 
+    fn __add__(other: *Object) *String {
+        return this.__add__(other.toString());
+    }
+
     fn __mul__(n: int) *String {
         return this.repeat(n);
     }
@@ -197,8 +201,27 @@ abstract class Number {
     fn __mod__(other: *Float) *Float {
         return new Float(this.floatValue() % other.floatValue());
     }
+
+    fn __lt__(other: *IntLike) int {
+        return this.intValue() < other.intValue();
+    }
+
+    fn __lt__(other: *Float) int {
+        return this.floatValue() < other.floatValue();
+    }
+
+    fn __gt__(other: *IntLike) int {
+        return this.intValue() > other.intValue();
+    }
+
+    fn __gt__(other: *Float) int {
+        return this.floatValue() > other.floatValue();
+    }
 }
 
+/**
+ * Numbers that can be transformed to Integer losslessly.
+ */
 abstract class IntLike(Number) {
     @Override
     fn floatValue() float {
@@ -445,12 +468,19 @@ fn intToString(value: int) *String {
 }
 
 fn floatToString(value: float) *String {
+    return floatToString(value, 6);
+}
+
+fn floatToString(value: float, precision: int) *String {
+    if precision < 0 or precision > 15 {
+        _exit(1);
+    }
     iv: int = value as int;
     dv := value - iv;
     dv = if dv < 0 then -dv else dv;
     front := intToString(iv as int);
     count := 0;
-    while count < 6 and dv != dv as int {
+    while count < precision and dv != dv as int {
         dv *= 10;
         count++;
     }

@@ -7,27 +7,27 @@ stack_size
 global_length
 620
 literal
-0 0 0 0 1 0 0 0 255 255 255 255 112 8 0 0 0 0 0 0 132 10 0 0 7 0 0 0 3 0 0 0 79 0 98 0 106 0 101 0 99 0 116 0 64 0 112 8 0 0 0 0 0 0 166 10 0 0 22 0 0 0 3 0 0 0 78 0 101 0 103 0 97 0 116 0 105 0 118 0 101 0 32 0 114 0 101 0 112 0 101 0 97 0 116 0 32 0 116 0 105 0 109 0 101 0 115 0 46 0 112 8 0 0 0 0 0 0 230 10 0 0 1 0 0 0 3 0 0 0 98 0 112 8 0 0 0 0 0 0 252 10 0 0 0 0 0 0 3 0 0 0 112 8 0 0 0 0 0 0 16 11 0 0 5 0 0 0 3 0 0 0 65 0 114 0 114 0 97 0 121 0 112 8 0 0 0 0 0 0 46 11 0 0 1 0 0 0 3 0 0 0 48 0 10 0 0 0 45 0 48 0 0 0 6 0 0 0 15 0 0 0 112 8 0 0 0 0 0 0 86 11 0 0 1 0 0 0 3 0 0 0 46 0 3 0 0 0 2 0 0 0 64 66 15 0 112 8 0 0 0 0 0 0 120 11 0 0 20 0 0 0 3 0 0 0 32 0 108 0 111 0 111 0 112 0 32 0 119 0 105 0 116 0 104 0 32 0 43 0 43 0 105 0 32 0 116 0 105 0 109 0 101 0 32 0 112 8 0 0 0 0 0 0 180 11 0 0 26 0 0 0 3 0 0 0 32 0 108 0 111 0 111 0 112 0 32 0 119 0 105 0 116 0 104 0 32 0 105 0 32 0 61 0 32 0 105 0 32 0 43 0 32 0 49 0 32 0 116 0 105 0 109 0 101 0 32 0 30 0 0 0 112 8 0 0 0 0 0 0 0 12 0 0 10 0 0 0 3 0 0 0 32 0 102 0 105 0 98 0 32 0 116 0 105 0 109 0 101 0 32 0 232 3 0 0 112 8 0 0 0 0 0 0 44 12 0 0 24 0 0 0 3 0 0 0 32 0 104 0 101 0 97 0 112 0 32 0 97 0 114 0 114 0 97 0 121 0 32 0 97 0 99 0 99 0 101 0 115 0 115 0 32 0 116 0 105 0 109 0 101 0 32 0 112 8 0 0 0 0 0 0 112 12 0 0 3 0 0 0 3 0 0 0 97 0 115 0 100 0 80 195 0 0 112 8 0 0 0 0 0 0 142 12 0 0 23 0 0 0 3 0 0 0 32 0 115 0 116 0 114 0 105 0 110 0 103 0 32 0 99 0 111 0 110 0 99 0 97 0 116 0 32 0 119 0 105 0 116 0 104 0 32 0 103 0 99 0 32 0 160 134 1 0 112 8 0 0 0 0 0 0 212 12 0 0 26 0 0 0 3 0 0 0 32 0 110 0 117 0 109 0 98 0 101 0 114 0 32 0 119 0 114 0 97 0 112 0 112 0 101 0 114 0 32 0 108 0 111 0 111 0 112 0 32 0 116 0 105 0 109 0 101 0 32 0
+0 0 0 0 1 0 0 0 255 255 255 255 112 8 0 0 0 0 0 0 132 10 0 0 7 0 0 0 3 0 0 0 79 0 98 0 106 0 101 0 99 0 116 0 64 0 112 8 0 0 0 0 0 0 166 10 0 0 22 0 0 0 3 0 0 0 78 0 101 0 103 0 97 0 116 0 105 0 118 0 101 0 32 0 114 0 101 0 112 0 101 0 97 0 116 0 32 0 116 0 105 0 109 0 101 0 115 0 46 0 112 8 0 0 0 0 0 0 230 10 0 0 1 0 0 0 3 0 0 0 98 0 112 8 0 0 0 0 0 0 252 10 0 0 0 0 0 0 3 0 0 0 112 8 0 0 0 0 0 0 16 11 0 0 5 0 0 0 3 0 0 0 65 0 114 0 114 0 97 0 121 0 112 8 0 0 0 0 0 0 46 11 0 0 1 0 0 0 3 0 0 0 48 0 10 0 0 0 45 0 48 0 0 0 6 0 0 0 15 0 0 0 112 8 0 0 0 0 0 0 86 11 0 0 1 0 0 0 3 0 0 0 46 0 3 0 0 0 2 0 0 0
 class_literals
-112 8 0 0 0 0 0 0 28 13 0 0 33 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 79 0 98 0 106 0 101 0 99 0 116 0 1 0 0 0 1 0 0 0 108 8 0 0 2 0 0 0 4 0 0 0 1 1 5 0 0 0 7 0 0 0 248 8 0 0 252 8 0 0 0 9 0 0 4 9 0 0 8 9 0 0
-112 8 0 0 0 0 0 0 164 13 0 0 33 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 83 0 116 0 114 0 105 0 110 0 103 0 2 0 0 0 1 0 0 0 112 8 0 0 108 8 0 0 3 0 0 0 4 0 0 0 1 1 6 18 0 0 0 7 0 0 0 248 8 0 0 252 8 0 0 48 9 0 0 4 9 0 0 36 9 0 0 12 9 0 0 16 9 0 0 20 9 0 0 24 9 0 0 28 9 0 0 32 9 0 0 40 9 0 0 44 9 0 0 52 9 0 0 56 9 0 0 60 9 0 0 64 9 0 0 68 9 0 0
-112 8 0 0 0 0 0 0 101 14 0 0 33 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 78 0 117 0 109 0 98 0 101 0 114 0 2 0 0 0 1 0 0 0 116 8 0 0 108 8 0 0 2 0 0 0 4 0 0 0 1 1 23 0 0 0 7 0 0 0 72 9 0 0 252 8 0 0 0 9 0 0 4 9 0 0 8 9 0 0 76 9 0 0 80 9 0 0 84 9 0 0 88 9 0 0 92 9 0 0 96 9 0 0 100 9 0 0 104 9 0 0 108 9 0 0 112 9 0 0 116 9 0 0 120 9 0 0 124 9 0 0 128 9 0 0 132 9 0 0 136 9 0 0 140 9 0 0 144 9 0 0
-112 8 0 0 0 0 0 0 57 15 0 0 34 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 73 0 110 0 116 0 76 0 105 0 107 0 101 0 3 0 0 0 1 0 0 0 120 8 0 0 116 8 0 0 108 8 0 0 2 0 0 0 4 0 0 0 1 1 23 0 0 0 7 0 0 0 152 9 0 0 252 8 0 0 0 9 0 0 4 9 0 0 8 9 0 0 76 9 0 0 148 9 0 0 84 9 0 0 88 9 0 0 92 9 0 0 96 9 0 0 100 9 0 0 104 9 0 0 108 9 0 0 112 9 0 0 116 9 0 0 120 9 0 0 124 9 0 0 128 9 0 0 132 9 0 0 136 9 0 0 140 9 0 0 144 9 0 0
-112 8 0 0 0 0 0 0 19 16 0 0 34 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 73 0 110 0 116 0 101 0 103 0 101 0 114 0 4 0 0 0 1 0 0 0 124 8 0 0 120 8 0 0 116 8 0 0 108 8 0 0 3 0 0 0 4 0 0 0 1 1 1 24 0 0 0 7 0 0 0 152 9 0 0 252 8 0 0 0 9 0 0 4 9 0 0 172 9 0 0 160 9 0 0 148 9 0 0 164 9 0 0 168 9 0 0 92 9 0 0 96 9 0 0 100 9 0 0 104 9 0 0 108 9 0 0 112 9 0 0 116 9 0 0 120 9 0 0 124 9 0 0 128 9 0 0 132 9 0 0 136 9 0 0 140 9 0 0 144 9 0 0 156 9 0 0
-112 8 0 0 0 0 0 0 246 16 0 0 32 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 70 0 108 0 111 0 97 0 116 0 3 0 0 0 1 0 0 0 128 8 0 0 116 8 0 0 108 8 0 0 3 0 0 0 4 0 0 0 1 1 2 24 0 0 0 7 0 0 0 72 9 0 0 252 8 0 0 0 9 0 0 4 9 0 0 196 9 0 0 180 9 0 0 184 9 0 0 188 9 0 0 192 9 0 0 92 9 0 0 96 9 0 0 100 9 0 0 104 9 0 0 108 9 0 0 112 9 0 0 116 9 0 0 120 9 0 0 124 9 0 0 128 9 0 0 132 9 0 0 136 9 0 0 140 9 0 0 144 9 0 0 176 9 0 0
-112 8 0 0 0 0 0 0 209 17 0 0 31 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 67 0 104 0 97 0 114 0 4 0 0 0 1 0 0 0 132 8 0 0 120 8 0 0 116 8 0 0 108 8 0 0 3 0 0 0 4 0 0 0 1 1 3 24 0 0 0 7 0 0 0 152 9 0 0 252 8 0 0 0 9 0 0 4 9 0 0 216 9 0 0 204 9 0 0 148 9 0 0 208 9 0 0 212 9 0 0 92 9 0 0 96 9 0 0 100 9 0 0 104 9 0 0 108 9 0 0 112 9 0 0 116 9 0 0 120 9 0 0 124 9 0 0 128 9 0 0 132 9 0 0 136 9 0 0 140 9 0 0 144 9 0 0 200 9 0 0
-112 8 0 0 0 0 0 0 174 18 0 0 31 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 66 0 121 0 116 0 101 0 4 0 0 0 1 0 0 0 136 8 0 0 120 8 0 0 116 8 0 0 108 8 0 0 3 0 0 0 4 0 0 0 1 1 4 24 0 0 0 7 0 0 0 152 9 0 0 252 8 0 0 0 9 0 0 4 9 0 0 236 9 0 0 224 9 0 0 148 9 0 0 228 9 0 0 232 9 0 0 92 9 0 0 96 9 0 0 100 9 0 0 104 9 0 0 108 9 0 0 112 9 0 0 116 9 0 0 120 9 0 0 124 9 0 0 128 9 0 0 132 9 0 0 136 9 0 0 140 9 0 0 144 9 0 0 220 9 0 0
+112 8 0 0 0 0 0 0 116 11 0 0 33 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 79 0 98 0 106 0 101 0 99 0 116 0 1 0 0 0 1 0 0 0 108 8 0 0 2 0 0 0 4 0 0 0 1 1 5 0 0 0 7 0 0 0 248 8 0 0 252 8 0 0 0 9 0 0 4 9 0 0 8 9 0 0
+112 8 0 0 0 0 0 0 252 11 0 0 33 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 83 0 116 0 114 0 105 0 110 0 103 0 2 0 0 0 1 0 0 0 112 8 0 0 108 8 0 0 3 0 0 0 4 0 0 0 1 1 6 18 0 0 0 7 0 0 0 248 8 0 0 252 8 0 0 48 9 0 0 4 9 0 0 36 9 0 0 12 9 0 0 16 9 0 0 20 9 0 0 24 9 0 0 28 9 0 0 32 9 0 0 40 9 0 0 44 9 0 0 52 9 0 0 56 9 0 0 60 9 0 0 64 9 0 0 68 9 0 0
+112 8 0 0 0 0 0 0 189 12 0 0 33 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 78 0 117 0 109 0 98 0 101 0 114 0 2 0 0 0 1 0 0 0 116 8 0 0 108 8 0 0 2 0 0 0 4 0 0 0 1 1 23 0 0 0 7 0 0 0 72 9 0 0 252 8 0 0 0 9 0 0 4 9 0 0 8 9 0 0 76 9 0 0 80 9 0 0 84 9 0 0 88 9 0 0 92 9 0 0 96 9 0 0 100 9 0 0 104 9 0 0 108 9 0 0 112 9 0 0 116 9 0 0 120 9 0 0 124 9 0 0 128 9 0 0 132 9 0 0 136 9 0 0 140 9 0 0 144 9 0 0
+112 8 0 0 0 0 0 0 145 13 0 0 34 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 73 0 110 0 116 0 76 0 105 0 107 0 101 0 3 0 0 0 1 0 0 0 120 8 0 0 116 8 0 0 108 8 0 0 2 0 0 0 4 0 0 0 1 1 23 0 0 0 7 0 0 0 152 9 0 0 252 8 0 0 0 9 0 0 4 9 0 0 8 9 0 0 76 9 0 0 148 9 0 0 84 9 0 0 88 9 0 0 92 9 0 0 96 9 0 0 100 9 0 0 104 9 0 0 108 9 0 0 112 9 0 0 116 9 0 0 120 9 0 0 124 9 0 0 128 9 0 0 132 9 0 0 136 9 0 0 140 9 0 0 144 9 0 0
+112 8 0 0 0 0 0 0 107 14 0 0 34 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 73 0 110 0 116 0 101 0 103 0 101 0 114 0 4 0 0 0 1 0 0 0 124 8 0 0 120 8 0 0 116 8 0 0 108 8 0 0 3 0 0 0 4 0 0 0 1 1 1 24 0 0 0 7 0 0 0 152 9 0 0 252 8 0 0 0 9 0 0 4 9 0 0 172 9 0 0 160 9 0 0 148 9 0 0 164 9 0 0 168 9 0 0 92 9 0 0 96 9 0 0 100 9 0 0 104 9 0 0 108 9 0 0 112 9 0 0 116 9 0 0 120 9 0 0 124 9 0 0 128 9 0 0 132 9 0 0 136 9 0 0 140 9 0 0 144 9 0 0 156 9 0 0
+112 8 0 0 0 0 0 0 78 15 0 0 32 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 70 0 108 0 111 0 97 0 116 0 3 0 0 0 1 0 0 0 128 8 0 0 116 8 0 0 108 8 0 0 3 0 0 0 4 0 0 0 1 1 2 24 0 0 0 7 0 0 0 72 9 0 0 252 8 0 0 0 9 0 0 4 9 0 0 196 9 0 0 180 9 0 0 184 9 0 0 188 9 0 0 192 9 0 0 92 9 0 0 96 9 0 0 100 9 0 0 104 9 0 0 108 9 0 0 112 9 0 0 116 9 0 0 120 9 0 0 124 9 0 0 128 9 0 0 132 9 0 0 136 9 0 0 140 9 0 0 144 9 0 0 176 9 0 0
+112 8 0 0 0 0 0 0 41 16 0 0 31 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 67 0 104 0 97 0 114 0 4 0 0 0 1 0 0 0 132 8 0 0 120 8 0 0 116 8 0 0 108 8 0 0 3 0 0 0 4 0 0 0 1 1 3 24 0 0 0 7 0 0 0 152 9 0 0 252 8 0 0 0 9 0 0 4 9 0 0 216 9 0 0 204 9 0 0 148 9 0 0 208 9 0 0 212 9 0 0 92 9 0 0 96 9 0 0 100 9 0 0 104 9 0 0 108 9 0 0 112 9 0 0 116 9 0 0 120 9 0 0 124 9 0 0 128 9 0 0 132 9 0 0 136 9 0 0 140 9 0 0 144 9 0 0 200 9 0 0
+112 8 0 0 0 0 0 0 6 17 0 0 31 0 0 0 3 0 0 0 68 0 58 0 92 0 71 0 105 0 116 0 72 0 117 0 98 0 92 0 116 0 112 0 108 0 50 0 92 0 108 0 105 0 98 0 92 0 108 0 97 0 110 0 103 0 46 0 116 0 112 0 36 0 66 0 121 0 116 0 101 0 4 0 0 0 1 0 0 0 136 8 0 0 120 8 0 0 116 8 0 0 108 8 0 0 3 0 0 0 4 0 0 0 1 1 4 24 0 0 0 7 0 0 0 152 9 0 0 252 8 0 0 0 9 0 0 4 9 0 0 236 9 0 0 224 9 0 0 148 9 0 0 228 9 0 0 232 9 0 0 92 9 0 0 96 9 0 0 100 9 0 0 104 9 0 0 108 9 0 0 112 9 0 0 116 9 0 0 120 9 0 0 124 9 0 0 128 9 0 0 132 9 0 0 136 9 0 0 140 9 0 0 144 9 0 0 220 9 0 0
 end_class_literals
 
 classes
-class D:\GitHub\tpl2\lib\lang.tp$Object name $3344 addr $2156 mro $3430 aligned_fields $3442 methods $3452
-class D:\GitHub\tpl2\lib\lang.tp$String name $3480 addr $2160 mro $3566 aligned_fields $3582 methods $3593
-class D:\GitHub\tpl2\lib\lang.tp$Number name $3673 addr $2164 mro $3759 aligned_fields $3775 methods $3785
-class D:\GitHub\tpl2\lib\lang.tp$IntLike name $3885 addr $2168 mro $3973 aligned_fields $3993 methods $4003
-class D:\GitHub\tpl2\lib\lang.tp$Integer name $4103 addr $2172 mro $4191 aligned_fields $4215 methods $4226
-class D:\GitHub\tpl2\lib\lang.tp$Float name $4330 addr $2176 mro $4414 aligned_fields $4434 methods $4445
-class D:\GitHub\tpl2\lib\lang.tp$Char name $4549 addr $2180 mro $4631 aligned_fields $4655 methods $4666
-class D:\GitHub\tpl2\lib\lang.tp$Byte name $4770 addr $2184 mro $4852 aligned_fields $4876 methods $4887
+class D:\GitHub\tpl2\lib\lang.tp$Object name $2920 addr $2156 mro $3006 aligned_fields $3018 methods $3028
+class D:\GitHub\tpl2\lib\lang.tp$String name $3056 addr $2160 mro $3142 aligned_fields $3158 methods $3169
+class D:\GitHub\tpl2\lib\lang.tp$Number name $3249 addr $2164 mro $3335 aligned_fields $3351 methods $3361
+class D:\GitHub\tpl2\lib\lang.tp$IntLike name $3461 addr $2168 mro $3549 aligned_fields $3569 methods $3579
+class D:\GitHub\tpl2\lib\lang.tp$Integer name $3679 addr $2172 mro $3767 aligned_fields $3791 methods $3802
+class D:\GitHub\tpl2\lib\lang.tp$Float name $3906 addr $2176 mro $3990 aligned_fields $4010 methods $4021
+class D:\GitHub\tpl2\lib\lang.tp$Char name $4125 addr $2180 mro $4207 aligned_fields $4231 methods $4242
+class D:\GitHub\tpl2\lib\lang.tp$Byte name $4346 addr $2184 mro $4428 aligned_fields $4452 methods $4463
 
 fn D:\GitHub\tpl2\lib\lang.tp$Object.__new__() $2296
     push_fp
@@ -4739,628 +4739,256 @@ fn D:\GitHub\tpl2\lib\lang.tp$vmBitsCount() $2280
     ret
     stop
 
-fn D:\GitHub\tpl2\tp\perf.tp$fib(int) $2284
+fn D:\GitHub\tpl2\tp\boxing.tp$box1(int) $2284
     push_fp
     ; begin of type assigning
-    push          56
-    iload         %0      44
+    push          20
+    iload         %0      16
     iload         %1      $0
     store         %1      %0
-    iload         %0      16843009
-    iload         %1      $44
-    store         %1      %0
-    iload         %0      16843009
-    iload         %1      $48
-    store         %1      %0
-    iload         %0      257
-    iload         %1      $52
+    iload         %0      65793
+    iload         %1      $16
     store         %1      %0
     ; end of type assigning
-    load          %0      $2916
+    load          %0      $2672
     iload         %1      $12
     store         %1      %0
     load          %0      $4
     load          %1      $12
-    lti           %0      %1
-    iload         %1      $8
-    store         %1      %0
-    load          %0      $8
-    if_zero_goto  %0      ELSE_14
-    load          %0      $4
-    put_ret       %0
-    pull_fp
-    ret
-    goto          ENDIF_14
-    label         ELSE_14
-    load          %0      $2916
-    iload         %1      $28
-    store         %1      %0
-    load          %0      $4
-    load          %1      $28
-    subi          %0      %1
-    iload         %1      $24
-    store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $24
-    store_abs     %0      %1
-    iload         %0      $20
-    set_ret       %0
-    call          $2284
-    load          %0      $2672
-    iload         %1      $40
-    store         %1      %0
-    load          %0      $4
-    load          %1      $40
-    subi          %0      %1
-    iload         %1      $36
-    store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $36
-    store_abs     %0      %1
-    iload         %0      $32
-    set_ret       %0
-    call          $2284
-    load          %0      $20
-    load          %1      $32
     addi          %0      %1
-    iload         %1      $16
+    iload         %1      $8
     store         %1      %0
-    load          %0      $16
+    load          %0      $8
     put_ret       %0
     pull_fp
     ret
-    label         ENDIF_14
     stop
 
-fn D:\GitHub\tpl2\tp\perf.tp$test_wrapper() $2288
+fn D:\GitHub\tpl2\tp\boxing.tp$box2(*Integer) $2288
     push_fp
     ; begin of type assigning
-    push          4
-    iload         %0      4
+    push          24
+    iload         %0      20
     iload         %1      $0
     store         %1      %0
-    ; end of type assigning
-    pull_fp
-    ret
-    stop
-
-fn D:\GitHub\tpl2\tp\perf.tp$main() $2292
-    push_fp
-    ; begin of type assigning
-    push          292
-    iload         %0      232
-    iload         %1      $0
-    store         %1      %0
-    iload         %0      16843009
-    iload         %1      $232
-    store         %1      %0
-    iload         %0      16844033
-    iload         %1      $236
-    store         %1      %0
-    iload         %0      83951873
-    iload         %1      $240
-    store         %1      %0
-    iload         %0      16843009
-    iload         %1      $244
-    store         %1      %0
-    iload         %0      17170693
-    iload         %1      $248
-    store         %1      %0
-    iload         %0      16843009
-    iload         %1      $252
-    store         %1      %0
-    iload         %0      83951873
-    iload         %1      $256
-    store         %1      %0
-    iload         %0      16844033
-    iload         %1      $260
-    store         %1      %0
-    iload         %0      16975107
-    iload         %1      $264
-    store         %1      %0
-    iload         %0      17105157
-    iload         %1      $268
-    store         %1      %0
-    iload         %0      17105153
-    iload         %1      $272
-    store         %1      %0
-    iload         %0      17105153
-    iload         %1      $276
-    store         %1      %0
-    iload         %0      16843009
-    iload         %1      $280
-    store         %1      %0
-    iload         %0      84214021
-    iload         %1      $284
-    store         %1      %0
-    iload         %0      1
-    iload         %1      $288
+    iload         %0      16843013
+    iload         %1      $20
     store         %1      %0
     ; end of type assigning
+    load          %0      $4
+    iload         %1      5
+    get_method    %0      %1      %2
     args
-    iload         %0      $4
-    set_ret       %0
-    invoke        $2060
-    load          %0      $2668
-    iload         %1      $8
-    store         %1      %0
-    label         LOOP_TITLE_7
-    load          %0      $2920
-    iload         %1      $16
-    store         %1      %0
-    load          %0      $8
-    load          %1      $16
-    lti           %0      %1
+    aload_sp      %1      $4
+    load          %2      $4
+    store_abs     %1      %2
     iload         %1      $12
+    set_ret       %1
+    call_reg      %0
+    load          %0      $2916
+    iload         %1      $16
     store         %1      %0
     load          %0      $12
-    if_zero_goto  %0      END_LOOP_7
-    label         LABEL_5
-    load          %0      $8
-    iload         %1      1
+    load          %1      $16
     addi          %0      %1
-    iload         %1      8
+    iload         %1      $8
     store         %1      %0
-    goto          LOOP_TITLE_7
-    label         END_LOOP_7
+    load          %0      $8
+    put_ret       %0
+    pull_fp
+    ret
+    stop
+
+fn D:\GitHub\tpl2\tp\boxing.tp$main() $2292
+    push_fp
+    ; begin of type assigning
+    push          100
+    iload         %0      80
+    iload         %1      $0
+    store         %1      %0
+    iload         %0      16844033
+    iload         %1      $80
+    store         %1      %0
+    iload         %0      17105153
+    iload         %1      $84
+    store         %1      %0
+    iload         %0      17170689
+    iload         %1      $88
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $92
+    store         %1      %0
+    iload         %0      65793
+    iload         %1      $96
+    store         %1      %0
+    ; end of type assigning
+    iload         %0      12
+    iload         %1      $12
+    store         %1      %0
     args
-    iload         %0      $20
+    aload_sp      %0      $0
+    load          %1      $12
+    store_abs     %0      %1
+    iload         %0      $8
     set_ret       %0
-    invoke        $2060
+    invoke        $2088
+    load          %0      $8
+    iload         %1      2172
+    store_abs     %0      %1
+    load          %0      $8
+    iload         %1      4
+    addi          %0      %1
+    iload         %1      16
+    store         %1      %0
+    load          %0      $16
+    iload         %1      12
+    store_abs     %0      %1
+    load          %0      $2912
+    iload         %1      $20
+    store         %1      %0
     args
     aload_sp      %0      $4
     load          %1      $8
     store_abs     %0      %1
-    call          $2192
-    aload         %0      $2924
+    aload_sp      %0      $8
+    load          %1      $20
+    store_abs     %0      %1
+    call          $2460
+    load          %0      $8
+    iload         %1      5
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $8
+    store_abs     %1      %2
     iload         %1      $24
+    set_ret       %1
+    call_reg      %0
+    load          %0      $24
+    iload         %1      $4
+    store         %1      %0
+    iload         %0      12
+    iload         %1      $32
     store         %1      %0
     args
-    aload_sp      %0      $4
-    load          %1      $24
+    aload_sp      %0      $0
+    load          %1      $32
     store_abs     %0      %1
-    call          $2224
-    load          %0      $20
-    load          %1      $4
-    subi          %0      %1
-    iload         %1      $28
+    iload         %0      $28
+    set_ret       %0
+    invoke        $2088
+    load          %0      $28
+    iload         %1      2172
+    store_abs     %0      %1
+    load          %0      $28
+    iload         %1      4
+    addi          %0      %1
+    iload         %1      36
+    store         %1      %0
+    load          %0      $36
+    iload         %1      12
+    store_abs     %0      %1
+    load          %0      $2916
+    iload         %1      $40
     store         %1      %0
     args
     aload_sp      %0      $4
     load          %1      $28
     store_abs     %0      %1
-    call          $2196
-    load          %0      $2668
-    iload         %1      $8
-    store         %1      %0
-    label         LOOP_TITLE_8
-    load          %0      $2920
-    iload         %1      $36
-    store         %1      %0
-    load          %0      $8
-    load          %1      $36
-    lti           %0      %1
-    iload         %1      $32
-    store         %1      %0
-    load          %0      $32
-    if_zero_goto  %0      END_LOOP_8
-    label         LABEL_6
-    load          %0      $2672
-    iload         %1      $40
-    store         %1      %0
-    load          %0      $8
+    aload_sp      %0      $8
     load          %1      $40
-    addi          %0      %1
-    iload         %1      $8
-    store         %1      %0
-    goto          LOOP_TITLE_8
-    label         END_LOOP_8
-    args
-    iload         %0      $44
-    set_ret       %0
-    invoke        $2060
+    store_abs     %0      %1
+    call          $2460
     args
     aload_sp      %0      $4
-    load          %1      $8
+    load          %1      $28
     store_abs     %0      %1
-    call          $2192
-    aload         %0      $2984
+    call          $2236
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    call          $2196
+    load          %0      $2912
     iload         %1      $48
     store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $48
-    store_abs     %0      %1
-    call          $2224
-    load          %0      $44
-    load          %1      $20
-    subi          %0      %1
+    iload         %0      1
     iload         %1      $52
     store         %1      %0
     args
+    aload_sp      %0      $0
+    load          %1      $48
+    store_abs     %0      %1
     aload_sp      %0      $4
     load          %1      $52
     store_abs     %0      %1
-    call          $2196
-    load          %0      $3056
+    iload         %0      $44
+    set_ret       %0
+    invoke        $2096
+    load          %0      $2668
     iload         %1      $56
     store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $56
-    store_abs     %0      %1
-    iload         %0      $60
-    set_ret       %0
-    call          $2284
-    args
-    iload         %0      $64
-    set_ret       %0
-    invoke        $2060
-    args
-    aload_sp      %0      $4
-    load          %1      $56
-    store_abs     %0      %1
-    call          $2192
-    aload         %0      $3060
-    iload         %1      $68
+    load          %0      $56
+    iload         %1      $60
     store         %1      %0
+    load          %0      $60
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      60
+    store         %1      %0
+    load          %0      $60
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      60
+    store         %1      %0
+    load          %0      $44
+    load          %1      $60
+    addi          %0      %1
+    iload         %1      $60
+    store         %1      %0
+    load          %0      $28
+    iload         %1      5
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $28
+    store_abs     %1      %2
+    iload         %1      $64
+    set_ret       %1
+    call_reg      %0
+    load          %0      $60
+    load          %1      $64
+    store_abs     %0      %1
+    load          %0      $2668
+    iload         %1      $72
+    store         %1      %0
+    load          %0      $72
+    iload         %1      $76
+    store         %1      %0
+    load          %0      $76
+    iload         %1      4
+    muli          %0      %1
+    iload         %1      76
+    store         %1      %0
+    load          %0      $76
+    iload         %1      8
+    addi          %0      %1
+    iload         %1      76
+    store         %1      %0
+    load          %0      $44
+    load          %1      $76
+    addi          %0      %1
+    iload         %1      $76
+    store         %1      %0
+    load          %0      $76
+    rload_abs     %1      %0
+    iload         %0      68
+    store         %0      %1
     args
     aload_sp      %0      $4
     load          %1      $68
     store_abs     %0      %1
-    call          $2224
-    load          %0      $64
-    load          %1      $44
-    subi          %0      %1
-    iload         %1      $72
-    store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $72
-    store_abs     %0      %1
     call          $2196
-    load          %0      $3100
-    iload         %1      $80
-    store         %1      %0
-    iload         %0      1
-    iload         %1      $84
-    store         %1      %0
-    args
-    aload_sp      %0      $0
-    load          %1      $80
-    store_abs     %0      %1
-    aload_sp      %0      $4
-    load          %1      $84
-    store_abs     %0      %1
-    iload         %0      $76
-    set_ret       %0
-    invoke        $2096
-    load          %0      $2668
-    iload         %1      $8
-    store         %1      %0
-    label         LOOP_TITLE_9
-    load          %0      $2920
-    iload         %1      $92
-    store         %1      %0
-    load          %0      $8
-    load          %1      $92
-    lti           %0      %1
-    iload         %1      $88
-    store         %1      %0
-    load          %0      $88
-    if_zero_goto  %0      END_LOOP_9
-    load          %0      $76
-    rload_abs     %1      %0
-    iload         %0      100
-    store         %0      %1
-    load          %0      $8
-    load          %1      $100
-    modi          %0      %1
-    iload         %1      $96
-    store         %1      %0
-    load          %0      $96
-    iload         %1      $104
-    store         %1      %0
-    load          %0      $104
-    iload         %1      4
-    muli          %0      %1
-    iload         %1      104
-    store         %1      %0
-    load          %0      $104
-    iload         %1      8
-    addi          %0      %1
-    iload         %1      104
-    store         %1      %0
-    load          %0      $76
-    load          %1      $104
-    addi          %0      %1
-    iload         %1      $104
-    store         %1      %0
-    load          %0      $104
-    load          %1      $8
-    store_abs     %0      %1
-    label         LABEL_7
-    load          %0      $8
-    iload         %1      1
-    addi          %0      %1
-    iload         %1      8
-    store         %1      %0
-    goto          LOOP_TITLE_9
-    label         END_LOOP_9
-    args
-    iload         %0      $108
-    set_ret       %0
-    invoke        $2060
-    args
-    aload_sp      %0      $4
-    load          %1      $8
-    store_abs     %0      %1
-    call          $2192
-    aload         %0      $3104
-    iload         %1      $112
-    store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $112
-    store_abs     %0      %1
-    call          $2224
-    load          %0      $108
-    load          %1      $64
-    subi          %0      %1
-    iload         %1      $116
-    store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $116
-    store_abs     %0      %1
-    call          $2196
-    aload         %0      $3172
-    iload         %1      $120
-    store         %1      %0
-    load          %0      $2668
-    iload         %1      $8
-    store         %1      %0
-    label         LOOP_TITLE_10
-    load          %0      $3198
-    iload         %1      $128
-    store         %1      %0
-    load          %0      $8
-    load          %1      $128
-    lti           %0      %1
-    iload         %1      $124
-    store         %1      %0
-    load          %0      $124
-    if_zero_goto  %0      END_LOOP_10
-    load          %0      $8
-    iload         %1      $132
-    storec        %1      %0
-    load          %0      $8
-    iload         %1      $140
-    storec        %1      %0
-    load          %0      $120
-    iload         %1      8
-    get_method    %0      %1      %2
-    args
-    aload_sp      %1      $4
-    load          %2      $120
-    store_abs     %1      %2
-    aload_sp      %1      $8
-    loadc         %2      $140
-    store_abs     %1      %2
-    iload         %1      $136
-    set_ret       %1
-    call_reg      %0
-    load          %0      $136
-    iload         %1      $120
-    store         %1      %0
-    label         LABEL_8
-    load          %0      $8
-    iload         %1      1
-    addi          %0      %1
-    iload         %1      8
-    store         %1      %0
-    goto          LOOP_TITLE_10
-    label         END_LOOP_10
-    args
-    iload         %0      $144
-    set_ret       %0
-    invoke        $2060
-    args
-    aload_sp      %0      $4
-    load          %1      $8
-    store_abs     %0      %1
-    call          $2192
-    aload         %0      $3202
-    iload         %1      $148
-    store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $148
-    store_abs     %0      %1
-    call          $2224
-    load          %0      $144
-    load          %1      $108
-    subi          %0      %1
-    iload         %1      $152
-    store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $152
-    store_abs     %0      %1
-    call          $2196
-    iload         %0      12
-    iload         %1      $160
-    store         %1      %0
-    args
-    aload_sp      %0      $0
-    load          %1      $160
-    store_abs     %0      %1
-    iload         %0      $156
-    set_ret       %0
-    invoke        $2088
-    load          %0      $156
-    iload         %1      2172
-    store_abs     %0      %1
-    load          %0      $156
-    iload         %1      4
-    addi          %0      %1
-    iload         %1      164
-    store         %1      %0
-    load          %0      $164
-    iload         %1      12
-    store_abs     %0      %1
-    load          %0      $3268
-    iload         %1      $168
-    store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $156
-    store_abs     %0      %1
-    aload_sp      %0      $8
-    load          %1      $168
-    store_abs     %0      %1
-    call          $2460
-    iload         %0      12
-    iload         %1      $176
-    store         %1      %0
-    args
-    aload_sp      %0      $0
-    load          %1      $176
-    store_abs     %0      %1
-    iload         %0      $172
-    set_ret       %0
-    invoke        $2088
-    load          %0      $172
-    iload         %1      2172
-    store_abs     %0      %1
-    load          %0      $172
-    iload         %1      4
-    addi          %0      %1
-    iload         %1      180
-    store         %1      %0
-    load          %0      $180
-    iload         %1      12
-    store_abs     %0      %1
-    load          %0      $2672
-    iload         %1      $184
-    store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $172
-    store_abs     %0      %1
-    aload_sp      %0      $8
-    load          %1      $184
-    store_abs     %0      %1
-    call          $2460
-    iload         %0      12
-    iload         %1      $192
-    store         %1      %0
-    args
-    aload_sp      %0      $0
-    load          %1      $192
-    store_abs     %0      %1
-    iload         %0      $188
-    set_ret       %0
-    invoke        $2088
-    load          %0      $188
-    iload         %1      2172
-    store_abs     %0      %1
-    load          %0      $188
-    iload         %1      4
-    addi          %0      %1
-    iload         %1      196
-    store         %1      %0
-    load          %0      $196
-    iload         %1      12
-    store_abs     %0      %1
-    load          %0      $2668
-    iload         %1      $200
-    store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $188
-    store_abs     %0      %1
-    aload_sp      %0      $8
-    load          %1      $200
-    store_abs     %0      %1
-    call          $2460
-    label         LOOP_TITLE_11
-    load          %0      $188
-    iload         %1      19
-    get_method    %0      %1      %2
-    args
-    aload_sp      %1      $4
-    load          %2      $188
-    store_abs     %1      %2
-    aload_sp      %1      $8
-    load          %2      $156
-    store_abs     %1      %2
-    iload         %1      $208
-    set_ret       %1
-    call_reg      %0
-    load          %0      $208
-    iload         %1      $204
-    store         %1      %0
-    load          %0      $204
-    if_zero_goto  %0      END_LOOP_11
-    label         LABEL_9
-    load          %0      $188
-    iload         %1      9
-    get_method    %0      %1      %2
-    args
-    aload_sp      %1      $4
-    load          %2      $188
-    store_abs     %1      %2
-    aload_sp      %1      $8
-    load          %2      $172
-    store_abs     %1      %2
-    iload         %1      $212
-    set_ret       %1
-    call_reg      %0
-    load          %0      $212
-    iload         %1      $188
-    store         %1      %0
-    goto          LOOP_TITLE_11
-    label         END_LOOP_11
-    args
-    iload         %0      $216
-    set_ret       %0
-    invoke        $2060
-    aload         %0      $2800
-    iload         %1      $220
-    store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $220
-    store_abs     %0      %1
-    call          $2228
-    args
-    aload_sp      %0      $4
-    load          %1      $156
-    store_abs     %0      %1
-    call          $2232
-    aload         %0      $3272
-    iload         %1      $224
-    store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $224
-    store_abs     %0      %1
-    call          $2224
-    load          %0      $216
-    load          %1      $144
-    subi          %0      %1
-    iload         %1      $228
-    store         %1      %0
-    args
-    aload_sp      %0      $4
-    load          %1      $228
-    store_abs     %0      %1
-    call          $2196
-    load          %0      $60
-    put_ret       %0
     pull_fp
     ret
     stop

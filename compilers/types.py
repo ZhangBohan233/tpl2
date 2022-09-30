@@ -3,6 +3,19 @@ from abc import ABC
 import compilers.util as util
 import compilers.errors as errs
 
+NOT_CONVERT = 0
+CONVERTIBLE = 1
+BOX_CONVERT = 2
+UNBOX_CONVERT = 3
+
+BOXING = {
+    "int": "Integer",
+    "float": "Float",
+    "char": "Char",
+    "byte": "Byte"
+}
+UNBOXING = {v: k for k, v in BOXING.items()}
+
 
 class Type:
     def __init__(self, length: int):
@@ -49,6 +62,24 @@ class Type:
 
     def normal_convertible(self, left_tar_type):
         return self.strong_convertible(left_tar_type)
+
+    def box_convertible(self, left_tar_type):
+        """
+        Returns whether the right type can be converted to left type via boxing, i.e., x: *Integer = 2;
+
+        :param left_tar_type:
+        :return:
+        """
+        return False
+
+    def unbox_convertible(self, left_tar_type):
+        """
+        Returns whether the right type can be converted to left type via unboxing, i.e., x: int = new Integer(2);
+
+        :param left_tar_type:
+        :return:
+        """
+        return False
 
     def convertible_to(self, left_tar_type, lf, normal=True, weak=True):
         """
@@ -100,10 +131,16 @@ class PrimitiveType(Type):
         return self.code
 
     def weak_convertible(self, left_tar_type: Type):
-        if self.t_name == "int" and isinstance(left_tar_type, PointerType):
-            return True
-        else:
-            return super().weak_convertible(left_tar_type)
+        # if self.t_name == "int" and isinstance(left_tar_type, PointerType):
+        #     return True
+        # else:
+        return super().weak_convertible(left_tar_type)
+
+    def box_convertible(self, left_tar_type):
+        if isinstance(left_tar_type, PointerType) and isinstance(left_tar_type.base, ClassType):
+            if self.t_name in BOXING and BOXING[self.t_name] == left_tar_type.base.name:
+                return True
+        return super().box_convertible(left_tar_type)
 
     def type_name(self):
         return self.t_name
@@ -152,12 +189,20 @@ class PointerType(Type):
             return super().normal_convertible(left_tar_type)
 
     def weak_convertible(self, left_tar_type):
-        if isinstance(left_tar_type, PrimitiveType) and left_tar_type.t_name == "int":
-            return True
-        elif isinstance(left_tar_type, PointerType):
+        # if isinstance(left_tar_type, PrimitiveType) and left_tar_type.t_name == "int":
+        #     return True
+        if isinstance(left_tar_type, PointerType):
             return self.base.weak_convertible(left_tar_type.base)
         else:
             return super().weak_convertible(left_tar_type)
+
+    def unbox_convertible(self, left_tar_type):
+        if isinstance(self.base, ClassType) and \
+                isinstance(left_tar_type, PrimitiveType) and \
+                self.base.name in UNBOXING and \
+                UNBOXING[self.base.name] == left_tar_type.type_name():
+            return True
+        return False
 
     def type_name(self):
         return "*" + self.base.type_name()
@@ -592,6 +637,7 @@ class ArrayType(Type):
     """
     This class actually represents the array pointer type.
     """
+
     def __init__(self, ele_type: Type):
         super().__init__(util.INT_PTR_LEN)
 
@@ -855,8 +901,8 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
     :param get_type_func: a function that extract the function type from a unit in poly dict
     :param lf:
     :return: anything that gets from the poly dict.
-        usually (method_key_type, (method_id, method_ptr, method_type)) for method,
-        (fn_type, (fn_type, fn_ptr)) for function
+        usually (method_key_type, (method_id, method_ptr, method_type), [boxing_info]) for method,
+        (fn_type, (fn_type, fn_ptr), [boxing_info]) for function
     """
     param_begin = 1 if is_method else 0
     matched = {}
@@ -884,7 +930,7 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
                     raise errs.TplCompileError(
                         f"Ambiguous call: {function_poly_name(name, arg_types, is_method)}. ", lf)
                 matched[sum_dt] = (fn_t, tup)
-    min_dt = 65536
+    min_dt = 16777216
     min_tup = None
     for dt in matched:
         if dt < min_dt:

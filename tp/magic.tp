@@ -20,4 +20,5 @@ fn main() void {
     println(a[0] + a[1]);
     println("asd" + "efg");
     println(34 % 7.7);
+    println("xxx" + 3);
 }

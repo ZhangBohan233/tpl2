@@ -1,0 +1,24 @@
+import lang;
+
+fn box1(x: int) int {
+    return x + 1;
+}
+
+fn box2(x: *Integer) int {
+    return x.intValue() + 2;
+}
+
+fn main() void {
+    a: int = new Integer(3);
+    b: *Integer = 2;
+    //box2(4);
+
+    println(b);
+    println(a);
+
+    arr: int[] = new int[3];
+    arr[0] = b;
+
+    println(arr[0]);
+
+}
