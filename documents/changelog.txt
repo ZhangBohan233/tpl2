@@ -1,4 +1,12 @@
-﻿===== VERSION 2079 =====
+﻿===== VERSION 2080 =====
+2022/10/02
+
+* Primitive type auto boxing and unboxing:
+    * Added support for function call
+* Added library function 'string(x)'
+* Added new constructors for String: String(char), String(byte[])
+
+===== VERSION 2079 =====
 2022/10/01
 
 * Primitive type auto boxing and unboxing:

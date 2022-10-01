@@ -7,7 +7,7 @@ stack_size
 global_length
 620
 literal
-0 0 0 0 1 0 0 0 255 255 255 255 112 8 0 0 0 0 0 0 132 10 0 0 7 0 0 0 3 0 0 0 79 0 98 0 106 0 101 0 99 0 116 0 64 0 112 8 0 0 0 0 0 0 166 10 0 0 22 0 0 0 3 0 0 0 78 0 101 0 103 0 97 0 116 0 105 0 118 0 101 0 32 0 114 0 101 0 112 0 101 0 97 0 116 0 32 0 116 0 105 0 109 0 101 0 115 0 46 0 112 8 0 0 0 0 0 0 230 10 0 0 1 0 0 0 3 0 0 0 98 0 112 8 0 0 0 0 0 0 252 10 0 0 0 0 0 0 3 0 0 0 112 8 0 0 0 0 0 0 16 11 0 0 5 0 0 0 3 0 0 0 65 0 114 0 114 0 97 0 121 0 112 8 0 0 0 0 0 0 46 11 0 0 1 0 0 0 3 0 0 0 48 0 10 0 0 0 45 0 48 0 0 0 6 0 0 0 15 0 0 0 112 8 0 0 0 0 0 0 86 11 0 0 1 0 0 0 3 0 0 0 46 0 3 0 0 0 2 0 0 0
+0 0 0 0 1 0 0 0 255 255 255 255 112 8 0 0 0 0 0 0 132 10 0 0 7 0 0 0 3 0 0 0 79 0 98 0 106 0 101 0 99 0 116 0 64 0 112 8 0 0 0 0 0 0 166 10 0 0 22 0 0 0 3 0 0 0 78 0 101 0 103 0 97 0 116 0 105 0 118 0 101 0 32 0 114 0 101 0 112 0 101 0 97 0 116 0 32 0 116 0 105 0 109 0 101 0 115 0 46 0 112 8 0 0 0 0 0 0 230 10 0 0 1 0 0 0 3 0 0 0 98 0 112 8 0 0 0 0 0 0 252 10 0 0 0 0 0 0 3 0 0 0 112 8 0 0 0 0 0 0 16 11 0 0 5 0 0 0 3 0 0 0 65 0 114 0 114 0 97 0 121 0 112 8 0 0 0 0 0 0 46 11 0 0 1 0 0 0 3 0 0 0 48 0 10 0 0 0 45 0 48 0 0 0 6 0 0 0 15 0 0 0 112 8 0 0 0 0 0 0 86 11 0 0 1 0 0 0 3 0 0 0 46 0 3 0 0 0 2 0 0 0 4 0 0 0
 classes
 class D:\GitHub\tpl2\lib\lang.tp$Object $2156
 mro
@@ -5002,7 +5002,7 @@ fn D:\GitHub\tpl2\tp\boxing.tp$box1(int) $2284
     ret
     stop
 
-fn D:\GitHub\tpl2\tp\boxing.tp$box2(*Integer) $2288
+fn D:\GitHub\tpl2\tp\boxing.tp$box2(*Number) $2288
     push_fp
     ; begin of type assigning
     push          24
@@ -5040,24 +5040,30 @@ fn D:\GitHub\tpl2\tp\boxing.tp$box2(*Integer) $2288
 fn D:\GitHub\tpl2\tp\boxing.tp$main() $2292
     push_fp
     ; begin of type assigning
-    push          100
-    iload         %0      80
+    push          136
+    iload         %0      108
     iload         %1      $0
     store         %1      %0
     iload         %0      16844033
-    iload         %1      $80
+    iload         %1      $108
     store         %1      %0
     iload         %0      17105153
-    iload         %1      $84
+    iload         %1      $112
     store         %1      %0
-    iload         %0      17170689
-    iload         %1      $88
+    iload         %0      83951873
+    iload         %1      $116
     store         %1      %0
     iload         %0      16843009
-    iload         %1      $92
+    iload         %1      $120
     store         %1      %0
-    iload         %0      65793
-    iload         %1      $96
+    iload         %0      16844289
+    iload         %1      $124
+    store         %1      %0
+    iload         %0      16843009
+    iload         %1      $128
+    store         %1      %0
+    iload         %0      257
+    iload         %1      $132
     store         %1      %0
     ; end of type assigning
     iload         %0      12
@@ -5137,52 +5143,118 @@ fn D:\GitHub\tpl2\tp\boxing.tp$main() $2292
     load          %1      $40
     store_abs     %0      %1
     call_fn       D:\GitHub\tpl2\lib\lang.tp$Integer.__new__(int)
+    iload         %0      12
+    iload         %1      $52
+    store         %1      %0
+    args
+    aload_sp      %0      $0
+    load          %1      $52
+    store_abs     %0      %1
+    iload         %0      $48
+    set_ret       %0
+    invoke_fn     _malloc
+    load          %0      $48
+    iload         %1      2172
+    store_abs     %0      %1
+    load          %0      $48
+    iload         %1      4
+    addi          %0      %1
+    iload         %1      56
+    store         %1      %0
+    load          %0      $56
+    iload         %1      12
+    store_abs     %0      %1
+    load_lit      %0      $252
+    iload         %1      $60
+    store         %1      %0
     args
     aload_sp      %0      $4
-    load          %1      $28
+    load          %1      $48
     store_abs     %0      %1
-    call          $2236
+    aload_sp      %0      $8
+    load          %1      $60
+    store_abs     %0      %1
+    call_fn       D:\GitHub\tpl2\lib\lang.tp$Integer.__new__(int)
+    args
+    aload_sp      %0      $4
+    load          %1      $48
+    store_abs     %0      %1
+    iload         %0      $44
+    set_ret       %0
+    call          $2288
+    args
+    aload_sp      %0      $4
+    load          %1      $44
+    store_abs     %0      %1
+    call          $2196
+    args
+    aload_sp      %0      $4
+    load          %1      $4
+    store_abs     %0      %1
+    iload         %0      $64
+    set_ret       %0
+    call          $2284
+    args
+    aload_sp      %0      $4
+    load          %1      $64
+    store_abs     %0      %1
+    call          $2196
+    load          %0      $28
+    iload         %1      5
+    get_method    %0      %1      %2
+    args
+    aload_sp      %1      $4
+    load          %2      $28
+    store_abs     %1      %2
+    iload         %1      $68
+    set_ret       %1
+    call_reg      %0
+    args
+    aload_sp      %0      $4
+    load          %1      $68
+    store_abs     %0      %1
+    call          $2196
     args
     aload_sp      %0      $4
     load          %1      $4
     store_abs     %0      %1
     call          $2196
     load_lit      %0      $244
-    iload         %1      $48
+    iload         %1      $76
     store         %1      %0
     iload         %0      1
-    iload         %1      $52
+    iload         %1      $80
     store         %1      %0
     args
     aload_sp      %0      $0
-    load          %1      $48
+    load          %1      $76
     store_abs     %0      %1
     aload_sp      %0      $4
-    load          %1      $52
+    load          %1      $80
     store_abs     %0      %1
-    iload         %0      $44
+    iload         %0      $72
     set_ret       %0
     invoke_fn     _heap_array
     load_lit      %0      $0
-    iload         %1      $56
+    iload         %1      $84
     store         %1      %0
-    load          %0      $56
-    iload         %1      $60
+    load          %0      $84
+    iload         %1      $88
     store         %1      %0
-    load          %0      $60
+    load          %0      $88
     iload         %1      4
     muli          %0      %1
-    iload         %1      60
+    iload         %1      88
     store         %1      %0
-    load          %0      $60
+    load          %0      $88
     iload         %1      8
     addi          %0      %1
-    iload         %1      60
+    iload         %1      88
     store         %1      %0
-    load          %0      $44
-    load          %1      $60
+    load          %0      $72
+    load          %1      $88
     addi          %0      %1
-    iload         %1      $60
+    iload         %1      $88
     store         %1      %0
     load          %0      $28
     iload         %1      5
@@ -5191,40 +5263,40 @@ fn D:\GitHub\tpl2\tp\boxing.tp$main() $2292
     aload_sp      %1      $4
     load          %2      $28
     store_abs     %1      %2
-    iload         %1      $64
+    iload         %1      $92
     set_ret       %1
     call_reg      %0
-    load          %0      $60
-    load          %1      $64
+    load          %0      $88
+    load          %1      $92
     store_abs     %0      %1
     load_lit      %0      $0
-    iload         %1      $72
+    iload         %1      $100
     store         %1      %0
-    load          %0      $72
-    iload         %1      $76
+    load          %0      $100
+    iload         %1      $104
     store         %1      %0
-    load          %0      $76
+    load          %0      $104
     iload         %1      4
     muli          %0      %1
-    iload         %1      76
+    iload         %1      104
     store         %1      %0
-    load          %0      $76
+    load          %0      $104
     iload         %1      8
     addi          %0      %1
-    iload         %1      76
+    iload         %1      104
     store         %1      %0
-    load          %0      $44
-    load          %1      $76
+    load          %0      $72
+    load          %1      $104
     addi          %0      %1
-    iload         %1      $76
+    iload         %1      $104
     store         %1      %0
-    load          %0      $76
+    load          %0      $104
     rload_abs     %1      %0
-    iload         %0      68
+    iload         %0      96
     store         %0      %1
     args
     aload_sp      %0      $4
-    load          %1      $68
+    load          %1      $96
     store_abs     %0      %1
     call          $2196
     pull_fp

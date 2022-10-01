@@ -3,10 +3,9 @@ from abc import ABC
 import compilers.util as util
 import compilers.errors as errs
 
-NOT_CONVERT = 0
-CONVERTIBLE = 1
-BOX_CONVERT = 2
-UNBOX_CONVERT = 3
+ARG_ORIG = 0
+ARG_BOX = 1
+ARG_UNBOX = 2
 
 BOXING = {
     "int": "Integer",
@@ -15,6 +14,20 @@ BOXING = {
     "byte": "Byte"
 }
 UNBOXING = {v: k for k, v in BOXING.items()}
+
+# Simulation of the structure in 'lang.tp'
+BOX_RELATIONS = {
+    "Object": {
+        "Number": {
+            "IntLike": {
+                "Integer": {},
+                "Char": {},
+                "Byte": {}
+            },
+            "Float": {}
+        }
+    }
+}
 
 
 class Type:
@@ -138,9 +151,10 @@ class PrimitiveType(Type):
 
     def box_convertible(self, left_tar_type):
         if isinstance(left_tar_type, PointerType) and isinstance(left_tar_type.base, ClassType):
-            if self.t_name in BOXING and BOXING[self.t_name] == left_tar_type.base.name:
-                return True
-        return super().box_convertible(left_tar_type)
+            if self.t_name in BOXING:
+                wrapper_name = BOXING[self.t_name]
+                return is_subclass_of_number(wrapper_name, left_tar_type.base.name)
+        return False
 
     def type_name(self):
         return self.t_name
@@ -882,7 +896,7 @@ def type_distance(left_type, right_real_type):
         for i in range(len(right.mro)):
             if left == right.mro[i]:
                 # print(left, right.mro, i)
-                return i
+                return i + 10
 
     return 0
 
@@ -901,11 +915,12 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
     :param get_type_func: a function that extract the function type from a unit in poly dict
     :param lf:
     :return: anything that gets from the poly dict.
-        usually (method_key_type, (method_id, method_ptr, method_type), [boxing_info]) for method,
-        (fn_type, (fn_type, fn_ptr), [boxing_info]) for function
+        usually (method_key_type, (method_id, method_ptr, method_type)) for method,
+        (fn_type, (fn_type, fn_ptr)) for function
     """
     param_begin = 1 if is_method else 0
     matched = {}
+    boxing = []
     for i in range(len(poly)):
         # fn_t = poly.keys[i]
         tup = poly.values[i]
@@ -914,14 +929,28 @@ def find_closet_func(poly: util.NaiveDict, arg_types: [Type], name: str, is_meth
             sum_dt = 0
             match = True
             for j in range(param_begin, len(arg_types)):
-                arg = arg_types[j]
-                param = fn_t.param_types[j]
+                arg: Type = arg_types[j]
+                param: Type = fn_t.param_types[j]
                 # print(arg, "=====", param, lf)
                 # if isinstance(arg, PointerType) and isinstance(arg.base, Generic):
                 #     print("zsda")
                 if arg.convertible_to(param, lf, weak=False):
                     # print(arg, param, lf, type_distance(param, arg))
                     sum_dt += type_distance(param, arg)
+                    boxing.append(ARG_ORIG)
+                elif arg.box_convertible(param):
+                    param: PointerType
+                    num_dt = number_distance(param.base.type_name(), BOXING[arg.type_name()])
+                    # weight is 1.
+                    # If this is less than the weight in 'type_distance', the privilege of calling boxing will
+                    # be greater.
+                    # For example, 'println(new Integer(1))' will call 'println(int)' if the weight here is small,
+                    # otherwise it will call 'println(*Object)'
+                    sum_dt += num_dt + 1
+                    boxing.append(ARG_BOX)
+                elif arg.unbox_convertible(param):
+                    sum_dt += 1
+                    boxing.append(ARG_UNBOX)
                 else:
                     match = False
                     break
@@ -973,6 +1002,55 @@ def replace_generic_method_with_real(method_t: MethodType, replacement: dict):
                           method_t.const,
                           method_t.permission,
                           method_t.inline)
+
+
+def find_type_extends_number(dic, item) -> (str, dict):
+    if item in dic:
+        return item, dic[item]
+    else:
+        for k, v in dic.items():
+            child = find_type_extends_number(v, item)
+            if child:
+                return child
+        return None
+
+
+def is_subclass_of_number(auto_boxer: str, declared_type: str):
+    """
+    Returns whether the auto boxer is convertible to the declared type.
+
+    :param auto_boxer: auto generated wrapper class of a primitive
+    :param declared_type:
+    :return:
+    """
+
+    def deep_contain(key, value, item):
+        if key == item:
+            return True
+        else:
+            for k, v in value.items():
+                if deep_contain(k, v, item):
+                    return True
+            return False
+
+    name_children = find_type_extends_number(BOX_RELATIONS, declared_type)
+    return name_children is not None and deep_contain(*name_children, auto_boxer)
+
+
+def number_distance(super_type: str, child_type: str):
+    def distance(super_name, dic, acc):
+        if super_name == child_type:
+            return acc
+        else:
+            for k, v in dic.items():
+                sub_dist = distance(k, v, acc + 1)
+                if sub_dist != -1:
+                    return sub_dist
+            return -1
+
+    super_self, super_children = find_type_extends_number(BOX_RELATIONS, super_type)
+
+    return distance(super_type, super_children, 0)
 
 
 # def find_correspond_tem_name()

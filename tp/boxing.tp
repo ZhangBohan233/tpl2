@@ -4,14 +4,15 @@ fn box1(x: int) int {
     return x + 1;
 }
 
-fn box2(x: *Integer) int {
+fn box2(x: *Number) int {
     return x.intValue() + 2;
 }
 
 fn main() void {
     a: int = new Integer(3);
     b: *Integer = 2;
-    //box2(4);
+    println(box2(4));
+    println(box1(a));
 
     println(b);
     println(a);

@@ -45,6 +45,25 @@ class String {
         this.__new__(other.chars);
     }
 
+    fn __new__(c: char) void {
+        super.__new__();
+
+        this.chars = new char[1];
+        this.chars[0] = c;
+    }
+
+    /**
+     * As of version 0.1, only ASCII codes are supported.
+     */
+    fn __new__(bytes: byte[]) void {
+        super.__new__();
+
+        this.chars = new char[bytes.length];
+        for i := 0; i < bytes.length; ++i {
+            this.chars[i] = bytes[i] as int as char;
+        }
+    }
+
     fn __add__(other: *String) *String {
         return this.concat(other);
     }
@@ -488,6 +507,29 @@ fn floatToString(value: float, precision: int) *String {
     return front + "." + back;
 }
 
+/*
+The following functions converts anything to string
+*/
+fn string(x: int) *String {
+    return intToString(x);
+}
+
+fn string(x: float) *String {
+    return floatToString(x);
+}
+
+fn string(x: char) *String {
+    return new String(x);
+}
+
+fn string(x: byte) *String {
+    return intToString(x as int);
+}
+
+fn string(x: *Object) *String {
+    return x.toString();
+}
+
 fn arraycopy(src: int[], srcIndex: int, dst: int[], dstIndex: int, length: int) void {
     unitLength := sizeof(int);
     _mem_copy(src as *void, srcIndex * unitLength, dst as *void, dstIndex * unitLength, length * unitLength);
@@ -525,5 +567,5 @@ export {
     Object, String,
     Number, Integer, Float, Char, Byte,
     print, println, arraycopy, vmBitsCount,
-    intToString, floatToString
+    intToString, floatToString, string
 }

@@ -21,4 +21,6 @@ fn main() void {
     println("asd" + "efg");
     println(34 % 7.7);
     println("xxx" + 3);
+    println(string(3) + "xxx");
+    println(sizeof(char));
 }

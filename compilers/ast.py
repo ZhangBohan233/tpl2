@@ -2122,12 +2122,23 @@ class FunctionCall(Expression):
             if i == 0 and is_method:
                 continue
             param_t = func_type.param_types[i]
-            arg_t: typ.Type = self.args[i - diff].evaluated_type(env, tpa.manager)
-            if not arg_t.convertible_to(param_t, self.lfp):
+            arg_node = self.args[i - diff]
+            arg_t: typ.Type = arg_node.evaluated_type(env, tpa.manager)
+            if arg_t.convertible_to(param_t, self.lfp):
+                real_arg_node = arg_node
+                real_arg_t = arg_t
+            elif arg_t.box_convertible(param_t):
+                real_arg_node = box(param_t, arg_node, arg_t, self.lfp)
+                real_arg_t = real_arg_node.evaluated_type(env, tpa.manager)
+            elif arg_t.unbox_convertible(param_t):
+                real_arg_node = unbox(param_t, arg_node, arg_t, self.lfp)
+                real_arg_t = real_arg_node.evaluated_type(env, tpa.manager)
+            else:
                 raise errs.TplCompileError("Argument type does not match param type. "
                                            "Expected '{}', got '{}'. ".format(param_t, arg_t), self.lfp)
-            arg_addr = self.args[i - diff].compile(env, tpa)
-            evaluated_args.append((arg_addr, arg_t.length))
+
+            arg_addr = real_arg_node.compile(env, tpa)
+            evaluated_args.append((arg_addr, real_arg_t.length))
         return evaluated_args
 
     def __str__(self):
